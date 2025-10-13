@@ -1,4 +1,4 @@
-# MeshCore SAR App
+# MeshCore SAR
 
 A Flutter-based Search and Rescue (SAR) application that communicates with MeshCore mesh network devices via Bluetooth Low Energy (BLE).
 

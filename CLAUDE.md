@@ -1,4 +1,4 @@
-# CLAUDE.md - MeshCore SAR App Technical Reference
+# CLAUDE.md - MeshCore SAR Technical Reference
 
 This document provides technical details for AI assistants (like Claude) working with this codebase.
 

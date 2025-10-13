@@ -1,0 +1,514 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../providers/connection_provider.dart';
+import '../providers/app_provider.dart';
+import '../models/device_info.dart' as models;
+import '../services/tile_cache_service.dart';
+import 'messages_tab.dart';
+import 'contacts_tab.dart';
+import 'map_tab.dart';
+import 'map_management_screen.dart';
+
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+  int _currentIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 3, vsync: this);
+    _tabController.addListener(() {
+      setState(() {
+        _currentIndex = _tabController.index;
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  void _showConnectionDialog(BuildContext context) {
+    final connectionProvider = context.read<ConnectionProvider>();
+
+    // Start scanning immediately
+    connectionProvider.startScan();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.9,
+        decoration: const BoxDecoration(
+          color: Color(0xFF1E1E1E),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          children: [
+            // Header
+            Container(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back, color: Colors.white),
+                    onPressed: () {
+                      connectionProvider.stopScan();
+                      Navigator.pop(context);
+                    },
+                  ),
+                  const Expanded(
+                    child: Column(
+                      children: [
+                        Text(
+                          'MeshCore',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          'Scanning for devices...',
+                          style: TextStyle(
+                            color: Colors.grey,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.more_vert, color: Colors.white),
+                    onPressed: () {},
+                  ),
+                ],
+              ),
+            ),
+
+            // Info banner
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.blue,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Row(
+                children: [
+                  Icon(Icons.info_outline, color: Colors.white),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'The default pin for devices without a screen is 123456. Trouble pairing? Forget the bluetooth device in system settings.',
+                      style: TextStyle(color: Colors.white, fontSize: 13),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            // Device list
+            Expanded(
+              child: Consumer<ConnectionProvider>(
+                builder: (context, provider, child) {
+                  if (provider.isScanning && provider.scannedDevices.isEmpty) {
+                    return const Center(
+                      child: CircularProgressIndicator(),
+                    );
+                  }
+
+                  if (provider.scannedDevices.isEmpty) {
+                    return const Center(
+                      child: Text(
+                        'No devices found',
+                        style: TextStyle(color: Colors.grey, fontSize: 16),
+                      ),
+                    );
+                  }
+
+                  return ListView.builder(
+                    itemCount: provider.scannedDevices.length,
+                    itemBuilder: (context, index) {
+                      final device = provider.scannedDevices[index];
+                      return Container(
+                        margin: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF2D2D2D),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: ListTile(
+                          leading: const Icon(
+                            Icons.bluetooth,
+                            color: Colors.white,
+                            size: 32,
+                          ),
+                          title: Text(
+                            device.platformName.isNotEmpty
+                                ? device.platformName
+                                : 'Unknown Device',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          subtitle: const Text(
+                            'Tap to connect',
+                            style: TextStyle(color: Colors.grey, fontSize: 14),
+                          ),
+                          trailing: const Icon(
+                            Icons.chevron_right,
+                            color: Colors.white,
+                          ),
+                          onTap: () async {
+                            Navigator.pop(context);
+                            await provider.connect(device);
+                            if (context.mounted &&
+                                provider.deviceInfo.isConnected) {
+                              final appProvider = context.read<AppProvider>();
+                              await appProvider.initialize();
+                            }
+                          },
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: _buildCompactStatusBar(),
+        actions: [
+          PopupMenuButton(
+            icon: const Icon(Icons.more_vert),
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                child: const Row(
+                  children: [
+                    Icon(Icons.refresh),
+                    SizedBox(width: 8),
+                    Text('Refresh Contacts'),
+                  ],
+                ),
+                onTap: () async {
+                  final appProvider = context.read<AppProvider>();
+                  await appProvider.refresh();
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Refreshed contacts')),
+                    );
+                  }
+                },
+              ),
+              PopupMenuItem(
+                child: const Row(
+                  children: [
+                    Icon(Icons.map),
+                    SizedBox(width: 8),
+                    Text('Map Management'),
+                  ],
+                ),
+                onTap: () {
+                  Future.delayed(Duration.zero, () {
+                    final appProvider = context.read<AppProvider>();
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => MapManagementScreen(
+                          tileCacheService: appProvider.tileCacheService,
+                        ),
+                      ),
+                    );
+                  });
+                },
+              ),
+            ],
+          ),
+        ],
+      ),
+      body: TabBarView(
+        controller: _tabController,
+        children: [
+          MessagesTab(onNavigateToMap: () => _tabController.animateTo(2)),
+          const ContactsTab(),
+          const MapTab(),
+        ],
+      ),
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 4,
+              offset: const Offset(0, -2),
+            ),
+          ],
+        ),
+        child: TabBar(
+          controller: _tabController,
+          tabs: const [
+            Tab(icon: Icon(Icons.message), text: 'Messages'),
+            Tab(icon: Icon(Icons.contacts), text: 'Contacts'),
+            Tab(icon: Icon(Icons.map), text: 'Map'),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCompactStatusBar() {
+    return Consumer<ConnectionProvider>(
+      builder: (context, provider, child) {
+        final deviceInfo = provider.deviceInfo;
+        final isConnected = deviceInfo.isConnected;
+
+        return Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'MeshCore',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Text(
+                    isConnected
+                        ? deviceInfo.deviceName ?? 'Connected'
+                        : 'Disconnected',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (!isConnected)
+              ElevatedButton.icon(
+                onPressed: () => _showConnectionDialog(context),
+                icon: const Icon(Icons.bluetooth, size: 18),
+                label: const Text('Connect'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: Colors.black87,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                ),
+              )
+            else
+              OutlinedButton(
+                onPressed: () async {
+                  await provider.disconnect();
+                  if (context.mounted) {
+                    context.read<AppProvider>().clearAllData();
+                  }
+                },
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  side: const BorderSide(color: Colors.white),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                ),
+                child: const Text('Disconnect'),
+              ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildStatusBar() {
+    return Consumer<ConnectionProvider>(
+      builder: (context, provider, child) {
+        final deviceInfo = provider.deviceInfo;
+        final isConnected = deviceInfo.isConnected;
+
+        return Container(
+          padding: const EdgeInsets.all(12),
+          color: Theme.of(context).colorScheme.surface,
+          child: Column(
+            children: [
+              Row(
+                children: [
+                  // Connection status
+                  Icon(
+                    isConnected ? Icons.bluetooth_connected : Icons.bluetooth_disabled,
+                    color: isConnected ? Colors.green : Colors.grey,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      isConnected
+                          ? deviceInfo.deviceName ?? 'Connected'
+                          : 'Not Connected',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                  ),
+                  // Battery indicator
+                  if (deviceInfo.batteryPercent != null) ...[
+                    Icon(
+                      _getBatteryIcon(deviceInfo.batteryPercent!),
+                      color: _getBatteryColor(deviceInfo.batteryPercent!),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      '${deviceInfo.batteryPercent!.round()}%',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ],
+                  // Signal strength
+                  if (deviceInfo.signalRssi != null) ...[
+                    const SizedBox(width: 12),
+                    Icon(
+                      Icons.signal_cellular_alt,
+                      color: _getSignalColor(deviceInfo.signalRssi!),
+                      size: 20,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      '${deviceInfo.signalRssi} dBm',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ],
+                ],
+              ),
+              const SizedBox(height: 8),
+              // Connection buttons
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: isConnected
+                          ? null
+                          : () => _showConnectionDialog(context),
+                      icon: const Icon(Icons.bluetooth_searching, size: 18),
+                      label: const Text('Connect'),
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: !isConnected
+                          ? null
+                          : () async {
+                              await provider.disconnect();
+                              if (context.mounted) {
+                                context.read<AppProvider>().clearAllData();
+                              }
+                            },
+                      icon: const Icon(Icons.bluetooth_disabled, size: 18),
+                      label: const Text('Disconnect'),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                      ),
+                    ),
+                  ),
+                  if (isConnected) ...[
+                    const SizedBox(width: 8),
+                    IconButton(
+                      onPressed: () async {
+                        final appProvider = context.read<AppProvider>();
+                        await appProvider.refresh();
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Refreshed contacts')),
+                          );
+                        }
+                      },
+                      icon: const Icon(Icons.refresh),
+                      tooltip: 'Refresh',
+                    ),
+                  ],
+                ],
+              ),
+              // Error message
+              if (provider.error != null) ...[
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.error, color: Colors.red, size: 16),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          provider.error!,
+                          style: const TextStyle(color: Colors.red, fontSize: 12),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close, size: 16),
+                        onPressed: provider.clearError,
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  IconData _getBatteryIcon(double percentage) {
+    if (percentage > 80) return Icons.battery_full;
+    if (percentage > 50) return Icons.battery_5_bar;
+    if (percentage > 20) return Icons.battery_3_bar;
+    return Icons.battery_1_bar;
+  }
+
+  Color _getBatteryColor(double percentage) {
+    if (percentage > 50) return Colors.green;
+    if (percentage > 20) return Colors.orange;
+    return Colors.red;
+  }
+
+  Color _getSignalColor(int rssi) {
+    if (rssi > -60) return Colors.green;
+    if (rssi > -70) return Colors.orange;
+    return Colors.red;
+  }
+}

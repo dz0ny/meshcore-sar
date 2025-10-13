@@ -1000,26 +1000,22 @@ class _DetailedCompassDialogState extends State<_DetailedCompassDialog> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Header
+            // Header - just close button
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                Text(
-                  'Compass View',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                ),
                 IconButton(
                   icon: const Icon(Icons.close),
                   onPressed: () => Navigator.pop(context),
                 ),
               ],
             ),
-            const SizedBox(height: 16),
             // Heading and Elevation info
             _buildInfoRow(context, heading, position),
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
+            // Current location in multiple formats
+            if (position != null) _buildLocationFormats(context, position),
+            const SizedBox(height: 16),
             // Large compass
             SizedBox(
               width: 300,
@@ -1088,6 +1084,82 @@ class _DetailedCompassDialogState extends State<_DetailedCompassDialog> {
         ),
       ],
     );
+  }
+
+  Widget _buildLocationFormats(BuildContext context, Position position) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Current Location',
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+          ),
+          const SizedBox(height: 8),
+          _buildCoordinateRow(
+            context,
+            'WGS84 (DD)',
+            '${position.latitude.toStringAsFixed(6)}, ${position.longitude.toStringAsFixed(6)}',
+          ),
+          _buildCoordinateRow(
+            context,
+            'WGS84 (DMS)',
+            '${_formatDMS(position.latitude, true)}, ${_formatDMS(position.longitude, false)}',
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCoordinateRow(BuildContext context, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 100,
+            child: Text(
+              label,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    fontWeight: FontWeight.w500,
+                    fontFamily: 'monospace',
+                  ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Convert decimal degrees to DMS (Degrees, Minutes, Seconds)
+  String _formatDMS(double degrees, bool isLatitude) {
+    final direction = isLatitude
+        ? (degrees >= 0 ? 'N' : 'S')
+        : (degrees >= 0 ? 'E' : 'W');
+
+    final absolute = degrees.abs();
+    final deg = absolute.floor();
+    final minDecimal = (absolute - deg) * 60;
+    final min = minDecimal.floor();
+    final sec = (minDecimal - min) * 60;
+
+    return '$deg°${min.toString().padLeft(2, '0')}\'${sec.toStringAsFixed(2).padLeft(5, '0')}"$direction';
   }
 
   Widget _buildContactsList(BuildContext context, double? heading, Position? position) {

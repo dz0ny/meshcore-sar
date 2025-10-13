@@ -8,9 +8,17 @@ import 'messages_tab.dart';
 import 'contacts_tab.dart';
 import 'map_tab.dart';
 import 'map_management_screen.dart';
+import 'settings_screen.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final Function(ThemeMode) onThemeChanged;
+  final ThemeMode currentTheme;
+
+  const HomeScreen({
+    super.key,
+    required this.onThemeChanged,
+    required this.currentTheme,
+  });
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -241,6 +249,28 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                       MaterialPageRoute(
                         builder: (context) => MapManagementScreen(
                           tileCacheService: appProvider.tileCacheService,
+                        ),
+                      ),
+                    );
+                  });
+                },
+              ),
+              PopupMenuItem(
+                child: const Row(
+                  children: [
+                    Icon(Icons.settings),
+                    SizedBox(width: 8),
+                    Text('Settings'),
+                  ],
+                ),
+                onTap: () {
+                  Future.delayed(Duration.zero, () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => SettingsScreen(
+                          onThemeChanged: widget.onThemeChanged,
+                          currentTheme: widget.currentTheme,
                         ),
                       ),
                     );

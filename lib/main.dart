@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'providers/connection_provider.dart';
 import 'providers/contacts_provider.dart';
 import 'providers/messages_provider.dart';
@@ -12,8 +13,38 @@ void main() {
   runApp(const MeshCoreSarApp());
 }
 
-class MeshCoreSarApp extends StatelessWidget {
+class MeshCoreSarApp extends StatefulWidget {
   const MeshCoreSarApp({super.key});
+
+  @override
+  State<MeshCoreSarApp> createState() => _MeshCoreSarAppState();
+}
+
+class _MeshCoreSarAppState extends State<MeshCoreSarApp> {
+  ThemeMode _themeMode = ThemeMode.system;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadThemePreference();
+  }
+
+  Future<void> _loadThemePreference() async {
+    final prefs = await SharedPreferences.getInstance();
+    final themeName = prefs.getString('theme_mode') ?? 'system';
+    setState(() {
+      _themeMode = ThemeMode.values.firstWhere(
+        (mode) => mode.name == themeName,
+        orElse: () => ThemeMode.system,
+      );
+    });
+  }
+
+  void _handleThemeChanged(ThemeMode mode) {
+    setState(() {
+      _themeMode = mode;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -96,8 +127,8 @@ class MeshCoreSarApp extends StatelessWidget {
             filled: true,
           ),
         ),
-        themeMode: ThemeMode.system,
-        home: const HomeScreen(),
+        themeMode: _themeMode,
+        home: HomeScreen(onThemeChanged: _handleThemeChanged, currentTheme: _themeMode),
       ),
     );
   }

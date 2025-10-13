@@ -67,6 +67,9 @@ dependencies:
   # Persistent storage
   shared_preferences: ^2.3.3
 
+  # Package info
+  package_info_plus: ^8.1.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

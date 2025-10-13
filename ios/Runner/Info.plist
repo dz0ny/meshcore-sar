@@ -57,5 +57,7 @@
 	<string>MeshCore SAR needs precise location for accurate positioning in SAR operations</string>
 	<key>NSLocationDefaultAccuracyReduced</key>
 	<false/>
+	<key>NSMotionUsageDescription</key>
+	<string>MeshCore SAR needs access to the compass to show your heading direction on the map</string>
 </dict>
 </plist>

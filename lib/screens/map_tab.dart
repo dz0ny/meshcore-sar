@@ -26,7 +26,7 @@ class MapTab extends StatefulWidget {
   State<MapTab> createState() => _MapTabState();
 }
 
-class _MapTabState extends State<MapTab> {
+class _MapTabState extends State<MapTab> with AutomaticKeepAliveClientMixin {
   final MapController _mapController = MapController();
   final TileCacheService _tileCache = TileCacheService();
   bool _isInitialized = false;
@@ -39,9 +39,16 @@ class _MapTabState extends State<MapTab> {
   StreamSubscription<Position>? _positionStreamSubscription;
   StreamSubscription<CompassEvent>? _compassStreamSubscription;
 
+  // Saved map position (loaded from SharedPreferences)
+  LatLng? _savedMapCenter;
+  double? _savedMapZoom;
+
   // Default center point (will be updated based on markers)
   static const LatLng _defaultCenter = LatLng(46.0569, 14.5058); // Ljubljana, Slovenia
   static const double _defaultZoom = 13.0;
+
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   void initState() {
@@ -59,35 +66,52 @@ class _MapTabState extends State<MapTab> {
   }
 
   void _startCompassTracking() {
-    // Start listening to compass events
-    _compassStreamSubscription = FlutterCompass.events?.listen((CompassEvent event) {
-      if (mounted && event.heading != null) {
-        setState(() {
-          _compassHeading = event.heading;
-        });
+    final compassStream = FlutterCompass.events;
+    if (compassStream == null) {
+      return;
+    }
 
-        // Rotate map if rotation mode is enabled and we have compass heading
-        if (_rotateMarkerWithHeading && event.heading != null) {
-          debugPrint('Rotating map to compass heading: ${event.heading}');
-          // Use rotateAroundPoint to set absolute rotation
-          final camera = _mapController.camera;
-          _mapController.moveAndRotate(
-            camera.center,
-            camera.zoom,
-            -event.heading!,
-          );
+    // Start listening to compass events
+    _compassStreamSubscription = compassStream.listen(
+      (CompassEvent event) {
+        if (mounted && event.heading != null) {
+          setState(() {
+            _compassHeading = event.heading;
+          });
+
+          // Rotate map if rotation mode is enabled and we have compass heading
+          if (_rotateMarkerWithHeading && event.heading != null) {
+            // Use moveAndRotate to set absolute rotation
+            final camera = _mapController.camera;
+            _mapController.moveAndRotate(
+              camera.center,
+              camera.zoom,
+              -event.heading!,
+            );
+          }
         }
-      }
-    });
+      },
+    );
   }
 
   Future<void> _loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
     if (mounted) {
+      // Load last map position if available
+      final lastLat = prefs.getDouble('map_last_latitude');
+      final lastLon = prefs.getDouble('map_last_longitude');
+      final lastZoom = prefs.getDouble('map_last_zoom');
+
       setState(() {
         _showLegend = prefs.getBool('map_show_legend') ?? false;
         _rotateMarkerWithHeading = prefs.getBool('map_rotate_with_heading') ?? false;
         _gpsUpdateDistance = prefs.getDouble('map_gps_update_distance') ?? 3.0;
+
+        // Store saved position for use in build
+        if (lastLat != null && lastLon != null && lastZoom != null) {
+          _savedMapCenter = LatLng(lastLat, lastLon);
+          _savedMapZoom = lastZoom;
+        }
       });
     }
   }
@@ -97,6 +121,14 @@ class _MapTabState extends State<MapTab> {
     await prefs.setBool('map_show_legend', _showLegend);
     await prefs.setBool('map_rotate_with_heading', _rotateMarkerWithHeading);
     await prefs.setDouble('map_gps_update_distance', _gpsUpdateDistance);
+  }
+
+  Future<void> _saveMapPosition() async {
+    final prefs = await SharedPreferences.getInstance();
+    final camera = _mapController.camera;
+    await prefs.setDouble('map_last_latitude', camera.center.latitude);
+    await prefs.setDouble('map_last_longitude', camera.center.longitude);
+    await prefs.setDouble('map_last_zoom', camera.zoom);
   }
 
   Future<void> _requestLocationPermission() async {
@@ -142,8 +174,6 @@ class _MapTabState extends State<MapTab> {
       ),
     ).listen((Position position) {
       if (mounted) {
-        debugPrint('Position update - Heading: ${position.heading}, Speed: ${position.speed}');
-
         setState(() {
           _currentPosition = position;
         });
@@ -151,7 +181,6 @@ class _MapTabState extends State<MapTab> {
         // Rotate map if rotation mode is enabled and heading is available
         // Heading of -1.0 means heading is unavailable
         if (_rotateMarkerWithHeading && position.heading != null && position.heading >= 0) {
-          debugPrint('Rotating map to heading: ${position.heading}');
           final camera = _mapController.camera;
           _mapController.moveAndRotate(
             camera.center,
@@ -195,6 +224,9 @@ class _MapTabState extends State<MapTab> {
 
   @override
   void dispose() {
+    // Save map position before disposing
+    _saveMapPosition();
+
     final mapProvider = context.read<MapProvider>();
     mapProvider.removeListener(_handleMapNavigation);
     _positionStreamSubscription?.cancel();
@@ -441,8 +473,8 @@ class _MapTabState extends State<MapTab> {
     showDialog(
       context: context,
       builder: (context) => _DetailedCompassDialog(
-        currentPosition: _currentPosition,
-        currentHeading: _currentHeading,
+        initialPosition: _currentPosition,
+        initialHeading: _currentHeading,
         contacts: contacts,
       ),
     );
@@ -480,6 +512,7 @@ class _MapTabState extends State<MapTab> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context); // Required for AutomaticKeepAliveClientMixin
     return Consumer2<ContactsProvider, MessagesProvider>(
       builder: (context, contactsProvider, messagesProvider, child) {
         final contactsWithLocation = contactsProvider.chatContactsWithLocation;
@@ -493,13 +526,20 @@ class _MapTabState extends State<MapTab> {
                 ? FlutterMap(
                     mapController: _mapController,
                     options: MapOptions(
-                      initialCenter: center,
-                      initialZoom: _defaultZoom,
+                      // Use saved position if available, otherwise use calculated center
+                      initialCenter: _savedMapCenter ?? center,
+                      initialZoom: _savedMapZoom ?? _defaultZoom,
                       minZoom: 5,
                       maxZoom: 18,
                       interactionOptions: const InteractionOptions(
                         flags: InteractiveFlag.all,
                       ),
+                      onMapEvent: (event) {
+                        // Save map position when user stops panning/zooming
+                        if (event is MapEventMoveEnd || event is MapEventScrollWheelZoom) {
+                          _saveMapPosition();
+                        }
+                      },
                     ),
                     children: [
                       TileLayer(
@@ -875,19 +915,80 @@ class _CompassRosePainter extends CustomPainter {
 }
 
 // Detailed Compass Dialog
-class _DetailedCompassDialog extends StatelessWidget {
-  final Position? currentPosition;
-  final double? currentHeading;
+class _DetailedCompassDialog extends StatefulWidget {
+  final Position? initialPosition;
+  final double? initialHeading;
   final List<Contact> contacts;
 
   const _DetailedCompassDialog({
-    required this.currentPosition,
-    required this.currentHeading,
+    required this.initialPosition,
+    required this.initialHeading,
     required this.contacts,
   });
 
   @override
+  State<_DetailedCompassDialog> createState() => _DetailedCompassDialogState();
+}
+
+class _DetailedCompassDialogState extends State<_DetailedCompassDialog> {
+  double? _currentHeading;
+  Position? _currentPosition;
+  StreamSubscription<CompassEvent>? _compassSubscription;
+  StreamSubscription<Position>? _positionSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentHeading = widget.initialHeading;
+    _currentPosition = widget.initialPosition;
+
+    // Subscribe to compass updates
+    final compassStream = FlutterCompass.events;
+    if (compassStream != null) {
+      _compassSubscription = compassStream.listen((event) {
+        if (mounted && event.heading != null) {
+          setState(() {
+            _currentHeading = event.heading;
+          });
+        }
+      });
+    }
+
+    // Subscribe to position updates
+    _positionSubscription = Geolocator.getPositionStream(
+      locationSettings: const LocationSettings(
+        accuracy: LocationAccuracy.best,
+        distanceFilter: 1,
+      ),
+    ).listen((position) {
+      if (mounted) {
+        setState(() {
+          _currentPosition = position;
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _compassSubscription?.cancel();
+    _positionSubscription?.cancel();
+    super.dispose();
+  }
+
+  // Get current heading (prefer compass over GPS)
+  double? get currentHeading {
+    if (_currentHeading != null) return _currentHeading;
+    if (_currentPosition?.heading != null && _currentPosition!.heading >= 0) {
+      return _currentPosition!.heading;
+    }
+    return null;
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final heading = currentHeading;
+    final position = _currentPosition;
     return Dialog(
       backgroundColor: Colors.transparent,
       child: Container(
@@ -917,51 +1018,51 @@ class _DetailedCompassDialog extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             // Heading and Elevation info
-            _buildInfoRow(context),
+            _buildInfoRow(context, heading, position),
             const SizedBox(height: 24),
             // Large compass
             SizedBox(
               width: 300,
               height: 300,
               child: _DetailedCompassPainter(
-                heading: currentHeading ?? 0,
-                hasHeading: currentHeading != null,
-                currentPosition: currentPosition,
-                contacts: contacts,
+                heading: heading ?? 0,
+                hasHeading: heading != null,
+                currentPosition: position,
+                contacts: widget.contacts,
               ),
             ),
             const SizedBox(height: 16),
             // Contacts list
-            if (contacts.isNotEmpty) _buildContactsList(context),
+            if (widget.contacts.isNotEmpty) _buildContactsList(context, heading, position),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildInfoRow(BuildContext context) {
+  Widget _buildInfoRow(BuildContext context, double? heading, Position? position) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: [
         _buildInfoCard(
           context,
           'Heading',
-          currentHeading != null ? '${currentHeading!.round()}°' : '--',
+          heading != null ? '${heading.round()}°' : '--',
           Icons.explore,
         ),
         _buildInfoCard(
           context,
           'Elevation',
-          currentPosition?.altitude != null
-              ? '${currentPosition!.altitude.round()}m'
+          position?.altitude != null
+              ? '${position!.altitude.round()}m'
               : '--',
           Icons.terrain,
         ),
         _buildInfoCard(
           context,
           'Accuracy',
-          currentPosition?.accuracy != null
-              ? '±${currentPosition!.accuracy.round()}m'
+          position?.accuracy != null
+              ? '±${position!.accuracy.round()}m'
               : '--',
           Icons.gps_fixed,
         ),
@@ -989,25 +1090,25 @@ class _DetailedCompassDialog extends StatelessWidget {
     );
   }
 
-  Widget _buildContactsList(BuildContext context) {
-    if (currentPosition == null) {
+  Widget _buildContactsList(BuildContext context, double? heading, Position? position) {
+    if (position == null) {
       return const Text('Location unavailable');
     }
 
     // Calculate bearings and distances
-    final contactsWithBearing = contacts.map((contact) {
+    final contactsWithBearing = widget.contacts.map((contact) {
       if (contact.displayLocation == null) return null;
 
       final bearing = _calculateBearing(
-        currentPosition!.latitude,
-        currentPosition!.longitude,
+        position.latitude,
+        position.longitude,
         contact.displayLocation!.latitude,
         contact.displayLocation!.longitude,
       );
 
       final distance = _calculateDistance(
-        currentPosition!.latitude,
-        currentPosition!.longitude,
+        position.latitude,
+        position.longitude,
         contact.displayLocation!.latitude,
         contact.displayLocation!.longitude,
       );

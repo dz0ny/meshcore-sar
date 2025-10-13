@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:math';
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -68,7 +69,13 @@ class _MapTabState extends State<MapTab> {
         // Rotate map if rotation mode is enabled and we have compass heading
         if (_rotateMarkerWithHeading && event.heading != null) {
           debugPrint('Rotating map to compass heading: ${event.heading}');
-          _mapController.rotate(-event.heading!);
+          // Use rotateAroundPoint to set absolute rotation
+          final camera = _mapController.camera;
+          _mapController.moveAndRotate(
+            camera.center,
+            camera.zoom,
+            -event.heading!,
+          );
         }
       }
     });
@@ -145,7 +152,12 @@ class _MapTabState extends State<MapTab> {
         // Heading of -1.0 means heading is unavailable
         if (_rotateMarkerWithHeading && position.heading != null && position.heading >= 0) {
           debugPrint('Rotating map to heading: ${position.heading}');
-          _mapController.rotate(-position.heading);
+          final camera = _mapController.camera;
+          _mapController.moveAndRotate(
+            camera.center,
+            camera.zoom,
+            -position.heading,
+          );
         }
       }
     });
@@ -352,11 +364,16 @@ class _MapTabState extends State<MapTab> {
                   setState(() {
                     _rotateMarkerWithHeading = value;
                     // Reset map rotation when disabling
+                    final camera = _mapController.camera;
                     if (!_rotateMarkerWithHeading) {
-                      _mapController.rotate(0);
+                      _mapController.moveAndRotate(camera.center, camera.zoom, 0);
                     } else if (_currentHeading != null) {
                       // Apply current heading rotation when enabling (if heading is valid)
-                      _mapController.rotate(-_currentHeading!);
+                      _mapController.moveAndRotate(
+                        camera.center,
+                        camera.zoom,
+                        -_currentHeading!,
+                      );
                     }
                   });
                   setModalState(() {});
@@ -420,6 +437,17 @@ class _MapTabState extends State<MapTab> {
     );
   }
 
+  void _showDetailedCompass(BuildContext context, List<Contact> contacts) {
+    showDialog(
+      context: context,
+      builder: (context) => _DetailedCompassDialog(
+        currentPosition: _currentPosition,
+        currentHeading: _currentHeading,
+        contacts: contacts,
+      ),
+    );
+  }
+
   void _restartLocationStream() {
     // Cancel existing subscription
     _positionStreamSubscription?.cancel();
@@ -439,7 +467,12 @@ class _MapTabState extends State<MapTab> {
         // Rotate map if rotation mode is enabled and heading is available
         // Heading of -1.0 means heading is unavailable
         if (_rotateMarkerWithHeading && position.heading != null && position.heading >= 0) {
-          _mapController.rotate(-position.heading);
+          final camera = _mapController.camera;
+          _mapController.moveAndRotate(
+            camera.center,
+            camera.zoom,
+            -position.heading,
+          );
         }
       }
     });
@@ -542,9 +575,15 @@ class _MapTabState extends State<MapTab> {
               Positioned(
                 top: 16,
                 right: 16,
-                child: _CompassWidget(
-                  heading: _currentHeading ?? 0,
-                  hasHeading: _currentHeading != null,
+                child: GestureDetector(
+                  onTap: () => _showDetailedCompass(
+                    context,
+                    contactsProvider.chatContactsWithLocation,
+                  ),
+                  child: _CompassWidget(
+                    heading: _currentHeading ?? 0,
+                    hasHeading: _currentHeading != null,
+                  ),
                 ),
               ),
             // Map legend overlay
@@ -833,5 +872,421 @@ class _CompassRosePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+// Detailed Compass Dialog
+class _DetailedCompassDialog extends StatelessWidget {
+  final Position? currentPosition;
+  final double? currentHeading;
+  final List<Contact> contacts;
+
+  const _DetailedCompassDialog({
+    required this.currentPosition,
+    required this.currentHeading,
+    required this.contacts,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Header
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Compass View',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            // Heading and Elevation info
+            _buildInfoRow(context),
+            const SizedBox(height: 24),
+            // Large compass
+            SizedBox(
+              width: 300,
+              height: 300,
+              child: _DetailedCompassPainter(
+                heading: currentHeading ?? 0,
+                hasHeading: currentHeading != null,
+                currentPosition: currentPosition,
+                contacts: contacts,
+              ),
+            ),
+            const SizedBox(height: 16),
+            // Contacts list
+            if (contacts.isNotEmpty) _buildContactsList(context),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceAround,
+      children: [
+        _buildInfoCard(
+          context,
+          'Heading',
+          currentHeading != null ? '${currentHeading!.round()}°' : '--',
+          Icons.explore,
+        ),
+        _buildInfoCard(
+          context,
+          'Elevation',
+          currentPosition?.altitude != null
+              ? '${currentPosition!.altitude.round()}m'
+              : '--',
+          Icons.terrain,
+        ),
+        _buildInfoCard(
+          context,
+          'Accuracy',
+          currentPosition?.accuracy != null
+              ? '±${currentPosition!.accuracy.round()}m'
+              : '--',
+          Icons.gps_fixed,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildInfoCard(
+      BuildContext context, String label, String value, IconData icon) {
+    return Column(
+      children: [
+        Icon(icon, size: 20, color: Theme.of(context).colorScheme.primary),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+        ),
+        Text(
+          label,
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildContactsList(BuildContext context) {
+    if (currentPosition == null) {
+      return const Text('Location unavailable');
+    }
+
+    // Calculate bearings and distances
+    final contactsWithBearing = contacts.map((contact) {
+      if (contact.displayLocation == null) return null;
+
+      final bearing = _calculateBearing(
+        currentPosition!.latitude,
+        currentPosition!.longitude,
+        contact.displayLocation!.latitude,
+        contact.displayLocation!.longitude,
+      );
+
+      final distance = _calculateDistance(
+        currentPosition!.latitude,
+        currentPosition!.longitude,
+        contact.displayLocation!.latitude,
+        contact.displayLocation!.longitude,
+      );
+
+      return {
+        'contact': contact,
+        'bearing': bearing,
+        'distance': distance,
+      };
+    }).whereType<Map<String, dynamic>>().toList();
+
+    // Sort by distance
+    contactsWithBearing.sort((a, b) =>
+        (a['distance'] as double).compareTo(b['distance'] as double));
+
+    return Container(
+      constraints: const BoxConstraints(maxHeight: 150),
+      child: ListView.builder(
+        shrinkWrap: true,
+        itemCount: contactsWithBearing.length,
+        itemBuilder: (context, index) {
+          final item = contactsWithBearing[index];
+          final contact = item['contact'] as Contact;
+          final bearing = item['bearing'] as double;
+          final distance = item['distance'] as double;
+
+          return ListTile(
+            dense: true,
+            leading: Icon(
+              Icons.person,
+              color: Colors.blue,
+              size: 20,
+            ),
+            title: Text(contact.advName),
+            subtitle: Text(
+              '${_bearingToCardinal(bearing)} • ${_formatDistance(distance)}',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            trailing: Text(
+              '${bearing.round()}°',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  // Calculate bearing between two points (in degrees)
+  double _calculateBearing(
+      double lat1, double lon1, double lat2, double lon2) {
+    final dLon = (lon2 - lon1) * pi / 180;
+    final lat1Rad = lat1 * pi / 180;
+    final lat2Rad = lat2 * pi / 180;
+
+    final y = sin(dLon) * cos(lat2Rad);
+    final x = cos(lat1Rad) * sin(lat2Rad) -
+        sin(lat1Rad) * cos(lat2Rad) * cos(dLon);
+
+    final bearing = atan2(y, x) * 180 / pi;
+    return (bearing + 360) % 360;
+  }
+
+  // Calculate distance between two points (in meters)
+  double _calculateDistance(
+      double lat1, double lon1, double lat2, double lon2) {
+    const R = 6371000; // Earth's radius in meters
+    final dLat = (lat2 - lat1) * pi / 180;
+    final dLon = (lon2 - lon1) * pi / 180;
+
+    final a = sin(dLat / 2) * sin(dLat / 2) +
+        cos(lat1 * pi / 180) *
+            cos(lat2 * pi / 180) *
+            sin(dLon / 2) *
+            sin(dLon / 2);
+
+    final c = 2 * atan2(sqrt(a), sqrt(1 - a));
+    return R * c;
+  }
+
+  String _bearingToCardinal(double bearing) {
+    const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+    final index = ((bearing + 22.5) / 45).floor() % 8;
+    return directions[index];
+  }
+
+  String _formatDistance(double meters) {
+    if (meters < 1000) {
+      return '${meters.round()}m';
+    } else {
+      return '${(meters / 1000).toStringAsFixed(1)}km';
+    }
+  }
+}
+
+// Detailed Compass Painter with contacts
+class _DetailedCompassPainter extends StatelessWidget {
+  final double heading;
+  final bool hasHeading;
+  final Position? currentPosition;
+  final List<Contact> contacts;
+
+  const _DetailedCompassPainter({
+    required this.heading,
+    required this.hasHeading,
+    required this.currentPosition,
+    required this.contacts,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(
+      painter: _LargeCompassPainter(
+        heading: heading,
+        hasHeading: hasHeading,
+        currentPosition: currentPosition,
+        contacts: contacts,
+      ),
+      child: Container(),
+    );
+  }
+}
+
+class _LargeCompassPainter extends CustomPainter {
+  final double heading;
+  final bool hasHeading;
+  final Position? currentPosition;
+  final List<Contact> contacts;
+
+  _LargeCompassPainter({
+    required this.heading,
+    required this.hasHeading,
+    required this.currentPosition,
+    required this.contacts,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = size.width / 2;
+
+    // Draw outer circle
+    final circlePaint = Paint()
+      ..color = Colors.grey.withOpacity(0.2)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2;
+    canvas.drawCircle(center, radius, circlePaint);
+
+    // Draw degree markers
+    for (int i = 0; i < 360; i += 10) {
+      final angle = i * pi / 180 - pi / 2 + heading * pi / 180;
+      final isCardinal = i % 90 == 0;
+      final isMajor = i % 30 == 0;
+
+      final startRadius = isCardinal ? radius - 25 : (isMajor ? radius - 15 : radius - 10);
+      final start = Offset(
+        center.dx + startRadius * cos(angle),
+        center.dy + startRadius * sin(angle),
+      );
+      final end = Offset(
+        center.dx + radius * cos(angle),
+        center.dy + radius * sin(angle),
+      );
+
+      final markerPaint = Paint()
+        ..color = isCardinal ? Colors.red : Colors.grey
+        ..strokeWidth = isCardinal ? 3 : (isMajor ? 2 : 1);
+
+      canvas.drawLine(start, end, markerPaint);
+    }
+
+    // Draw cardinal directions
+    final textPainter = TextPainter(textDirection: TextDirection.ltr);
+    final directions = ['N', 'E', 'S', 'W'];
+    for (int i = 0; i < 4; i++) {
+      final angle = i * pi / 2 - pi / 2 + heading * pi / 180;
+      final x = center.dx + (radius - 35) * cos(angle);
+      final y = center.dy + (radius - 35) * sin(angle);
+
+      textPainter.text = TextSpan(
+        text: directions[i],
+        style: TextStyle(
+          color: i == 0 ? Colors.red : Colors.grey.shade700,
+          fontSize: 24,
+          fontWeight: FontWeight.bold,
+        ),
+      );
+      textPainter.layout();
+      textPainter.paint(
+        canvas,
+        Offset(x - textPainter.width / 2, y - textPainter.height / 2),
+      );
+    }
+
+    // Draw contacts as dots
+    if (currentPosition != null) {
+      for (final contact in contacts) {
+        if (contact.displayLocation == null) continue;
+
+        final bearing = _calculateBearing(
+          currentPosition!.latitude,
+          currentPosition!.longitude,
+          contact.displayLocation!.latitude,
+          contact.displayLocation!.longitude,
+        );
+
+        // Adjust bearing relative to current heading
+        final relativeBearing = (bearing - heading + 360) % 360;
+        final angle = relativeBearing * pi / 180 - pi / 2;
+
+        // Place contact dot
+        final dotRadius = radius * 0.7;
+        final dotX = center.dx + dotRadius * cos(angle);
+        final dotY = center.dy + dotRadius * sin(angle);
+
+        // Draw dot
+        final dotPaint = Paint()
+          ..color = Colors.blue
+          ..style = PaintingStyle.fill;
+        canvas.drawCircle(Offset(dotX, dotY), 6, dotPaint);
+
+        // Draw white border
+        final borderPaint = Paint()
+          ..color = Colors.white
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2;
+        canvas.drawCircle(Offset(dotX, dotY), 6, borderPaint);
+      }
+    }
+
+    // Draw center heading indicator (fixed pointing up)
+    final indicatorPaint = Paint()
+      ..color = hasHeading ? Colors.red : Colors.grey
+      ..style = PaintingStyle.fill;
+
+    final path = ui.Path()
+      ..moveTo(center.dx, center.dy - 40)
+      ..lineTo(center.dx - 10, center.dy + 10)
+      ..lineTo(center.dx + 10, center.dy + 10)
+      ..close();
+
+    canvas.drawPath(path, indicatorPaint);
+
+    // Draw heading text
+    textPainter.text = TextSpan(
+      text: hasHeading ? '${heading.round()}°' : '--',
+      style: const TextStyle(
+        color: Colors.black,
+        fontSize: 20,
+        fontWeight: FontWeight.bold,
+      ),
+    );
+    textPainter.layout();
+    textPainter.paint(
+      canvas,
+      Offset(
+        center.dx - textPainter.width / 2,
+        center.dy + 20,
+      ),
+    );
+  }
+
+  double _calculateBearing(
+      double lat1, double lon1, double lat2, double lon2) {
+    final dLon = (lon2 - lon1) * pi / 180;
+    final lat1Rad = lat1 * pi / 180;
+    final lat2Rad = lat2 * pi / 180;
+
+    final y = sin(dLon) * cos(lat2Rad);
+    final x = cos(lat1Rad) * sin(lat2Rad) -
+        sin(lat1Rad) * cos(lat2Rad) * cos(dLon);
+
+    final bearing = atan2(y, x) * 180 / pi;
+    return (bearing + 360) % 360;
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
 

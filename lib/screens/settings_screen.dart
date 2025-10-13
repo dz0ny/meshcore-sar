@@ -93,12 +93,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
         stagingCount: 1,
       );
 
+      final channelMessages = SampleDataGenerator.generateChannelMessages(
+        generalChannelMessages: 8,
+        emergencyChannelMessages: 5,
+      );
+
+      // Combine all messages
+      final allMessages = [...sarMessages, ...channelMessages];
+
       // Add to providers
       final contactsProvider = Provider.of<ContactsProvider>(context, listen: false);
       final messagesProvider = Provider.of<MessagesProvider>(context, listen: false);
 
       contactsProvider.addContacts(contacts);
-      messagesProvider.addMessages(sarMessages);
+      messagesProvider.addMessages(allMessages);
 
       if (!mounted) return;
 
@@ -108,7 +116,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Loaded $teamCount team members, $channelCount channels, ${sarMessages.length} SAR markers',
+            'Loaded $teamCount team members, $channelCount channels, ${sarMessages.length} SAR markers, ${channelMessages.length} messages',
           ),
           backgroundColor: Colors.green,
         ),
@@ -227,7 +235,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Text(
-              'Load or clear sample contacts and SAR markers for testing',
+              'Load or clear sample contacts, channel messages, and SAR markers for testing',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                   ),

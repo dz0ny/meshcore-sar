@@ -211,4 +211,107 @@ class SampleDataGenerator {
 
     return messages;
   }
+
+  /// Generate sample channel messages for public channels
+  static List<Message> generateChannelMessages({
+    int generalChannelMessages = 8,
+    int emergencyChannelMessages = 5,
+  }) {
+    final messages = <Message>[];
+    final now = DateTime.now();
+    int messageId = 1000; // Start with high ID to avoid conflicts
+
+    // Sample messages for General channel (index 0)
+    final generalMessages = [
+      'All teams check in',
+      'Weather update: Clear skies, temp 18°C',
+      'Base camp established at staging area',
+      'Team Alpha moving to sector 2',
+      'Radio check - all stations respond',
+      'Water supply available at checkpoint 3',
+      'Team Bravo reporting: sector 1 clear',
+      'ETA to rally point: 15 minutes',
+      'Supply drop confirmed for 14:00',
+      'Drone survey completed - no findings',
+      'Team Charlie requesting backup',
+      'All units: maintain radio discipline',
+    ];
+
+    // Sample messages for Emergency channel (index 1)
+    final emergencyMessages = [
+      'URGENT: Medical assistance needed at sector 4',
+      'Found person - requesting immediate evac',
+      'Fire spotted - coordinates incoming',
+      'Team member injured - sending location',
+      'PRIORITY: Need helicopter support',
+      'Medical team en route to your location',
+      'Evac helicopter ETA 10 minutes',
+      'Emergency resolved - all clear',
+      'Casualties: 1 minor injury, being treated',
+      'Emergency services notified and responding',
+    ];
+
+    final teamNames = [
+      'Alpha Team Lead',
+      'Bravo Scout',
+      'Charlie Medic',
+      'Delta Navigator',
+      'Echo Support',
+      'Base Command',
+      'Field Coordinator',
+      'Medical Team',
+    ];
+
+    // Generate General channel messages
+    for (int i = 0; i < generalChannelMessages && i < generalMessages.length; i++) {
+      final senderKey = Uint8List.fromList(
+        List.generate(32, (_) => _random.nextInt(256)),
+      );
+
+      // Messages spread over the last 2 hours
+      final minutesAgo = 120 - (i * 15) - _random.nextInt(10);
+      final timestamp = now.subtract(Duration(minutes: minutesAgo));
+
+      messages.add(Message(
+        id: 'sample_general_$messageId',
+        messageType: MessageType.channel,
+        channelIdx: 0, // General channel
+        senderPublicKeyPrefix: senderKey.sublist(0, 6),
+        pathLen: 1,
+        textType: MessageTextType.plain,
+        senderTimestamp: timestamp.millisecondsSinceEpoch ~/ 1000,
+        text: generalMessages[i],
+        receivedAt: timestamp,
+        senderName: teamNames[_random.nextInt(teamNames.length)],
+      ));
+      messageId++;
+    }
+
+    // Generate Emergency channel messages
+    for (int i = 0; i < emergencyChannelMessages && i < emergencyMessages.length; i++) {
+      final senderKey = Uint8List.fromList(
+        List.generate(32, (_) => _random.nextInt(256)),
+      );
+
+      // Emergency messages more recent (last hour)
+      final minutesAgo = 60 - (i * 10) - _random.nextInt(5);
+      final timestamp = now.subtract(Duration(minutes: minutesAgo));
+
+      messages.add(Message(
+        id: 'sample_emergency_$messageId',
+        messageType: MessageType.channel,
+        channelIdx: 1, // Emergency channel
+        senderPublicKeyPrefix: senderKey.sublist(0, 6),
+        pathLen: 1,
+        textType: MessageTextType.plain,
+        senderTimestamp: timestamp.millisecondsSinceEpoch ~/ 1000,
+        text: emergencyMessages[i],
+        receivedAt: timestamp,
+        senderName: teamNames[_random.nextInt(teamNames.length)],
+      ));
+      messageId++;
+    }
+
+    return messages;
+  }
 }

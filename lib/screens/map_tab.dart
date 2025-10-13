@@ -506,7 +506,7 @@ class _MapTabState extends State<MapTab> with AutomaticKeepAliveClientMixin {
     );
   }
 
-  void _showDetailedCompass(BuildContext context, List<Contact> contacts) {
+  void _showDetailedCompass(BuildContext context, List<Contact> contacts, List<SarMarker> sarMarkers) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -521,6 +521,7 @@ class _MapTabState extends State<MapTab> with AutomaticKeepAliveClientMixin {
           initialPosition: _currentPosition,
           initialHeading: _currentHeading,
           contacts: contacts,
+          sarMarkers: sarMarkers,
         ),
       ),
     );
@@ -665,6 +666,7 @@ class _MapTabState extends State<MapTab> with AutomaticKeepAliveClientMixin {
                   onTap: () => _showDetailedCompass(
                     context,
                     contactsProvider.chatContactsWithLocation,
+                    messagesProvider.sarMarkers,
                   ),
                   child: _CompassWidget(
                     heading: _currentHeading ?? 0,
@@ -972,11 +974,13 @@ class _DetailedCompassDialog extends StatefulWidget {
   final Position? initialPosition;
   final double? initialHeading;
   final List<Contact> contacts;
+  final List<SarMarker> sarMarkers;
 
   const _DetailedCompassDialog({
     required this.initialPosition,
     required this.initialHeading,
     required this.contacts,
+    required this.sarMarkers,
   });
 
   @override

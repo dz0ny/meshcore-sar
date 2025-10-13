@@ -570,7 +570,7 @@ class _MapTabState extends State<MapTab> with AutomaticKeepAliveClientMixin {
                               rotate: false, // Don't rotate with map
                               child: Container(
                                 decoration: BoxDecoration(
-                                  color: Colors.blue.withOpacity(0.3),
+                                  color: Colors.blue.withValues(alpha: 0.3),
                                   shape: BoxShape.circle,
                                 ),
                                 child: Container(
@@ -794,7 +794,7 @@ class _LegendItem extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.2),
+              color: color.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
@@ -849,7 +849,7 @@ class _CompassWidget extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.7),
+                  color: Colors.black.withValues(alpha: 0.7),
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
@@ -873,7 +873,7 @@ class _CompassRosePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.grey.withOpacity(0.3)
+      ..color = Colors.grey.withValues(alpha: 0.3)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1;
 
@@ -1254,7 +1254,7 @@ class _LargeCompassPainter extends CustomPainter {
 
     // Draw outer circle
     final circlePaint = Paint()
-      ..color = Colors.grey.withOpacity(0.2)
+      ..color = Colors.grey.withValues(alpha: 0.2)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2;
     canvas.drawCircle(center, radius, circlePaint);
@@ -1353,24 +1353,6 @@ class _LargeCompassPainter extends CustomPainter {
       ..close();
 
     canvas.drawPath(path, indicatorPaint);
-
-    // Draw heading text
-    textPainter.text = TextSpan(
-      text: hasHeading ? '${heading.round()}°' : '--',
-      style: const TextStyle(
-        color: Colors.black,
-        fontSize: 20,
-        fontWeight: FontWeight.bold,
-      ),
-    );
-    textPainter.layout();
-    textPainter.paint(
-      canvas,
-      Offset(
-        center.dx - textPainter.width / 2,
-        center.dy + 20,
-      ),
-    );
   }
 
   double _calculateBearing(

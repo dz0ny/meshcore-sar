@@ -1,9 +1,12 @@
 import 'dart:async';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:flutter_compass/flutter_compass.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../providers/contacts_provider.dart';
 import '../providers/messages_provider.dart';
 import '../providers/map_provider.dart';
@@ -28,9 +31,12 @@ class _MapTabState extends State<MapTab> {
   bool _isInitialized = false;
   MapLayer _currentLayer = MapLayer.openStreetMap;
   Position? _currentPosition;
-  bool _showLegend = true;
+  double? _compassHeading; // Compass sensor heading
+  bool _rotateMarkerWithHeading = false; // Toggle for rotation
+  bool _showLegend = false;
   double _gpsUpdateDistance = 3.0; // meters
   StreamSubscription<Position>? _positionStreamSubscription;
+  StreamSubscription<CompassEvent>? _compassStreamSubscription;
 
   // Default center point (will be updated based on markers)
   static const LatLng _defaultCenter = LatLng(46.0569, 14.5058); // Ljubljana, Slovenia
@@ -39,14 +45,51 @@ class _MapTabState extends State<MapTab> {
   @override
   void initState() {
     super.initState();
+    _loadSettings();
     _initializeTileCache();
     _requestLocationPermission();
+    _startCompassTracking();
 
     // Listen to map provider for navigation requests
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final mapProvider = context.read<MapProvider>();
       mapProvider.addListener(_handleMapNavigation);
     });
+  }
+
+  void _startCompassTracking() {
+    // Start listening to compass events
+    _compassStreamSubscription = FlutterCompass.events?.listen((CompassEvent event) {
+      if (mounted && event.heading != null) {
+        setState(() {
+          _compassHeading = event.heading;
+        });
+
+        // Rotate map if rotation mode is enabled and we have compass heading
+        if (_rotateMarkerWithHeading && event.heading != null) {
+          debugPrint('Rotating map to compass heading: ${event.heading}');
+          _mapController.rotate(-event.heading!);
+        }
+      }
+    });
+  }
+
+  Future<void> _loadSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (mounted) {
+      setState(() {
+        _showLegend = prefs.getBool('map_show_legend') ?? false;
+        _rotateMarkerWithHeading = prefs.getBool('map_rotate_with_heading') ?? false;
+        _gpsUpdateDistance = prefs.getDouble('map_gps_update_distance') ?? 3.0;
+      });
+    }
+  }
+
+  Future<void> _saveSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('map_show_legend', _showLegend);
+    await prefs.setBool('map_rotate_with_heading', _rotateMarkerWithHeading);
+    await prefs.setDouble('map_gps_update_distance', _gpsUpdateDistance);
   }
 
   Future<void> _requestLocationPermission() async {
@@ -92,9 +135,18 @@ class _MapTabState extends State<MapTab> {
       ),
     ).listen((Position position) {
       if (mounted) {
+        debugPrint('Position update - Heading: ${position.heading}, Speed: ${position.speed}');
+
         setState(() {
           _currentPosition = position;
         });
+
+        // Rotate map if rotation mode is enabled and heading is available
+        // Heading of -1.0 means heading is unavailable
+        if (_rotateMarkerWithHeading && position.heading != null && position.heading >= 0) {
+          debugPrint('Rotating map to heading: ${position.heading}');
+          _mapController.rotate(-position.heading);
+        }
       }
     });
   }
@@ -134,9 +186,23 @@ class _MapTabState extends State<MapTab> {
     final mapProvider = context.read<MapProvider>();
     mapProvider.removeListener(_handleMapNavigation);
     _positionStreamSubscription?.cancel();
+    _compassStreamSubscription?.cancel();
     _mapController.dispose();
     _tileCache.dispose();
     super.dispose();
+  }
+
+  // Get the current heading from compass or GPS
+  double? get _currentHeading {
+    // Prefer compass heading as it works when stationary
+    if (_compassHeading != null) {
+      return _compassHeading;
+    }
+    // Fall back to GPS heading when moving
+    if (_currentPosition?.heading != null && _currentPosition!.heading >= 0) {
+      return _currentPosition!.heading;
+    }
+    return null;
   }
 
   LatLng _calculateCenter(List<Contact> contacts, List<SarMarker> sarMarkers) {
@@ -272,6 +338,29 @@ class _MapTabState extends State<MapTab> {
                     _showLegend = value;
                   });
                   setModalState(() {});
+                  _saveSettings();
+                },
+              ),
+              const Divider(),
+              // Compass rotation toggle
+              SwitchListTile(
+                secondary: const Icon(Icons.explore),
+                title: const Text('Rotate Map with Heading'),
+                subtitle: const Text('Map follows your direction when moving'),
+                value: _rotateMarkerWithHeading,
+                onChanged: (value) {
+                  setState(() {
+                    _rotateMarkerWithHeading = value;
+                    // Reset map rotation when disabling
+                    if (!_rotateMarkerWithHeading) {
+                      _mapController.rotate(0);
+                    } else if (_currentHeading != null) {
+                      // Apply current heading rotation when enabling (if heading is valid)
+                      _mapController.rotate(-_currentHeading!);
+                    }
+                  });
+                  setModalState(() {});
+                  _saveSettings();
                 },
               ),
               const Divider(),
@@ -302,6 +391,7 @@ class _MapTabState extends State<MapTab> {
                         });
                         // Restart location stream with new distance
                         _restartLocationStream();
+                        _saveSettings();
                       },
                     ),
                     Padding(
@@ -345,6 +435,12 @@ class _MapTabState extends State<MapTab> {
         setState(() {
           _currentPosition = position;
         });
+
+        // Rotate map if rotation mode is enabled and heading is available
+        // Heading of -1.0 means heading is unavailable
+        if (_rotateMarkerWithHeading && position.heading != null && position.heading >= 0) {
+          _mapController.rotate(-position.heading);
+        }
       }
     });
   }
@@ -398,6 +494,7 @@ class _MapTabState extends State<MapTab> {
                               ),
                               width: 40,
                               height: 40,
+                              rotate: false, // Don't rotate with map
                               child: Container(
                                 decoration: BoxDecoration(
                                   color: Colors.blue.withOpacity(0.3),
@@ -416,7 +513,7 @@ class _MapTabState extends State<MapTab> {
                                     ],
                                   ),
                                   child: const Icon(
-                                    Icons.navigation,
+                                    Icons.my_location,
                                     color: Colors.white,
                                     size: 16,
                                   ),
@@ -440,10 +537,20 @@ class _MapTabState extends State<MapTab> {
                       ],
                     ),
                   ),
+            // Compass widget - top right
+            if (_rotateMarkerWithHeading)
+              Positioned(
+                top: 16,
+                right: 16,
+                child: _CompassWidget(
+                  heading: _currentHeading ?? 0,
+                  hasHeading: _currentHeading != null,
+                ),
+              ),
             // Map legend overlay
             if (_showLegend)
               Positioned(
-                top: 16,
+                top: _rotateMarkerWithHeading ? 80 : 16,
                 right: 16,
                 child: _MapLegend(
                   teamMemberCount: contactsWithLocation.length,
@@ -622,5 +729,109 @@ class _LegendItem extends StatelessWidget {
       ),
     );
   }
+}
+
+class _CompassWidget extends StatelessWidget {
+  final double heading;
+  final bool hasHeading;
+
+  const _CompassWidget({
+    required this.heading,
+    required this.hasHeading,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Container(
+        width: 56,
+        height: 56,
+        padding: const EdgeInsets.all(8),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            // Compass rose background - rotates to show true north at top
+            Transform.rotate(
+              angle: heading * pi / 180,
+              child: CustomPaint(
+                size: const Size(40, 40),
+                painter: _CompassRosePainter(),
+              ),
+            ),
+            // Fixed needle pointing up (since map rotates)
+            Icon(
+              Icons.navigation,
+              color: hasHeading ? Colors.red : Colors.grey,
+              size: 28,
+            ),
+            // Heading text
+            Positioned(
+              bottom: 0,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.7),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  hasHeading ? '${heading.round()}°' : '--',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 9,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CompassRosePainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.grey.withOpacity(0.3)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1;
+
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = size.width / 2;
+
+    // Draw circle
+    canvas.drawCircle(center, radius, paint);
+
+    // Draw cardinal direction markers
+    final textPainter = TextPainter(
+      textDirection: TextDirection.ltr,
+    );
+
+    final directions = ['N', 'E', 'S', 'W'];
+    for (int i = 0; i < 4; i++) {
+      final angle = i * pi / 2 - pi / 2; // Start from North (top)
+      final x = center.dx + radius * 0.7 * cos(angle);
+      final y = center.dy + radius * 0.7 * sin(angle);
+
+      textPainter.text = TextSpan(
+        text: directions[i],
+        style: TextStyle(
+          color: Colors.grey.shade700,
+          fontSize: 10,
+          fontWeight: FontWeight.bold,
+        ),
+      );
+      textPainter.layout();
+      textPainter.paint(
+        canvas,
+        Offset(x - textPainter.width / 2, y - textPainter.height / 2),
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 

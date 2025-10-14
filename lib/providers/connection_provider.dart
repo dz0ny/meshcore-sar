@@ -133,6 +133,29 @@ class ConnectionProvider with ChangeNotifier {
       onLoginFail?.call(publicKeyPrefix);
     };
 
+    _bleService.onDeviceInfoReceived = (deviceInfo) {
+      print('📥 [Provider] Received DeviceInfo:');
+      print('  Firmware Version: ${deviceInfo['firmwareVersion']}');
+      print('  Max Contacts: ${deviceInfo['maxContacts']}');
+      print('  Max Channels: ${deviceInfo['maxChannels']}');
+      print('  BLE PIN: ${deviceInfo['blePin']}');
+      print('  Build Date: ${deviceInfo['firmwareBuildDate']}');
+      print('  Model: ${deviceInfo['manufacturerModel']}');
+      print('  Version: ${deviceInfo['semanticVersion']}');
+
+      _deviceInfo = _deviceInfo.copyWith(
+        firmwareVersion: deviceInfo['firmwareVersion'] as int?,
+        maxContacts: deviceInfo['maxContacts'] as int?,
+        maxChannels: deviceInfo['maxChannels'] as int?,
+        blePin: deviceInfo['blePin'] as int?,
+        firmwareBuildDate: deviceInfo['firmwareBuildDate'] as String?,
+        manufacturerModel: deviceInfo['manufacturerModel'] as String?,
+        semanticVersion: deviceInfo['semanticVersion'] as String?,
+      );
+      notifyListeners();
+      print('✅ [Provider] Device info updated with DeviceInfo');
+    };
+
     _bleService.onSelfInfoReceived = (selfInfo) {
       print('📥 [Provider] Received SelfInfo:');
       print('  TX Power: ${selfInfo['txPower']} / ${selfInfo['maxTxPower']} dBm');

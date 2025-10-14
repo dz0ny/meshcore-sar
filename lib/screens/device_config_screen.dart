@@ -294,10 +294,13 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
                   _InfoRow('BLE Name', deviceInfo.deviceName ?? 'Unknown'),
                   _InfoRow('Mesh Name', deviceInfo.selfName ?? 'Not set'),
                   _InfoRow('Type', _getDeviceTypeString(deviceInfo.deviceType)),
-                  _InfoRow('Firmware', deviceInfo.firmwareVersion?.toString() ?? 'Unknown'),
+                  _InfoRow('Model', deviceInfo.manufacturerModel ?? 'Unknown'),
+                  _InfoRow('Version', deviceInfo.semanticVersion ?? 'Unknown'),
+                  _InfoRow('Build Date', deviceInfo.firmwareBuildDate ?? 'Unknown'),
+                  _InfoRow('Firmware', 'v${deviceInfo.firmwareVersion?.toString() ?? "?"}'),
                   _InfoRow('Max Contacts', deviceInfo.maxContacts?.toString() ?? 'Unknown'),
                   _InfoRow('Max Channels', deviceInfo.maxChannels?.toString() ?? 'Unknown'),
-                  _InfoRow('Public Key', _getPublicKeyShort(deviceInfo.publicKey)),
+                  _CopyableInfoRow('Public Key', _getPublicKeyHex(deviceInfo.publicKey)),
                 ],
               ),
             ),
@@ -339,31 +342,40 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
                       helperText: 'Name broadcast in mesh advertisements',
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 8),
 
-                  // Telemetry Toggle
-                  SwitchListTile(
-                    title: const Text('Enable Telemetry & Location Sharing'),
-                    subtitle: const Text('Allow others to query your location and telemetry'),
-                    value: _telemetryEnabled,
-                    onChanged: (value) {
-                      setState(() {
-                        _telemetryEnabled = value;
-                      });
-                    },
+                  // Telemetry Toggle - Compact version
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'Telemetry & Location Sharing',
+                          style: theme.textTheme.bodyMedium,
+                        ),
+                      ),
+                      Switch(
+                        value: _telemetryEnabled,
+                        onChanged: (value) {
+                          setState(() {
+                            _telemetryEnabled = value;
+                          });
+                        },
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 16),
 
                   // GPS Coordinates (only show if telemetry enabled)
                   if (_telemetryEnabled) ...[
+                    const SizedBox(height: 12),
                     Row(
                       children: [
                         Expanded(
                           child: TextField(
                             controller: _latController,
                             decoration: const InputDecoration(
-                              labelText: 'Latitude',
+                              labelText: 'Lat',
                               border: OutlineInputBorder(),
+                              isDense: true,
                             ),
                             keyboardType: const TextInputType.numberWithOptions(
                               decimal: true,
@@ -371,13 +383,14 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
                             ),
                           ),
                         ),
-                        const SizedBox(width: 16),
+                        const SizedBox(width: 8),
                         Expanded(
                           child: TextField(
                             controller: _lonController,
                             decoration: const InputDecoration(
-                              labelText: 'Longitude',
+                              labelText: 'Lon',
                               border: OutlineInputBorder(),
+                              isDense: true,
                             ),
                             keyboardType: const TextInputType.numberWithOptions(
                               decimal: true,
@@ -385,16 +398,13 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
                             ),
                           ),
                         ),
+                        const SizedBox(width: 8),
+                        IconButton.filled(
+                          onPressed: _useCurrentLocation,
+                          icon: const Icon(Icons.my_location, size: 20),
+                          tooltip: 'Use current location',
+                        ),
                       ],
-                    ),
-                    const SizedBox(height: 12),
-                    ElevatedButton.icon(
-                      onPressed: _useCurrentLocation,
-                      icon: const Icon(Icons.my_location),
-                      label: const Text('Use Current Location'),
-                      style: ElevatedButton.styleFrom(
-                        minimumSize: const Size(double.infinity, 48),
-                      ),
                     ),
                   ],
                 ],
@@ -542,13 +552,9 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
     }
   }
 
-  String _getPublicKeyShort(List<int>? publicKey) {
+  String _getPublicKeyHex(List<int>? publicKey) {
     if (publicKey == null || publicKey.isEmpty) return 'N/A';
-    final hex = publicKey.map((b) => b.toRadixString(16).padLeft(2, '0')).join('');
-    if (hex.length >= 16) {
-      return '${hex.substring(0, 8)}...${hex.substring(hex.length - 8)}';
-    }
-    return hex;
+    return publicKey.map((b) => b.toRadixString(16).padLeft(2, '0')).join('');
   }
 }
 
@@ -580,6 +586,65 @@ class _InfoRow extends StatelessWidget {
               value,
               style: const TextStyle(
                 fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CopyableInfoRow extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _CopyableInfoRow(this.label, this.value);
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 120,
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontWeight: FontWeight.w500,
+                color: Colors.grey,
+              ),
+            ),
+          ),
+          Expanded(
+            child: GestureDetector(
+              onTap: () {
+                Clipboard.setData(ClipboardData(text: value));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Copied $label to clipboard'),
+                    duration: const Duration(seconds: 2),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+              },
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      value,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontFamily: 'monospace',
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  const Icon(Icons.copy, size: 16, color: Colors.grey),
+                ],
               ),
             ),
           ),

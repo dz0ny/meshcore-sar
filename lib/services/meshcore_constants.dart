@@ -69,6 +69,9 @@ class MeshCoreConstants {
   static const int respChannelInfo = 18;
   static const int respSignStart = 19;
   static const int respSignature = 20;
+  static const int respCustomVars = 21;
+  static const int respAdvertPath = 22;
+  static const int respTuningParams = 21; // Same as respCustomVars per protocol
 
   // Push Codes (Device -> App, unsolicited)
   static const int pushAdvert = 0x80;

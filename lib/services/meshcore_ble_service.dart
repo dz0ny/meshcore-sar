@@ -17,7 +17,11 @@ typedef OnContactsCompleteCallback = void Function(List<Contact> contacts);
 typedef OnMessageCallback = void Function(Message message);
 typedef OnTelemetryCallback = void Function(Uint8List publicKey, Uint8List lppData);
 typedef OnSelfInfoCallback = void Function(Map<String, dynamic> selfInfo);
+typedef OnDeviceInfoCallback = void Function(Map<String, dynamic> deviceInfo);
 typedef OnNoMoreMessagesCallback = void Function();
+typedef OnMessageWaitingCallback = void Function();
+typedef OnLoginSuccessCallback = void Function(Uint8List publicKeyPrefix, int permissions, bool isAdmin, int tag);
+typedef OnLoginFailCallback = void Function(Uint8List publicKeyPrefix);
 typedef OnErrorCallback = void Function(String error);
 typedef OnConnectionStateCallback = void Function(bool isConnected);
 
@@ -35,7 +39,11 @@ class MeshCoreBleService {
   OnMessageCallback? onMessageReceived;
   OnTelemetryCallback? onTelemetryReceived;
   OnSelfInfoCallback? onSelfInfoReceived;
+  OnDeviceInfoCallback? onDeviceInfoReceived;
   OnNoMoreMessagesCallback? onNoMoreMessages;
+  OnMessageWaitingCallback? onMessageWaiting;
+  OnLoginSuccessCallback? onLoginSuccess;
+  OnLoginFailCallback? onLoginFail;
   OnErrorCallback? onError;
 
   // Internal state
@@ -350,6 +358,18 @@ class MeshCoreBleService {
           print('  → Handling SendConfirmed push');
           _handleSendConfirmed(reader);
           break;
+        case MeshCoreConstants.pushMsgWaiting:
+          print('  → Handling MsgWaiting push');
+          _handleMsgWaiting(reader);
+          break;
+        case MeshCoreConstants.pushLoginSuccess:
+          print('  → Handling LoginSuccess push');
+          _handleLoginSuccess(reader);
+          break;
+        case MeshCoreConstants.pushLoginFail:
+          print('  → Handling LoginFail push');
+          _handleLoginFail(reader);
+          break;
         case MeshCoreConstants.respNoMoreMessages:
           print('  → Response: No More Messages');
           onNoMoreMessages?.call();
@@ -359,6 +379,7 @@ class MeshCoreBleService {
           break;
         case MeshCoreConstants.respErr:
           print('  → Response: ERROR');
+          _handleError(reader);
           break;
         default:
           print('  ⚠️ Unknown response code: $responseCode');
@@ -587,37 +608,75 @@ class MeshCoreBleService {
   }
 
   /// Handle DeviceInfo response
+  /// Handle DeviceInfo response (RESP_CODE_DEVICE_INFO)
+  ///
+  /// Protocol format:
+  /// - 1 byte: firmware version
+  /// - 1 byte: max contacts ÷ 2 (ver 3+)
+  /// - 1 byte: max channels (ver 3+)
+  /// - 4 bytes: BLE PIN (uint32, ver 3+)
+  /// - 12 bytes: firmware build date (ASCII null-terminated)
+  /// - 40 bytes: manufacturer model (ASCII null-terminated)
+  /// - 20 bytes: semantic version (ASCII null-terminated)
   void _handleDeviceInfo(BufferReader reader) {
     try {
       print('  [DeviceInfo] Parsing device info...');
       print('    Remaining bytes: ${reader.remainingBytesCount}');
-
-      // DeviceInfo format (based on MeshCore protocol):
-      // - 1 byte: protocol version
-      // - 32 bytes: public key
-      // - 1 byte: device name length
-      // - N bytes: device name (UTF-8)
-      // - remaining: additional info (firmware version, etc.)
 
       if (reader.remainingBytesCount < 1) {
         print('  [DeviceInfo] No data to parse');
         return;
       }
 
-      final protocolVersion = reader.readByte();
-      print('    Protocol version: $protocolVersion');
+      final firmwareVersion = reader.readByte();
+      print('    Firmware version: $firmwareVersion');
 
-      if (reader.remainingBytesCount >= 32) {
-        final publicKey = reader.readBytes(32);
-        print('    Public key prefix: ${publicKey.sublist(0, 6).map((b) => b.toRadixString(16).padLeft(2, '0')).join(':')}');
+      int? maxContacts;
+      int? maxChannels;
+      int? blePin;
+      if (reader.remainingBytesCount >= 6) {
+        final maxContactsDiv2 = reader.readByte();
+        maxContacts = maxContactsDiv2 * 2;
+        print('    Max contacts: $maxContacts');
+
+        maxChannels = reader.readByte();
+        print('    Max channels: $maxChannels');
+
+        blePin = reader.readUInt32LE();
+        print('    BLE PIN: $blePin');
       }
 
-      // Read remaining data as device info details
-      if (reader.hasRemaining) {
-        final remainingData = reader.readRemainingBytes();
-        print('    Additional info: ${remainingData.length} bytes');
-        // Could parse device name, firmware version, etc. here if needed
+      String? firmwareBuildDate;
+      if (reader.remainingBytesCount >= 12) {
+        final buildDateBytes = reader.readBytes(12);
+        firmwareBuildDate = String.fromCharCodes(buildDateBytes.takeWhile((b) => b != 0));
+        print('    Firmware build date: "$firmwareBuildDate"');
       }
+
+      String? manufacturerModel;
+      if (reader.remainingBytesCount >= 40) {
+        final modelBytes = reader.readBytes(40);
+        manufacturerModel = String.fromCharCodes(modelBytes.takeWhile((b) => b != 0));
+        print('    Manufacturer model: "$manufacturerModel"');
+      }
+
+      String? semanticVersion;
+      if (reader.remainingBytesCount >= 20) {
+        final versionBytes = reader.readBytes(20);
+        semanticVersion = String.fromCharCodes(versionBytes.takeWhile((b) => b != 0));
+        print('    Semantic version: "$semanticVersion"');
+      }
+
+      // Call callback with parsed data
+      onDeviceInfoReceived?.call({
+        'firmwareVersion': firmwareVersion,
+        'maxContacts': maxContacts,
+        'maxChannels': maxChannels,
+        'blePin': blePin,
+        'firmwareBuildDate': firmwareBuildDate,
+        'manufacturerModel': manufacturerModel,
+        'semanticVersion': semanticVersion,
+      });
 
       print('  ✅ [DeviceInfo] Parsed successfully');
     } catch (e) {
@@ -632,20 +691,22 @@ class MeshCoreBleService {
       print('  [SelfInfo] Parsing self info...');
       print('    Remaining bytes: ${reader.remainingBytesCount}');
 
-      // SelfInfo format (from MeshCore protocol):
-      // - 1 byte: protocol version
-      // - 1 byte: device type
-      // - 1 byte: tx power
-      // - 1 byte: max tx power
+      // SelfInfo format (RESP_CODE_SELF_INFO):
+      // - 1 byte: type (ADV_TYPE_*)
+      // - 1 byte: tx power (dBm, current)
+      // - 1 byte: max tx power (dBm, max radio supports)
       // - 32 bytes: public key
-      // - 4 bytes: adv lat (int32)
-      // - 4 bytes: adv lon (int32)
-      // - 1 byte: manual add contacts flag
-      // - 4 bytes: radio freq (uint32)
-      // - 2 bytes: radio bw (uint16)
-      // - 1 byte: radio sf
-      // - 1 byte: radio cr
-      // - remaining: self name (null-terminated string)
+      // - 4 bytes: adv lat * 1E6 (int32)
+      // - 4 bytes: adv lon * 1E6 (int32)
+      // - 1 byte: multi ACKs (0=no extra, 1=send extra ACK)
+      // - 1 byte: advert location policy (0=don't share, 1=share)
+      // - 1 byte: telemetry modes (bits 0-1: Base, bits 2-3: Location)
+      // - 1 byte: manual add contacts (0 or 1)
+      // - 4 bytes: radio freq * 1000 (uint32)
+      // - 4 bytes: radio bw (kHz) * 1000 (uint32)
+      // - 1 byte: spreading factor
+      // - 1 byte: coding rate
+      // - remaining: self name (null-terminated varchar)
 
       if (reader.remainingBytesCount < 54) {
         print('  [SelfInfo] Insufficient data: ${reader.remainingBytesCount} bytes');
@@ -654,35 +715,85 @@ class MeshCoreBleService {
         return;
       }
 
-      final protocolVersion = reader.readByte();
-      final deviceType = reader.readByte();
-      final txPower = reader.readByte();
-      final maxTxPower = reader.readByte();
-      final publicKey = reader.readBytes(32);
-      final advLat = reader.readInt32LE();
-      final advLon = reader.readInt32LE();
-      final manualAddContacts = reader.readByte();
-      final radioFreq = reader.readUInt32LE();
-      final radioBw = reader.readUInt16LE();
-      final radioSf = reader.readByte();
-      final radioCr = reader.readByte();
+      print('    📍 BYTE-BY-BYTE PARSING DEBUG:');
+      print('    Position before reads: offset=0, remaining=${reader.remainingBytesCount}');
 
-      print('    Protocol version: $protocolVersion');
-      print('    Device type: $deviceType');
-      print('    TX power: $txPower / $maxTxPower dBm');
-      print('    Public key prefix: ${publicKey.sublist(0, 6).map((b) => b.toRadixString(16).padLeft(2, '0')).join(':')}');
-      print('    Position: ${advLat / 1000000.0}, ${advLon / 1000000.0}');
-      print('    Radio: freq=$radioFreq, bw=$radioBw, sf=$radioSf, cr=$radioCr');
+      // NO protocol version byte - it starts with device type!
+      final deviceType = reader.readByte();
+      print('    [Byte 0] Device type: $deviceType (0x${deviceType.toRadixString(16).padLeft(2, '0')})');
+
+      final txPower = reader.readByte();
+      print('    [Byte 1] TX power: $txPower dBm (0x${txPower.toRadixString(16).padLeft(2, '0')})');
+
+      final maxTxPower = reader.readByte();
+      print('    [Byte 2] Max TX power: $maxTxPower dBm (0x${maxTxPower.toRadixString(16).padLeft(2, '0')})');
+
+      final publicKey = reader.readBytes(32);
+      print('    [Bytes 3-34] Public key (32 bytes): ${publicKey.sublist(0, 8).map((b) => b.toRadixString(16).padLeft(2, '0')).join(' ')}...');
+
+      final advLatBytes = reader.readBytes(4);
+      final advLat = ByteData.sublistView(Uint8List.fromList(advLatBytes)).getInt32(0, Endian.little);
+      print('    [Bytes 35-38] Adv Lat (raw bytes): ${advLatBytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join(' ')}');
+      print('    [Bytes 35-38] Adv Lat (int32 LE): $advLat');
+      print('    [Bytes 35-38] Adv Lat (decimal): ${advLat / 1000000.0}°');
+
+      final advLonBytes = reader.readBytes(4);
+      final advLon = ByteData.sublistView(Uint8List.fromList(advLonBytes)).getInt32(0, Endian.little);
+      print('    [Bytes 39-42] Adv Lon (raw bytes): ${advLonBytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join(' ')}');
+      print('    [Bytes 39-42] Adv Lon (int32 LE): $advLon');
+      print('    [Bytes 39-42] Adv Lon (decimal): ${advLon / 1000000.0}°');
+
+      final multiAcks = reader.readByte();
+      print('    [Byte 43] Multi ACKs: $multiAcks (0x${multiAcks.toRadixString(16).padLeft(2, '0')})');
+
+      final advertLocPolicy = reader.readByte();
+      print('    [Byte 44] Advert Loc Policy: $advertLocPolicy (0x${advertLocPolicy.toRadixString(16).padLeft(2, '0')})');
+
+      final telemetryModes = reader.readByte();
+      print('    [Byte 45] Telemetry Modes: $telemetryModes (0x${telemetryModes.toRadixString(16).padLeft(2, '0')})');
+
+      final manualAddContacts = reader.readByte();
+      print('    [Byte 46] Manual Add Contacts: $manualAddContacts (0x${manualAddContacts.toRadixString(16).padLeft(2, '0')})');
+
+      final radioFreqBytes = reader.readBytes(4);
+      final radioFreq = ByteData.sublistView(Uint8List.fromList(radioFreqBytes)).getUint32(0, Endian.little);
+      print('    [Bytes 47-50] Radio Freq (raw bytes): ${radioFreqBytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join(' ')}');
+      print('    [Bytes 47-50] Radio Freq (uint32 LE): $radioFreq');
+      print('    [Bytes 47-50] Radio Freq (MHz): ${radioFreq / 1000.0}');
+
+      final radioBwBytes = reader.readBytes(4);
+      final radioBw = ByteData.sublistView(Uint8List.fromList(radioBwBytes)).getUint32(0, Endian.little);
+      print('    [Bytes 51-54] Radio BW (raw bytes): ${radioBwBytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join(' ')}');
+      print('    [Bytes 51-54] Radio BW (uint32 LE): $radioBw');
+      print('    [Bytes 51-54] Radio BW (kHz): ${radioBw / 1000.0}');
+
+      final radioSf = reader.readByte();
+      print('    [Byte 55] Radio SF: $radioSf (0x${radioSf.toRadixString(16).padLeft(2, '0')})');
+
+      final radioCr = reader.readByte();
+      print('    [Byte 56] Radio CR: $radioCr (0x${radioCr.toRadixString(16).padLeft(2, '0')})');
+
+      print('    Remaining bytes after radio params: ${reader.remainingBytesCount}');
 
       String? selfName;
       if (reader.hasRemaining) {
-        selfName = String.fromCharCodes(reader.readRemainingBytes().takeWhile((b) => b != 0));
-        print('    Self name: $selfName');
+        final nameBytes = reader.readRemainingBytes();
+        print('    Self name bytes (hex): ${nameBytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join(' ')}');
+        print('    Self name bytes (ASCII): ${nameBytes.map((b) => b >= 32 && b <= 126 ? String.fromCharCode(b) : '.')}');
+        selfName = String.fromCharCodes(nameBytes.takeWhile((b) => b != 0));
+        print('    Self name (parsed): "$selfName"');
       }
+
+      print('    ✅ PARSED SUMMARY:');
+      print('       Type: $deviceType');
+      print('       TX Power: $txPower / $maxTxPower dBm');
+      print('       Position: ${advLat / 1000000.0}°, ${advLon / 1000000.0}°');
+      print('       Flags: multiAcks=$multiAcks, locPolicy=$advertLocPolicy, telemetry=$telemetryModes, manual=$manualAddContacts');
+      print('       Radio: freq=${radioFreq / 1000.0} MHz, bw=${radioBw / 1000.0} kHz, sf=$radioSf, cr=$radioCr');
+      print('       Name: "$selfName"');
 
       // Call callback with parsed data
       onSelfInfoReceived?.call({
-        'protocolVersion': protocolVersion,
         'deviceType': deviceType,
         'txPower': txPower,
         'maxTxPower': maxTxPower,
@@ -843,6 +954,132 @@ class MeshCoreBleService {
     } catch (e) {
       print('  ❌ [SendConfirmed] Parsing error: $e');
       // Don't call onError - confirmations are informational
+    }
+  }
+
+  /// Handle MsgWaiting push (PUSH_CODE_MSG_WAITING)
+  ///
+  /// This push notification indicates that new messages are waiting
+  /// in the device queue and should be fetched using syncNextMessage()
+  void _handleMsgWaiting(BufferReader reader) {
+    try {
+      print('  [MsgWaiting] New message(s) waiting in queue');
+      print('  ✅ [MsgWaiting] Notifying callback to fetch messages');
+      onMessageWaiting?.call();
+    } catch (e) {
+      print('  ❌ [MsgWaiting] Parsing error: $e');
+      // Don't call onError - this is informational
+    }
+  }
+
+  /// Handle LoginSuccess push (PUSH_CODE_LOGIN_SUCCESS)
+  ///
+  /// Protocol format:
+  /// - 1 byte: permissions (lowest bit = is_admin)
+  /// - 6 bytes: public key prefix (first 6 bytes)
+  /// - 4 bytes: tag (int32)
+  /// - 1 byte: (V7+) new permissions
+  void _handleLoginSuccess(BufferReader reader) {
+    try {
+      print('  [LoginSuccess] Parsing login success...');
+      print('    Remaining bytes: ${reader.remainingBytesCount}');
+
+      if (reader.remainingBytesCount >= 11) {
+        final permissions = reader.readByte();
+        final isAdmin = (permissions & 0x01) != 0;
+        print('    Permissions: $permissions (admin: $isAdmin)');
+
+        final publicKeyPrefix = reader.readBytes(6);
+        print('    Room public key prefix: ${publicKeyPrefix.map((b) => b.toRadixString(16).padLeft(2, '0')).join(':')}');
+
+        final tag = reader.readInt32LE();
+        print('    Tag: $tag');
+
+        // V7+ new permissions byte
+        int? newPermissions;
+        if (reader.hasRemaining) {
+          newPermissions = reader.readByte();
+          print('    New permissions (V7+): $newPermissions');
+        }
+
+        print('  ✅ [LoginSuccess] Successfully logged into room');
+        onLoginSuccess?.call(publicKeyPrefix, permissions, isAdmin, tag);
+      } else {
+        print('  ⚠️ [LoginSuccess] Insufficient data for full parsing');
+      }
+    } catch (e) {
+      print('  ❌ [LoginSuccess] Parsing error: $e');
+      onError?.call('Login success parsing error: $e');
+    }
+  }
+
+  /// Handle LoginFail push (PUSH_CODE_LOGIN_FAIL)
+  ///
+  /// Protocol format:
+  /// - 1 byte: reserved (zero)
+  /// - 6 bytes: public key prefix (first 6 bytes)
+  void _handleLoginFail(BufferReader reader) {
+    try {
+      print('  [LoginFail] Parsing login fail...');
+      print('    Remaining bytes: ${reader.remainingBytesCount}');
+
+      if (reader.remainingBytesCount >= 7) {
+        final reserved = reader.readByte();
+        print('    Reserved: $reserved');
+
+        final publicKeyPrefix = reader.readBytes(6);
+        print('    Room public key prefix: ${publicKeyPrefix.map((b) => b.toRadixString(16).padLeft(2, '0')).join(':')}');
+
+        print('  ❌ [LoginFail] Failed to login to room (incorrect password or access denied)');
+        onLoginFail?.call(publicKeyPrefix);
+      } else {
+        print('  ⚠️ [LoginFail] Insufficient data for full parsing');
+      }
+    } catch (e) {
+      print('  ❌ [LoginFail] Parsing error: $e');
+      onError?.call('Login fail parsing error: $e');
+    }
+  }
+
+  /// Handle Error response (RESP_CODE_ERR)
+  ///
+  /// Protocol format:
+  /// - 1 byte: error code (ERR_CODE_*)
+  void _handleError(BufferReader reader) {
+    try {
+      print('  [Error] Parsing error response...');
+      print('    Remaining bytes: ${reader.remainingBytesCount}');
+
+      if (reader.hasRemaining) {
+        final errorCode = reader.readByte();
+        String errorMsg = 'Error code: $errorCode';
+
+        switch (errorCode) {
+          case MeshCoreConstants.errUnsupportedCmd:
+            errorMsg = 'Unsupported command';
+            break;
+          case MeshCoreConstants.errNotFound:
+            errorMsg = 'Not found';
+            break;
+          case MeshCoreConstants.errTableFull:
+            errorMsg = 'Table full';
+            break;
+          case MeshCoreConstants.errBadState:
+            errorMsg = 'Bad state';
+            break;
+          case MeshCoreConstants.errFileIoError:
+            errorMsg = 'File I/O error';
+            break;
+          case MeshCoreConstants.errIllegalArg:
+            errorMsg = 'Illegal argument';
+            break;
+        }
+
+        print('  ❌ [Error] $errorMsg');
+        onError?.call(errorMsg);
+      }
+    } catch (e) {
+      print('  ❌ [Error] Parsing error: $e');
     }
   }
 
@@ -1024,6 +1261,53 @@ class MeshCoreBleService {
     final writer = BufferWriter();
     writer.writeByte(MeshCoreConstants.cmdSetTxPower);
     writer.writeByte(powerDbm);
+    await _writeData(writer.toBytes());
+  }
+
+  /// Set other parameters (telemetry modes, advert location policy, manual add contacts)
+  ///
+  /// Protocol format (CMD_SET_OTHER_PARAMS):
+  /// - 1 byte: command code (38)
+  /// - 1 byte: manual add contacts (0 or 1)
+  /// - 1 byte: telemetry modes (bits 0-1: Base mode, bits 2-3: Location mode)
+  ///           Modes: 0=DENY, 1=apply contact.flags, 2=ALLOW ALL
+  /// - 1 byte: advert location policy (0=don't share, 1=share)
+  /// - 1 byte: multi ACKs (0=no extra, 1=send extra ACK)
+  Future<void> setOtherParams({
+    required int manualAddContacts, // 0 or 1
+    required int telemetryModes, // bits 0-1: Base, bits 2-3: Location
+    required int advertLocationPolicy, // 0=don't share, 1=share
+    int multiAcks = 0, // 0=no extra, 1=send extra
+  }) async {
+    final writer = BufferWriter();
+    writer.writeByte(MeshCoreConstants.cmdSetOtherParams);
+    writer.writeByte(manualAddContacts);
+    writer.writeByte(telemetryModes);
+    writer.writeByte(advertLocationPolicy);
+    writer.writeByte(multiAcks);
+    await _writeData(writer.toBytes());
+  }
+
+  /// Send login request to room or repeater
+  ///
+  /// Protocol format (CMD_SEND_LOGIN):
+  /// - 1 byte: command code (26)
+  /// - 32 bytes: public key (room or repeater)
+  /// - N bytes: password (remainder of frame, varchar, max 15 bytes)
+  ///
+  /// Response: PUSH_CODE_LOGIN_SUCCESS (0x85) or PUSH_CODE_LOGIN_FAIL (0x86)
+  Future<void> loginToRoom({
+    required Uint8List roomPublicKey,
+    required String password,
+  }) async {
+    if (password.length > 15) {
+      throw ArgumentError('Password exceeds 15 character limit');
+    }
+
+    final writer = BufferWriter();
+    writer.writeByte(MeshCoreConstants.cmdSendLogin);
+    writer.writeBytes(roomPublicKey); // 32 bytes
+    writer.writeString(password); // Max 15 bytes
     await _writeData(writer.toBytes());
   }
 

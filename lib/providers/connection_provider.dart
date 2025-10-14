@@ -49,6 +49,8 @@ class ConnectionProvider with ChangeNotifier {
   Function(List<Contact>)? onContactsComplete;
   Function(Message)? onMessageReceived;
   Function(Uint8List publicKey, Uint8List lppData)? onTelemetryReceived;
+  Function(Uint8List publicKeyPrefix, int permissions, bool isAdmin, int tag)? onLoginSuccess;
+  Function(Uint8List publicKeyPrefix)? onLoginFail;
 
   ConnectionProvider() {
     _initializeBleService();
@@ -110,6 +112,25 @@ class ConnectionProvider with ChangeNotifier {
     _bleService.onNoMoreMessages = () {
       print('📥 [Provider] Received NoMoreMessages signal');
       _noMoreMessages = true;
+    };
+
+    _bleService.onMessageWaiting = () {
+      print('📥 [Provider] Received MsgWaiting push - auto-fetching messages');
+      // Automatically fetch messages when push notification received
+      syncAllMessages();
+    };
+
+    _bleService.onLoginSuccess = (publicKeyPrefix, permissions, isAdmin, tag) {
+      print('📥 [Provider] Login successful to room');
+      print('  Public key prefix: ${publicKeyPrefix.map((b) => b.toRadixString(16).padLeft(2, '0')).join(':')}');
+      print('  Permissions: $permissions, Admin: $isAdmin, Tag: $tag');
+      onLoginSuccess?.call(publicKeyPrefix, permissions, isAdmin, tag);
+    };
+
+    _bleService.onLoginFail = (publicKeyPrefix) {
+      print('📥 [Provider] Login failed to room');
+      print('  Public key prefix: ${publicKeyPrefix.map((b) => b.toRadixString(16).padLeft(2, '0')).join(':')}');
+      onLoginFail?.call(publicKeyPrefix);
     };
 
     _bleService.onSelfInfoReceived = (selfInfo) {
@@ -413,6 +434,32 @@ class ConnectionProvider with ChangeNotifier {
     }
   }
 
+  /// Set other parameters (telemetry modes, advert location policy)
+  Future<void> setOtherParams({
+    required int manualAddContacts,
+    required int telemetryModes,
+    required int advertLocationPolicy,
+    int multiAcks = 0,
+  }) async {
+    if (!_bleService.isConnected) {
+      _error = 'Not connected to device';
+      notifyListeners();
+      return;
+    }
+
+    try {
+      await _bleService.setOtherParams(
+        manualAddContacts: manualAddContacts,
+        telemetryModes: telemetryModes,
+        advertLocationPolicy: advertLocationPolicy,
+        multiAcks: multiAcks,
+      );
+    } catch (e) {
+      _error = 'Failed to set other params: $e';
+      notifyListeners();
+    }
+  }
+
   /// Request fresh device info (triggers SelfInfo response)
   Future<void> refreshDeviceInfo() async {
     if (!_bleService.isConnected) {
@@ -487,6 +534,45 @@ class ConnectionProvider with ChangeNotifier {
       _error = 'Failed to sync messages: $e';
       notifyListeners();
       return count;
+    }
+  }
+
+  /// Login to a room or repeater
+  ///
+  /// Sends login request with password. Results will be delivered via
+  /// onLoginSuccess or onLoginFail callbacks.
+  ///
+  /// Example usage:
+  /// ```dart
+  /// connectionProvider.onLoginSuccess = (pkPrefix, perms, isAdmin, tag) {
+  ///   print('Successfully logged in to room!');
+  /// };
+  /// connectionProvider.onLoginFail = (pkPrefix) {
+  ///   print('Login failed - incorrect password');
+  /// };
+  /// await connectionProvider.loginToRoom(
+  ///   roomPublicKey: contact.publicKey,
+  ///   password: 'secret123',
+  /// );
+  /// ```
+  Future<void> loginToRoom({
+    required Uint8List roomPublicKey,
+    required String password,
+  }) async {
+    if (!_bleService.isConnected) {
+      _error = 'Not connected to device';
+      notifyListeners();
+      return;
+    }
+
+    try {
+      await _bleService.loginToRoom(
+        roomPublicKey: roomPublicKey,
+        password: password,
+      );
+    } catch (e) {
+      _error = 'Failed to send login request: $e';
+      notifyListeners();
     }
   }
 

@@ -627,6 +627,29 @@ class _SarUpdateSheetState extends State<_SarUpdateSheet> {
   void initState() {
     super.initState();
     _getCurrentLocation();
+    _setDefaultDestination();
+  }
+
+  void _setDefaultDestination() {
+    // Set default to first room, or first channel if no rooms exist
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final contactsProvider = context.read<ContactsProvider>();
+      final destinations = contactsProvider.roomsAndChannels;
+
+      if (destinations.isNotEmpty) {
+        // Prefer rooms over channels
+        final room = destinations.firstWhere(
+          (c) => c.isRoom,
+          orElse: () => destinations.first,
+        );
+
+        if (mounted) {
+          setState(() {
+            _selectedContact = room;
+          });
+        }
+      }
+    });
   }
 
   @override

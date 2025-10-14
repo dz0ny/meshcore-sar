@@ -346,6 +346,10 @@ class MeshCoreBleService {
           print('  → Handling NewAdvert push');
           _handleNewAdvert(reader);
           break;
+        case MeshCoreConstants.pushSendConfirmed:
+          print('  → Handling SendConfirmed push');
+          _handleSendConfirmed(reader);
+          break;
         case MeshCoreConstants.respNoMoreMessages:
           print('  → Response: No More Messages');
           onNoMoreMessages?.call();
@@ -442,35 +446,34 @@ class MeshCoreBleService {
     _pendingContacts.clear();
   }
 
-  /// Handle Sent confirmation response
+  /// Handle Sent confirmation response (RESP_CODE_SENT)
+  ///
+  /// Protocol format:
+  /// - 1 byte: send type (1=flood, 0=direct)
+  /// - 4 bytes: expected ACK code or TAG
+  /// - 4 bytes: suggested timeout (uint32, milliseconds)
   void _handleSentConfirmation(BufferReader reader) {
     try {
       print('  [Sent] Parsing sent confirmation...');
       print('    Remaining bytes: ${reader.remainingBytesCount}');
 
-      // Sent confirmation format (from protocol):
-      // - 1 byte: reserved
-      // - 4 bytes: public key prefix (recipient)
-      // - 2 bytes: message ID
-      // - 2 bytes: reserved
-
       if (reader.remainingBytesCount >= 9) {
-        final reserved1 = reader.readByte();
-        print('    Reserved: $reserved1');
+        final sendType = reader.readByte();
+        final sendTypeStr = sendType == 1 ? 'flood' : 'direct';
+        print('    Send type: $sendType ($sendTypeStr)');
 
-        final pubKeyPrefix = reader.readBytes(4);
-        print('    Recipient public key prefix: ${pubKeyPrefix.map((b) => b.toRadixString(16).padLeft(2, '0')).join(':')}');
+        final expectedAckOrTag = reader.readBytes(4);
+        print('    Expected ACK/TAG: ${expectedAckOrTag.map((b) => b.toRadixString(16).padLeft(2, '0')).join(' ')}');
 
-        final messageId = reader.readUInt16LE();
-        print('    Message ID: $messageId');
+        final suggestedTimeout = reader.readUInt32LE();
+        print('    Suggested timeout: ${suggestedTimeout}ms');
 
-        if (reader.remainingBytesCount >= 2) {
-          final reserved2 = reader.readUInt16LE();
-          print('    Reserved2: $reserved2');
-        }
+        print('  ✅ [Sent] Message sent successfully ($sendTypeStr mode, timeout: ${suggestedTimeout}ms)');
+
+        // TODO: Store ACK/TAG to match with PUSH_CODE_SEND_CONFIRMED later
+      } else {
+        print('  ⚠️ [Sent] Insufficient data for full parsing');
       }
-
-      print('  ✅ [Sent] Message sent confirmation');
     } catch (e) {
       print('  ❌ [Sent] Parsing error: $e');
       // Don't call onError - sent confirmations are informational
@@ -814,6 +817,35 @@ class MeshCoreBleService {
     }
   }
 
+  /// Handle SendConfirmed push (PUSH_CODE_SEND_CONFIRMED)
+  ///
+  /// Protocol format:
+  /// - 4 bytes: ACK code
+  /// - 4 bytes: round trip time (uint32, milliseconds)
+  void _handleSendConfirmed(BufferReader reader) {
+    try {
+      print('  [SendConfirmed] Parsing send confirmed...');
+      print('    Remaining bytes: ${reader.remainingBytesCount}');
+
+      if (reader.remainingBytesCount >= 8) {
+        final ackCode = reader.readBytes(4);
+        print('    ACK code: ${ackCode.map((b) => b.toRadixString(16).padLeft(2, '0')).join(' ')}');
+
+        final roundTripTime = reader.readUInt32LE();
+        print('    Round trip time: ${roundTripTime}ms');
+
+        print('  ✅ [SendConfirmed] Message delivery confirmed (RTT: ${roundTripTime}ms)');
+
+        // TODO: Match ACK code with pending sends and notify UI
+      } else {
+        print('  ⚠️ [SendConfirmed] Insufficient data for full parsing');
+      }
+    } catch (e) {
+      print('  ❌ [SendConfirmed] Parsing error: $e');
+      // Don't call onError - confirmations are informational
+    }
+  }
+
   /// Send AppStart command
   Future<void> _sendAppStart() async {
     final writer = BufferWriter();
@@ -845,31 +877,60 @@ class MeshCoreBleService {
     await _writeData(writer.toBytes());
   }
 
-  /// Send text message to contact
+  /// Send text message to contact (DM)
+  ///
+  /// Protocol format (CMD_SEND_TXT_MSG):
+  /// - 1 byte: command code (2)
+  /// - 1 byte: text type (TXT_TYPE_*, 0=plain)
+  /// - 1 byte: attempt (0-3, attempt number)
+  /// - 4 bytes: sender timestamp (uint32, epoch seconds)
+  /// - 6 bytes: recipient public key prefix (first 6 bytes)
+  /// - N bytes: text (remainder of frame, varchar, max 160 bytes)
   Future<void> sendTextMessage({
     required Uint8List contactPublicKey,
     required String text,
+    int textType = 0, // TXT_TYPE_PLAIN
+    int attempt = 0,
   }) async {
+    if (text.length > 160) {
+      throw ArgumentError('Text message exceeds 160 character limit');
+    }
+
     final writer = BufferWriter();
-    writer.writeByte(MeshCoreConstants.cmdSendTxtMsg);
-    writer.writeByte(MeshCoreConstants.txtTypePlain);
-    writer.writeByte(0); // attempt
-    writer.writeUInt32LE(DateTime.now().millisecondsSinceEpoch ~/ 1000);
-    writer.writeBytes(contactPublicKey.sublist(0, 6));
+    writer.writeByte(MeshCoreConstants.cmdSendTxtMsg); // 0x02
+    writer.writeByte(textType); // TXT_TYPE_*
+    writer.writeByte(attempt); // 0-3
+    writer.writeUInt32LE(DateTime.now().millisecondsSinceEpoch ~/ 1000); // epoch seconds
+    writer.writeBytes(contactPublicKey.sublist(0, 6)); // first 6 bytes of public key
     writer.writeString(text);
     await _writeData(writer.toBytes());
   }
 
-  /// Send channel text message
+  /// Send flood-mode text message to channel
+  ///
+  /// Protocol format (CMD_SEND_CHANNEL_TXT_MSG):
+  /// - 1 byte: command code (3)
+  /// - 1 byte: text type (TXT_TYPE_*, 0=plain)
+  /// - 1 byte: channel index (reserved, 0 for 'public')
+  /// - 4 bytes: sender timestamp (uint32, epoch seconds)
+  /// - N bytes: text (remainder of frame, max 160 - len(advert_name) - 2)
+  ///
+  /// Note: For SAR messages, ensure text starts with "S:<emoji>:<lat>,<lon>"
   Future<void> sendChannelMessage({
     required int channelIdx,
     required String text,
+    int textType = 0, // TXT_TYPE_PLAIN
   }) async {
+    // Note: Max length depends on advert name length, but typically ~140 chars
+    if (text.length > 160) {
+      throw ArgumentError('Channel message too long (max ~160 characters)');
+    }
+
     final writer = BufferWriter();
-    writer.writeByte(MeshCoreConstants.cmdSendChannelTxtMsg);
-    writer.writeByte(MeshCoreConstants.txtTypePlain);
-    writer.writeByte(channelIdx);
-    writer.writeUInt32LE(DateTime.now().millisecondsSinceEpoch ~/ 1000);
+    writer.writeByte(MeshCoreConstants.cmdSendChannelTxtMsg); // 0x03
+    writer.writeByte(textType); // TXT_TYPE_*
+    writer.writeByte(channelIdx); // 0 for 'public' channel
+    writer.writeUInt32LE(DateTime.now().millisecondsSinceEpoch ~/ 1000); // epoch seconds
     writer.writeString(text);
     await _writeData(writer.toBytes());
   }

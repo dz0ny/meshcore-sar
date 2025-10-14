@@ -10,7 +10,6 @@ import 'map_management_screen.dart';
 import 'settings_screen.dart';
 import 'device_config_screen.dart';
 import 'packet_log_screen.dart';
-import 'message_history_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final Function(AppThemeMode) onThemeChanged;
@@ -233,43 +232,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           PopupMenuButton(
             icon: const Icon(Icons.more_vert),
             itemBuilder: (context) => [
-              PopupMenuItem(
-                child: const Row(
-                  children: [
-                    Icon(Icons.history),
-                    SizedBox(width: 8),
-                    Text('Message History'),
-                  ],
-                ),
-                onTap: () {
-                  Future.delayed(Duration.zero, () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const MessageHistoryScreen(),
-                      ),
-                    );
-                  });
-                },
-              ),
-              PopupMenuItem(
-                child: const Row(
-                  children: [
-                    Icon(Icons.refresh),
-                    SizedBox(width: 8),
-                    Text('Refresh Contacts'),
-                  ],
-                ),
-                onTap: () async {
-                  final appProvider = context.read<AppProvider>();
-                  await appProvider.refresh();
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Refreshed contacts')),
-                    );
-                  }
-                },
-              ),
               PopupMenuItem(
                 child: const Row(
                   children: [

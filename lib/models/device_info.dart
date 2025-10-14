@@ -34,10 +34,19 @@ class DeviceInfo {
   final int? radioCr;
   final String? selfName;
 
+  // Additional device capabilities (from RESP_CODE_DEVICE_INFO)
+  final int? maxContacts;        // Max contacts device supports
+  final int? maxChannels;        // Max channels device supports
+  final int? telemetryModes;     // Telemetry permission modes (bits 0-1: Base, bits 2-3: Location)
+  final int? blePin;             // BLE PIN code
+  final int? multiAcks;          // Extra ACK mode (0=no, 1=yes)
+  final int? advertLocPolicy;    // Location sharing policy (0=don't share, 1=share)
+
   // Firmware info
   final int? firmwareVersion;
   final String? firmwareBuildDate;
   final String? manufacturerModel;
+  final String? semanticVersion;
 
   DeviceInfo({
     this.deviceId,
@@ -60,9 +69,16 @@ class DeviceInfo {
     this.radioSf,
     this.radioCr,
     this.selfName,
+    this.maxContacts,
+    this.maxChannels,
+    this.telemetryModes,
+    this.blePin,
+    this.multiAcks,
+    this.advertLocPolicy,
     this.firmwareVersion,
     this.firmwareBuildDate,
     this.manufacturerModel,
+    this.semanticVersion,
   });
 
   /// Check if device is connected
@@ -144,9 +160,16 @@ class DeviceInfo {
     int? radioSf,
     int? radioCr,
     String? selfName,
+    int? maxContacts,
+    int? maxChannels,
+    int? telemetryModes,
+    int? blePin,
+    int? multiAcks,
+    int? advertLocPolicy,
     int? firmwareVersion,
     String? firmwareBuildDate,
     String? manufacturerModel,
+    String? semanticVersion,
   }) {
     return DeviceInfo(
       deviceId: deviceId ?? this.deviceId,
@@ -169,9 +192,16 @@ class DeviceInfo {
       radioSf: radioSf ?? this.radioSf,
       radioCr: radioCr ?? this.radioCr,
       selfName: selfName ?? this.selfName,
+      maxContacts: maxContacts ?? this.maxContacts,
+      maxChannels: maxChannels ?? this.maxChannels,
+      telemetryModes: telemetryModes ?? this.telemetryModes,
+      blePin: blePin ?? this.blePin,
+      multiAcks: multiAcks ?? this.multiAcks,
+      advertLocPolicy: advertLocPolicy ?? this.advertLocPolicy,
       firmwareVersion: firmwareVersion ?? this.firmwareVersion,
       firmwareBuildDate: firmwareBuildDate ?? this.firmwareBuildDate,
       manufacturerModel: manufacturerModel ?? this.manufacturerModel,
+      semanticVersion: semanticVersion ?? this.semanticVersion,
     );
   }
 

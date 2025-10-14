@@ -25,10 +25,6 @@ class _MessagesTabState extends State<MessagesTab> {
   int _characterCount = 0;
   static const int _maxCharacters = 160;
 
-  // Message recipient selection
-  String? _selectedRecipientId; // null = broadcast to public channel (channel 0)
-  MessageRecipientType _recipientType = MessageRecipientType.room;
-
   @override
   void initState() {
     super.initState();
@@ -53,7 +49,6 @@ class _MessagesTabState extends State<MessagesTab> {
     if (text.isEmpty) return;
 
     final connectionProvider = context.read<ConnectionProvider>();
-    final contactsProvider = context.read<ContactsProvider>();
 
     if (!connectionProvider.deviceInfo.isConnected) {
       if (!mounted) return;
@@ -67,40 +62,11 @@ class _MessagesTabState extends State<MessagesTab> {
     }
 
     try {
-      if (_recipientType == MessageRecipientType.contact && _selectedRecipientId != null) {
-        // Send to specific contact
-        final contact = contactsProvider.contacts.firstWhere(
-          (c) => c.publicKeyHex == _selectedRecipientId,
-        );
-        await connectionProvider.sendTextMessage(
-          contactPublicKey: contact.publicKey,
-          text: text,
-        );
-      } else {
-        // Send to room/channel
-        // Default to channel 0 (public channel) if no specific room selected
-        int channelIdx = 0;
-
-        if (_selectedRecipientId != null) {
-          // Try to find selected room
-          final rooms = contactsProvider.rooms;
-          try {
-            final targetRoom = rooms.firstWhere(
-              (r) => r.publicKeyHex == _selectedRecipientId,
-            );
-            if (targetRoom.outPath.isNotEmpty) {
-              channelIdx = targetRoom.outPath[0];
-            }
-          } catch (e) {
-            // Room not found, use default channel 0
-          }
-        }
-
-        await connectionProvider.sendChannelMessage(
-          channelIdx: channelIdx,
-          text: text,
-        );
-      }
+      // Always send to public channel (channel 0)
+      await connectionProvider.sendChannelMessage(
+        channelIdx: 0,
+        text: text,
+      );
 
       _textController.clear();
       _focusNode.unfocus();
@@ -108,7 +74,7 @@ class _MessagesTabState extends State<MessagesTab> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Message sent'),
+          content: Text('Message sent to public channel'),
           backgroundColor: Colors.green,
           duration: Duration(seconds: 1),
         ),
@@ -124,81 +90,6 @@ class _MessagesTabState extends State<MessagesTab> {
     }
   }
 
-  void _showRecipientSelector() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) => _RecipientSelectorSheet(
-        selectedRecipientId: _selectedRecipientId,
-        selectedRecipientType: _recipientType,
-        onSelect: (recipientId, recipientType) {
-          setState(() {
-            _selectedRecipientId = recipientId;
-            _recipientType = recipientType;
-          });
-
-          // Fetch messages from the newly selected channel/room
-          _syncMessagesForRecipient();
-        },
-      ),
-    );
-  }
-
-  /// Sync all messages when recipient changes (for sending context)
-  Future<void> _syncMessagesForRecipient() async {
-    final appProvider = context.read<AppProvider>();
-
-    if (!appProvider.connectionProvider.deviceInfo.isConnected) {
-      return;
-    }
-
-    try {
-      debugPrint('🔄 [MessagesTab] Syncing messages after recipient change...');
-      final messageCount = await appProvider.syncMessages();
-
-      if (!mounted) return;
-      if (messageCount > 0) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Synced $messageCount message${messageCount == 1 ? '' : 's'}'),
-            backgroundColor: Colors.green,
-            duration: const Duration(seconds: 2),
-          ),
-        );
-      }
-    } catch (e) {
-      debugPrint('❌ [MessagesTab] Error syncing messages: $e');
-    }
-  }
-
-  String _getRecipientDisplayName() {
-    final contactsProvider = context.read<ContactsProvider>();
-
-    if (_selectedRecipientId == null) {
-      // Default to public channel
-      return 'Public Channel';
-    }
-
-    if (_recipientType == MessageRecipientType.contact) {
-      try {
-        final contact = contactsProvider.contacts.firstWhere(
-          (c) => c.publicKeyHex == _selectedRecipientId,
-        );
-        return contact.displayName;
-      } catch (e) {
-        return 'Public Channel';
-      }
-    } else {
-      try {
-        final room = contactsProvider.rooms.firstWhere(
-          (r) => r.publicKeyHex == _selectedRecipientId,
-        );
-        return room.displayName;
-      } catch (e) {
-        return 'Public Channel';
-      }
-    }
-  }
 
   void _showSarDialog() {
     showModalBottomSheet(
@@ -206,8 +97,8 @@ class _MessagesTabState extends State<MessagesTab> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => _SarUpdateSheet(
-        onSend: (sarType, position, notes) async {
-          await _sendSarMessage(sarType, position, notes);
+        onSend: (sarType, position, notes, channelIdx) async {
+          await _sendSarMessage(sarType, position, notes, channelIdx);
         },
       ),
     );
@@ -217,9 +108,9 @@ class _MessagesTabState extends State<MessagesTab> {
     SarMarkerType sarType,
     Position position,
     String? notes,
+    int channelIdx,
   ) async {
     final connectionProvider = context.read<ConnectionProvider>();
-    final contactsProvider = context.read<ContactsProvider>();
 
     if (!connectionProvider.deviceInfo.isConnected) {
       if (!mounted) return;
@@ -241,46 +132,17 @@ class _MessagesTabState extends State<MessagesTab> {
           ? '$sarMessage $notes'
           : sarMessage;
 
-      // Send to selected recipient (contact or room)
-      if (_recipientType == MessageRecipientType.contact && _selectedRecipientId != null) {
-        // Send to specific contact
-        final contact = contactsProvider.contacts.firstWhere(
-          (c) => c.publicKeyHex == _selectedRecipientId,
-        );
-        await connectionProvider.sendTextMessage(
-          contactPublicKey: contact.publicKey,
-          text: fullMessage,
-        );
-      } else {
-        // Send to room/channel
-        // Default to channel 0 (public channel) if no specific room selected
-        int channelIdx = 0;
-
-        if (_selectedRecipientId != null) {
-          // Try to find selected room
-          final rooms = contactsProvider.rooms;
-          try {
-            final targetRoom = rooms.firstWhere(
-              (r) => r.publicKeyHex == _selectedRecipientId,
-            );
-            if (targetRoom.outPath.isNotEmpty) {
-              channelIdx = targetRoom.outPath[0];
-            }
-          } catch (e) {
-            // Room not found, use default channel 0
-          }
-        }
-
-        await connectionProvider.sendChannelMessage(
-          channelIdx: channelIdx,
-          text: fullMessage,
-        );
-      }
+      // Send SAR message to selected room/channel
+      await connectionProvider.sendChannelMessage(
+        channelIdx: channelIdx,
+        text: fullMessage,
+      );
 
       if (!mounted) return;
+      final channelName = channelIdx == 0 ? 'Public Channel' : 'Channel $channelIdx';
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('${sarType.displayName} marker sent'),
+          content: Text('${sarType.displayName} marker sent to $channelName'),
           backgroundColor: Colors.green,
           duration: const Duration(seconds: 2),
         ),
@@ -393,54 +255,7 @@ class _MessagesTabState extends State<MessagesTab> {
                 ),
               ),
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-              child: Column(
-                children: [
-                  // Recipient selector bar
-                  Consumer<ContactsProvider>(
-                    builder: (context, contactsProvider, child) {
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 8),
-                        child: InkWell(
-                          onTap: _showRecipientSelector,
-                          borderRadius: BorderRadius.circular(8),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                            decoration: BoxDecoration(
-                              color: Theme.of(context).colorScheme.surfaceVariant,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  _recipientType == MessageRecipientType.contact
-                                      ? Icons.person
-                                      : Icons.tag,
-                                  size: 18,
-                                  color: Theme.of(context).colorScheme.primary,
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    'To: ${_getRecipientDisplayName()}',
-                                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                                Icon(
-                                  Icons.arrow_drop_down,
-                                  color: Theme.of(context).colorScheme.primary,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                  // Message input row
-                  Row(
+              child: Row(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       // SAR quick action button
@@ -503,8 +318,6 @@ class _MessagesTabState extends State<MessagesTab> {
                       ),
                     ],
                   ),
-                ],
-              ),
             ),
           ],
         );
@@ -764,7 +577,7 @@ class _MessageBubble extends StatelessWidget {
 
 // SAR Update Sheet
 class _SarUpdateSheet extends StatefulWidget {
-  final Future<void> Function(SarMarkerType, Position, String?) onSend;
+  final Future<void> Function(SarMarkerType, Position, String?, int) onSend;
 
   const _SarUpdateSheet({required this.onSend});
 
@@ -777,6 +590,7 @@ class _SarUpdateSheetState extends State<_SarUpdateSheet> {
   Position? _currentPosition;
   bool _loadingLocation = false;
   String? _locationError;
+  int _selectedChannelIdx = 0; // Default to Public Channel (channel 0)
   final TextEditingController _notesController = TextEditingController();
 
   @override
@@ -939,6 +753,82 @@ class _SarUpdateSheetState extends State<_SarUpdateSheet> {
                     type: SarMarkerType.object,
                     isSelected: _selectedType == SarMarkerType.object,
                     onTap: () => setState(() => _selectedType = SarMarkerType.object),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Room/Channel selection
+                  const Text(
+                    'Send To',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Consumer<ContactsProvider>(
+                    builder: (context, contactsProvider, child) {
+                      // Build list of available rooms/channels
+                      final rooms = contactsProvider.rooms;
+
+                      return Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF2D2D2D),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<int>(
+                            value: _selectedChannelIdx,
+                            dropdownColor: const Color(0xFF2D2D2D),
+                            isExpanded: true,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                            ),
+                            icon: const Icon(Icons.arrow_drop_down, color: Colors.white),
+                            items: [
+                              // Public Channel (always available)
+                              const DropdownMenuItem<int>(
+                                value: 0,
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.public, size: 18, color: Colors.white),
+                                    SizedBox(width: 12),
+                                    Text('Public Channel'),
+                                  ],
+                                ),
+                              ),
+                              // Room channels
+                              ...rooms.asMap().entries.map((entry) {
+                                final idx = entry.key + 1; // Rooms start at channel 1
+                                final room = entry.value;
+                                return DropdownMenuItem<int>(
+                                  value: idx,
+                                  child: Row(
+                                    children: [
+                                      const Icon(Icons.tag, size: 18, color: Colors.white),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Text(
+                                          room.displayName,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }).toList(),
+                            ],
+                            onChanged: (value) {
+                              if (value != null) {
+                                setState(() => _selectedChannelIdx = value);
+                              }
+                            },
+                          ),
+                        ),
+                      );
+                    },
                   ),
                   const SizedBox(height: 24),
 
@@ -1135,6 +1025,7 @@ class _SarUpdateSheetState extends State<_SarUpdateSheet> {
                             _notesController.text.trim().isEmpty
                                 ? null
                                 : _notesController.text.trim(),
+                            _selectedChannelIdx,
                           );
                           if (context.mounted) {
                             Navigator.pop(context);
@@ -1237,210 +1128,3 @@ class _MarkerTypeChip extends StatelessWidget {
   }
 }
 
-// Message recipient type enum
-enum MessageRecipientType {
-  contact,
-  room,
-}
-
-// Recipient Selector Sheet
-class _RecipientSelectorSheet extends StatefulWidget {
-  final String? selectedRecipientId;
-  final MessageRecipientType selectedRecipientType;
-  final void Function(String?, MessageRecipientType) onSelect;
-
-  const _RecipientSelectorSheet({
-    required this.selectedRecipientId,
-    required this.selectedRecipientType,
-    required this.onSelect,
-  });
-
-  @override
-  State<_RecipientSelectorSheet> createState() => _RecipientSelectorSheetState();
-}
-
-class _RecipientSelectorSheetState extends State<_RecipientSelectorSheet> with SingleTickerProviderStateMixin {
-  late TabController _tabController;
-
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(
-      length: 2,
-      vsync: this,
-      initialIndex: widget.selectedRecipientType == MessageRecipientType.contact ? 0 : 1,
-    );
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: MediaQuery.of(context).size.height * 0.7,
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      child: Column(
-        children: [
-          // Header
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              border: Border(
-                bottom: BorderSide(
-                  color: Theme.of(context).dividerColor,
-                  width: 1,
-                ),
-              ),
-            ),
-            child: Row(
-              children: [
-                Text(
-                  'Select Recipient',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                ),
-                const Spacer(),
-                IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: () => Navigator.pop(context),
-                ),
-              ],
-            ),
-          ),
-          // Tab bar
-          TabBar(
-            controller: _tabController,
-            tabs: const [
-              Tab(
-                icon: Icon(Icons.person),
-                text: 'Contacts',
-              ),
-              Tab(
-                icon: Icon(Icons.tag),
-                text: 'Channels',
-              ),
-            ],
-          ),
-          // Tab view
-          Expanded(
-            child: TabBarView(
-              controller: _tabController,
-              children: [
-                // Contacts tab
-                Consumer<ContactsProvider>(
-                  builder: (context, contactsProvider, child) {
-                    final contacts = contactsProvider.chatContacts;
-
-                    if (contacts.isEmpty) {
-                      return const Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.person_off, size: 64, color: Colors.grey),
-                            SizedBox(height: 16),
-                            Text('No contacts available'),
-                          ],
-                        ),
-                      );
-                    }
-
-                    return ListView.builder(
-                      itemCount: contacts.length,
-                      itemBuilder: (context, index) {
-                        final contact = contacts[index];
-                        final isSelected = widget.selectedRecipientType == MessageRecipientType.contact &&
-                            widget.selectedRecipientId == contact.publicKeyHex;
-
-                        return ListTile(
-                          leading: CircleAvatar(
-                            child: contact.roleEmoji != null
-                                ? Text(contact.roleEmoji!)
-                                : const Icon(Icons.person),
-                          ),
-                          title: Text(contact.displayName),
-                          subtitle: Text(
-                            contact.publicKeyShort,
-                            style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
-                          ),
-                          trailing: isSelected
-                              ? Icon(
-                                  Icons.check_circle,
-                                  color: Theme.of(context).colorScheme.primary,
-                                )
-                              : null,
-                          selected: isSelected,
-                          onTap: () {
-                            widget.onSelect(contact.publicKeyHex, MessageRecipientType.contact);
-                            Navigator.pop(context);
-                          },
-                        );
-                      },
-                    );
-                  },
-                ),
-                // Channels/Rooms tab
-                Consumer<ContactsProvider>(
-                  builder: (context, contactsProvider, child) {
-                    final rooms = contactsProvider.rooms;
-
-                    if (rooms.isEmpty) {
-                      return Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.tag, size: 64, color: Colors.grey),
-                            const SizedBox(height: 16),
-                            const Text('No channels available'),
-                          ],
-                        ),
-                      );
-                    }
-
-                    return ListView.builder(
-                      itemCount: rooms.length,
-                      itemBuilder: (context, index) {
-                        final room = rooms[index];
-                        final isSelected = widget.selectedRecipientType == MessageRecipientType.room &&
-                            widget.selectedRecipientId == room.publicKeyHex;
-
-                        return ListTile(
-                          leading: const CircleAvatar(
-                            child: Icon(Icons.tag),
-                          ),
-                          title: Text(room.displayName),
-                          subtitle: Text(
-                            room.publicKeyShort,
-                            style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
-                          ),
-                          trailing: isSelected
-                              ? Icon(
-                                  Icons.check_circle,
-                                  color: Theme.of(context).colorScheme.primary,
-                                )
-                              : null,
-                          selected: isSelected,
-                          onTap: () {
-                            widget.onSelect(room.publicKeyHex, MessageRecipientType.room);
-                            Navigator.pop(context);
-                          },
-                        );
-                      },
-                    );
-                  },
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}

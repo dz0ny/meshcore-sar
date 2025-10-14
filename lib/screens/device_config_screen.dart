@@ -265,6 +265,48 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
     }
   }
 
+  String _getDeviceTypeString(int? deviceType) {
+    if (deviceType == null) return 'Unknown';
+    switch (deviceType) {
+      case 0:
+        return 'None/Unknown';
+      case 1:
+        return 'Chat Node';
+      case 2:
+        return 'Repeater';
+      case 3:
+        return 'Room/Channel Server';
+      default:
+        return 'Type $deviceType';
+    }
+  }
+
+  String _getTelemetryModesString(deviceInfo) {
+    if (deviceInfo.telemetryModes == null) return 'Unknown';
+
+    final telemetryModes = deviceInfo.telemetryModes!;
+    final baseMode = telemetryModes & 0x03; // bits 0-1
+    final locationMode = (telemetryModes >> 2) & 0x03; // bits 2-3
+
+    String baseModeStr = _getTelemetryModeString(baseMode);
+    String locationModeStr = _getTelemetryModeString(locationMode);
+
+    return 'Base: $baseModeStr, Loc: $locationModeStr';
+  }
+
+  String _getTelemetryModeString(int mode) {
+    switch (mode) {
+      case 0:
+        return 'Deny';
+      case 1:
+        return 'By Contact';
+      case 2:
+        return 'Allow All';
+      default:
+        return 'Unknown';
+    }
+  }
+
   Future<void> _useCurrentLocation() async {
     try {
       // Check if location services are enabled
@@ -469,6 +511,101 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
                   ),
                 ),
               ],
+            ),
+          ),
+
+          const SizedBox(height: 24),
+
+          // Device Information Section (Read-only)
+          _SectionHeader(
+            title: 'Device Information',
+            trailing: IconButton(
+              icon: const Icon(Icons.info_outline),
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text('Device Information'),
+                    content: const Text(
+                      'This information is provided by the MeshCore device '
+                      'and cannot be edited. Tap refresh to update.',
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text('GOT IT'),
+                      ),
+                    ],
+                  ),
+                );
+              },
+              iconSize: 20,
+            ),
+          ),
+
+          _SettingTile(
+            icon: Icons.numbers,
+            label: 'Device Type',
+            isFirst: true,
+            trailing: Text(
+              _getDeviceTypeString(deviceInfo.deviceType),
+              style: const TextStyle(
+                fontWeight: FontWeight.w500,
+                fontSize: 14,
+              ),
+            ),
+          ),
+
+          _SettingTile(
+            icon: Icons.groups,
+            label: 'Max Contacts',
+            trailing: Text(
+              deviceInfo.maxContacts != null
+                  ? deviceInfo.maxContacts.toString()
+                  : 'Unknown',
+              style: const TextStyle(
+                fontWeight: FontWeight.w500,
+                fontSize: 14,
+              ),
+            ),
+          ),
+
+          _SettingTile(
+            icon: Icons.tag,
+            label: 'Max Channels',
+            trailing: Text(
+              deviceInfo.maxChannels != null
+                  ? deviceInfo.maxChannels.toString()
+                  : 'Unknown',
+              style: const TextStyle(
+                fontWeight: FontWeight.w500,
+                fontSize: 14,
+              ),
+            ),
+          ),
+
+          _SettingTile(
+            icon: Icons.settings_suggest,
+            label: 'Telemetry Modes',
+            trailing: Text(
+              _getTelemetryModesString(deviceInfo),
+              style: const TextStyle(
+                fontWeight: FontWeight.w500,
+                fontSize: 13,
+              ),
+            ),
+          ),
+
+          _SettingTile(
+            icon: Icons.group_add,
+            label: 'Manual Add Contacts',
+            isLast: true,
+            trailing: Text(
+              deviceInfo.manualAddContacts == true ? 'Enabled' : 'Disabled',
+              style: const TextStyle(
+                fontWeight: FontWeight.w500,
+                fontSize: 14,
+              ),
             ),
           ),
 

@@ -1,11 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../providers/contacts_provider.dart';
 import '../providers/connection_provider.dart';
+import '../providers/app_provider.dart';
 import '../models/contact.dart';
 
-class ContactsTab extends StatelessWidget {
+class ContactsTab extends StatefulWidget {
   const ContactsTab({super.key});
+
+  @override
+  State<ContactsTab> createState() => _ContactsTabState();
+}
+
+class _ContactsTabState extends State<ContactsTab> {
+  Future<void> _handleRefresh() async {
+    final appProvider = context.read<AppProvider>();
+    await appProvider.refresh();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +44,7 @@ class ContactsTab extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Connect to a device and refresh to load contacts',
+                  'Connect to a device to load contacts',
                   style: Theme.of(context).textTheme.bodyMedium,
                   textAlign: TextAlign.center,
                 ),
@@ -41,9 +53,11 @@ class ContactsTab extends StatelessWidget {
           );
         }
 
-        return ListView(
-          padding: const EdgeInsets.all(8),
-          children: [
+        return RefreshIndicator(
+          onRefresh: _handleRefresh,
+          child: ListView(
+            padding: const EdgeInsets.all(8),
+            children: [
             // Team Members (Chat contacts)
             if (chatContacts.isNotEmpty) ...[
               _SectionHeader(
@@ -75,7 +89,8 @@ class ContactsTab extends StatelessWidget {
               ),
               ...rooms.map((contact) => _ContactTile(contact: contact)),
             ],
-          ],
+            ],
+          ),
         );
       },
     );
@@ -234,19 +249,32 @@ class _ContactTile extends StatelessWidget {
             ),
           ],
         ),
-        trailing: IconButton(
-          icon: const Icon(Icons.refresh, size: 20),
-          onPressed: () {
-            final connectionProvider = context.read<ConnectionProvider>();
-            connectionProvider.requestTelemetry(contact.publicKey);
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Requesting telemetry from ${contact.displayName}'),
-                duration: const Duration(seconds: 2),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Message icon - only for chat contacts
+            if (contact.type == ContactType.chat)
+              IconButton(
+                icon: const Icon(Icons.message, size: 20),
+                onPressed: () => _showDirectMessageDialog(context, contact),
+                tooltip: 'Send direct message',
               ),
-            );
-          },
-          tooltip: 'Request telemetry',
+            // Telemetry refresh button
+            IconButton(
+              icon: const Icon(Icons.refresh, size: 20),
+              onPressed: () {
+                final connectionProvider = context.read<ConnectionProvider>();
+                connectionProvider.requestTelemetry(contact.publicKey);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Requesting telemetry from ${contact.displayName}'),
+                    duration: const Duration(seconds: 2),
+                  ),
+                );
+              },
+              tooltip: 'Request telemetry',
+            ),
+          ],
         ),
         onTap: () => _showContactDetails(context, contact),
         onLongPress: () {
@@ -260,6 +288,15 @@ class _ContactTile extends StatelessWidget {
           );
         },
       ),
+    );
+  }
+
+  void _showDirectMessageDialog(BuildContext context, Contact contact) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _DirectMessageSheet(contact: contact),
     );
   }
 
@@ -476,5 +513,238 @@ class _ContactTile extends StatelessWidget {
     } else {
       return '${diff.inDays}d ago';
     }
+  }
+}
+
+// Direct Message Sheet Widget
+class _DirectMessageSheet extends StatefulWidget {
+  final Contact contact;
+
+  const _DirectMessageSheet({required this.contact});
+
+  @override
+  State<_DirectMessageSheet> createState() => _DirectMessageSheetState();
+}
+
+class _DirectMessageSheetState extends State<_DirectMessageSheet> {
+  final TextEditingController _textController = TextEditingController();
+  final FocusNode _focusNode = FocusNode();
+  int _characterCount = 0;
+  static const int _maxCharacters = 160;
+
+  @override
+  void initState() {
+    super.initState();
+    _textController.addListener(_updateCharacterCount);
+  }
+
+  @override
+  void dispose() {
+    _textController.dispose();
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  void _updateCharacterCount() {
+    setState(() {
+      _characterCount = _textController.text.length;
+    });
+  }
+
+  Future<void> _sendDirectMessage() async {
+    final text = _textController.text.trim();
+    if (text.isEmpty) return;
+
+    final connectionProvider = context.read<ConnectionProvider>();
+
+    if (!connectionProvider.deviceInfo.isConnected) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Not connected to device'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    try {
+      // Send direct message to contact
+      await connectionProvider.sendTextMessage(
+        contactPublicKey: widget.contact.publicKey,
+        text: text,
+      );
+
+      _textController.clear();
+      _focusNode.unfocus();
+
+      if (!mounted) return;
+      Navigator.pop(context); // Close the dialog
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Direct message sent to ${widget.contact.displayName}'),
+          backgroundColor: Colors.green,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to send: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.9,
+      decoration: const BoxDecoration(
+        color: Color(0xFF1E1E1E),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      child: Column(
+        children: [
+          // Header
+          Container(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.arrow_back, color: Colors.white),
+                  onPressed: () => Navigator.pop(context),
+                ),
+                Expanded(
+                  child: Column(
+                    children: [
+                      const Text(
+                        'Direct Message',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        widget.contact.displayName,
+                        style: const TextStyle(
+                          color: Colors.grey,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.more_vert, color: Colors.white),
+                  onPressed: () {},
+                ),
+              ],
+            ),
+          ),
+
+          // Info banner
+          Container(
+            margin: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.primaryContainer,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.info_outline, color: Theme.of(context).colorScheme.onPrimaryContainer),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'This message will be sent directly to ${widget.contact.displayName}. It will also appear in the main messages feed.',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onPrimaryContainer,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          const Spacer(),
+
+          // Message input
+          Container(
+            padding: EdgeInsets.only(
+              left: 16,
+              right: 16,
+              top: 16,
+              bottom: 16 + MediaQuery.of(context).viewInsets.bottom,
+            ),
+            decoration: const BoxDecoration(
+              color: Color(0xFF2D2D2D),
+            ),
+            child: Column(
+              children: [
+                TextField(
+                  controller: _textController,
+                  focusNode: _focusNode,
+                  maxLength: _maxCharacters,
+                  maxLines: 3,
+                  autofocus: true,
+                  maxLengthEnforcement: MaxLengthEnforcement.enforced,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: InputDecoration(
+                    hintText: 'Type your message...',
+                    hintStyle: const TextStyle(color: Colors.grey),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Colors.grey),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Colors.grey),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Colors.white),
+                    ),
+                    contentPadding: const EdgeInsets.all(16),
+                    counterText: _characterCount >= 150
+                        ? '$_characterCount/$_maxCharacters'
+                        : '',
+                    counterStyle: TextStyle(
+                      fontSize: 11,
+                      color: _characterCount > _maxCharacters * 0.9
+                          ? Colors.orange
+                          : Colors.grey,
+                    ),
+                  ),
+                  textInputAction: TextInputAction.send,
+                  onSubmitted: (_) => _sendDirectMessage(),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: _textController.text.trim().isEmpty
+                        ? null
+                        : _sendDirectMessage,
+                    icon: const Icon(Icons.send),
+                    label: const Text('Send Direct Message'),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

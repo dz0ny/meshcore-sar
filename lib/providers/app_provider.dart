@@ -80,9 +80,25 @@ class AppProvider with ChangeNotifier {
       // Load contacts
       await connectionProvider.getContacts();
 
+      // Sync any waiting messages from device queue
+      await _syncMessages();
+
       notifyListeners();
     } catch (e) {
       debugPrint('Initialization error: $e');
+    }
+  }
+
+  /// Sync messages from device queue
+  Future<void> _syncMessages() async {
+    if (!connectionProvider.deviceInfo.isConnected) return;
+
+    try {
+      debugPrint('🔄 [AppProvider] Starting message sync...');
+      final messageCount = await connectionProvider.syncAllMessages();
+      debugPrint('✅ [AppProvider] Synced $messageCount messages');
+    } catch (e) {
+      debugPrint('❌ [AppProvider] Message sync error: $e');
     }
   }
 
@@ -92,9 +108,26 @@ class AppProvider with ChangeNotifier {
 
     try {
       await connectionProvider.getContacts();
+      await _syncMessages();
       notifyListeners();
     } catch (e) {
       debugPrint('Refresh error: $e');
+    }
+  }
+
+  /// Manually sync messages (useful for pull-to-refresh)
+  Future<int> syncMessages() async {
+    if (!connectionProvider.deviceInfo.isConnected) return 0;
+
+    try {
+      debugPrint('🔄 [AppProvider] Manual message sync requested');
+      final messageCount = await connectionProvider.syncAllMessages();
+      debugPrint('✅ [AppProvider] Synced $messageCount messages');
+      notifyListeners();
+      return messageCount;
+    } catch (e) {
+      debugPrint('❌ [AppProvider] Message sync error: $e');
+      return 0;
     }
   }
 

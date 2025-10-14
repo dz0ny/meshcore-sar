@@ -249,6 +249,16 @@ class _ContactTile extends StatelessWidget {
           tooltip: 'Request telemetry',
         ),
         onTap: () => _showContactDetails(context, contact),
+        onLongPress: () {
+          final connectionProvider = context.read<ConnectionProvider>();
+          connectionProvider.requestTelemetry(contact.publicKey, zeroHop: true);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Pinging ${contact.displayName} (direct connection)...'),
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        },
       ),
     );
   }
@@ -344,11 +354,29 @@ class _ContactTile extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    if (contact.telemetry!.batteryPercentage != null)
+                    if (contact.telemetry!.batteryMilliVolts != null)
+                      _DetailRow(
+                        'Voltage',
+                        '${(contact.telemetry!.batteryMilliVolts! / 1000).toStringAsFixed(3)}V'
+                        '${contact.telemetry!.batteryPercentage != null ? ' (${contact.telemetry!.batteryPercentage!.toStringAsFixed(1)}%)' : ''}',
+                      )
+                    else if (contact.telemetry!.batteryPercentage != null)
                       _DetailRow('Battery', '${contact.telemetry!.batteryPercentage!.toStringAsFixed(1)}%'),
                     if (contact.telemetry!.temperature != null)
                       _DetailRow('Temperature', '${contact.telemetry!.temperature!.toStringAsFixed(1)}°C'),
-                    _DetailRow('Updated', contact.telemetry!.isRecent ? 'Recently' : 'Stale'),
+                    if (contact.telemetry!.humidity != null)
+                      _DetailRow('Humidity', '${contact.telemetry!.humidity!.toStringAsFixed(1)}%'),
+                    if (contact.telemetry!.pressure != null)
+                      _DetailRow('Pressure', '${contact.telemetry!.pressure!.toStringAsFixed(1)} hPa'),
+                    if (contact.telemetry!.gpsLocation != null)
+                      _DetailRow(
+                        'GPS (Telemetry)',
+                        '${contact.telemetry!.gpsLocation!.latitude.toStringAsFixed(6)}, ${contact.telemetry!.gpsLocation!.longitude.toStringAsFixed(6)}',
+                      ),
+                    _DetailRow(
+                      'Updated',
+                      '${_formatTimestamp(contact.telemetry!.timestamp)} (${_formatTimeAgo(contact.telemetry!.timestamp)})',
+                    ),
                   ],
                 ],
               ),
@@ -417,5 +445,36 @@ class _ContactTile extends StatelessWidget {
     if (percentage > 50) return Colors.green;
     if (percentage > 20) return Colors.orange;
     return Colors.red;
+  }
+
+  String _formatTimestamp(DateTime timestamp) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final timestampDate = DateTime(timestamp.year, timestamp.month, timestamp.day);
+
+    if (timestampDate == today) {
+      // Today - show time only
+      return '${timestamp.hour.toString().padLeft(2, '0')}:${timestamp.minute.toString().padLeft(2, '0')}:${timestamp.second.toString().padLeft(2, '0')}';
+    } else {
+      // Another day - show date and time
+      return '${timestamp.year}-${timestamp.month.toString().padLeft(2, '0')}-${timestamp.day.toString().padLeft(2, '0')} ${timestamp.hour.toString().padLeft(2, '0')}:${timestamp.minute.toString().padLeft(2, '0')}';
+    }
+  }
+
+  String _formatTimeAgo(DateTime timestamp) {
+    final now = DateTime.now();
+    final diff = now.difference(timestamp);
+
+    if (diff.inSeconds < 60) {
+      return '${diff.inSeconds}s ago';
+    } else if (diff.inMinutes < 60) {
+      return '${diff.inMinutes}m ago';
+    } else if (diff.inHours < 24) {
+      return '${diff.inHours}h ago';
+    } else if (diff.inDays == 1) {
+      return 'yesterday';
+    } else {
+      return '${diff.inDays}d ago';
+    }
   }
 }

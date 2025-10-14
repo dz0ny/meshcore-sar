@@ -23,11 +23,19 @@ class MeshCoreSarApp extends StatefulWidget {
 
 class _MeshCoreSarAppState extends State<MeshCoreSarApp> {
   AppThemeMode _themeMode = AppThemeMode.system;
+  bool _isInitialized = false;
 
   @override
   void initState() {
     super.initState();
-    _loadThemePreference();
+    _initializeApp();
+  }
+
+  Future<void> _initializeApp() async {
+    await _loadThemePreference();
+    setState(() {
+      _isInitialized = true;
+    });
   }
 
   Future<void> _loadThemePreference() async {
@@ -46,12 +54,29 @@ class _MeshCoreSarAppState extends State<MeshCoreSarApp> {
 
   @override
   Widget build(BuildContext context) {
+    if (!_isInitialized) {
+      return const MaterialApp(
+        home: Scaffold(
+          body: Center(
+            child: CircularProgressIndicator(),
+          ),
+        ),
+      );
+    }
+
     return MultiProvider(
       providers: [
         // Core providers
         ChangeNotifierProvider(create: (_) => ConnectionProvider()),
         ChangeNotifierProvider(create: (_) => ContactsProvider()),
-        ChangeNotifierProvider(create: (_) => MessagesProvider()),
+        ChangeNotifierProvider(
+          create: (_) {
+            final provider = MessagesProvider();
+            // Initialize messages provider asynchronously
+            provider.initialize();
+            return provider;
+          },
+        ),
         ChangeNotifierProvider(create: (_) => MapProvider()),
 
         // Tile cache service

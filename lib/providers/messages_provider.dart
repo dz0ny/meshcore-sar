@@ -1,11 +1,14 @@
 import 'package:flutter/foundation.dart';
 import '../models/message.dart';
 import '../models/sar_marker.dart';
+import '../services/message_storage_service.dart';
 
 /// Messages Provider - manages message history and SAR markers
 class MessagesProvider with ChangeNotifier {
   final List<Message> _messages = [];
   final Map<String, SarMarker> _sarMarkers = {};
+  final MessageStorageService _storageService = MessageStorageService();
+  bool _isInitialized = false;
 
   List<Message> get messages => List.unmodifiable(_messages);
 
@@ -32,6 +35,38 @@ class MessagesProvider with ChangeNotifier {
   List<SarMarker> get objectMarkers =>
       sarMarkers.where((m) => m.type == SarMarkerType.object).toList();
 
+  bool get isInitialized => _isInitialized;
+
+  /// Initialize and load persisted messages
+  Future<void> initialize() async {
+    if (_isInitialized) return;
+
+    try {
+      print('📦 [MessagesProvider] Loading persisted messages...');
+      final storedMessages = await _storageService.loadMessages();
+
+      // Add stored messages
+      _messages.addAll(storedMessages);
+
+      // Extract SAR markers from stored messages
+      for (final message in storedMessages) {
+        if (message.isSarMarker) {
+          final marker = message.toSarMarker();
+          if (marker != null) {
+            _sarMarkers[marker.id] = marker;
+          }
+        }
+      }
+
+      _isInitialized = true;
+      print('✅ [MessagesProvider] Loaded ${storedMessages.length} persisted messages');
+      notifyListeners();
+    } catch (e) {
+      print('❌ [MessagesProvider] Error initializing: $e');
+      _isInitialized = true; // Mark as initialized even on error
+    }
+  }
+
   /// Add a message
   void addMessage(Message message) {
     _messages.add(message);
@@ -43,6 +78,9 @@ class MessagesProvider with ChangeNotifier {
         _sarMarkers[marker.id] = marker;
       }
     }
+
+    // Persist to storage asynchronously
+    _persistMessages();
 
     notifyListeners();
   }
@@ -59,7 +97,20 @@ class MessagesProvider with ChangeNotifier {
         }
       }
     }
+
+    // Persist to storage asynchronously
+    _persistMessages();
+
     notifyListeners();
+  }
+
+  /// Persist messages to storage (async, non-blocking)
+  Future<void> _persistMessages() async {
+    try {
+      await _storageService.saveMessages(_messages);
+    } catch (e) {
+      print('❌ [MessagesProvider] Error persisting messages: $e');
+    }
   }
 
   /// Get messages for a specific contact
@@ -120,6 +171,7 @@ class MessagesProvider with ChangeNotifier {
   /// Clear all messages
   void clearMessages() {
     _messages.clear();
+    _persistMessages();
     notifyListeners();
   }
 
@@ -133,7 +185,13 @@ class MessagesProvider with ChangeNotifier {
   void clearAll() {
     _messages.clear();
     _sarMarkers.clear();
+    _persistMessages();
     notifyListeners();
+  }
+
+  /// Get storage statistics
+  Future<Map<String, dynamic>> getStorageStats() async {
+    return await _storageService.getStorageStats();
   }
 
   /// Get message statistics

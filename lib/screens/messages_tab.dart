@@ -6,6 +6,7 @@ import '../providers/messages_provider.dart';
 import '../providers/contacts_provider.dart';
 import '../providers/map_provider.dart';
 import '../providers/connection_provider.dart';
+import '../providers/app_provider.dart';
 import '../models/message.dart';
 import '../models/sar_marker.dart';
 
@@ -23,6 +24,10 @@ class _MessagesTabState extends State<MessagesTab> {
   final FocusNode _focusNode = FocusNode();
   int _characterCount = 0;
   static const int _maxCharacters = 160;
+
+  // Message recipient selection
+  String? _selectedRecipientId; // null = broadcast to public channel (channel 0)
+  MessageRecipientType _recipientType = MessageRecipientType.room;
 
   @override
   void initState() {
@@ -62,30 +67,39 @@ class _MessagesTabState extends State<MessagesTab> {
     }
 
     try {
-      // Default to sending to room/channel (first available room)
-      final rooms = contactsProvider.rooms;
+      if (_recipientType == MessageRecipientType.contact && _selectedRecipientId != null) {
+        // Send to specific contact
+        final contact = contactsProvider.contacts.firstWhere(
+          (c) => c.publicKeyHex == _selectedRecipientId,
+        );
+        await connectionProvider.sendTextMessage(
+          contactPublicKey: contact.publicKey,
+          text: text,
+        );
+      } else {
+        // Send to room/channel
+        // Default to channel 0 (public channel) if no specific room selected
+        int channelIdx = 0;
 
-      if (rooms.isNotEmpty) {
-        // Send to first available room
-        final defaultRoom = rooms.first;
-        final channelIdx = defaultRoom.outPath.isNotEmpty
-            ? defaultRoom.outPath[0]
-            : 0;
+        if (_selectedRecipientId != null) {
+          // Try to find selected room
+          final rooms = contactsProvider.rooms;
+          try {
+            final targetRoom = rooms.firstWhere(
+              (r) => r.publicKeyHex == _selectedRecipientId,
+            );
+            if (targetRoom.outPath.isNotEmpty) {
+              channelIdx = targetRoom.outPath[0];
+            }
+          } catch (e) {
+            // Room not found, use default channel 0
+          }
+        }
 
         await connectionProvider.sendChannelMessage(
           channelIdx: channelIdx,
           text: text,
         );
-      } else {
-        // No rooms available, show error
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('No channels available'),
-            backgroundColor: Colors.orange,
-          ),
-        );
-        return;
       }
 
       _textController.clear();
@@ -107,6 +121,82 @@ class _MessagesTabState extends State<MessagesTab> {
           backgroundColor: Colors.red,
         ),
       );
+    }
+  }
+
+  void _showRecipientSelector() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _RecipientSelectorSheet(
+        selectedRecipientId: _selectedRecipientId,
+        selectedRecipientType: _recipientType,
+        onSelect: (recipientId, recipientType) {
+          setState(() {
+            _selectedRecipientId = recipientId;
+            _recipientType = recipientType;
+          });
+
+          // Fetch messages from the newly selected channel/room
+          _syncMessagesForRecipient();
+        },
+      ),
+    );
+  }
+
+  /// Sync messages when recipient changes
+  Future<void> _syncMessagesForRecipient() async {
+    final appProvider = context.read<AppProvider>();
+
+    if (!appProvider.connectionProvider.deviceInfo.isConnected) {
+      return;
+    }
+
+    try {
+      debugPrint('🔄 [MessagesTab] Syncing messages after channel/room change...');
+      final messageCount = await appProvider.syncMessages();
+
+      if (!mounted) return;
+      if (messageCount > 0) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Synced $messageCount message${messageCount == 1 ? '' : 's'} from ${_getRecipientDisplayName()}'),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('❌ [MessagesTab] Error syncing messages: $e');
+    }
+  }
+
+  String _getRecipientDisplayName() {
+    final contactsProvider = context.read<ContactsProvider>();
+
+    if (_selectedRecipientId == null) {
+      // Default to public channel
+      return 'Public Channel';
+    }
+
+    if (_recipientType == MessageRecipientType.contact) {
+      try {
+        final contact = contactsProvider.contacts.firstWhere(
+          (c) => c.publicKeyHex == _selectedRecipientId,
+        );
+        return contact.displayName;
+      } catch (e) {
+        return 'Public Channel';
+      }
+    } else {
+      try {
+        final room = contactsProvider.rooms.firstWhere(
+          (r) => r.publicKeyHex == _selectedRecipientId,
+        );
+        return room.displayName;
+      } catch (e) {
+        return 'Public Channel';
+      }
     }
   }
 
@@ -151,30 +241,40 @@ class _MessagesTabState extends State<MessagesTab> {
           ? '$sarMessage $notes'
           : sarMessage;
 
-      // Default to sending to room/channel (first available room)
-      final rooms = contactsProvider.rooms;
+      // Send to selected recipient (contact or room)
+      if (_recipientType == MessageRecipientType.contact && _selectedRecipientId != null) {
+        // Send to specific contact
+        final contact = contactsProvider.contacts.firstWhere(
+          (c) => c.publicKeyHex == _selectedRecipientId,
+        );
+        await connectionProvider.sendTextMessage(
+          contactPublicKey: contact.publicKey,
+          text: fullMessage,
+        );
+      } else {
+        // Send to room/channel
+        // Default to channel 0 (public channel) if no specific room selected
+        int channelIdx = 0;
 
-      if (rooms.isNotEmpty) {
-        // Send to first available room
-        final defaultRoom = rooms.first;
-        final channelIdx = defaultRoom.outPath.isNotEmpty
-            ? defaultRoom.outPath[0]
-            : 0;
+        if (_selectedRecipientId != null) {
+          // Try to find selected room
+          final rooms = contactsProvider.rooms;
+          try {
+            final targetRoom = rooms.firstWhere(
+              (r) => r.publicKeyHex == _selectedRecipientId,
+            );
+            if (targetRoom.outPath.isNotEmpty) {
+              channelIdx = targetRoom.outPath[0];
+            }
+          } catch (e) {
+            // Room not found, use default channel 0
+          }
+        }
 
         await connectionProvider.sendChannelMessage(
           channelIdx: channelIdx,
           text: fullMessage,
         );
-      } else {
-        // No rooms available, show error
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('No channels available'),
-            backgroundColor: Colors.orange,
-          ),
-        );
-        return;
       }
 
       if (!mounted) return;
@@ -197,11 +297,80 @@ class _MessagesTabState extends State<MessagesTab> {
   }
 
 
+  Future<void> _handleRefresh() async {
+    final appProvider = context.read<AppProvider>();
+    final messageCount = await appProvider.syncMessages();
+
+    if (!mounted) return;
+    if (messageCount > 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Synced $messageCount message${messageCount == 1 ? '' : 's'}'),
+          backgroundColor: Colors.green,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
+  List<Message> _getFilteredMessages(MessagesProvider messagesProvider) {
+    // If viewing a specific contact, show all their messages indefinitely
+    if (_recipientType == MessageRecipientType.contact && _selectedRecipientId != null) {
+      final contactMessages = messagesProvider.contactMessages
+          .where((m) => m.senderPublicKeyPrefix != null)
+          .toList();
+
+      // Filter by selected contact
+      return contactMessages
+          .where((m) {
+            final senderHex = m.senderPublicKeyPrefix!
+                .map((b) => b.toRadixString(16).padLeft(2, '0'))
+                .join();
+            return _selectedRecipientId!.startsWith(senderHex);
+          })
+          .toList()
+        ..sort((a, b) => b.sentAt.compareTo(a.sentAt));
+    }
+
+    // For channels/rooms, limit to recent 100 messages
+    if (_recipientType == MessageRecipientType.room) {
+      if (_selectedRecipientId != null) {
+        // Filter by specific channel
+        final contactsProvider = context.read<ContactsProvider>();
+        try {
+          final room = contactsProvider.rooms.firstWhere(
+            (r) => r.publicKeyHex == _selectedRecipientId,
+          );
+          final channelIdx = room.outPath.isNotEmpty ? room.outPath[0] : 0;
+          return messagesProvider
+              .getMessagesForChannel(channelIdx)
+              .take(100)
+              .toList();
+        } catch (e) {
+          // Room not found, show all channel messages
+          return messagesProvider.channelMessages
+              .take(100)
+              .toList()
+            ..sort((a, b) => b.sentAt.compareTo(a.sentAt));
+        }
+      }
+
+      // Default: show recent channel messages (public channel)
+      return messagesProvider.channelMessages
+          .take(100)
+          .toList()
+        ..sort((a, b) => b.sentAt.compareTo(a.sentAt));
+    }
+
+    // Fallback: show all recent messages
+    return messagesProvider.getRecentMessages(count: 100);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<MessagesProvider>(
       builder: (context, messagesProvider, child) {
-        final messages = messagesProvider.getRecentMessages(count: 100);
+        final messages = _getFilteredMessages(messagesProvider);
 
         return Column(
           children: [
@@ -231,28 +400,31 @@ class _MessagesTabState extends State<MessagesTab> {
                         ],
                       ),
                     )
-                  : ListView.builder(
-                      reverse: true,
-                      padding: const EdgeInsets.all(8),
-                      itemCount: messages.length,
-                      itemBuilder: (context, index) {
-                        final message = messages[index];
-                        return _MessageBubble(
-                          message: message,
-                          onTap: message.isSarMarker &&
-                                  message.sarGpsCoordinates != null
-                              ? () {
-                                  final mapProvider =
-                                      context.read<MapProvider>();
-                                  mapProvider.navigateToLocation(
-                                    location: message.sarGpsCoordinates!,
-                                    zoom: 15.0,
-                                  );
-                                  widget.onNavigateToMap();
-                                }
-                              : null,
-                        );
-                      },
+                  : RefreshIndicator(
+                      onRefresh: _handleRefresh,
+                      child: ListView.builder(
+                        reverse: true,
+                        padding: const EdgeInsets.all(8),
+                        itemCount: messages.length,
+                        itemBuilder: (context, index) {
+                          final message = messages[index];
+                          return _MessageBubble(
+                            message: message,
+                            onTap: message.isSarMarker &&
+                                    message.sarGpsCoordinates != null
+                                ? () {
+                                    final mapProvider =
+                                        context.read<MapProvider>();
+                                    mapProvider.navigateToLocation(
+                                      location: message.sarGpsCoordinates!,
+                                      zoom: 15.0,
+                                    );
+                                    widget.onNavigateToMap();
+                                  }
+                                : null,
+                          );
+                        },
+                      ),
                     ),
             ),
 
@@ -268,66 +440,115 @@ class _MessagesTabState extends State<MessagesTab> {
                 ),
               ),
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
+              child: Column(
                 children: [
-                  // SAR quick action button
-                  IconButton(
-                    icon: const Icon(Icons.add_location_alt),
-                    tooltip: 'Send SAR marker',
-                    onPressed: _showSarDialog,
-                    style: IconButton.styleFrom(
-                      backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-                      foregroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  // Text field with embedded send button
-                  Expanded(
-                    child: TextField(
-                      controller: _textController,
-                      focusNode: _focusNode,
-                      maxLength: _maxCharacters,
-                      maxLines: null,
-                      maxLengthEnforcement: MaxLengthEnforcement.enforced,
-                      style: const TextStyle(fontSize: 14),
-                      decoration: InputDecoration(
-                        hintText: 'Message to channel...',
-                        hintStyle: const TextStyle(fontSize: 14),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(24),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 10,
-                        ),
-                        isDense: true,
-                        counterText: _characterCount >= 150
-                            ? '$_characterCount/$_maxCharacters'
-                            : '',
-                        counterStyle: TextStyle(
-                          fontSize: 10,
-                          color: _characterCount > _maxCharacters * 0.9
-                              ? Colors.orange
-                              : Theme.of(context).textTheme.bodySmall?.color,
-                        ),
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            Icons.send_rounded,
-                            size: 22,
-                            color: _textController.text.trim().isEmpty
-                                ? Theme.of(context).disabledColor
-                                : Theme.of(context).colorScheme.primary,
+                  // Recipient selector bar
+                  Consumer<ContactsProvider>(
+                    builder: (context, contactsProvider, child) {
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 8),
+                        child: InkWell(
+                          onTap: _showRecipientSelector,
+                          borderRadius: BorderRadius.circular(8),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.surfaceVariant,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  _recipientType == MessageRecipientType.contact
+                                      ? Icons.person
+                                      : Icons.tag,
+                                  size: 18,
+                                  color: Theme.of(context).colorScheme.primary,
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    'To: ${_getRecipientDisplayName()}',
+                                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                Icon(
+                                  Icons.arrow_drop_down,
+                                  color: Theme.of(context).colorScheme.primary,
+                                ),
+                              ],
+                            ),
                           ),
-                          onPressed: _textController.text.trim().isEmpty
-                              ? null
-                              : _sendMessage,
-                          tooltip: 'Send',
+                        ),
+                      );
+                    },
+                  ),
+                  // Message input row
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      // SAR quick action button
+                      IconButton(
+                        icon: const Icon(Icons.add_location_alt),
+                        tooltip: 'Send SAR marker',
+                        onPressed: _showSarDialog,
+                        style: IconButton.styleFrom(
+                          backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                          foregroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
                         ),
                       ),
-                      textInputAction: TextInputAction.send,
-                      onSubmitted: (_) => _sendMessage(),
-                    ),
+                      const SizedBox(width: 8),
+                      // Text field with embedded send button
+                      Expanded(
+                        child: TextField(
+                          controller: _textController,
+                          focusNode: _focusNode,
+                          maxLength: _maxCharacters,
+                          maxLines: null,
+                          maxLengthEnforcement: MaxLengthEnforcement.enforced,
+                          style: const TextStyle(fontSize: 14),
+                          decoration: InputDecoration(
+                            hintText: 'Type a message...',
+                            hintStyle: const TextStyle(fontSize: 14),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(24),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 10,
+                            ),
+                            isDense: true,
+                            counterText: _characterCount >= 150
+                                ? '$_characterCount/$_maxCharacters'
+                                : '',
+                            counterStyle: TextStyle(
+                              fontSize: 10,
+                              color: _characterCount > _maxCharacters * 0.9
+                                  ? Colors.orange
+                                  : Theme.of(context).textTheme.bodySmall?.color,
+                            ),
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                Icons.send_rounded,
+                                size: 22,
+                                color: _textController.text.trim().isEmpty
+                                    ? Theme.of(context).disabledColor
+                                    : Theme.of(context).colorScheme.primary,
+                              ),
+                              onPressed: _textController.text.trim().isEmpty
+                                  ? null
+                                  : _sendMessage,
+                              tooltip: 'Send',
+                            ),
+                          ),
+                          textInputAction: TextInputAction.send,
+                          onSubmitted: (_) => _sendMessage(),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -944,6 +1165,214 @@ class _MarkerTypeChip extends StatelessWidget {
               ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+// Message recipient type enum
+enum MessageRecipientType {
+  contact,
+  room,
+}
+
+// Recipient Selector Sheet
+class _RecipientSelectorSheet extends StatefulWidget {
+  final String? selectedRecipientId;
+  final MessageRecipientType selectedRecipientType;
+  final void Function(String?, MessageRecipientType) onSelect;
+
+  const _RecipientSelectorSheet({
+    required this.selectedRecipientId,
+    required this.selectedRecipientType,
+    required this.onSelect,
+  });
+
+  @override
+  State<_RecipientSelectorSheet> createState() => _RecipientSelectorSheetState();
+}
+
+class _RecipientSelectorSheetState extends State<_RecipientSelectorSheet> with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(
+      length: 2,
+      vsync: this,
+      initialIndex: widget.selectedRecipientType == MessageRecipientType.contact ? 0 : 1,
+    );
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.7,
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      child: Column(
+        children: [
+          // Header
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              border: Border(
+                bottom: BorderSide(
+                  color: Theme.of(context).dividerColor,
+                  width: 1,
+                ),
+              ),
+            ),
+            child: Row(
+              children: [
+                Text(
+                  'Select Recipient',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                ),
+                const Spacer(),
+                IconButton(
+                  icon: const Icon(Icons.close),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ],
+            ),
+          ),
+          // Tab bar
+          TabBar(
+            controller: _tabController,
+            tabs: const [
+              Tab(
+                icon: Icon(Icons.person),
+                text: 'Contacts',
+              ),
+              Tab(
+                icon: Icon(Icons.tag),
+                text: 'Channels',
+              ),
+            ],
+          ),
+          // Tab view
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                // Contacts tab
+                Consumer<ContactsProvider>(
+                  builder: (context, contactsProvider, child) {
+                    final contacts = contactsProvider.chatContacts;
+
+                    if (contacts.isEmpty) {
+                      return const Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.person_off, size: 64, color: Colors.grey),
+                            SizedBox(height: 16),
+                            Text('No contacts available'),
+                          ],
+                        ),
+                      );
+                    }
+
+                    return ListView.builder(
+                      itemCount: contacts.length,
+                      itemBuilder: (context, index) {
+                        final contact = contacts[index];
+                        final isSelected = widget.selectedRecipientType == MessageRecipientType.contact &&
+                            widget.selectedRecipientId == contact.publicKeyHex;
+
+                        return ListTile(
+                          leading: CircleAvatar(
+                            child: contact.roleEmoji != null
+                                ? Text(contact.roleEmoji!)
+                                : const Icon(Icons.person),
+                          ),
+                          title: Text(contact.displayName),
+                          subtitle: Text(
+                            contact.publicKeyShort,
+                            style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+                          ),
+                          trailing: isSelected
+                              ? Icon(
+                                  Icons.check_circle,
+                                  color: Theme.of(context).colorScheme.primary,
+                                )
+                              : null,
+                          selected: isSelected,
+                          onTap: () {
+                            widget.onSelect(contact.publicKeyHex, MessageRecipientType.contact);
+                            Navigator.pop(context);
+                          },
+                        );
+                      },
+                    );
+                  },
+                ),
+                // Channels/Rooms tab
+                Consumer<ContactsProvider>(
+                  builder: (context, contactsProvider, child) {
+                    final rooms = contactsProvider.rooms;
+
+                    if (rooms.isEmpty) {
+                      return Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.tag, size: 64, color: Colors.grey),
+                            const SizedBox(height: 16),
+                            const Text('No channels available'),
+                          ],
+                        ),
+                      );
+                    }
+
+                    return ListView.builder(
+                      itemCount: rooms.length,
+                      itemBuilder: (context, index) {
+                        final room = rooms[index];
+                        final isSelected = widget.selectedRecipientType == MessageRecipientType.room &&
+                            widget.selectedRecipientId == room.publicKeyHex;
+
+                        return ListTile(
+                          leading: const CircleAvatar(
+                            child: Icon(Icons.tag),
+                          ),
+                          title: Text(room.displayName),
+                          subtitle: Text(
+                            room.publicKeyShort,
+                            style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+                          ),
+                          trailing: isSelected
+                              ? Icon(
+                                  Icons.check_circle,
+                                  color: Theme.of(context).colorScheme.primary,
+                                )
+                              : null,
+                          selected: isSelected,
+                          onTap: () {
+                            widget.onSelect(room.publicKeyHex, MessageRecipientType.room);
+                            Navigator.pop(context);
+                          },
+                        );
+                      },
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

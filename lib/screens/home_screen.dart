@@ -9,6 +9,8 @@ import 'map_tab.dart';
 import 'map_management_screen.dart';
 import 'settings_screen.dart';
 import 'device_config_screen.dart';
+import 'packet_log_screen.dart';
+import 'message_history_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final Function(AppThemeMode) onThemeChanged;
@@ -234,6 +236,25 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               PopupMenuItem(
                 child: const Row(
                   children: [
+                    Icon(Icons.history),
+                    SizedBox(width: 8),
+                    Text('Message History'),
+                  ],
+                ),
+                onTap: () {
+                  Future.delayed(Duration.zero, () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const MessageHistoryScreen(),
+                      ),
+                    );
+                  });
+                },
+              ),
+              PopupMenuItem(
+                child: const Row(
+                  children: [
                     Icon(Icons.refresh),
                     SizedBox(width: 8),
                     Text('Refresh Contacts'),
@@ -440,21 +461,34 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                   ),
                   const SizedBox(width: 8),
                   // Disconnect button (prominent, icon only)
-                  FilledButton(
-                    onPressed: () async {
-                      await provider.disconnect();
-                      if (context.mounted) {
-                        context.read<AppProvider>().clearAllData();
-                      }
+                  // Long press to open packet log viewer
+                  GestureDetector(
+                    onLongPress: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => PacketLogScreen(
+                            bleService: provider.bleService,
+                          ),
+                        ),
+                      );
                     },
-                    style: FilledButton.styleFrom(
-                      backgroundColor: Colors.red.shade700,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.all(10),
-                      minimumSize: const Size(40, 40),
-                      shape: const CircleBorder(),
+                    child: FilledButton(
+                      onPressed: () async {
+                        await provider.disconnect();
+                        if (context.mounted) {
+                          context.read<AppProvider>().clearAllData();
+                        }
+                      },
+                      style: FilledButton.styleFrom(
+                        backgroundColor: Colors.red.shade700,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.all(10),
+                        minimumSize: const Size(40, 40),
+                        shape: const CircleBorder(),
+                      ),
+                      child: const Icon(Icons.power_settings_new, size: 20),
                     ),
-                    child: const Icon(Icons.power_settings_new, size: 20),
                   ),
                 ],
               ),

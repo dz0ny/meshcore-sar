@@ -49,7 +49,7 @@ class CayenneLppParser {
             break;
 
           case MeshCoreConstants.lppAnalogInput:
-            final rawValue = reader.readInt16LE();
+            final rawValue = reader.readInt16BE();
             final value = rawValue / 100.0;
             print('      Analog Input (raw): $rawValue');
             print('      Analog Input (volts): ${value}V');
@@ -63,7 +63,7 @@ class CayenneLppParser {
             break;
 
           case MeshCoreConstants.lppAnalogOutput:
-            final rawValue = reader.readInt16LE();
+            final rawValue = reader.readInt16BE();
             final value = rawValue / 100.0;
             print('      Analog Output (raw): $rawValue');
             print('      Analog Output (volts): ${value}V');
@@ -71,7 +71,7 @@ class CayenneLppParser {
             break;
 
           case MeshCoreConstants.lppIlluminanceSensor:
-            final value = reader.readUInt16LE();
+            final value = reader.readUInt16BE();
             print('      Illuminance: $value lux');
             extraSensorData['illuminance_$channel'] = value;
             break;
@@ -83,7 +83,7 @@ class CayenneLppParser {
             break;
 
           case MeshCoreConstants.lppTemperatureSensor:
-            final rawValue = reader.readInt16LE();
+            final rawValue = reader.readInt16BE();
             temperature = rawValue / 10.0;
             print('      Temperature (raw): $rawValue');
             print('      Temperature: ${temperature?.toStringAsFixed(1)}°C');
@@ -97,22 +97,22 @@ class CayenneLppParser {
             break;
 
           case MeshCoreConstants.lppAccelerometer:
-            final x = reader.readInt16LE() / 1000.0;
-            final y = reader.readInt16LE() / 1000.0;
-            final z = reader.readInt16LE() / 1000.0;
+            final x = reader.readInt16BE() / 1000.0;
+            final y = reader.readInt16BE() / 1000.0;
+            final z = reader.readInt16BE() / 1000.0;
             print('      Accelerometer: x=$x, y=$y, z=$z');
             extraSensorData['accelerometer_$channel'] = {'x': x, 'y': y, 'z': z};
             break;
 
           case MeshCoreConstants.lppBarometer:
-            final rawValue = reader.readUInt16LE();
+            final rawValue = reader.readUInt16BE();
             pressure = rawValue / 10.0;
             print('      Barometer (raw): $rawValue');
             print('      Barometer: ${pressure?.toStringAsFixed(1)} hPa');
             break;
 
           case MeshCoreConstants.lppVoltageSensor:
-            final rawValue = reader.readUInt16LE();
+            final rawValue = reader.readUInt16BE();
             final value = rawValue / 100.0;
             print('      Voltage (raw): $rawValue');
             print('      Voltage: ${value}V');
@@ -123,9 +123,9 @@ class CayenneLppParser {
             break;
 
           case MeshCoreConstants.lppGyrometer:
-            final x = reader.readInt16LE() / 100.0;
-            final y = reader.readInt16LE() / 100.0;
-            final z = reader.readInt16LE() / 100.0;
+            final x = reader.readInt16BE() / 100.0;
+            final y = reader.readInt16BE() / 100.0;
+            final z = reader.readInt16BE() / 100.0;
             print('      Gyrometer: x=$x, y=$y, z=$z');
             extraSensorData['gyrometer_$channel'] = {'x': x, 'y': y, 'z': z};
             break;

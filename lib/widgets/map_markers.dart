@@ -216,11 +216,21 @@ class MapMarkers {
                 '${contact.displayLocation!.latitude.toStringAsFixed(6)}, ${contact.displayLocation!.longitude.toStringAsFixed(6)}',
               ),
             ],
-            if (contact.displayBattery != null)
+            if (contact.telemetry?.batteryMilliVolts != null)
+              _InfoRow(
+                'Voltage',
+                '${(contact.telemetry!.batteryMilliVolts! / 1000).toStringAsFixed(3)}V'
+                '${contact.telemetry!.batteryPercentage != null ? ' (${contact.telemetry!.batteryPercentage!.toStringAsFixed(1)}%)' : ''}',
+              )
+            else if (contact.displayBattery != null)
               _InfoRow('Battery', '${contact.displayBattery!.round()}%'),
             if (contact.telemetry?.temperature != null)
               _InfoRow(
                   'Temperature', '${contact.telemetry!.temperature!.toStringAsFixed(1)}°C'),
+            if (contact.telemetry?.humidity != null)
+              _InfoRow('Humidity', '${contact.telemetry!.humidity!.toStringAsFixed(1)}%'),
+            if (contact.telemetry?.pressure != null)
+              _InfoRow('Pressure', '${contact.telemetry!.pressure!.toStringAsFixed(1)} hPa'),
             _InfoRow('Last Seen', contact.timeSinceLastSeen),
             _InfoRow('Public Key', contact.publicKeyShort),
           ],

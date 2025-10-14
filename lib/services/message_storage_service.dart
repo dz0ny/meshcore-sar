@@ -1,0 +1,164 @@
+import 'dart:convert';
+import 'dart:typed_data';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../models/message.dart';
+import '../models/sar_marker.dart';
+import 'package:latlong2/latlong.dart';
+
+/// Service for persisting messages to local storage
+class MessageStorageService {
+  static const String _messagesKey = 'stored_messages';
+  static const int _maxStoredMessages = 1000; // Store up to 1000 messages
+
+  /// Save messages to persistent storage
+  Future<void> saveMessages(List<Message> messages) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+
+      // Convert messages to JSON
+      final jsonList = messages.map((msg) => _messageToJson(msg)).toList();
+
+      // Limit to max stored messages (keep most recent)
+      final limitedList = jsonList.length > _maxStoredMessages
+          ? jsonList.sublist(jsonList.length - _maxStoredMessages)
+          : jsonList;
+
+      final jsonString = jsonEncode(limitedList);
+      await prefs.setString(_messagesKey, jsonString);
+
+      print('✅ [MessageStorage] Saved ${limitedList.length} messages to storage');
+    } catch (e) {
+      print('❌ [MessageStorage] Error saving messages: $e');
+    }
+  }
+
+  /// Load messages from persistent storage
+  Future<List<Message>> loadMessages() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final jsonString = prefs.getString(_messagesKey);
+
+      if (jsonString == null || jsonString.isEmpty) {
+        print('ℹ️ [MessageStorage] No stored messages found');
+        return [];
+      }
+
+      final jsonList = jsonDecode(jsonString) as List<dynamic>;
+      final messages = jsonList
+          .map((json) => _messageFromJson(json as Map<String, dynamic>))
+          .where((msg) => msg != null)
+          .cast<Message>()
+          .toList();
+
+      print('✅ [MessageStorage] Loaded ${messages.length} messages from storage');
+      return messages;
+    } catch (e) {
+      print('❌ [MessageStorage] Error loading messages: $e');
+      return [];
+    }
+  }
+
+  /// Clear all stored messages
+  Future<void> clearMessages() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_messagesKey);
+      print('✅ [MessageStorage] Cleared all stored messages');
+    } catch (e) {
+      print('❌ [MessageStorage] Error clearing messages: $e');
+    }
+  }
+
+  /// Get storage statistics
+  Future<Map<String, dynamic>> getStorageStats() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final jsonString = prefs.getString(_messagesKey);
+
+      if (jsonString == null || jsonString.isEmpty) {
+        return {
+          'messageCount': 0,
+          'storageSizeBytes': 0,
+          'storageSizeKB': 0,
+        };
+      }
+
+      final sizeBytes = jsonString.length;
+      final jsonList = jsonDecode(jsonString) as List<dynamic>;
+
+      return {
+        'messageCount': jsonList.length,
+        'storageSizeBytes': sizeBytes,
+        'storageSizeKB': (sizeBytes / 1024).toStringAsFixed(2),
+      };
+    } catch (e) {
+      print('❌ [MessageStorage] Error getting storage stats: $e');
+      return {
+        'messageCount': 0,
+        'storageSizeBytes': 0,
+        'storageSizeKB': 0,
+      };
+    }
+  }
+
+  /// Convert Message to JSON
+  Map<String, dynamic> _messageToJson(Message message) {
+    return {
+      'id': message.id,
+      'messageType': message.messageType.name,
+      'senderPublicKeyPrefix': message.senderPublicKeyPrefix != null
+          ? base64Encode(message.senderPublicKeyPrefix!)
+          : null,
+      'channelIdx': message.channelIdx,
+      'pathLen': message.pathLen,
+      'textType': message.textType.value,
+      'senderTimestamp': message.senderTimestamp,
+      'text': message.text,
+      'isSarMarker': message.isSarMarker,
+      'sarMarkerType': message.sarMarkerType?.name,
+      'sarGpsLat': message.sarGpsCoordinates?.latitude,
+      'sarGpsLon': message.sarGpsCoordinates?.longitude,
+      'receivedAtMillis': message.receivedAt.millisecondsSinceEpoch,
+      'senderName': message.senderName,
+    };
+  }
+
+  /// Convert JSON to Message
+  Message? _messageFromJson(Map<String, dynamic> json) {
+    try {
+      return Message(
+        id: json['id'] as String,
+        messageType: MessageType.values.firstWhere(
+          (e) => e.name == json['messageType'],
+          orElse: () => MessageType.contact,
+        ),
+        senderPublicKeyPrefix: json['senderPublicKeyPrefix'] != null
+            ? Uint8List.fromList(
+                base64Decode(json['senderPublicKeyPrefix'] as String))
+            : null,
+        channelIdx: json['channelIdx'] as int?,
+        pathLen: json['pathLen'] as int,
+        textType: MessageTextType.fromValue(json['textType'] as int),
+        senderTimestamp: json['senderTimestamp'] as int,
+        text: json['text'] as String,
+        isSarMarker: json['isSarMarker'] as bool? ?? false,
+        sarMarkerType: json['sarMarkerType'] != null
+            ? SarMarkerType.values.firstWhere(
+                (e) => e.name == json['sarMarkerType'],
+                orElse: () => SarMarkerType.unknown,
+              )
+            : null,
+        sarGpsCoordinates: json['sarGpsLat'] != null &&
+                json['sarGpsLon'] != null
+            ? LatLng(json['sarGpsLat'] as double, json['sarGpsLon'] as double)
+            : null,
+        receivedAt: DateTime.fromMillisecondsSinceEpoch(
+            json['receivedAtMillis'] as int),
+        senderName: json['senderName'] as String?,
+      );
+    } catch (e) {
+      print('❌ [MessageStorage] Error parsing message from JSON: $e');
+      return null;
+    }
+  }
+}

@@ -5,6 +5,7 @@ import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import '../models/contact.dart';
 import '../models/contact_telemetry.dart';
 import '../models/message.dart';
+import '../models/ble_packet_log.dart';
 import 'buffer_reader.dart';
 import 'buffer_writer.dart';
 import 'meshcore_constants.dart';
@@ -15,6 +16,7 @@ typedef OnContactsCompleteCallback = void Function(List<Contact> contacts);
 typedef OnMessageCallback = void Function(Message message);
 typedef OnTelemetryCallback = void Function(Uint8List publicKey, Uint8List lppData);
 typedef OnSelfInfoCallback = void Function(Map<String, dynamic> selfInfo);
+typedef OnNoMoreMessagesCallback = void Function();
 typedef OnErrorCallback = void Function(String error);
 typedef OnConnectionStateCallback = void Function(bool isConnected);
 
@@ -32,6 +34,7 @@ class MeshCoreBleService {
   OnMessageCallback? onMessageReceived;
   OnTelemetryCallback? onTelemetryReceived;
   OnSelfInfoCallback? onSelfInfoReceived;
+  OnNoMoreMessagesCallback? onNoMoreMessages;
   OnErrorCallback? onError;
 
   // Internal state
@@ -48,6 +51,11 @@ class MeshCoreBleService {
   // Activity callbacks (for blinking indicators)
   VoidCallback? onRxActivity;
   VoidCallback? onTxActivity;
+
+  // Packet logging
+  final List<BlePacketLog> _packetLogs = [];
+  List<BlePacketLog> get packetLogs => List.unmodifiable(_packetLogs);
+  static const int _maxLogSize = 1000; // Keep last 1000 packets
 
   /// Scan for MeshCore devices
   Stream<BluetoothDevice> scanForDevices({Duration timeout = const Duration(seconds: 10)}) async* {
@@ -238,6 +246,10 @@ class MeshCoreBleService {
         throw Exception('Characteristic does not support write operations');
       }
 
+      // Log TX packet (extract command code from first byte)
+      final commandCode = data.isNotEmpty ? data[0] : null;
+      _logPacket(data, PacketDirection.tx, responseCode: commandCode);
+
       // Increment TX packet counter and trigger activity indicator
       _txPacketCount++;
       onTxActivity?.call();
@@ -261,16 +273,21 @@ class MeshCoreBleService {
         return;
       }
 
+      final dataBytes = Uint8List.fromList(data);
+
       // Increment RX packet counter and trigger activity indicator
       _rxPacketCount++;
       onRxActivity?.call();
 
       print('  Raw data: ${data.map((b) => b.toRadixString(16).padLeft(2, '0')).join(' ')}');
 
-      final reader = BufferReader(Uint8List.fromList(data));
+      final reader = BufferReader(dataBytes);
       final responseCode = reader.readByte();
       print('  Response code: $responseCode (0x${responseCode.toRadixString(16)})');
       print('  Remaining bytes: ${reader.remainingBytesCount}');
+
+      // Log RX packet (before processing so we capture everything)
+      _logPacket(dataBytes, PacketDirection.rx, responseCode: responseCode);
 
       switch (responseCode) {
         case MeshCoreConstants.respContactsStart:
@@ -316,6 +333,14 @@ class MeshCoreBleService {
         case MeshCoreConstants.pushLogRxData:
           print('  → Handling LogRxData push');
           _handleLogRxData(reader);
+          break;
+        case MeshCoreConstants.pushNewAdvert:
+          print('  → Handling NewAdvert push');
+          _handleNewAdvert(reader);
+          break;
+        case MeshCoreConstants.respNoMoreMessages:
+          print('  → Response: No More Messages');
+          onNoMoreMessages?.call();
           break;
         case MeshCoreConstants.respOk:
           print('  → Response: OK');
@@ -708,6 +733,79 @@ class MeshCoreBleService {
     }
   }
 
+  /// Handle NewAdvert push
+  void _handleNewAdvert(BufferReader reader) {
+    try {
+      print('  [NewAdvert] Parsing new advertisement...');
+      print('    Remaining bytes: ${reader.remainingBytesCount}');
+
+      // NewAdvert format is identical to Contact response:
+      // - 32 bytes: public key
+      // - 1 byte: type
+      // - 1 byte: flags
+      // - 1 byte: outPathLen
+      // - 64 bytes: outPath
+      // - 32 bytes: advName (null-terminated string)
+      // - 4 bytes: lastAdvert (uint32)
+      // - 4 bytes: advLat (int32)
+      // - 4 bytes: advLon (int32)
+      // - 4 bytes: lastMod (uint32)
+
+      final publicKey = reader.readBytes(32);
+      print('    Public key prefix: ${publicKey.sublist(0, 6).map((b) => b.toRadixString(16).padLeft(2, '0')).join(':')}');
+
+      final typeByte = reader.readByte();
+      final type = ContactType.fromValue(typeByte);
+      print('    Type byte: $typeByte → Type: $type');
+
+      final flags = reader.readByte();
+      print('    Flags: $flags (0x${flags.toRadixString(16).padLeft(2, '0')})');
+
+      final outPathLen = reader.readInt8();
+      print('    Out path length: $outPathLen');
+
+      final outPath = reader.readBytes(64);
+      print('    Out path: ${outPath.sublist(0, 6).map((b) => b.toRadixString(16).padLeft(2, '0')).join(':')}...');
+
+      final advName = reader.readCString(32);
+      print('    Advertised name: "$advName"');
+
+      final lastAdvert = reader.readUInt32LE();
+      print('    Last advert timestamp: $lastAdvert');
+
+      final advLat = reader.readInt32LE();
+      print('    Latitude (raw int32): $advLat');
+      print('    Latitude (decimal): ${advLat / 1000000.0}°');
+
+      final advLon = reader.readInt32LE();
+      print('    Longitude (raw int32): $advLon');
+      print('    Longitude (decimal): ${advLon / 1000000.0}°');
+
+      final lastMod = reader.readUInt32LE();
+      print('    Last modified timestamp: $lastMod');
+
+      final contact = Contact(
+        publicKey: publicKey,
+        type: type,
+        flags: flags,
+        outPathLen: outPathLen,
+        outPath: outPath,
+        advName: advName,
+        lastAdvert: lastAdvert,
+        advLat: advLat,
+        advLon: advLon,
+        lastMod: lastMod,
+      );
+
+      print('  ✅ [NewAdvert] Parsed successfully - new contact advertised on network');
+      // Call the contact received callback to add/update the contact
+      onContactReceived?.call(contact);
+    } catch (e) {
+      print('  ❌ [NewAdvert] Parsing error: $e');
+      onError?.call('NewAdvert parsing error: $e');
+    }
+  }
+
   /// Send AppStart command
   Future<void> _sendAppStart() async {
     print('📤 [BLE] Preparing AppStart command...');
@@ -780,10 +878,11 @@ class MeshCoreBleService {
   }
 
   /// Request telemetry from contact
-  Future<void> requestTelemetry(Uint8List contactPublicKey) async {
+  /// [zeroHop] - if true, only direct connection (no mesh forwarding)
+  Future<void> requestTelemetry(Uint8List contactPublicKey, {bool zeroHop = false}) async {
     final writer = BufferWriter();
     writer.writeByte(MeshCoreConstants.cmdSendTelemetryReq);
-    writer.writeByte(0); // reserved
+    writer.writeByte(zeroHop ? 0 : 255); // hop count: 0 = direct only, 255 = unlimited
     writer.writeByte(0); // reserved
     writer.writeByte(0); // reserved
     writer.writeBytes(contactPublicKey);
@@ -794,6 +893,14 @@ class MeshCoreBleService {
   Future<void> getBatteryVoltage() async {
     final writer = BufferWriter();
     writer.writeByte(MeshCoreConstants.cmdGetBatteryVoltage);
+    await _writeData(writer.toBytes());
+  }
+
+  /// Sync next message from device queue
+  /// Returns true if a message was retrieved, false if no more messages
+  Future<void> syncNextMessage() async {
+    final writer = BufferWriter();
+    writer.writeByte(MeshCoreConstants.cmdSyncNextMessage);
     await _writeData(writer.toBytes());
   }
 
@@ -862,6 +969,87 @@ class MeshCoreBleService {
     await _writeData(writer.toBytes());
   }
 
+  /// Log a packet
+  void _logPacket(Uint8List data, PacketDirection direction, {int? responseCode}) {
+    // Add new packet
+    _packetLogs.add(BlePacketLog(
+      timestamp: DateTime.now(),
+      rawData: data,
+      direction: direction,
+      responseCode: responseCode,
+      description: _getPacketDescription(responseCode, direction),
+    ));
+
+    // Limit log size to prevent memory issues
+    if (_packetLogs.length > _maxLogSize) {
+      _packetLogs.removeAt(0);
+    }
+  }
+
+  /// Get human-readable description of packet
+  String? _getPacketDescription(int? code, PacketDirection direction) {
+    if (direction == PacketDirection.tx) {
+      // TX packets - command codes
+      switch (code) {
+        case MeshCoreConstants.cmdGetContacts:
+          return 'Get Contacts';
+        case MeshCoreConstants.cmdSendTxtMsg:
+          return 'Send Text Message';
+        case MeshCoreConstants.cmdSendChannelTxtMsg:
+          return 'Send Channel Message';
+        case MeshCoreConstants.cmdSendTelemetryReq:
+          return 'Request Telemetry';
+        case MeshCoreConstants.cmdDeviceQuery:
+          return 'Device Query';
+        case MeshCoreConstants.cmdAppStart:
+          return 'App Start';
+        default:
+          return null;
+      }
+    } else {
+      // RX packets - response codes
+      switch (code) {
+        case MeshCoreConstants.respContactsStart:
+          return 'Contacts Start';
+        case MeshCoreConstants.respContact:
+          return 'Contact Info';
+        case MeshCoreConstants.respEndOfContacts:
+          return 'End of Contacts';
+        case MeshCoreConstants.respSent:
+          return 'Message Sent';
+        case MeshCoreConstants.respContactMsgRecv:
+          return 'Contact Message';
+        case MeshCoreConstants.respChannelMsgRecv:
+          return 'Channel Message';
+        case MeshCoreConstants.pushTelemetryResponse:
+          return 'Telemetry Data';
+        case MeshCoreConstants.respDeviceInfo:
+          return 'Device Info';
+        case MeshCoreConstants.respSelfInfo:
+          return 'Self Info';
+        case MeshCoreConstants.pushAdvert:
+          return 'Advertisement';
+        case MeshCoreConstants.pushLogRxData:
+          return 'Log RX Data';
+        case MeshCoreConstants.pushNewAdvert:
+          return 'New Advertisement';
+        case MeshCoreConstants.respNoMoreMessages:
+          return 'No More Messages';
+        case MeshCoreConstants.respOk:
+          return 'OK';
+        case MeshCoreConstants.respErr:
+          return 'ERROR';
+        default:
+          return null;
+      }
+    }
+  }
+
+  /// Clear packet logs
+  void clearPacketLogs() {
+    _packetLogs.clear();
+  }
+
   /// Reset packet counters
   void resetCounters() {
     _rxPacketCount = 0;
@@ -872,5 +1060,6 @@ class MeshCoreBleService {
   void dispose() {
     _txSubscription?.cancel();
     _pendingContacts.clear();
+    _packetLogs.clear();
   }
 }

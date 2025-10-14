@@ -50,6 +50,22 @@ class BufferReader {
     return value > 32767 ? value - 65536 : value;
   }
 
+  /// Read unsigned 16-bit integer (big-endian)
+  int readUInt16BE() {
+    if (_offset + 2 > _buffer.length) {
+      throw Exception('Buffer overflow: attempting to read beyond buffer length');
+    }
+    final value = (_buffer[_offset] << 8) | _buffer[_offset + 1];
+    _offset += 2;
+    return value;
+  }
+
+  /// Read signed 16-bit integer (big-endian)
+  int readInt16BE() {
+    final value = readUInt16BE();
+    return value > 32767 ? value - 65536 : value;
+  }
+
   /// Read unsigned 32-bit integer (little-endian)
   int readUInt32LE() {
     if (_offset + 4 > _buffer.length) {

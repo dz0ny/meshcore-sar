@@ -41,6 +41,9 @@ class ConnectionProvider with ChangeNotifier {
   int get rxPacketCount => _bleService.rxPacketCount;
   int get txPacketCount => _bleService.txPacketCount;
 
+  // Message sync state
+  bool _noMoreMessages = false;
+
   // Callbacks for other providers
   Function(Contact)? onContactReceived;
   Function(List<Contact>)? onContactsComplete;
@@ -102,6 +105,11 @@ class ConnectionProvider with ChangeNotifier {
 
     _bleService.onTelemetryReceived = (publicKey, lppData) {
       onTelemetryReceived?.call(publicKey, lppData);
+    };
+
+    _bleService.onNoMoreMessages = () {
+      print('📥 [Provider] Received NoMoreMessages signal');
+      _noMoreMessages = true;
     };
 
     _bleService.onSelfInfoReceived = (selfInfo) {
@@ -297,7 +305,8 @@ class ConnectionProvider with ChangeNotifier {
   }
 
   /// Request telemetry from contact
-  Future<void> requestTelemetry(Uint8List contactPublicKey) async {
+  /// [zeroHop] - if true, only direct connection (no mesh forwarding)
+  Future<void> requestTelemetry(Uint8List contactPublicKey, {bool zeroHop = false}) async {
     if (!_bleService.isConnected) {
       _error = 'Not connected to device';
       notifyListeners();
@@ -305,7 +314,7 @@ class ConnectionProvider with ChangeNotifier {
     }
 
     try {
-      await _bleService.requestTelemetry(contactPublicKey);
+      await _bleService.requestTelemetry(contactPublicKey, zeroHop: zeroHop);
     } catch (e) {
       _error = 'Failed to request telemetry: $e';
       notifyListeners();
@@ -418,6 +427,66 @@ class ConnectionProvider with ChangeNotifier {
     } catch (e) {
       _error = 'Failed to refresh device info: $e';
       notifyListeners();
+    }
+  }
+
+  /// Sync messages from device queue
+  /// Call this repeatedly until no more messages are available
+  Future<bool> syncNextMessage() async {
+    if (!_bleService.isConnected) {
+      _error = 'Not connected to device';
+      notifyListeners();
+      return false;
+    }
+
+    try {
+      await _bleService.syncNextMessage();
+      return true;
+    } catch (e) {
+      _error = 'Failed to sync message: $e';
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// Sync all waiting messages from device
+  Future<int> syncAllMessages() async {
+    if (!_bleService.isConnected) {
+      _error = 'Not connected to device';
+      notifyListeners();
+      return 0;
+    }
+
+    int count = 0;
+    _noMoreMessages = false; // Reset flag
+
+    try {
+      print('🔄 [Provider] Starting message sync...');
+      // Keep syncing until we get NoMoreMessages response
+      // The device will send ContactMsgRecv or ChannelMsgRecv responses
+      // until it sends NoMoreMessages
+      for (int i = 0; i < 100; i++) {  // Safety limit
+        if (_noMoreMessages) {
+          print('✅ [Provider] Message sync complete - NoMoreMessages received after $count requests');
+          break;
+        }
+
+        await _bleService.syncNextMessage();
+        count++;
+
+        // Small delay to allow response to be processed
+        await Future.delayed(const Duration(milliseconds: 100));
+      }
+
+      if (!_noMoreMessages && count >= 100) {
+        print('⚠️ [Provider] Message sync stopped - reached safety limit of 100 requests');
+      }
+
+      return count;
+    } catch (e) {
+      _error = 'Failed to sync messages: $e';
+      notifyListeners();
+      return count;
     }
   }
 

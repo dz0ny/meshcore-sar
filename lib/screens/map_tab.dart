@@ -1544,8 +1544,14 @@ class _DetailedCompassDialogState extends State<_DetailedCompassDialog> {
         );
       }
 
-      // Show battery if available
-      if (_selectedContact!.telemetry?.batteryPercentage != null) {
+      // Show voltage/battery if available
+      if (_selectedContact!.telemetry?.batteryMilliVolts != null) {
+        final volts = (_selectedContact!.telemetry!.batteryMilliVolts! / 1000).toStringAsFixed(3);
+        final percent = _selectedContact!.telemetry!.batteryPercentage != null
+            ? ' (${_selectedContact!.telemetry!.batteryPercentage!.round()}%)'
+            : '';
+        additionalInfo = 'Voltage: ${volts}V$percent';
+      } else if (_selectedContact!.telemetry?.batteryPercentage != null) {
         additionalInfo = 'Battery: ${_selectedContact!.telemetry!.batteryPercentage!.round()}%';
       }
     } else if (_selectedSarMarker != null) {

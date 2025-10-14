@@ -13,7 +13,9 @@
       "Bash(flutter pub get:*)",
       "Bash(flutter run:*)",
       "Bash(nc:*)",
-      "Bash(pkill:*)"
+      "Bash(pkill:*)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)"
     ],
     "deny": [],
     "ask": []

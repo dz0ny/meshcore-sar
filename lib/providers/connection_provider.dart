@@ -50,13 +50,22 @@ class ConnectionProvider with ChangeNotifier {
   final Map<String, RoomLoginState> _roomLoginStates = {};
   Map<String, RoomLoginState> get roomLoginStates => Map.unmodifiable(_roomLoginStates);
 
+  // Track sent message IDs by ACK tag for delivery confirmation
+  final Map<int, String> _ackTagToMessageId = {};
+  final List<String> _pendingSentMessageIds = []; // Queue of pending message IDs
+
   // Callbacks for other providers
   Function(Contact)? onContactReceived;
   Function(List<Contact>)? onContactsComplete;
   Function(Message)? onMessageReceived;
   Function(Uint8List publicKey, Uint8List lppData)? onTelemetryReceived;
+  Function(Uint8List publicKeyPrefix, int tag, Uint8List responseData)? onBinaryResponse;
+  Function(Uint8List publicKey)? onPathUpdated;
   Function(Uint8List publicKeyPrefix, int permissions, bool isAdmin, int tag)? onLoginSuccess;
   Function(Uint8List publicKeyPrefix)? onLoginFail;
+  Function(String messageId, int expectedAckTag, int suggestedTimeoutMs)? onMessageSent;
+  Function(int ackCode, int roundTripTimeMs)? onMessageDelivered;
+  Function(Uint8List publicKeyPrefix, Uint8List statusData)? onStatusResponse;
 
   ConnectionProvider() {
     _initializeBleService();
@@ -115,14 +124,23 @@ class ConnectionProvider with ChangeNotifier {
       onTelemetryReceived?.call(publicKey, lppData);
     };
 
+    _bleService.onBinaryResponse = (publicKeyPrefix, tag, responseData) {
+      print('📥 [Provider] Binary response received');
+      print('  Public key prefix: ${publicKeyPrefix.map((b) => b.toRadixString(16).padLeft(2, '0')).join(':')}');
+      print('  Tag: $tag');
+      print('  Response data: ${responseData.length} bytes');
+      onBinaryResponse?.call(publicKeyPrefix, tag, responseData);
+    };
+
     _bleService.onNoMoreMessages = () {
       print('📥 [Provider] Received NoMoreMessages signal');
       _noMoreMessages = true;
     };
 
     _bleService.onMessageWaiting = () {
-      print('📥 [Provider] Received MsgWaiting push - auto-fetching messages');
+      print('📥 [Provider] PUSH_CODE_MSG_WAITING received - auto-fetching messages via event');
       // Automatically fetch messages when push notification received
+      // This is the CORRECT way to receive messages - room server pushes them
       syncAllMessages();
     };
 
@@ -167,6 +185,46 @@ class ConnectionProvider with ChangeNotifier {
       print('  Note: Waiting for PUSH_CODE_NEW_ADVERT (0x8A) with full contact details');
       // The companion radio will automatically send PUSH_CODE_NEW_ADVERT if manual_add_contacts=0
       // which will trigger onContactReceived callback and add/update the contact
+    };
+
+    _bleService.onPathUpdated = (publicKey) {
+      print('📥 [Provider] Path updated for contact');
+      print('  Public key: ${publicKey.sublist(0, 6).map((b) => b.toRadixString(16).padLeft(2, '0')).join(':')}...');
+      print('  Note: Mesh network discovered a new/better routing path to this contact');
+      // Forward the callback to ContactsProvider to trigger contact sync
+      onPathUpdated?.call(publicKey);
+    };
+
+    _bleService.onMessageSent = (expectedAckTag, suggestedTimeoutMs, isFloodMode) {
+      print('📥 [Provider] Message sent - ACK tag: $expectedAckTag, timeout: ${suggestedTimeoutMs}ms');
+
+      // Pop the first pending message ID from the queue (FIFO)
+      // This assumes messages are sent sequentially and SENT responses arrive in order
+      if (_pendingSentMessageIds.isNotEmpty) {
+        final messageId = _pendingSentMessageIds.removeAt(0);
+        print('  Matched with message ID: $messageId');
+
+        // Store the ACK tag to message ID mapping for delivery confirmation
+        _ackTagToMessageId[expectedAckTag] = messageId;
+
+        // Notify callback with message ID
+        onMessageSent?.call(messageId, expectedAckTag, suggestedTimeoutMs);
+      } else {
+        print('⚠️ [Provider] SENT response received but no pending message IDs');
+      }
+    };
+
+    _bleService.onMessageDelivered = (ackCode, roundTripTimeMs) {
+      print('📥 [Provider] Message delivered - ACK code: $ackCode, RTT: ${roundTripTimeMs}ms');
+      onMessageDelivered?.call(ackCode, roundTripTimeMs);
+    };
+
+    _bleService.onStatusResponse = (publicKeyPrefix, statusData) {
+      print('📥 [Provider] Status response received from node');
+      print('  Public key prefix: ${publicKeyPrefix.map((b) => b.toRadixString(16).padLeft(2, '0')).join(':')}');
+      print('  Status data: ${statusData.length} bytes');
+      // Forward the callback to whoever needs it (e.g., ContactsProvider)
+      onStatusResponse?.call(publicKeyPrefix, statusData);
     };
 
     _bleService.onDeviceInfoReceived = (deviceInfo) {
@@ -218,6 +276,30 @@ class ConnectionProvider with ChangeNotifier {
     };
 
     // Activity indicators
+
+    _bleService.onBatteryAndStorage = (millivolts, usedKb, totalKb) {
+      print('📥 [Provider] Received BatteryAndStorage:');
+      print('  Battery: ${millivolts}mV (${(millivolts / 1000.0).toStringAsFixed(2)}V)');
+      if (usedKb != null) {
+        print('  Storage Used: ${usedKb}KB');
+      }
+      if (totalKb != null) {
+        print('  Storage Total: ${totalKb}KB');
+        if (totalKb > 0 && usedKb != null) {
+          final usedPercent = (usedKb / totalKb) * 100.0;
+          print('  Storage Usage: ${usedPercent.toStringAsFixed(1)}%');
+        }
+      }
+
+      _deviceInfo = _deviceInfo.copyWith(
+        batteryMilliVolts: millivolts,
+        storageUsedKb: usedKb,
+        storageTotalKb: totalKb,
+        lastUpdate: DateTime.now(),
+      );
+      notifyListeners();
+      print('✅ [Provider] Device info updated with BatteryAndStorage');
+    };
     _bleService.onRxActivity = () {
       _rxActivity = true;
       notifyListeners();
@@ -361,31 +443,53 @@ class ConnectionProvider with ChangeNotifier {
   }
 
   /// Send text message to contact
-  Future<void> sendTextMessage({
+  ///
+  /// Returns true if the message was successfully sent to the BLE service.
+  /// Note: This doesn't mean the message was delivered over the mesh network,
+  /// only that it was queued on the companion radio.
+  ///
+  /// [messageId] - optional message ID to track delivery status
+  Future<bool> sendTextMessage({
     required Uint8List contactPublicKey,
     required String text,
+    String? messageId,
   }) async {
     if (!_bleService.isConnected) {
       _error = 'Not connected to device';
       notifyListeners();
-      return;
+      return false;
     }
 
     try {
+      // Send the message
       await _bleService.sendTextMessage(
         contactPublicKey: contactPublicKey,
         text: text,
       );
+
+      // If message ID provided, add it to the pending queue
+      // When the SENT response arrives, it will be matched with this message ID
+      // Note: Messages must be sent sequentially for this to work correctly
+      if (messageId != null) {
+        _pendingSentMessageIds.add(messageId);
+        print('  Added message ID to pending queue: $messageId');
+      }
+
+      return true;
     } catch (e) {
       _error = 'Failed to send message: $e';
       notifyListeners();
+      return false;
     }
   }
 
   /// Send channel message
+  ///
+  /// [messageId] - optional message ID to track delivery status
   Future<void> sendChannelMessage({
     required int channelIdx,
     required String text,
+    String? messageId,
   }) async {
     if (!_bleService.isConnected) {
       _error = 'Not connected to device';
@@ -398,6 +502,12 @@ class ConnectionProvider with ChangeNotifier {
         channelIdx: channelIdx,
         text: text,
       );
+
+      // If message ID provided, add it to the pending queue
+      if (messageId != null) {
+        _pendingSentMessageIds.add(messageId);
+        print('  Added message ID to pending queue: $messageId');
+      }
     } catch (e) {
       _error = 'Failed to send channel message: $e';
       notifyListeners();
@@ -406,6 +516,7 @@ class ConnectionProvider with ChangeNotifier {
 
   /// Request telemetry from contact
   /// [zeroHop] - if true, only direct connection (no mesh forwarding)
+  @Deprecated('Use requestBinary() instead for better functionality')
   Future<void> requestTelemetry(Uint8List contactPublicKey, {bool zeroHop = false}) async {
     if (!_bleService.isConnected) {
       _error = 'Not connected to device';
@@ -417,6 +528,55 @@ class ConnectionProvider with ChangeNotifier {
       await _bleService.requestTelemetry(contactPublicKey, zeroHop: zeroHop);
     } catch (e) {
       _error = 'Failed to request telemetry: $e';
+      notifyListeners();
+    }
+  }
+
+  /// Send binary request to contact (modern replacement for requestTelemetry)
+  ///
+  /// Supports multiple request types:
+  /// - Telemetry data (use MeshCoreConstants.binaryReqGetTelemetryData)
+  /// - Average/min/max telemetry (use MeshCoreConstants.binaryReqGetAvgMinMax)
+  /// - Access list (use MeshCoreConstants.binaryReqGetAccessList)
+  /// - Neighbors list (use MeshCoreConstants.binaryReqGetNeighbours)
+  ///
+  /// Response arrives via onBinaryResponse callback with matching tag.
+  ///
+  /// Example - request telemetry:
+  /// ```dart
+  /// connectionProvider.onBinaryResponse = (prefix, tag, data) {
+  ///   // Parse telemetry data (Cayenne LPP format)
+  ///   final telemetry = CayenneLppParser.parse(data);
+  /// };
+  /// await connectionProvider.requestBinary(
+  ///   contactPublicKey: contact.publicKey,
+  ///   requestType: MeshCoreConstants.binaryReqGetTelemetryData,
+  /// );
+  /// ```
+  Future<void> requestBinary({
+    required Uint8List contactPublicKey,
+    required int requestType,
+    Uint8List? additionalParams,
+  }) async {
+    if (!_bleService.isConnected) {
+      _error = 'Not connected to device';
+      notifyListeners();
+      return;
+    }
+
+    try {
+      // Build request data: request type byte + optional params
+      final requestData = Uint8List.fromList([
+        requestType,
+        if (additionalParams != null) ...additionalParams,
+      ]);
+
+      await _bleService.sendBinaryRequest(
+        contactPublicKey: contactPublicKey,
+        requestData: requestData,
+      );
+    } catch (e) {
+      _error = 'Failed to send binary request: $e';
       notifyListeners();
     }
   }
@@ -595,6 +755,29 @@ class ConnectionProvider with ChangeNotifier {
     }
   }
 
+  /// Request battery and storage information
+  ///
+  /// Queries the companion radio for:
+  /// - Battery voltage in millivolts
+  /// - Used storage in KB (if available)
+  /// - Total storage in KB (if available)
+  ///
+  /// Results arrive via onBatteryAndStorage callback and update deviceInfo.
+  Future<void> getBatteryAndStorage() async {
+    if (!_bleService.isConnected) {
+      _error = 'Not connected to device';
+      notifyListeners();
+      return;
+    }
+
+    try {
+      await _bleService.getBatteryAndStorage();
+    } catch (e) {
+      _error = 'Failed to get battery and storage: $e';
+      notifyListeners();
+    }
+  }
+
   /// Sync messages from device queue
   /// Call this repeatedly until no more messages are available
   Future<bool> syncNextMessage() async {
@@ -633,6 +816,7 @@ class ConnectionProvider with ChangeNotifier {
       // The device will send ContactMsgRecv or ChannelMsgRecv responses
       // until it sends NoMoreMessages
       for (int i = 0; i < 100; i++) {  // Safety limit
+        // Check flag BEFORE sending (not after)
         if (_noMoreMessages) {
           print('✅ [Provider] Message sync complete - NoMoreMessages flag set after $count requests');
           break;
@@ -698,6 +882,33 @@ class ConnectionProvider with ChangeNotifier {
       );
     } catch (e) {
       _error = 'Failed to send login request: $e';
+      notifyListeners();
+    }
+  }
+
+  /// Request status from repeater or sensor node
+  ///
+  /// Sends a status request to query operational status of a node.
+  /// Results will be delivered via onStatusResponse callback.
+  ///
+  /// Example usage:
+  /// ```dart
+  /// connectionProvider.onStatusResponse = (publicKeyPrefix, statusData) {
+  ///   print('Status from node: ${utf8.decode(statusData)}');
+  /// };
+  /// await connectionProvider.requestStatus(repeaterContact.publicKey);
+  /// ```
+  Future<void> requestStatus(Uint8List contactPublicKey) async {
+    if (!_bleService.isConnected) {
+      _error = 'Not connected to device';
+      notifyListeners();
+      return;
+    }
+
+    try {
+      await _bleService.sendStatusRequest(contactPublicKey);
+    } catch (e) {
+      _error = 'Failed to send status request: $e';
       notifyListeners();
     }
   }

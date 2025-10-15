@@ -159,6 +159,7 @@ The companion radio acts as a 'server', responding to requests from the connecte
 | 0x85 | PUSH_CODE_LOGIN_SUCCESS | Login response successful |
 | 0x86 | PUSH_CODE_LOGIN_FAIL | Login response failed |
 | 0x87 | PUSH_CODE_STATUS_RESPONSE | Status response received |
+| 0x88 | PUSH_CODE_LOG_RX_DATA | Debug: raw over-the-air packet received (diagnostic) |
 | 0x89 | PUSH_CODE_TRACE_DATA | TRACE packet reached end of path |
 | 0x8A | PUSH_CODE_NEW_ADVERT | New contact advert (manual_add_contacts=1) |
 | 0x8B | PUSH_CODE_TELEMETRY_RESPONSE | Telemetry response received |
@@ -368,10 +369,13 @@ The companion radio acts as a 'server', responding to requests from the connecte
 [0x07] - Response code (7)
 [6 bytes] - Sender public key prefix (first 6 bytes)
 [1 byte] - Path length (0xFF if direct, else hop count for flood-mode)
-[1 byte] - Text type (TXT_TYPE_*, 0=plain)
+[1 byte] - Text type (TXT_TYPE_*, 0=plain, 2=signed)
 [4 bytes] - Sender timestamp (uint32)
+[4 bytes] - (Only if text type = 2) Extra sender prefix bytes for verification
 [N bytes] - Text (remainder of frame, varchar)
 ```
+
+**Note on TXT_TYPE_SIGNED_PLAIN (2)**: Despite the name "signed", this doesn't contain a cryptographic signature. It includes 4 extra bytes of the sender's public key prefix (bytes 6-9) for additional verification. The text follows immediately after these 4 bytes.
 
 **RESP_CODE_CHANNEL_MSG_RECV (8)**:
 ```
@@ -444,8 +448,10 @@ The companion radio acts as a 'server', responding to requests from the connecte
 ```
 [0x1A] - Command code (26)
 [32 bytes] - Public key (repeater or room server)
-[N bytes] - Password (remainder of frame, varchar, max 15 bytes)
+[N bytes] - Password (remainder of frame, varchar, max 15 bytes, null-terminated)
 ```
+
+**NOTE**: The companion radio's `sendLogin()` function internally generates the `sender_timestamp` and `sync_since` parameters when creating the over-the-air packet. The BLE protocol does NOT accept these parameters.
 
 **PUSH_CODE_LOGIN_SUCCESS (0x85)**:
 ```
@@ -520,6 +526,25 @@ The companion radio acts as a 'server', responding to requests from the connecte
 [N bytes] - Path hashes (variable length)
 [N+1 bytes] - Path SNRs (last byte = SNR for last hop, each byte = SNR * 4)
 ```
+
+**PUSH_CODE_LOG_RX_DATA (0x88)** *(Diagnostic/Debug Feature)*:
+```
+[0x88] - Push code
+[1 byte] - SNR × 4 (signed int8, divide by 4 to get SNR in dB)
+[1 byte] - RSSI (signed int8, in dBm)
+[N bytes] - Raw over-the-air packet data (encrypted LoRa packet from mesh network)
+```
+
+**Purpose**: This is a diagnostic push notification that forwards ALL over-the-air packets received by the companion radio to the app, allowing network debugging and signal quality monitoring.
+
+**Implementation**: Based on `MyMesh::logRxRaw()` in MeshCore C++ source (MyMesh.cpp lines 237-248).
+
+**Usage**:
+- Monitor mesh network activity in real-time
+- Analyze signal quality (SNR/RSSI) for received packets
+- Debug packet reception issues
+- The raw packet data is typically encrypted (high entropy ~95%+)
+- Not part of official protocol documentation (debug feature)
 
 **CMD_SET_DEVICE_PIN (37)**:
 ```

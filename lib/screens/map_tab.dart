@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:math';
+import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -12,14 +13,17 @@ import '../providers/contacts_provider.dart';
 import '../providers/messages_provider.dart';
 import '../providers/map_provider.dart';
 import '../providers/app_provider.dart';
+import '../providers/connection_provider.dart';
 import '../models/contact.dart';
 import '../models/sar_marker.dart';
 import '../models/map_layer.dart';
+import '../models/message.dart';
 import '../services/tile_cache_service.dart';
 import '../services/background_location_service.dart';
 import '../widgets/map_markers.dart';
 import '../widgets/map_debug_info.dart';
 import 'map_management_screen.dart';
+import 'messages_tab.dart';
 
 class MapTab extends StatefulWidget {
   const MapTab({super.key});
@@ -44,6 +48,11 @@ class _MapTabState extends State<MapTab> with AutomaticKeepAliveClientMixin {
   StreamSubscription<Position>? _positionStreamSubscription;
   StreamSubscription<CompassEvent>? _compassStreamSubscription;
   final BackgroundLocationService _backgroundLocationService = BackgroundLocationService();
+
+  // Dropped pin state
+  LatLng? _droppedPinLocation;
+  bool _isDraggingPin = false;
+  final GlobalKey _pinMarkerKey = GlobalKey();
 
   // Saved map position (loaded from SharedPreferences)
   LatLng? _savedMapCenter;
@@ -682,6 +691,166 @@ class _MapTabState extends State<MapTab> with AutomaticKeepAliveClientMixin {
     await _backgroundLocationService.stopTracking();
   }
 
+  /// Calculate distance between two points in meters
+  double _calculateDistanceInMeters(double lat1, double lon1, double lat2, double lon2) {
+    const R = 6371000; // Earth's radius in meters
+    final dLat = (lat2 - lat1) * pi / 180;
+    final dLon = (lon2 - lon1) * pi / 180;
+
+    final a = sin(dLat / 2) * sin(dLat / 2) +
+        cos(lat1 * pi / 180) *
+            cos(lat2 * pi / 180) *
+            sin(dLon / 2) *
+            sin(dLon / 2);
+
+    final c = 2 * atan2(sqrt(a), sqrt(1 - a));
+    return R * c;
+  }
+
+  /// Show SAR dialog with pre-populated location from map long press
+  void _showSarDialogWithLocation(LatLng location) {
+    // Create a Position object from the LatLng coordinates
+    final position = Position(
+      latitude: location.latitude,
+      longitude: location.longitude,
+      timestamp: DateTime.now(),
+      accuracy: 0.0, // Unknown accuracy for map-selected point
+      altitude: 0.0,
+      altitudeAccuracy: 0.0,
+      heading: 0.0,
+      headingAccuracy: 0.0,
+      speed: 0.0,
+      speedAccuracy: 0.0,
+    );
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => SarUpdateSheet(
+        prePopulatedPosition: position,
+        allowLocationUpdate: false, // Don't allow changing to current location
+        onSend: (sarType, position, notes, roomPublicKey, sendToChannel) async {
+          await _sendSarMessage(sarType, position, notes, roomPublicKey, sendToChannel);
+        },
+      ),
+    );
+  }
+
+  Future<void> _sendSarMessage(
+    SarMarkerType sarType,
+    Position position,
+    String? notes,
+    Uint8List? roomPublicKey,
+    bool sendToChannel,
+  ) async {
+    final connectionProvider = context.read<ConnectionProvider>();
+    final messagesProvider = context.read<MessagesProvider>();
+
+    if (!connectionProvider.deviceInfo.isConnected) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Not connected to device'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    if (!sendToChannel && roomPublicKey == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select a room to send SAR marker'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    try {
+      // Format: S:<emoji>:<latitude>,<longitude>
+      final sarMessage = 'S:${sarType.emoji}:${position.latitude},${position.longitude}';
+
+      // Add notes if provided
+      final fullMessage = notes != null && notes.isNotEmpty
+          ? '$sarMessage $notes'
+          : sarMessage;
+
+      if (sendToChannel) {
+        // Send to public channel (ephemeral, over-the-air only)
+        await connectionProvider.sendChannelMessage(
+          channelIdx: 0,
+          text: fullMessage,
+        );
+
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${sarType.displayName} marker broadcast to public channel'),
+            backgroundColor: Colors.orange,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      } else {
+        // Create message ID
+        final messageId = '${DateTime.now().millisecondsSinceEpoch}_sent';
+        final timestamp = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+
+        // Get current device's public key (first 6 bytes)
+        final devicePublicKey = connectionProvider.deviceInfo.publicKey;
+        final senderPublicKeyPrefix = devicePublicKey?.sublist(0, 6);
+
+        // Create sent message object
+        final sentMessage = Message(
+          id: messageId,
+          messageType: MessageType.contact,
+          senderPublicKeyPrefix: senderPublicKeyPrefix,
+          pathLen: 0,
+          textType: MessageTextType.plain,
+          senderTimestamp: timestamp,
+          text: fullMessage,
+          receivedAt: DateTime.now(),
+          deliveryStatus: MessageDeliveryStatus.sending,
+          // SAR marker data is automatically added by SarMessageParser.enhanceMessage in MessagesProvider
+        );
+
+        // Add to messages list with "sending" status
+        messagesProvider.addSentMessage(sentMessage);
+
+        // Send SAR message to selected room (persisted and immutable)
+        final sentSuccessfully = await connectionProvider.sendTextMessage(
+          contactPublicKey: roomPublicKey!,
+          text: fullMessage,
+          messageId: messageId, // Pass message ID so it can be tracked
+        );
+
+        if (!sentSuccessfully) {
+          // Mark message as failed if sending failed
+          messagesProvider.markMessageFailed(messageId);
+        }
+
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${sarType.displayName} marker sent to room'),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to send SAR marker: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     super.build(context); // Required for AutomaticKeepAliveClientMixin
@@ -695,7 +864,17 @@ class _MapTabState extends State<MapTab> with AutomaticKeepAliveClientMixin {
           children: [
             // Map widget
             _isInitialized
-                ? FlutterMap(
+                ? Listener(
+                    onPointerMove: (PointerMoveEvent event) {
+                      // Track pointer movement for mobile drag (onPointerHover doesn't work on mobile)
+                      if (_isDraggingPin) {
+                        final latLng = _mapController.camera.screenOffsetToLatLng(event.localPosition);
+                        setState(() {
+                          _droppedPinLocation = latLng;
+                        });
+                      }
+                    },
+                    child: FlutterMap(
                     mapController: _mapController,
                     options: MapOptions(
                       // Use saved position if available, otherwise use calculated center
@@ -703,13 +882,74 @@ class _MapTabState extends State<MapTab> with AutomaticKeepAliveClientMixin {
                       initialZoom: _savedMapZoom ?? _defaultZoom,
                       minZoom: 0, // Allow full zoom out to see world view
                       maxZoom: _currentLayer.maxZoom, // Respect current layer's maximum
-                      interactionOptions: const InteractionOptions(
-                        flags: InteractiveFlag.all,
+                      interactionOptions: InteractionOptions(
+                        flags: _isDraggingPin
+                            ? InteractiveFlag.none // Disable map interaction while dragging pin
+                            : InteractiveFlag.all,
                       ),
                       onMapEvent: (event) {
                         // Save map position when user stops panning/zooming
                         if (event is MapEventMoveEnd || event is MapEventScrollWheelZoom) {
                           _saveMapPosition();
+                        }
+                      },
+                      onLongPress: (tapPosition, point) {
+                        // Drop a pin at long press location (if no pin exists)
+                        if (_droppedPinLocation == null) {
+                          setState(() {
+                            _droppedPinLocation = point;
+                          });
+                        }
+                      },
+                      onPointerDown: (event, point) {
+                        // Check if pointer is near the pin to start dragging
+                        if (_droppedPinLocation != null) {
+                          final distance = _calculateDistanceInMeters(
+                            _droppedPinLocation!.latitude,
+                            _droppedPinLocation!.longitude,
+                            point.latitude,
+                            point.longitude,
+                          );
+                          // If within ~50m of pin, start dragging
+                          if (distance <= 50) {
+                            setState(() {
+                              _isDraggingPin = true;
+                            });
+                          }
+                        }
+                      },
+                      onPointerHover: (event, point) {
+                        // Update pin location while dragging
+                        if (_isDraggingPin) {
+                          setState(() {
+                            _droppedPinLocation = point;
+                          });
+                        }
+                      },
+                      onPointerUp: (event, point) {
+                        // Stop dragging on pointer release
+                        if (_isDraggingPin) {
+                          setState(() {
+                            _isDraggingPin = false;
+                          });
+                        }
+                      },
+                      onTap: (tapPosition, point) {
+                        // Clear dropped pin if tapping elsewhere (not on the pin itself)
+                        if (_droppedPinLocation != null && !_isDraggingPin) {
+                          // Check if tap is far from the pin
+                          final distance = _calculateDistanceInMeters(
+                            _droppedPinLocation!.latitude,
+                            _droppedPinLocation!.longitude,
+                            point.latitude,
+                            point.longitude,
+                          );
+                          // If tap is more than ~50m away, clear pin
+                          if (distance > 50) {
+                            setState(() {
+                              _droppedPinLocation = null;
+                            });
+                          }
                         }
                       },
                     ),
@@ -783,10 +1023,81 @@ class _MapTabState extends State<MapTab> with AutomaticKeepAliveClientMixin {
                                 ),
                               ),
                             ),
+                          // Dropped pin marker with label
+                          if (_droppedPinLocation != null)
+                            Marker(
+                              key: _pinMarkerKey,
+                              point: _droppedPinLocation!,
+                              width: 200,
+                              height: 100,
+                              rotate: false,
+                              child: GestureDetector(
+                                onTap: () {
+                                  // Only open dialog if not dragging
+                                  if (!_isDraggingPin) {
+                                    _showSarDialogWithLocation(_droppedPinLocation!);
+                                    // Clear the pin after opening dialog
+                                    setState(() {
+                                      _droppedPinLocation = null;
+                                    });
+                                  }
+                                },
+                                child: Opacity(
+                                  // Make pin slightly transparent while dragging
+                                  opacity: _isDraggingPin ? 0.7 : 1.0,
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      // Label
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 12,
+                                          vertical: 6,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: _isDraggingPin ? Colors.orange : Colors.red,
+                                          borderRadius: BorderRadius.circular(8),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.black.withValues(alpha: 0.3),
+                                              blurRadius: 4,
+                                              offset: const Offset(0, 2),
+                                            ),
+                                          ],
+                                        ),
+                                        child: Text(
+                                          _isDraggingPin ? 'Drag to Position' : 'Create SAR Marker',
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      // Pin icon pointing down
+                                      Icon(
+                                        Icons.location_pin,
+                                        color: _isDraggingPin ? Colors.orange : Colors.red,
+                                        size: 48,
+                                        shadows: const [
+                                          Shadow(
+                                            color: Colors.black26,
+                                            blurRadius: 4,
+                                            offset: Offset(0, 2),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
                         ],
                       ),
                     ],
-                  )
+                  ),
+                )
                 : Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,

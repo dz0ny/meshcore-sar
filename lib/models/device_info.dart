@@ -16,6 +16,8 @@ class DeviceInfo {
   final ConnectionState connectionState;
   final int? batteryMilliVolts;
   final double? batteryPercentage;
+  final int? storageUsedKb;
+  final int? storageTotalKb;
   final int? signalRssi;
   final double? signalSnr;
   final DateTime? lastUpdate;
@@ -54,6 +56,8 @@ class DeviceInfo {
     this.connectionState = ConnectionState.disconnected,
     this.batteryMilliVolts,
     this.batteryPercentage,
+    this.storageUsedKb,
+    this.storageTotalKb,
     this.signalRssi,
     this.signalSnr,
     this.lastUpdate,
@@ -112,6 +116,32 @@ class DeviceInfo {
     return 'Critical';
   }
 
+  /// Get storage usage percentage (0-100)
+  double? get storageUsedPercent {
+    if (storageUsedKb == null || storageTotalKb == null || storageTotalKb == 0) {
+      return null;
+    }
+    return (storageUsedKb! / storageTotalKb!) * 100.0;
+  }
+
+  /// Get storage available in KB
+  int? get storageAvailableKb {
+    if (storageUsedKb == null || storageTotalKb == null) {
+      return null;
+    }
+    return storageTotalKb! - storageUsedKb!;
+  }
+
+  /// Get human-readable storage status
+  String get storageStatus {
+    final percent = storageUsedPercent;
+    if (percent == null) return 'Unknown';
+    if (percent < 50) return 'Plenty Available';
+    if (percent < 80) return 'Moderate Usage';
+    if (percent < 95) return 'Low Space';
+    return 'Critical - Nearly Full';
+  }
+
   /// Get signal strength category
   String get signalStrength {
     if (signalRssi == null) return 'Unknown';
@@ -145,6 +175,8 @@ class DeviceInfo {
     ConnectionState? connectionState,
     int? batteryMilliVolts,
     double? batteryPercentage,
+    int? storageUsedKb,
+    int? storageTotalKb,
     int? signalRssi,
     double? signalSnr,
     DateTime? lastUpdate,
@@ -177,6 +209,8 @@ class DeviceInfo {
       connectionState: connectionState ?? this.connectionState,
       batteryMilliVolts: batteryMilliVolts ?? this.batteryMilliVolts,
       batteryPercentage: batteryPercentage ?? this.batteryPercentage,
+      storageUsedKb: storageUsedKb ?? this.storageUsedKb,
+      storageTotalKb: storageTotalKb ?? this.storageTotalKb,
       signalRssi: signalRssi ?? this.signalRssi,
       signalSnr: signalSnr ?? this.signalSnr,
       lastUpdate: lastUpdate ?? this.lastUpdate,

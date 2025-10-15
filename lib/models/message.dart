@@ -25,6 +25,15 @@ enum MessageType {
   channel,
 }
 
+/// Message delivery status
+enum MessageDeliveryStatus {
+  sending,     // Message is being sent
+  sent,        // Message queued with expected ACK
+  delivered,   // Delivery confirmed (ACK received)
+  failed,      // Delivery failed
+  received,    // Message received from another contact
+}
+
 /// MeshCore message model
 class Message {
   final String id;
@@ -45,6 +54,13 @@ class Message {
   final DateTime receivedAt;
   final String? senderName;
 
+  // Delivery tracking (for sent messages)
+  final MessageDeliveryStatus deliveryStatus;
+  final int? expectedAckTag; // Expected ACK/TAG from SENT response
+  final int? suggestedTimeoutMs; // Suggested timeout from SENT response
+  final int? roundTripTimeMs; // RTT from SEND_CONFIRMED
+  final DateTime? deliveredAt; // When delivery was confirmed
+
   Message({
     required this.id,
     required this.messageType,
@@ -59,6 +75,11 @@ class Message {
     this.sarGpsCoordinates,
     required this.receivedAt,
     this.senderName,
+    this.deliveryStatus = MessageDeliveryStatus.received,
+    this.expectedAckTag,
+    this.suggestedTimeoutMs,
+    this.roundTripTimeMs,
+    this.deliveredAt,
   });
 
   /// Get sender public key as hex string
@@ -120,6 +141,28 @@ class Message {
     );
   }
 
+  /// Get friendly delivery status description
+  String get deliveryStatusText {
+    switch (deliveryStatus) {
+      case MessageDeliveryStatus.sending:
+        return 'Sending...';
+      case MessageDeliveryStatus.sent:
+        return 'Sent';
+      case MessageDeliveryStatus.delivered:
+        if (roundTripTimeMs != null) {
+          return 'Delivered (${roundTripTimeMs}ms)';
+        }
+        return 'Delivered';
+      case MessageDeliveryStatus.failed:
+        return 'Failed';
+      case MessageDeliveryStatus.received:
+        return '';
+    }
+  }
+
+  /// Check if this is a sent message (not received)
+  bool get isSentMessage => deliveryStatus != MessageDeliveryStatus.received;
+
   Message copyWith({
     String? id,
     MessageType? messageType,
@@ -134,6 +177,11 @@ class Message {
     LatLng? sarGpsCoordinates,
     DateTime? receivedAt,
     String? senderName,
+    MessageDeliveryStatus? deliveryStatus,
+    int? expectedAckTag,
+    int? suggestedTimeoutMs,
+    int? roundTripTimeMs,
+    DateTime? deliveredAt,
   }) {
     return Message(
       id: id ?? this.id,
@@ -149,6 +197,11 @@ class Message {
       sarGpsCoordinates: sarGpsCoordinates ?? this.sarGpsCoordinates,
       receivedAt: receivedAt ?? this.receivedAt,
       senderName: senderName ?? this.senderName,
+      deliveryStatus: deliveryStatus ?? this.deliveryStatus,
+      expectedAckTag: expectedAckTag ?? this.expectedAckTag,
+      suggestedTimeoutMs: suggestedTimeoutMs ?? this.suggestedTimeoutMs,
+      roundTripTimeMs: roundTripTimeMs ?? this.roundTripTimeMs,
+      deliveredAt: deliveredAt ?? this.deliveredAt,
     );
   }
 

@@ -24,6 +24,12 @@ typedef OnMessageWaitingCallback = void Function();
 typedef OnLoginSuccessCallback = void Function(Uint8List publicKeyPrefix, int permissions, bool isAdmin, int tag);
 typedef OnLoginFailCallback = void Function(Uint8List publicKeyPrefix);
 typedef OnAdvertReceivedCallback = void Function(Uint8List publicKey);
+typedef OnPathUpdatedCallback = void Function(Uint8List publicKey);
+typedef OnMessageSentCallback = void Function(int expectedAckTag, int suggestedTimeoutMs, bool isFloodMode);
+typedef OnMessageDeliveredCallback = void Function(int ackCode, int roundTripTimeMs);
+typedef OnStatusResponseCallback = void Function(Uint8List publicKeyPrefix, Uint8List statusData);
+typedef OnBinaryResponseCallback = void Function(Uint8List publicKeyPrefix, int tag, Uint8List responseData);
+typedef OnBatteryAndStorageCallback = void Function(int millivolts, int? usedKb, int? totalKb);
 typedef OnErrorCallback = void Function(String error);
 typedef OnConnectionStateCallback = void Function(bool isConnected);
 
@@ -47,6 +53,12 @@ class MeshCoreBleService {
   OnLoginSuccessCallback? onLoginSuccess;
   OnLoginFailCallback? onLoginFail;
   OnAdvertReceivedCallback? onAdvertReceived;
+  OnPathUpdatedCallback? onPathUpdated;
+  OnMessageSentCallback? onMessageSent;
+  OnMessageDeliveredCallback? onMessageDelivered;
+  OnStatusResponseCallback? onStatusResponse;
+  OnBinaryResponseCallback? onBinaryResponse;
+  OnBatteryAndStorageCallback? onBatteryAndStorage;
   OnErrorCallback? onError;
 
   // Internal state
@@ -337,6 +349,10 @@ class MeshCoreBleService {
           print('  → Handling TelemetryResponse');
           _handleTelemetryResponse(reader);
           break;
+        case MeshCoreConstants.pushBinaryResponse:
+          print('  → Handling BinaryResponse');
+          _handleBinaryResponse(reader);
+          break;
         case MeshCoreConstants.respDeviceInfo:
           print('  → Handling DeviceInfo');
           _handleDeviceInfo(reader);
@@ -348,6 +364,10 @@ class MeshCoreBleService {
         case MeshCoreConstants.pushAdvert:
           print('  → Handling Advert push');
           _handleAdvert(reader);
+          break;
+        case MeshCoreConstants.pushPathUpdated:
+          print('  → Handling PathUpdated push');
+          _handlePathUpdated(reader);
           break;
         case MeshCoreConstants.pushLogRxData:
           print('  → Handling LogRxData push');
@@ -373,9 +393,17 @@ class MeshCoreBleService {
           print('  → Handling LoginFail push');
           _handleLoginFail(reader);
           break;
+        case MeshCoreConstants.pushStatusResponse:
+          print('  → Handling StatusResponse push');
+          _handleStatusResponse(reader);
+          break;
         case MeshCoreConstants.respCurrTime:
           print('  → Handling CurrentTime');
           _handleCurrentTime(reader);
+          break;
+        case MeshCoreConstants.respBatteryVoltage:
+          print('  → Handling BatteryAndStorage');
+          _handleBatteryAndStorage(reader);
           break;
         case MeshCoreConstants.respNoMoreMessages:
           print('  → Response: No More Messages');
@@ -488,17 +516,20 @@ class MeshCoreBleService {
       if (reader.remainingBytesCount >= 9) {
         final sendType = reader.readByte();
         final sendTypeStr = sendType == 1 ? 'flood' : 'direct';
+        final isFloodMode = sendType == 1;
         print('    Send type: $sendType ($sendTypeStr)');
 
-        final expectedAckOrTag = reader.readBytes(4);
-        print('    Expected ACK/TAG: ${expectedAckOrTag.map((b) => b.toRadixString(16).padLeft(2, '0')).join(' ')}');
+        final expectedAckOrTagBytes = reader.readBytes(4);
+        final expectedAckTag = ByteData.sublistView(Uint8List.fromList(expectedAckOrTagBytes)).getUint32(0, Endian.little);
+        print('    Expected ACK/TAG: ${expectedAckOrTagBytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join(' ')} (uint32: $expectedAckTag)');
 
         final suggestedTimeout = reader.readUInt32LE();
         print('    Suggested timeout: ${suggestedTimeout}ms');
 
         print('  ✅ [Sent] Message sent successfully ($sendTypeStr mode, timeout: ${suggestedTimeout}ms)');
 
-        // TODO: Store ACK/TAG to match with PUSH_CODE_SEND_CONFIRMED later
+        // Notify provider that message was sent
+        onMessageSent?.call(expectedAckTag, suggestedTimeout, isFloodMode);
       } else {
         print('  ⚠️ [Sent] Insufficient data for full parsing');
       }
@@ -529,27 +560,29 @@ class MeshCoreBleService {
 
       // Handle different message types
       String text;
-      Uint8List? signature;
+      Uint8List? senderPrefixExtra;
 
       if (txtType == MessageTextType.signedPlain) {
-        // Signed message format: [64-byte signature][UTF-8 text]
-        print('    Signed message detected - extracting signature');
+        // Signed message format: [4-byte sender prefix][UTF-8 text]
+        // Note: Despite the name "signed", this doesn't contain a cryptographic signature
+        // It contains 4 extra bytes of the sender's public key prefix for verification
+        print('    Signed message detected - extracting extra sender prefix');
 
-        if (reader.remainingBytesCount < 64) {
-          print('    ⚠️ Insufficient bytes for signature (${reader.remainingBytesCount} < 64)');
-          // Try to read as plain text anyway
-          text = reader.readString();
-        } else {
-          signature = reader.readBytes(64);
-          print('    Signature (first 16 bytes): ${signature.sublist(0, 16).map((b) => b.toRadixString(16).padLeft(2, '0')).join(' ')}...');
+        if (reader.remainingBytesCount >= 4) {
+          senderPrefixExtra = reader.readBytes(4);
+          print('    Extra sender prefix (4 bytes): ${senderPrefixExtra.map((b) => b.toRadixString(16).padLeft(2, '0')).join(' ')}');
 
           // Remaining bytes are the actual text
           if (reader.hasRemaining) {
             text = reader.readString();
           } else {
             text = '';
-            print('    ⚠️ No text content after signature');
+            print('    ⚠️ No text content after sender prefix');
           }
+        } else {
+          print('    ⚠️ Insufficient bytes for sender prefix (${reader.remainingBytesCount} < 4)');
+          // Read remaining bytes as text anyway
+          text = reader.readString();
         }
       } else {
         // Plain text message
@@ -598,27 +631,29 @@ class MeshCoreBleService {
 
       // Handle different message types
       String text;
-      Uint8List? signature;
+      Uint8List? senderPrefixExtra;
 
       if (txtType == MessageTextType.signedPlain) {
-        // Signed message format: [64-byte signature][UTF-8 text]
-        print('    Signed message detected - extracting signature');
+        // Signed message format: [4-byte sender prefix][UTF-8 text]
+        // Note: Despite the name "signed", this doesn't contain a cryptographic signature
+        // It contains 4 extra bytes of the sender's public key prefix for verification
+        print('    Signed message detected - extracting extra sender prefix');
 
-        if (reader.remainingBytesCount < 64) {
-          print('    ⚠️ Insufficient bytes for signature (${reader.remainingBytesCount} < 64)');
-          // Try to read as plain text anyway
-          text = reader.readString();
-        } else {
-          signature = reader.readBytes(64);
-          print('    Signature (first 16 bytes): ${signature.sublist(0, 16).map((b) => b.toRadixString(16).padLeft(2, '0')).join(' ')}...');
+        if (reader.remainingBytesCount >= 4) {
+          senderPrefixExtra = reader.readBytes(4);
+          print('    Extra sender prefix (4 bytes): ${senderPrefixExtra.map((b) => b.toRadixString(16).padLeft(2, '0')).join(' ')}');
 
           // Remaining bytes are the actual text
           if (reader.hasRemaining) {
             text = reader.readString();
           } else {
             text = '';
-            print('    ⚠️ No text content after signature');
+            print('    ⚠️ No text content after sender prefix');
           }
+        } else {
+          print('    ⚠️ Insufficient bytes for sender prefix (${reader.remainingBytesCount} < 4)');
+          // Read remaining bytes as text anyway
+          text = reader.readString();
         }
       } else {
         // Plain text message
@@ -667,6 +702,41 @@ class MeshCoreBleService {
     } catch (e) {
       print('  ❌ [Telemetry] Parsing error: $e');
       onError?.call('Telemetry parsing error: $e');
+    }
+  }
+
+  /// Handle BinaryResponse push (PUSH_CODE_BINARY_RESPONSE 0x8C)
+  ///
+  /// Protocol format:
+  /// - 1 byte: reserved (zero)
+  /// - 4 bytes: tag (uint32, matches RESP_CODE_SENT expected_ack_or_tag)
+  /// - N bytes: response data (remainder of frame)
+  void _handleBinaryResponse(BufferReader reader) {
+    try {
+      print('  [BinaryResponse] Parsing binary response...');
+      print('    Remaining bytes: ${reader.remainingBytesCount}');
+
+      final reserved = reader.readByte();
+      print('    Reserved byte: $reserved');
+
+      final tag = reader.readUInt32LE();
+      print('    Tag: $tag (matches RESP_CODE_SENT expected_ack_or_tag)');
+
+      final responseData = reader.readRemainingBytes();
+      print('    Response data length: ${responseData.length} bytes');
+      print('    Response data (hex): ${responseData.map((b) => b.toRadixString(16).padLeft(2, '0')).join(' ')}');
+
+      // Extract public key prefix from response data if present
+      // Note: The firmware doesn't include the sender's public key prefix in binary responses
+      // The app must track which request corresponds to which tag
+      // For now, we'll use an empty prefix and rely on the tag for matching
+      final emptyPrefix = Uint8List(6);
+
+      print('  ✅ [BinaryResponse] Parsed successfully');
+      onBinaryResponse?.call(emptyPrefix, tag, responseData);
+    } catch (e) {
+      print('  ❌ [BinaryResponse] Parsing error: $e');
+      onError?.call('Binary response parsing error: $e');
     }
   }
 
@@ -934,24 +1004,111 @@ class MeshCoreBleService {
     }
   }
 
+  /// Handle PathUpdated push (PUSH_CODE_PATH_UPDATED)
+  ///
+  /// This push notification indicates that the mesh network has discovered
+  /// a new or better routing path to a contact. The companion radio sends
+  /// this notification when a contact's out_path is updated.
+  ///
+  /// Protocol format:
+  /// - 32 bytes: public key of the contact whose path was updated
+  ///
+  /// The app can use this to:
+  /// - Trigger a contact sync to get the updated path
+  /// - Show network topology changes in the UI
+  /// - Update signal quality indicators
+  void _handlePathUpdated(BufferReader reader) {
+    try {
+      print('  [PathUpdated] Parsing path updated push notification...');
+      print('    Remaining bytes: ${reader.remainingBytesCount}');
+
+      // PathUpdated format: 32 bytes public key
+      if (reader.remainingBytesCount >= 32) {
+        final publicKey = reader.readBytes(32);
+        final publicKeyPrefix = publicKey.sublist(0, 6);
+        final publicKeyFull = publicKey.map((b) => b.toRadixString(16).padLeft(2, '0')).join(':');
+
+        print('    📡 PATH UPDATED FOR CONTACT:');
+        print('       Public key prefix (6 bytes): ${publicKeyPrefix.map((b) => b.toRadixString(16).padLeft(2, '0')).join(':')}');
+        print('       Public key (full 32 bytes): $publicKeyFull');
+        print('    ℹ️  The mesh network has discovered a new/better routing path to this contact');
+        print('    ℹ️  The companion radio has updated the contact\'s out_path');
+        print('    ℹ️  Recommended action: Call CMD_GET_CONTACTS to sync the updated contact info');
+
+        // Notify callback so app can trigger contact sync or update UI
+        onPathUpdated?.call(publicKey);
+      } else {
+        print('  ⚠️ [PathUpdated] Insufficient data: expected 32 bytes, got ${reader.remainingBytesCount}');
+      }
+
+      // Consume any remaining bytes
+      if (reader.hasRemaining) {
+        final extraBytes = reader.readRemainingBytes();
+        print('  ⚠️ [PathUpdated] Extra bytes found: ${extraBytes.length} bytes');
+        print('       Extra data (hex): ${extraBytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join(' ')}');
+      }
+
+      print('  ✅ [PathUpdated] Parsed successfully');
+    } catch (e) {
+      print('  ❌ [PathUpdated] Parsing error: $e');
+      // Don't call onError - path updates are informational
+    }
+  }
+
   /// Handle LogRxData push (PUSH_CODE_LOG_RX_DATA)
   ///
-  /// This push notification contains diagnostic/debug data from the companion radio
-  /// about packets it received over the air. The format is device-specific and may
-  /// contain encrypted or encoded data from the radio firmware.
+  /// This push notification contains diagnostic data about packets received over-the-air.
+  /// Based on MyMesh.cpp logRxRaw() implementation:
+  ///
+  /// Frame format (after 0x88 opcode):
+  /// - Byte 0: SNR × 4 (signed int8, divide by 4 to get SNR in dB)
+  /// - Byte 1: RSSI (signed int8, in dBm)
+  /// - Bytes 2+: Raw over-the-air packet data (encrypted mesh packet)
+  ///
+  /// The "raw" data is the actual LoRa packet received from another mesh node,
+  /// which is typically encrypted and has high entropy.
   void _handleLogRxData(BufferReader reader) {
     try {
-      print('  [LogRxData] Parsing log rx data...');
+      print('  [LogRxData] Parsing log rx data from over-the-air packet...');
       print('    Remaining bytes: ${reader.remainingBytesCount}');
 
       final data = reader.readRemainingBytes();
       print('    Data length: ${data.length} bytes');
 
+      // Parse signal quality metrics (first 2 bytes)
+      if (data.length < 2) {
+        print('  ⚠️ [LogRxData] Insufficient data (need at least 2 bytes for SNR+RSSI)');
+        return;
+      }
+
+      final snrRaw = data[0];
+      final snrDb = (snrRaw.toSigned(8)) / 4.0; // Convert from int8 and divide by 4
+      print('    SNR: ${snrDb.toStringAsFixed(2)} dB (raw byte: 0x${snrRaw.toRadixString(16).padLeft(2, '0')})');
+
+      final rssiDbm = data[1].toSigned(8); // Signed int8
+      print('    RSSI: $rssiDbm dBm (raw byte: 0x${data[1].toRadixString(16).padLeft(2, '0')})');
+
+      // Remaining bytes are the raw over-the-air packet
+      if (data.length <= 2) {
+        print('  ⚠️ [LogRxData] No raw packet data after signal metrics');
+        return;
+      }
+
+      final rawPacketData = data.sublist(2);
+      print('    Raw packet data: ${rawPacketData.length} bytes');
+      print('    ℹ️  This is the encrypted LoRa packet received from another mesh node');
+
+      // Variables to store decoded information
+      int? airtimeMs;
+      Uint8List? senderPublicKey;
+      int? ackCode;
+      final List<String> embeddedStrings = [];
+
       // Enhanced hex dump with 16 bytes per line for readability
-      print('    📊 HEX DUMP:');
-      for (int i = 0; i < data.length; i += 16) {
-        final end = (i + 16 < data.length) ? i + 16 : data.length;
-        final chunk = data.sublist(i, end);
+      print('    📊 RAW PACKET HEX DUMP:');
+      for (int i = 0; i < rawPacketData.length; i += 16) {
+        final end = (i + 16 < rawPacketData.length) ? i + 16 : rawPacketData.length;
+        final chunk = rawPacketData.sublist(i, end);
 
         // Offset column (4 hex digits)
         final offset = i.toRadixString(16).padLeft(4, '0');
@@ -972,42 +1129,192 @@ class MeshCoreBleService {
         print('       $offset: ${hexBytes.padRight(47)} | $ascii');
       }
 
-      // Attempt to decode structure
-      print('    🔍 STRUCTURE ANALYSIS:');
+      // 🔥 FORCED DECODING - Try ALL possible interpretations
+      print('    🔥 FORCED DECODING - EXHAUSTIVE ANALYSIS:');
+      print('');
 
-      if (data.length >= 4) {
-        // Try to parse potential timestamp at beginning (uint32 LE)
-        final timestamp = ByteData.sublistView(Uint8List.fromList(data.sublist(0, 4)))
-            .getUint32(0, Endian.little);
-        print('       [Bytes 0-3] Potential timestamp (uint32 LE): $timestamp');
+      // ========== INTERPRETATION 1: All Possible uint32 Values ==========
+      print('    🔍 [INTERPRETATION 1] All uint32 LE values at each offset:');
+      for (int offset = 0; offset <= rawPacketData.length - 4; offset++) {
+        final value = ByteData.sublistView(Uint8List.fromList(rawPacketData.sublist(offset, offset + 4))).getUint32(0, Endian.little);
+        final valueHex = '0x${value.toRadixString(16).padLeft(8, '0')}';
 
-        // Check if timestamp is reasonable (between 2020 and 2030)
+        String interpretation = '';
+
+        // Check if it's a valid timestamp
         const minTimestamp = 1577836800; // 2020-01-01
         const maxTimestamp = 1893456000; // 2030-01-01
-        if (timestamp >= minTimestamp && timestamp <= maxTimestamp) {
-          print('                   As epoch: ${DateTime.fromMillisecondsSinceEpoch(timestamp * 1000)}');
-          print('                   ✅ Valid timestamp!');
-        } else {
-          print('                   ⚠️  Timestamp out of reasonable range (not epoch seconds)');
+        if (value >= minTimestamp && value <= maxTimestamp) {
+          final date = DateTime.fromMillisecondsSinceEpoch(value * 1000);
+          interpretation = ' → TIMESTAMP: $date';
+        } else if (value < 100000) {
+          interpretation = ' → Airtime/Duration: ${value}ms';
+        } else if (value > 900000000 && value < 1000000000) {
+          interpretation = ' → Radio freq: ${value / 1000} MHz';
         }
+
+        print('       [Offset $offset] uint32: $value ($valueHex)$interpretation');
+      }
+      print('');
+
+      // ========== INTERPRETATION 2: All Possible int32 Values ==========
+      print('    🔍 [INTERPRETATION 2] All int32 LE values (for GPS coordinates):');
+      for (int offset = 0; offset <= rawPacketData.length - 4; offset++) {
+        final value = ByteData.sublistView(Uint8List.fromList(rawPacketData.sublist(offset, offset + 4))).getInt32(0, Endian.little);
+        final latLon = value / 1000000.0;
+
+        String interpretation = '';
+        if (latLon >= -90 && latLon <= 90) {
+          interpretation = ' → Possible GPS: ${latLon.toStringAsFixed(6)}°';
+        }
+
+        print('       [Offset $offset] int32: $value → ${latLon.toStringAsFixed(6)}$interpretation');
+      }
+      print('');
+
+      // ========== INTERPRETATION 3: All uint16 Values ==========
+      print('    🔍 [INTERPRETATION 3] All uint16 LE values:');
+      for (int offset = 0; offset <= rawPacketData.length - 2; offset++) {
+        final value = ByteData.sublistView(Uint8List.fromList(rawPacketData.sublist(offset, offset + 2))).getUint16(0, Endian.little);
+        print('       [Offset $offset] uint16: $value (0x${value.toRadixString(16).padLeft(4, '0')})');
+      }
+      print('');
+
+      // ========== INTERPRETATION 4: Byte Pair Analysis ==========
+      print('    🔍 [INTERPRETATION 4] Byte pair correlation (detect patterns):');
+      final Map<int, List<int>> bytePairs = {};
+      for (int i = 0; i < rawPacketData.length - 1; i++) {
+        final key = rawPacketData[i];
+        bytePairs.putIfAbsent(key, () => []);
+        bytePairs[key]!.add(rawPacketData[i + 1]);
       }
 
-      // Check if this contains a public key (32-byte sequence starting around byte 4)
-      if (data.length >= 36) {
-        final potentialPubKey = data.sublist(4, 36);
-        final pubKeyPrefix = potentialPubKey.sublist(0, 6);
-        print('       [Bytes 4-35] Potential public key (32 bytes):');
-        print('                    Prefix: ${pubKeyPrefix.map((b) => b.toRadixString(16).padLeft(2, '0')).join(':')}');
-        print('                    Full: ${potentialPubKey.map((b) => b.toRadixString(16).padLeft(2, '0')).join(' ')}');
-        print('                    ℹ️  This might be the sender\'s public key from over-the-air packet');
+      // Find repeating patterns
+      final repeatingPatterns = bytePairs.entries.where((e) => e.value.length > 1);
+      if (repeatingPatterns.isNotEmpty) {
+        print('       Repeating byte transitions found:');
+        for (final entry in repeatingPatterns) {
+          print('         Byte 0x${entry.key.toRadixString(16).padLeft(2, '0')} → ${entry.value.map((b) => '0x${b.toRadixString(16).padLeft(2, '0')}').join(', ')}');
+        }
+      } else {
+        print('       No repeating byte transitions (high randomness)');
+      }
+      print('');
+
+      // ========== INTERPRETATION 5: Nibble Distribution ==========
+      print('    🔍 [INTERPRETATION 5] Nibble (half-byte) distribution:');
+      final Map<int, int> nibbleHist = {};
+      for (final byte in rawPacketData) {
+        final high = (byte >> 4) & 0x0F;
+        final low = byte & 0x0F;
+        nibbleHist[high] = (nibbleHist[high] ?? 0) + 1;
+        nibbleHist[low] = (nibbleHist[low] ?? 0) + 1;
+      }
+
+      final sortedNibbles = nibbleHist.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
+      print('       Top nibble frequencies:');
+      for (int i = 0; i < (sortedNibbles.length < 5 ? sortedNibbles.length : 5); i++) {
+        final entry = sortedNibbles[i];
+        final bar = '█' * ((entry.value / sortedNibbles[0].value * 20).round());
+        print('         0x${entry.key.toRadixString(16)}: ${entry.value.toString().padLeft(3)} $bar');
+      }
+      print('');
+
+      // ========== INTERPRETATION 6: XOR Pattern Detection ==========
+      print('    🔍 [INTERPRETATION 6] XOR pattern detection (simple encryption):');
+      final List<int> xorKeys = [0x00, 0xFF, 0xAA, 0x55, 0x42, 0x69];
+      for (final xorKey in xorKeys) {
+        final xored = rawPacketData.map((b) => b ^ xorKey).toList();
+        final printableCount = xored.where((b) => b >= 32 && b <= 126).length;
+        final printableRatio = printableCount / xored.length;
+
+        if (printableRatio > 0.3) {
+          final preview = String.fromCharCodes(xored.take(20).map((b) => b >= 32 && b <= 126 ? b : 46));
+          print('       XOR key 0x${xorKey.toRadixString(16).padLeft(2, '0')}: ${(printableRatio * 100).toStringAsFixed(1)}% printable → "$preview..."');
+        }
+      }
+      print('');
+
+      // ========== INTERPRETATION 7: Sliding Window CRC/Checksum ==========
+      print('    🔍 [INTERPRETATION 7] Checksum/CRC candidates (last 1-4 bytes):');
+      if (rawPacketData.length >= 2) {
+        // Try last byte as checksum
+        final lastByte = rawPacketData[rawPacketData.length - 1];
+        final payload = rawPacketData.sublist(0, rawPacketData.length - 1);
+        final simpleSum = payload.reduce((a, b) => (a + b) & 0xFF);
+        final xorSum = payload.reduce((a, b) => a ^ b);
+
+        print('       Last byte: 0x${lastByte.toRadixString(16).padLeft(2, '0')}');
+        print('         Simple sum (mod 256): 0x${simpleSum.toRadixString(16).padLeft(2, '0')} ${simpleSum == lastByte ? '✅ MATCH!' : ''}');
+        print('         XOR checksum: 0x${xorSum.toRadixString(16).padLeft(2, '0')} ${xorSum == lastByte ? '✅ MATCH!' : ''}');
+      }
+
+      if (rawPacketData.length >= 3) {
+        final last2 = ByteData.sublistView(Uint8List.fromList(rawPacketData.sublist(rawPacketData.length - 2))).getUint16(0, Endian.little);
+        print('       Last 2 bytes (uint16 LE): 0x${last2.toRadixString(16).padLeft(4, '0')} ($last2)');
+      }
+      print('');
+
+      // ========== INTERPRETATION 8: Bit Pattern Analysis ==========
+      print('    🔍 [INTERPRETATION 8] Bit-level analysis:');
+      int bitCount1 = 0;
+      int bitCount0 = 0;
+      for (final byte in rawPacketData) {
+        for (int bit = 0; bit < 8; bit++) {
+          if ((byte & (1 << bit)) != 0) {
+            bitCount1++;
+          } else {
+            bitCount0++;
+          }
+        }
+      }
+      final bitRatio = bitCount1 / (bitCount0 + bitCount1);
+      print('       Bit 1 count: $bitCount1 (${(bitRatio * 100).toStringAsFixed(1)}%)');
+      print('       Bit 0 count: $bitCount0 (${((1 - bitRatio) * 100).toStringAsFixed(1)}%)');
+      print('       Balance: ${(bitRatio - 0.5).abs() < 0.05 ? '✅ Well-balanced (likely encrypted/random)' : '⚠️ Imbalanced (may have structure)'}');
+      print('');
+
+      // ========== INTERPRETATION 9: LoRa Modulation Params ==========
+      print('    🔍 [INTERPRETATION 9] LoRa modulation parameter candidates:');
+      for (int i = 0; i < rawPacketData.length; i++) {
+        final byte = rawPacketData[i];
+
+        // Check if it could be spreading factor (7-12)
+        if (byte >= 7 && byte <= 12) {
+          print('       [Offset $i] Possible SF (Spreading Factor): $byte');
+        }
+
+        // Check if it could be coding rate (5-8)
+        if (byte >= 5 && byte <= 8) {
+          print('       [Offset $i] Possible CR (Coding Rate): $byte');
+        }
+
+        // Check if it could be bandwidth index (0-9)
+        if (byte >= 0 && byte <= 9) {
+          final bwValues = [7.8, 10.4, 15.6, 20.8, 31.25, 41.7, 62.5, 125, 250, 500];
+          print('       [Offset $i] Possible BW index: $byte → ${bwValues[byte]} kHz');
+        }
+      }
+      print('');
+
+      // ========== Final Structure Analysis ==========
+      print('    🔍 STRUCTURE ANALYSIS:');
+
+      // Calculate entropy to detect encryption
+      final uniqueBytes = rawPacketData.toSet().length;
+      final entropy = uniqueBytes / rawPacketData.length;
+      final isLikelyEncrypted = entropy > 0.7;
+      print('       Entropy: ${(entropy * 100).toStringAsFixed(1)}% (${uniqueBytes}/${rawPacketData.length} unique bytes)');
+      if (isLikelyEncrypted) {
+        print('       ℹ️  High entropy suggests encrypted or compressed data');
       }
 
       // Look for printable strings (runs of 4+ printable characters)
       final strings = <String>[];
       StringBuffer currentString = StringBuffer();
 
-      for (int i = 0; i < data.length; i++) {
-        final byte = data[i];
+      for (int i = 0; i < rawPacketData.length; i++) {
+        final byte = rawPacketData[i];
         if (byte >= 32 && byte <= 126) {
           // Printable ASCII
           currentString.write(String.fromCharCode(byte));
@@ -1028,20 +1335,38 @@ class MeshCoreBleService {
         print('       Embedded strings found:');
         for (final str in strings) {
           print('         → "$str"');
+          embeddedStrings.add(str);
         }
       } else {
         print('       No printable strings found (likely encrypted/binary data)');
       }
 
-      // Check if this might be an encrypted packet (high entropy)
-      final uniqueBytes = data.toSet().length;
-      final entropy = uniqueBytes / data.length;
-      print('       Entropy: ${(entropy * 100).toStringAsFixed(1)}% (${uniqueBytes}/${data.length} unique bytes)');
-      if (entropy > 0.7) {
-        print('       ℹ️  High entropy suggests encrypted or compressed data');
-      }
+      print('  ✅ [LogRxData] Forced decode complete');
 
-      print('  ✅ [LogRxData] Parsed successfully');
+      // Create decoded info for packet log
+      final logRxDataInfo = LogRxDataInfo(
+        airtimeMs: airtimeMs,
+        senderPublicKey: senderPublicKey,
+        ackCode: ackCode,
+        embeddedStrings: embeddedStrings,
+        entropy: entropy,
+        isLikelyEncrypted: isLikelyEncrypted,
+      );
+
+      // Update the most recent packet log entry with decoded information
+      if (_packetLogs.isNotEmpty) {
+        final lastLog = _packetLogs.last;
+        if (lastLog.responseCode == MeshCoreConstants.pushLogRxData) {
+          _packetLogs[_packetLogs.length - 1] = BlePacketLog(
+            timestamp: lastLog.timestamp,
+            rawData: lastLog.rawData,
+            direction: lastLog.direction,
+            responseCode: lastLog.responseCode,
+            description: lastLog.description,
+            logRxDataInfo: logRxDataInfo,
+          );
+        }
+      }
     } catch (e) {
       print('  ❌ [LogRxData] Parsing error: $e');
       // Don't call onError - logs are informational
@@ -1132,15 +1457,17 @@ class MeshCoreBleService {
       print('    Remaining bytes: ${reader.remainingBytesCount}');
 
       if (reader.remainingBytesCount >= 8) {
-        final ackCode = reader.readBytes(4);
-        print('    ACK code: ${ackCode.map((b) => b.toRadixString(16).padLeft(2, '0')).join(' ')}');
+        final ackCodeBytes = reader.readBytes(4);
+        final ackCode = ByteData.sublistView(Uint8List.fromList(ackCodeBytes)).getUint32(0, Endian.little);
+        print('    ACK code: ${ackCodeBytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join(' ')} (uint32: $ackCode)');
 
         final roundTripTime = reader.readUInt32LE();
         print('    Round trip time: ${roundTripTime}ms');
 
         print('  ✅ [SendConfirmed] Message delivery confirmed (RTT: ${roundTripTime}ms)');
 
-        // TODO: Match ACK code with pending sends and notify UI
+        // Notify provider that message was delivered
+        onMessageDelivered?.call(ackCode, roundTripTime);
       } else {
         print('  ⚠️ [SendConfirmed] Insufficient data for full parsing');
       }
@@ -1234,6 +1561,72 @@ class MeshCoreBleService {
     }
   }
 
+  /// Handle StatusResponse push (PUSH_CODE_STATUS_RESPONSE)
+  ///
+  /// This push notification is received in response to CMD_SEND_STATUS_REQ.
+  /// It contains status information from a repeater or sensor node.
+  ///
+  /// Protocol format (PUSH_CODE_STATUS_RESPONSE, 0x87):
+  /// - 1 byte: reserved (zero)
+  /// - 6 bytes: public key prefix (first 6 bytes of responding node)
+  /// - N bytes: status data (remainder of frame, format depends on node type)
+  ///
+  /// The status data format is node-specific and may include:
+  /// - Repeater nodes: uptime, message counts, relay statistics
+  /// - Sensor nodes: sensor readings, battery level, operational state
+  /// - Room nodes: user counts, message storage stats
+  void _handleStatusResponse(BufferReader reader) {
+    try {
+      print('  [StatusResponse] Parsing status response...');
+      print('    Remaining bytes: ${reader.remainingBytesCount}');
+
+      if (reader.remainingBytesCount >= 7) {
+        final reserved = reader.readByte();
+        print('    Reserved: $reserved');
+
+        final publicKeyPrefix = reader.readBytes(6);
+        print('    Node public key prefix: ${publicKeyPrefix.map((b) => b.toRadixString(16).padLeft(2, '0')).join(':')}');
+
+        // Read remaining status data
+        final statusData = reader.readRemainingBytes();
+        print('    Status data: ${statusData.length} bytes');
+        print('    Status data (hex): ${statusData.map((b) => b.toRadixString(16).padLeft(2, '0')).join(' ')}');
+
+        // Try to decode as ASCII text if printable
+        try {
+          final statusText = utf8.decode(statusData, allowMalformed: true);
+          if (statusText.isNotEmpty && _isPrintableAscii(statusText)) {
+            print('    Status data (text): $statusText');
+          }
+        } catch (e) {
+          // Not text data, that's fine
+        }
+
+        print('  ✅ [StatusResponse] Received status response from node');
+        onStatusResponse?.call(publicKeyPrefix, statusData);
+      } else {
+        print('  ⚠️ [StatusResponse] Insufficient data for full parsing');
+      }
+    } catch (e) {
+      print('  ❌ [StatusResponse] Parsing error: $e');
+      onError?.call('Status response parsing error: $e');
+    }
+  }
+
+  /// Check if a string contains only printable ASCII characters
+  bool _isPrintableAscii(String text) {
+    for (int i = 0; i < text.length; i++) {
+      final code = text.codeUnitAt(i);
+      if (code < 32 || code > 126) {
+        // Not printable ASCII (except newlines and tabs which are common)
+        if (code != 10 && code != 13 && code != 9) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
   /// Handle CurrentTime response (RESP_CODE_CURR_TIME)
   ///
   /// Protocol format:
@@ -1273,6 +1666,64 @@ class MeshCoreBleService {
     }
   }
 
+
+  /// Handle BatteryAndStorage response (RESP_CODE_BATT_AND_STORAGE)
+  ///
+  /// Protocol format (RESP_CODE_BATT_AND_STORAGE, code 12):
+  /// - 2 bytes: Millivolts (uint16)
+  /// - 4 bytes: (Optional) Used KB (uint32)
+  /// - 4 bytes: (Optional) Total KB (uint32, zero if unknown)
+  void _handleBatteryAndStorage(BufferReader reader) {
+    try {
+      print('  [BatteryAndStorage] Parsing battery and storage info...');
+      print('    Remaining bytes: ${reader.remainingBytesCount}');
+
+      if (reader.remainingBytesCount >= 2) {
+        // Battery voltage is always present (uint16)
+        final millivolts = reader.readUInt16LE();
+        final voltage = millivolts / 1000.0;
+        print('    Battery: ${millivolts}mV (${voltage.toStringAsFixed(2)}V)');
+
+        // Storage fields are optional
+        int? usedKb;
+        int? totalKb;
+
+        if (reader.remainingBytesCount >= 8) {
+          // Both storage fields present
+          usedKb = reader.readUInt32LE();
+          totalKb = reader.readUInt32LE();
+
+          print('    Storage Used: ${usedKb}KB');
+          print('    Storage Total: ${totalKb}KB');
+
+          if (totalKb > 0) {
+            final usedPercent = (usedKb / totalKb) * 100.0;
+            final availableKb = totalKb - usedKb;
+            print('    Storage Available: ${availableKb}KB (${(100 - usedPercent).toStringAsFixed(1)}% free)');
+            print('    Storage Usage: ${usedPercent.toStringAsFixed(1)}%');
+          } else {
+            print('    Storage Total is 0 (size unknown)');
+          }
+        } else if (reader.remainingBytesCount >= 4) {
+          // Only used KB present
+          usedKb = reader.readUInt32LE();
+          print('    Storage Used: ${usedKb}KB');
+          print('    Storage Total: Not available');
+        } else {
+          print('    Storage: Not available');
+        }
+
+        // Trigger callback
+        onBatteryAndStorage?.call(millivolts, usedKb, totalKb);
+        print('  ✅ [BatteryAndStorage] Parsed successfully');
+      } else {
+        print('  ⚠️ [BatteryAndStorage] Insufficient data (need at least 2 bytes for battery)');
+      }
+    } catch (e) {
+      print('  ❌ [BatteryAndStorage] Parsing error: $e');
+      onError?.call('BatteryAndStorage parsing error: $e');
+    }
+  }
   /// Handle Error response (RESP_CODE_ERR)
   ///
   /// Protocol format:
@@ -1457,6 +1908,7 @@ class MeshCoreBleService {
 
   /// Request telemetry from contact
   /// [zeroHop] - if true, only direct connection (no mesh forwarding)
+  @Deprecated('Use sendBinaryRequest() instead for better functionality')
   Future<void> requestTelemetry(Uint8List contactPublicKey, {bool zeroHop = false}) async {
     final writer = BufferWriter();
     writer.writeByte(MeshCoreConstants.cmdSendTelemetryReq);
@@ -1467,11 +1919,60 @@ class MeshCoreBleService {
     await _writeData(writer.toBytes());
   }
 
-  /// Get battery voltage
-  Future<void> getBatteryVoltage() async {
+  /// Send binary request to contact (CMD_SEND_BINARY_REQ)
+  ///
+  /// Modern replacement for requestTelemetry() with better functionality.
+  /// Supports multiple request types including telemetry, access lists, and neighbors.
+  ///
+  /// Protocol format:
+  /// - 1 byte: command code (50)
+  /// - 32 bytes: contact public key
+  /// - N bytes: request code and params (requestData)
+  ///
+  /// Common request codes (first byte of requestData):
+  /// - 0x03: Get telemetry data (equivalent to old requestTelemetry)
+  /// - 0x04: Get average/min/max telemetry
+  /// - 0x05: Get access list
+  /// - 0x06: Get neighbors list
+  ///
+  /// Response arrives via onBinaryResponse callback with matching tag.
+  ///
+  /// Example - request telemetry:
+  /// ```dart
+  /// await sendBinaryRequest(
+  ///   contactPublicKey: contact.publicKey,
+  ///   requestData: Uint8List.fromList([0x03]), // BINARY_REQ_GET_TELEMETRY_DATA
+  /// );
+  /// ```
+  Future<void> sendBinaryRequest({
+    required Uint8List contactPublicKey,
+    required Uint8List requestData,
+  }) async {
+    final writer = BufferWriter();
+    writer.writeByte(MeshCoreConstants.cmdSendBinaryReq); // 0x32 (50)
+    writer.writeBytes(contactPublicKey); // 32 bytes
+    writer.writeBytes(requestData); // request code + params
+    await _writeData(writer.toBytes());
+  }
+
+  /// Get battery voltage and storage information
+  ///
+  /// Sends CMD_GET_BATT_AND_STORAGE (20) to query:
+  /// - Battery voltage in millivolts (uint16)
+  /// - Used storage in KB (optional uint32)
+  /// - Total storage in KB (optional uint32, 0 if unknown)
+  ///
+  /// Response arrives via onBatteryAndStorage callback
+  Future<void> getBatteryAndStorage() async {
     final writer = BufferWriter();
     writer.writeByte(MeshCoreConstants.cmdGetBatteryVoltage);
     await _writeData(writer.toBytes());
+  }
+
+  /// Legacy method name for backward compatibility
+  @Deprecated('Use getBatteryAndStorage() instead')
+  Future<void> getBatteryVoltage() async {
+    await getBatteryAndStorage();
   }
 
   /// Sync next message from device queue
@@ -1592,20 +2093,20 @@ class MeshCoreBleService {
 
   /// Send login request to room or repeater
   ///
-  /// This sends a PAYLOAD_TYPE_ANON_REQ packet via the companion radio.
-  /// The companion radio encodes it and sends it to the room server.
+  /// This sends a login request to the room server via the companion radio.
   ///
-  /// Protocol format (CMD_SEND_LOGIN):
+  /// **ACTUAL Protocol format (CMD_SEND_LOGIN):**
   /// - 1 byte: command code (26)
-  /// - 4 bytes: sender timestamp (uint32, epoch seconds - current time)
-  /// - 4 bytes: sync_since timestamp (uint32, epoch seconds - 0 for all messages)
   /// - 32 bytes: room public key
   /// - N bytes: password (varchar, max 15 bytes, null-terminated)
   ///
+  /// NOTE: The documentation was wrong - there are NO timestamp/sync_since params
+  /// in the companion radio protocol. The companion radio's sendLogin() function
+  /// handles timestamp internally when it creates the PAYLOAD_TYPE_ANON_REQ packet.
+  ///
   /// Response: PUSH_CODE_LOGIN_SUCCESS (0x85) or PUSH_CODE_LOGIN_FAIL (0x86)
   ///
-  /// After successful login, the room server will PUSH messages where
-  /// post_timestamp > sync_since directly to the companion radio.
+  /// After successful login, the room server will automatically PUSH stored messages.
   ///
   /// IMPORTANT: The companion radio must have the room contact in its own
   /// internal contact table. If you get ERR_CODE_NOT_FOUND (2), the radio
@@ -1616,28 +2117,55 @@ class MeshCoreBleService {
   Future<void> loginToRoom({
     required Uint8List roomPublicKey,
     required String password,
-    int syncSince = 0, // 0 = get all messages
   }) async {
     if (password.length > 15) {
       throw ArgumentError('Password exceeds 15 character limit');
     }
 
-    final now = DateTime.now().millisecondsSinceEpoch ~/ 1000; // epoch seconds
-
     print('🔐 [BLE] Preparing login request:');
     print('    Room public key prefix: ${roomPublicKey.sublist(0, 6).map((b) => b.toRadixString(16).padLeft(2, '0')).join(':')}');
     print('    Password: ${"*" * password.length} (${password.length} chars)');
-    print('    Sender timestamp: $now (${DateTime.fromMillisecondsSinceEpoch(now * 1000)})');
-    print('    Sync since: $syncSince (${syncSince == 0 ? "all messages" : "messages after timestamp $syncSince"})');
     print('    ⚠️  NOTE: The companion radio must have this room in its contact table');
     print('           If you get ERR_CODE_NOT_FOUND, the room needs to advertise first or use CMD_ADD_UPDATE_CONTACT');
 
     final writer = BufferWriter();
-    writer.writeByte(MeshCoreConstants.cmdSendLogin);
-    writer.writeUInt32LE(now); // sender timestamp
-    writer.writeUInt32LE(syncSince); // sync messages since this timestamp (0 = all)
+    writer.writeByte(MeshCoreConstants.cmdSendLogin); // 0x1A
     writer.writeBytes(roomPublicKey); // 32 bytes
     writer.writeString(password); // Max 15 bytes, null-terminated
+    await _writeData(writer.toBytes());
+  }
+
+  /// Send status request to repeater or sensor node
+  ///
+  /// This sends a status request (CMD_SEND_STATUS_REQ, 0x1B) to a repeater
+  /// or sensor node to query its current operational status.
+  ///
+  /// Protocol format (CMD_SEND_STATUS_REQ):
+  /// - 1 byte: command code (27)
+  /// - 32 bytes: public key of target node (repeater or sensor)
+  ///
+  /// Response: PUSH_CODE_STATUS_RESPONSE (0x87) push notification
+  ///
+  /// The status data format is node-specific:
+  /// - Repeater nodes: uptime, message counts, relay statistics
+  /// - Sensor nodes: sensor readings, battery level, operational state
+  /// - Room nodes: user counts, message storage statistics
+  ///
+  /// Example usage:
+  /// ```dart
+  /// bleService.onStatusResponse = (publicKeyPrefix, statusData) {
+  ///   print('Status from node: ${utf8.decode(statusData)}');
+  /// };
+  /// await bleService.sendStatusRequest(repeaterContact.publicKey);
+  /// ```
+  Future<void> sendStatusRequest(Uint8List contactPublicKey) async {
+    print('📊 [BLE] Preparing status request:');
+    print('    Target node public key prefix: ${contactPublicKey.sublist(0, 6).map((b) => b.toRadixString(16).padLeft(2, '0')).join(':')}');
+    print('    ℹ️  Requesting status from repeater/sensor node');
+
+    final writer = BufferWriter();
+    writer.writeByte(MeshCoreConstants.cmdSendStatusReq); // 0x1B
+    writer.writeBytes(contactPublicKey); // 32 bytes
     await _writeData(writer.toBytes());
   }
 
@@ -1675,6 +2203,8 @@ class MeshCoreBleService {
           return 'Device Query';
         case MeshCoreConstants.cmdAppStart:
           return 'App Start';
+        case MeshCoreConstants.cmdSendStatusReq:
+          return 'Status Request';
         default:
           return null;
       }
@@ -1701,10 +2231,14 @@ class MeshCoreBleService {
           return 'Self Info';
         case MeshCoreConstants.pushAdvert:
           return 'Advertisement';
+        case MeshCoreConstants.pushPathUpdated:
+          return 'Path Updated';
         case MeshCoreConstants.pushLogRxData:
           return 'Log RX Data';
         case MeshCoreConstants.pushNewAdvert:
           return 'New Advertisement';
+        case MeshCoreConstants.pushStatusResponse:
+          return 'Status Response';
         case MeshCoreConstants.respNoMoreMessages:
           return 'No More Messages';
         case MeshCoreConstants.respOk:

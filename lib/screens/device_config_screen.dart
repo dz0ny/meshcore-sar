@@ -370,24 +370,25 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      Wrap(
-                        spacing: 8,
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          OutlinedButton.icon(
+                          IconButton.outlined(
                             onPressed: _isBroadcasting ? null : _broadcastNow,
                             icon: _isBroadcasting
                                 ? const SizedBox(
-                                    width: 16,
-                                    height: 16,
+                                    width: 20,
+                                    height: 20,
                                     child: CircularProgressIndicator(strokeWidth: 2),
                                   )
-                                : const Icon(Icons.sensors, size: 18),
-                            label: const Text('Broadcast'),
+                                : const Icon(Icons.sensors),
+                            tooltip: 'Broadcast',
                           ),
-                          ElevatedButton.icon(
+                          const SizedBox(width: 8),
+                          IconButton.filled(
                             onPressed: _savePublicInfo,
-                            icon: const Icon(Icons.save, size: 18),
-                            label: const Text('Save'),
+                            icon: const Icon(Icons.save),
+                            tooltip: 'Save',
                           ),
                         ],
                       ),
@@ -492,10 +493,10 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      ElevatedButton.icon(
+                      IconButton.filled(
                         onPressed: _saveRadioSettings,
-                        icon: const Icon(Icons.save, size: 18),
-                        label: const Text('Save'),
+                        icon: const Icon(Icons.save),
+                        tooltip: 'Save',
                       ),
                     ],
                   ),

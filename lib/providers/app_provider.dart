@@ -70,6 +70,30 @@ class AppProvider with ChangeNotifier {
     connectionProvider.onTelemetryReceived = (publicKey, lppData) {
       contactsProvider.updateTelemetry(publicKey, lppData);
     };
+
+    // When a contact's routing path is updated in the mesh network
+    connectionProvider.onPathUpdated = (publicKey) {
+      debugPrint('🔄 [AppProvider] Path updated for contact: ${publicKey.sublist(0, 6).map((b) => b.toRadixString(16).padLeft(2, '0')).join(':')}...');
+      // Trigger a contact sync to get the updated path information
+      // This happens asynchronously to avoid blocking the event handler
+      Future.delayed(const Duration(milliseconds: 100), () {
+        if (connectionProvider.deviceInfo.isConnected) {
+          connectionProvider.getContacts();
+        }
+      });
+    };
+
+    // When a message is sent (RESP_CODE_SENT received)
+    connectionProvider.onMessageSent = (messageId, expectedAckTag, suggestedTimeoutMs) {
+      debugPrint('📤 [AppProvider] Message sent - Message ID: $messageId, ACK tag: $expectedAckTag');
+      messagesProvider.markMessageSent(messageId, expectedAckTag, suggestedTimeoutMs);
+    };
+
+    // When a message is delivered (PUSH_CODE_SEND_CONFIRMED received)
+    connectionProvider.onMessageDelivered = (ackCode, roundTripTimeMs) {
+      debugPrint('✅ [AppProvider] Message delivered - ACK: $ackCode, RTT: ${roundTripTimeMs}ms');
+      messagesProvider.markMessageDelivered(ackCode, roundTripTimeMs);
+    };
   }
 
   /// Initialize the app (load contacts, sync time, etc.)
@@ -89,8 +113,8 @@ class AppProvider with ChangeNotifier {
       // Automatically login to all saved rooms
       await _autoLoginToRooms();
 
-      // Sync any waiting messages from device queue
-      await _syncMessages();
+      // Note: Messages are synced automatically via PUSH_CODE_MSG_WAITING events
+      // No need to manually sync here - the BLE service handles this via callbacks
 
       notifyListeners();
     } catch (e) {
@@ -195,40 +219,32 @@ class AppProvider with ChangeNotifier {
     }
   }
 
-  /// Sync messages from device queue
-  Future<void> _syncMessages() async {
-    if (!connectionProvider.deviceInfo.isConnected) return;
+  // Removed _syncMessages() - messages are automatically synced via PUSH_CODE_MSG_WAITING events
+  // The ConnectionProvider's onMessageWaiting callback handles automatic message fetching
 
-    try {
-      debugPrint('🔄 [AppProvider] Starting message sync...');
-      final messageCount = await connectionProvider.syncAllMessages();
-      debugPrint('✅ [AppProvider] Synced $messageCount messages');
-    } catch (e) {
-      debugPrint('❌ [AppProvider] Message sync error: $e');
-    }
-  }
-
-  /// Refresh data (contacts, messages)
+  /// Refresh data (contacts only - messages are handled via events)
   Future<void> refresh() async {
     if (!connectionProvider.deviceInfo.isConnected) return;
 
     try {
       await connectionProvider.getContacts();
-      await _syncMessages();
+      // Messages are automatically synced via PUSH_CODE_MSG_WAITING events
       notifyListeners();
     } catch (e) {
       debugPrint('Refresh error: $e');
     }
   }
 
-  /// Manually sync messages (useful for pull-to-refresh)
+  /// Manually sync messages (only for explicit user pull-to-refresh)
+  /// Note: Messages are automatically synced via PUSH_CODE_MSG_WAITING events
+  /// This method should ONLY be called when the user explicitly pulls to refresh
   Future<int> syncMessages() async {
     if (!connectionProvider.deviceInfo.isConnected) return 0;
 
     try {
-      debugPrint('🔄 [AppProvider] Manual message sync requested');
+      debugPrint('🔄 [AppProvider] Manual message sync requested (user initiated)');
       final messageCount = await connectionProvider.syncAllMessages();
-      debugPrint('✅ [AppProvider] Synced $messageCount messages');
+      debugPrint('✅ [AppProvider] Manual sync completed: $messageCount messages');
       notifyListeners();
       return messageCount;
     } catch (e) {

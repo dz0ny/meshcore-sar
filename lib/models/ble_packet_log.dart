@@ -1,6 +1,44 @@
 import 'dart:typed_data';
 import '../services/meshcore_opcode_names.dart';
 
+/// Decoded LOG_RX_DATA packet structure
+class LogRxDataInfo {
+  final int? airtimeMs;
+  final Uint8List? senderPublicKey;
+  final int? ackCode;
+  final List<String> embeddedStrings;
+  final double entropy;
+  final bool isLikelyEncrypted;
+
+  LogRxDataInfo({
+    this.airtimeMs,
+    this.senderPublicKey,
+    this.ackCode,
+    this.embeddedStrings = const [],
+    required this.entropy,
+    required this.isLikelyEncrypted,
+  });
+
+  /// Get sender public key as hex string (short)
+  String? get senderKeyShort {
+    if (senderPublicKey == null || senderPublicKey!.length < 6) return null;
+    return senderPublicKey!
+        .sublist(0, 6)
+        .map((b) => b.toRadixString(16).padLeft(2, '0'))
+        .join(':');
+  }
+
+  String get summary {
+    final parts = <String>[];
+    if (airtimeMs != null) parts.add('airtime:${airtimeMs}ms');
+    if (ackCode != null) parts.add('ACK:$ackCode');
+    if (senderKeyShort != null) parts.add('from:$senderKeyShort');
+    if (embeddedStrings.isNotEmpty) parts.add('strings:${embeddedStrings.length}');
+    if (isLikelyEncrypted) parts.add('encrypted');
+    return parts.join(', ');
+  }
+}
+
 /// Represents a logged BLE packet with timestamp and metadata
 class BlePacketLog {
   final DateTime timestamp;
@@ -8,6 +46,7 @@ class BlePacketLog {
   final PacketDirection direction;
   final int? responseCode;
   final String? description;
+  final LogRxDataInfo? logRxDataInfo; // Decoded LOG_RX_DATA information
 
   BlePacketLog({
     required this.timestamp,
@@ -15,6 +54,7 @@ class BlePacketLog {
     required this.direction,
     this.responseCode,
     this.description,
+    this.logRxDataInfo,
   });
 
   /// Convert raw data to hex string for display
@@ -63,7 +103,8 @@ class BlePacketLog {
     final dir = direction == PacketDirection.rx ? 'RX' : 'TX';
     final code = responseCode != null ? ' [$opcodeDescription]' : '';
     final desc = description != null ? ' - $description' : '';
-    return '${timestamp.toIso8601String()} [$dir]$code ${rawData.length} bytes: $hexData$desc';
+    final logRxInfo = logRxDataInfo != null ? ' [${logRxDataInfo!.summary}]' : '';
+    return '${timestamp.toIso8601String()} [$dir]$code ${rawData.length} bytes: $hexData$desc$logRxInfo';
   }
 }
 

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import '../models/message.dart';
 import '../models/sar_marker.dart';
@@ -10,6 +11,12 @@ class MessagesProvider with ChangeNotifier {
   final Map<String, SarMarker> _sarMarkers = {};
   final MessageStorageService _storageService = MessageStorageService();
   bool _isInitialized = false;
+
+  // Track pending sent messages by expected ACK/TAG
+  final Map<int, Message> _pendingSentMessages = {};
+
+  // Track timeout timers for pending messages
+  final Map<int, Timer> _timeoutTimers = {};
 
   List<Message> get messages => List.unmodifiable(_messages);
 
@@ -83,6 +90,17 @@ class MessagesProvider with ChangeNotifier {
       print('   sarMarkerType: ${enhancedMessage.sarMarkerType}');
     }
 
+    // Check for duplicates before adding
+    // Messages can arrive multiple times due to:
+    // - Mesh network retransmissions
+    // - Multiple paths in the network
+    // - Syncing messages from device queue
+    if (_isDuplicate(enhancedMessage)) {
+      print('⚠️ [MessagesProvider] Duplicate message detected, skipping: ${enhancedMessage.id}');
+      print('   Text: ${enhancedMessage.text.substring(0, enhancedMessage.text.length > 50 ? 50 : enhancedMessage.text.length)}...');
+      return; // Skip duplicate
+    }
+
     _messages.add(enhancedMessage);
 
     // If it's a SAR marker message, extract and store the marker
@@ -99,12 +117,65 @@ class MessagesProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  /// Check if a message is a duplicate
+  ///
+  /// Messages are considered duplicates if they have:
+  /// 1. Same sender public key prefix (for contact messages)
+  /// 2. Same channel index (for channel messages)
+  /// 3. Same sender timestamp
+  /// 4. Same text content
+  bool _isDuplicate(Message message) {
+    return _messages.any((existing) {
+      // Check message type matches
+      if (existing.messageType != message.messageType) {
+        return false;
+      }
+
+      // Check sender matches
+      if (message.isContactMessage) {
+        // For contact messages, compare sender public key prefix
+        if (existing.senderKeyShort != message.senderKeyShort) {
+          return false;
+        }
+      } else if (message.isChannelMessage) {
+        // For channel messages, compare channel index
+        if (existing.channelIdx != message.channelIdx) {
+          return false;
+        }
+      }
+
+      // Check timestamp matches (sender timestamp is the unique identifier from the sender)
+      if (existing.senderTimestamp != message.senderTimestamp) {
+        return false;
+      }
+
+      // Check text content matches
+      if (existing.text != message.text) {
+        return false;
+      }
+
+      // All criteria match - this is a duplicate
+      return true;
+    });
+  }
+
   /// Add multiple messages
   void addMessages(List<Message> messages) {
+    int addedCount = 0;
+    int duplicateCount = 0;
+
     for (final message in messages) {
       // Always enhance message with SAR parser to detect SAR markers
       final enhancedMessage = SarMessageParser.enhanceMessage(message);
+
+      // Check for duplicates
+      if (_isDuplicate(enhancedMessage)) {
+        duplicateCount++;
+        continue; // Skip duplicate
+      }
+
       _messages.add(enhancedMessage);
+      addedCount++;
 
       if (enhancedMessage.isSarMarker) {
         final marker = enhancedMessage.toSarMarker();
@@ -113,6 +184,8 @@ class MessagesProvider with ChangeNotifier {
         }
       }
     }
+
+    print('📥 [MessagesProvider] Added $addedCount messages, skipped $duplicateCount duplicates');
 
     // Persist to storage asynchronously
     _persistMessages();
@@ -230,5 +303,159 @@ class MessagesProvider with ChangeNotifier {
       'stagingArea': stagingAreaMarkers.length,
       'object': objectMarkers.length,
     };
+  }
+
+  /// Add a sent message with initial status
+  void addSentMessage(Message message) {
+    // Always enhance message with SAR parser to detect SAR markers
+    final enhancedMessage = SarMessageParser.enhanceMessage(message);
+
+    // Check for duplicates (shouldn't happen for sent messages, but be safe)
+    if (_isDuplicate(enhancedMessage)) {
+      print('⚠️ [MessagesProvider] Duplicate sent message detected, skipping: ${enhancedMessage.id}');
+      return;
+    }
+
+    // Add message with sending status
+    final sendingMessage = enhancedMessage.copyWith(
+      deliveryStatus: MessageDeliveryStatus.sending,
+    );
+    _messages.add(sendingMessage);
+
+    // If it's a SAR marker message, extract and store the marker
+    if (sendingMessage.isSarMarker) {
+      final marker = sendingMessage.toSarMarker();
+      if (marker != null) {
+        _sarMarkers[marker.id] = marker;
+      }
+    }
+
+    _persistMessages();
+    notifyListeners();
+  }
+
+  /// Update message status to sent with ACK tag
+  void markMessageSent(String messageId, int expectedAckTag, int suggestedTimeoutMs) {
+    print('📤 [MessagesProvider] markMessageSent called');
+    print('  Message ID: $messageId');
+    print('  Expected ACK tag: $expectedAckTag');
+    print('  Timeout: ${suggestedTimeoutMs}ms');
+
+    final index = _messages.indexWhere((m) => m.id == messageId);
+    print('  Message index in list: $index');
+
+    if (index != -1) {
+      final message = _messages[index];
+      print('  Current status: ${message.deliveryStatus}');
+
+      final updatedMessage = message.copyWith(
+        deliveryStatus: MessageDeliveryStatus.sent,
+        expectedAckTag: expectedAckTag,
+        suggestedTimeoutMs: suggestedTimeoutMs,
+      );
+      _messages[index] = updatedMessage;
+
+      // Track by ACK tag for matching with delivery confirmation
+      _pendingSentMessages[expectedAckTag] = updatedMessage;
+      print('  Added to pending messages map with ACK: $expectedAckTag');
+      print('  Total pending messages: ${_pendingSentMessages.length}');
+
+      // Start timeout timer
+      _timeoutTimers[expectedAckTag] = Timer(
+        Duration(milliseconds: suggestedTimeoutMs),
+        () {
+          print('⏱️ [MessagesProvider] Timeout for message $messageId (ACK $expectedAckTag)');
+          if (_pendingSentMessages.containsKey(expectedAckTag)) {
+            markMessageFailed(messageId);
+          }
+        },
+      );
+
+      print('⏱️ [MessagesProvider] Started ${suggestedTimeoutMs}ms timeout timer for message $messageId (ACK $expectedAckTag)');
+
+      _persistMessages();
+      notifyListeners();
+    } else {
+      print('⚠️ [MessagesProvider] Message not found in list: $messageId');
+    }
+  }
+
+  /// Update message status to delivered with RTT
+  void markMessageDelivered(int ackCode, int roundTripTimeMs) {
+    print('🔍 [MessagesProvider] markMessageDelivered called with ACK: $ackCode, RTT: ${roundTripTimeMs}ms');
+    print('  Current pending messages: ${_pendingSentMessages.keys.toList()}');
+    print('  Looking for ACK: $ackCode');
+
+    // Find message by ACK code
+    final message = _pendingSentMessages[ackCode];
+    if (message != null) {
+      print('  ✅ Found message: ${message.id}');
+      final index = _messages.indexWhere((m) => m.id == message.id);
+      print('  Message index in list: $index');
+
+      if (index != -1) {
+        final updatedMessage = message.copyWith(
+          deliveryStatus: MessageDeliveryStatus.delivered,
+          roundTripTimeMs: roundTripTimeMs,
+          deliveredAt: DateTime.now(),
+        );
+        _messages[index] = updatedMessage;
+
+        // Cancel timeout timer
+        _timeoutTimers[ackCode]?.cancel();
+        _timeoutTimers.remove(ackCode);
+
+        // Remove from pending
+        _pendingSentMessages.remove(ackCode);
+
+        print('✅ [MessagesProvider] Message ${message.id} delivered in ${roundTripTimeMs}ms (ACK $ackCode)');
+        print('  Calling notifyListeners() to update UI');
+
+        _persistMessages();
+        notifyListeners();
+      } else {
+        print('⚠️ [MessagesProvider] Message not found in list (index=-1)');
+      }
+    } else {
+      print('⚠️ [MessagesProvider] No pending message found for ACK code: $ackCode');
+      print('  This means either:');
+      print('  1. markMessageSent() was never called for this message');
+      print('  2. The ACK code doesn\'t match the expected ACK tag from RESP_CODE_SENT');
+      print('  3. The message was already delivered or timed out');
+    }
+  }
+
+  /// Update message status to failed
+  void markMessageFailed(String messageId) {
+    final index = _messages.indexWhere((m) => m.id == messageId);
+    if (index != -1) {
+      final message = _messages[index];
+      final updatedMessage = message.copyWith(
+        deliveryStatus: MessageDeliveryStatus.failed,
+      );
+      _messages[index] = updatedMessage;
+
+      // Cancel timeout timer if it exists
+      if (message.expectedAckTag != null) {
+        _timeoutTimers[message.expectedAckTag]?.cancel();
+        _timeoutTimers.remove(message.expectedAckTag);
+        _pendingSentMessages.remove(message.expectedAckTag);
+      }
+
+      print('❌ [MessagesProvider] Message $messageId marked as failed');
+
+      _persistMessages();
+      notifyListeners();
+    }
+  }
+
+  @override
+  void dispose() {
+    // Cancel all pending timeout timers
+    for (final timer in _timeoutTimers.values) {
+      timer.cancel();
+    }
+    _timeoutTimers.clear();
+    super.dispose();
   }
 }

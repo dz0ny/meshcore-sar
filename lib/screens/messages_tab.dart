@@ -7,7 +7,6 @@ import '../providers/messages_provider.dart';
 import '../providers/contacts_provider.dart';
 import '../providers/map_provider.dart';
 import '../providers/connection_provider.dart';
-import '../providers/app_provider.dart';
 import '../models/message.dart';
 import '../models/sar_marker.dart';
 import '../models/contact.dart';
@@ -98,7 +97,7 @@ class _MessagesTabState extends State<MessagesTab> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => _SarUpdateSheet(
+      builder: (context) => SarUpdateSheet(
         onSend: (sarType, position, notes, roomPublicKey, sendToChannel) async {
           await _sendSarMessage(sarType, position, notes, roomPublicKey, sendToChannel);
         },
@@ -114,6 +113,7 @@ class _MessagesTabState extends State<MessagesTab> {
     bool sendToChannel,
   ) async {
     final connectionProvider = context.read<ConnectionProvider>();
+    final messagesProvider = context.read<MessagesProvider>();
 
     if (!connectionProvider.deviceInfo.isConnected) {
       if (!mounted) return;
@@ -162,11 +162,42 @@ class _MessagesTabState extends State<MessagesTab> {
           ),
         );
       } else {
+        // Create message ID
+        final messageId = '${DateTime.now().millisecondsSinceEpoch}_sent';
+        final timestamp = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+
+        // Get current device's public key (first 6 bytes)
+        final devicePublicKey = connectionProvider.deviceInfo.publicKey;
+        final senderPublicKeyPrefix = devicePublicKey?.sublist(0, 6);
+
+        // Create sent message object
+        final sentMessage = Message(
+          id: messageId,
+          messageType: MessageType.contact,
+          senderPublicKeyPrefix: senderPublicKeyPrefix,
+          pathLen: 0,
+          textType: MessageTextType.plain,
+          senderTimestamp: timestamp,
+          text: fullMessage,
+          receivedAt: DateTime.now(),
+          deliveryStatus: MessageDeliveryStatus.sending,
+          // SAR marker data is automatically added by SarMessageParser.enhanceMessage in MessagesProvider
+        );
+
+        // Add to messages list with "sending" status
+        messagesProvider.addSentMessage(sentMessage);
+
         // Send SAR message to selected room (persisted and immutable)
-        await connectionProvider.sendTextMessage(
+        final sentSuccessfully = await connectionProvider.sendTextMessage(
           contactPublicKey: roomPublicKey!,
           text: fullMessage,
+          messageId: messageId, // Pass message ID so it can be tracked
         );
+
+        if (!sentSuccessfully) {
+          // Mark message as failed if sending failed
+          messagesProvider.markMessageFailed(messageId);
+        }
 
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
@@ -189,21 +220,7 @@ class _MessagesTabState extends State<MessagesTab> {
   }
 
 
-  Future<void> _handleRefresh() async {
-    final appProvider = context.read<AppProvider>();
-    final messageCount = await appProvider.syncMessages();
-
-    if (!mounted) return;
-    if (messageCount > 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Synced $messageCount message${messageCount == 1 ? '' : 's'}'),
-          backgroundColor: Colors.green,
-          duration: const Duration(seconds: 2),
-        ),
-      );
-    }
-  }
+  // Removed _handleRefresh() - messages are synced automatically via PUSH_CODE_MSG_WAITING events
 
   List<Message> _getFilteredMessages(MessagesProvider messagesProvider) {
     // Show ALL messages regardless of recipient selection
@@ -245,31 +262,28 @@ class _MessagesTabState extends State<MessagesTab> {
                         ],
                       ),
                     )
-                  : RefreshIndicator(
-                      onRefresh: _handleRefresh,
-                      child: ListView.builder(
-                        reverse: true,
-                        padding: const EdgeInsets.all(8),
-                        itemCount: messages.length,
-                        itemBuilder: (context, index) {
-                          final message = messages[index];
-                          return _MessageBubble(
-                            message: message,
-                            onTap: message.isSarMarker &&
-                                    message.sarGpsCoordinates != null
-                                ? () {
-                                    final mapProvider =
-                                        context.read<MapProvider>();
-                                    mapProvider.navigateToLocation(
-                                      location: message.sarGpsCoordinates!,
-                                      zoom: 15.0,
-                                    );
-                                    widget.onNavigateToMap();
-                                  }
-                                : null,
-                          );
-                        },
-                      ),
+                  : ListView.builder(
+                      reverse: true,
+                      padding: const EdgeInsets.all(8),
+                      itemCount: messages.length,
+                      itemBuilder: (context, index) {
+                        final message = messages[index];
+                        return _MessageBubble(
+                          message: message,
+                          onTap: message.isSarMarker &&
+                                  message.sarGpsCoordinates != null
+                              ? () {
+                                  final mapProvider =
+                                      context.read<MapProvider>();
+                                  mapProvider.navigateToLocation(
+                                    location: message.sarGpsCoordinates!,
+                                    zoom: 15.0,
+                                  );
+                                  widget.onNavigateToMap();
+                                }
+                              : null,
+                        );
+                      },
                     ),
             ),
 
@@ -364,6 +378,70 @@ class _MessageBubble extends StatelessWidget {
     required this.message,
     this.onTap,
   });
+
+  Future<void> _retryFailedMessage(BuildContext context, Message failedMessage) async {
+    final connectionProvider = context.read<ConnectionProvider>();
+    final messagesProvider = context.read<MessagesProvider>();
+
+    if (!connectionProvider.deviceInfo.isConnected) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Not connected to device'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    try {
+      // Create new message ID for retry
+      final retryMessageId = '${failedMessage.id}_retry';
+
+      // Create retry message
+      final retryMessage = failedMessage.copyWith(
+        id: retryMessageId,
+        deliveryStatus: MessageDeliveryStatus.sending,
+      );
+
+      // Add retry message to provider
+      messagesProvider.addSentMessage(retryMessage);
+
+      // Resend the message
+      if (failedMessage.messageType == MessageType.contact) {
+        // Direct message retry - NOT YET IMPLEMENTED
+        // Would need to look up contact's full public key by senderKeyShort
+        messagesProvider.markMessageFailed(retryMessageId);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Direct message retry not yet implemented'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      } else if (failedMessage.messageType == MessageType.channel) {
+        // Channel message retry
+        await connectionProvider.sendChannelMessage(
+          channelIdx: failedMessage.channelIdx ?? 0,
+          text: failedMessage.text,
+          messageId: retryMessageId,
+        );
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Retrying message...'),
+            backgroundColor: Colors.orange,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Retry failed: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -514,10 +592,92 @@ class _MessageBubble extends StatelessWidget {
                 message.text,
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
+
+            // Delivery status for sent messages
+            if (message.isSentMessage) ...[
+              const SizedBox(height: 8),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    _getDeliveryStatusIcon(message.deliveryStatus),
+                    size: 14,
+                    color: _getDeliveryStatusColor(message.deliveryStatus),
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    message.deliveryStatusText,
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: _getDeliveryStatusColor(message.deliveryStatus),
+                          fontStyle: FontStyle.italic,
+                        ),
+                  ),
+                  // Show retry button for failed messages
+                  if (message.deliveryStatus == MessageDeliveryStatus.failed) ...[
+                    const SizedBox(width: 8),
+                    GestureDetector(
+                      onTap: () => _retryFailedMessage(context, message),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.orange.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(color: Colors.orange, width: 1),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.refresh, size: 12, color: Colors.orange),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Retry',
+                              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                    color: Colors.orange,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ],
           ],
         ),
       ),
     );
+  }
+
+  IconData _getDeliveryStatusIcon(MessageDeliveryStatus status) {
+    switch (status) {
+      case MessageDeliveryStatus.sending:
+        return Icons.schedule;
+      case MessageDeliveryStatus.sent:
+        return Icons.check;
+      case MessageDeliveryStatus.delivered:
+        return Icons.done_all;
+      case MessageDeliveryStatus.failed:
+        return Icons.error_outline;
+      case MessageDeliveryStatus.received:
+        return Icons.inbox;
+    }
+  }
+
+  Color _getDeliveryStatusColor(MessageDeliveryStatus status) {
+    switch (status) {
+      case MessageDeliveryStatus.sending:
+        return Colors.orange;
+      case MessageDeliveryStatus.sent:
+        return Colors.blue;
+      case MessageDeliveryStatus.delivered:
+        return Colors.green;
+      case MessageDeliveryStatus.failed:
+        return Colors.red;
+      case MessageDeliveryStatus.received:
+        return Colors.grey;
+    }
   }
 
   Color _getSarMarkerColor(BuildContext context, bool isDarkMode) {
@@ -605,17 +765,24 @@ class _MessageBubble extends StatelessWidget {
   }
 }
 
-// SAR Update Sheet
-class _SarUpdateSheet extends StatefulWidget {
+// SAR Update Sheet (public so it can be used from map_tab.dart)
+class SarUpdateSheet extends StatefulWidget {
   final Future<void> Function(SarMarkerType, Position, String?, Uint8List?, bool) onSend;
+  final Position? prePopulatedPosition;
+  final bool allowLocationUpdate;
 
-  const _SarUpdateSheet({required this.onSend});
+  const SarUpdateSheet({
+    super.key,
+    required this.onSend,
+    this.prePopulatedPosition,
+    this.allowLocationUpdate = true,
+  });
 
   @override
-  State<_SarUpdateSheet> createState() => _SarUpdateSheetState();
+  State<SarUpdateSheet> createState() => _SarUpdateSheetState();
 }
 
-class _SarUpdateSheetState extends State<_SarUpdateSheet> {
+class _SarUpdateSheetState extends State<SarUpdateSheet> {
   SarMarkerType _selectedType = SarMarkerType.foundPerson;
   Position? _currentPosition;
   bool _loadingLocation = false;
@@ -626,7 +793,12 @@ class _SarUpdateSheetState extends State<_SarUpdateSheet> {
   @override
   void initState() {
     super.initState();
-    _getCurrentLocation();
+    // Use pre-populated position if provided, otherwise get current location
+    if (widget.prePopulatedPosition != null) {
+      _currentPosition = widget.prePopulatedPosition;
+    } else {
+      _getCurrentLocation();
+    }
     _setDefaultDestination();
   }
 
@@ -956,13 +1128,39 @@ class _SarUpdateSheetState extends State<_SarUpdateSheet> {
                   const SizedBox(height: 24),
 
                   // Location display
-                  const Text(
-                    'Current Location',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  Row(
+                    children: [
+                      const Text(
+                        'Location',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      if (!widget.allowLocationUpdate) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Colors.blue.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(4),
+                            border: Border.all(
+                              color: Colors.blue.withValues(alpha: 0.5),
+                              width: 1,
+                            ),
+                          ),
+                          child: const Text(
+                            'From Map',
+                            style: TextStyle(
+                              color: Colors.blue,
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                   const SizedBox(height: 12),
                   if (_loadingLocation)
@@ -1065,13 +1263,15 @@ class _SarUpdateSheetState extends State<_SarUpdateSheet> {
                                   ),
                                 ),
                               ),
-                              IconButton(
-                                icon: const Icon(Icons.refresh, size: 20, color: Colors.white),
-                                onPressed: _getCurrentLocation,
-                                padding: EdgeInsets.zero,
-                                constraints: const BoxConstraints(),
-                                tooltip: 'Refresh location',
-                              ),
+                              // Only show refresh button if location updates are allowed
+                              if (widget.allowLocationUpdate)
+                                IconButton(
+                                  icon: const Icon(Icons.refresh, size: 20, color: Colors.white),
+                                  onPressed: _getCurrentLocation,
+                                  padding: EdgeInsets.zero,
+                                  constraints: const BoxConstraints(),
+                                  tooltip: 'Refresh location',
+                                ),
                             ],
                           ),
                           if (_currentPosition!.accuracy != null) ...[

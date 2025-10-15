@@ -454,19 +454,19 @@ class ConnectionProvider with ChangeNotifier {
     }
 
     try {
+      // IMPORTANT: Track pending message BEFORE sending to avoid race condition
+      // The SENT response can arrive so quickly that if we track after sending,
+      // the callback will fire before we add the message ID to the queue.
+      if (messageId != null) {
+        _messageDeliveryTracker.trackPendingMessage(messageId);
+        print('  Added message ID to pending queue BEFORE sending: $messageId');
+      }
+
       // Send the message
       await _bleService.sendTextMessage(
         contactPublicKey: contactPublicKey,
         text: text,
       );
-
-      // If message ID provided, add it to the pending queue via helper
-      // When the SENT response arrives, it will be matched with this message ID
-      // Note: Messages must be sent sequentially for this to work correctly
-      if (messageId != null) {
-        _messageDeliveryTracker.trackPendingMessage(messageId);
-        print('  Added message ID to pending queue: $messageId');
-      }
 
       return true;
     } catch (e) {
@@ -491,16 +491,16 @@ class ConnectionProvider with ChangeNotifier {
     }
 
     try {
+      // IMPORTANT: Track pending message BEFORE sending to avoid race condition
+      if (messageId != null) {
+        _messageDeliveryTracker.trackPendingMessage(messageId);
+        print('  Added message ID to pending queue BEFORE sending: $messageId');
+      }
+
       await _bleService.sendChannelMessage(
         channelIdx: channelIdx,
         text: text,
       );
-
-      // If message ID provided, add it to the pending queue via helper
-      if (messageId != null) {
-        _messageDeliveryTracker.trackPendingMessage(messageId);
-        print('  Added message ID to pending queue: $messageId');
-      }
     } catch (e) {
       _error = 'Failed to send channel message: $e';
       notifyListeners();

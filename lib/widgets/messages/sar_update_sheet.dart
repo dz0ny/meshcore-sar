@@ -5,6 +5,7 @@ import 'package:geolocator/geolocator.dart';
 import '../../providers/contacts_provider.dart';
 import '../../models/contact.dart';
 import '../../models/sar_marker.dart';
+import '../../services/validation_service.dart';
 
 /// SAR Update Sheet - Modal bottom sheet for creating and sending SAR markers
 /// This widget is public so it can be used from both messages_tab.dart and map_tab.dart
@@ -584,12 +585,76 @@ class _SarUpdateSheetState extends State<SarUpdateSheet> {
                   onPressed: _currentPosition == null || _selectedContact == null
                       ? null
                       : () async {
+                          final validator = ValidationService();
+
+                          // Validate coordinates
+                          final coordResult = validator.validateCoordinates(
+                            _currentPosition!.latitude,
+                            _currentPosition!.longitude,
+                          );
+                          if (!coordResult.isValid) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(coordResult.errorMessage!),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
+                            return;
+                          }
+
+                          // Validate notes length if provided
+                          final notes = _notesController.text.trim();
+                          if (notes.isNotEmpty) {
+                            final notesResult = validator.validateName(
+                              notes,
+                              maxLength: 100,
+                            );
+                            if (!notesResult.isValid) {
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(notesResult.errorMessage!),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                              }
+                              return;
+                            }
+                          }
+
+                          // Validate location accuracy (warn if >50m)
+                          if (_currentPosition!.accuracy != null &&
+                              _currentPosition!.accuracy! > 50.0) {
+                            final shouldContinue = await showDialog<bool>(
+                              context: context,
+                              builder: (context) => AlertDialog(
+                                title: const Text('Low Location Accuracy'),
+                                content: Text(
+                                  'Location accuracy is ±${_currentPosition!.accuracy!.round()}m. '
+                                  'This may not be accurate enough for SAR operations.\n\n'
+                                  'Continue anyway?',
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(context, false),
+                                    child: const Text('Cancel'),
+                                  ),
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(context, true),
+                                    child: const Text('Continue'),
+                                  ),
+                                ],
+                              ),
+                            );
+                            if (shouldContinue != true) return;
+                          }
+
                           await widget.onSend(
                             _selectedType,
                             _currentPosition!,
-                            _notesController.text.trim().isEmpty
-                                ? null
-                                : _notesController.text.trim(),
+                            notes.isEmpty ? null : notes,
                             _selectedContact!.isChannel
                                 ? null
                                 : _selectedContact!.publicKey,

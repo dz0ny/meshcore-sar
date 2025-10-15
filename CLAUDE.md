@@ -38,13 +38,17 @@ lib/
 │   ├── buffer_writer.dart             # Binary protocol writer
 │   ├── cayenne_lpp_parser.dart        # Telemetry decoder
 │   ├── tile_cache_service.dart        # Offline map tiles
+│   ├── background_location_service.dart # Background GPS tracking (legacy)
 │   ├── protocol/                      # Protocol layer (628 lines)
 │   │   ├── frame_parser.dart          # Parse incoming BLE frames
 │   │   └── frame_builder.dart         # Build outgoing BLE frames
-│   └── ble/                           # BLE layer (963 lines)
-│       ├── ble_connection_manager.dart  # Connection lifecycle
-│       ├── ble_command_sender.dart      # Command transmission
-│       └── ble_response_handler.dart    # Response processing
+│   ├── ble/                           # BLE layer (963 lines)
+│   │   ├── ble_connection_manager.dart  # Connection lifecycle
+│   │   ├── ble_command_sender.dart      # Command transmission
+│   │   └── ble_response_handler.dart    # Response processing
+│   ├── location_tracking_service.dart # GPS tracking & mesh broadcasting (501 lines)
+│   ├── map_marker_service.dart        # Marker generation & geodesic calculations (518 lines)
+│   └── validation_service.dart        # Form validation & input parsing (511 lines)
 ├── providers/           # State management
 │   ├── connection_provider.dart       # BLE connection state (957 lines)
 │   ├── contacts_provider.dart         # Contact list management
@@ -783,6 +787,434 @@ enum ContactType {
 **Map Display Rules**:
 - Only `ContactType.chat` contacts with valid GPS are shown on map
 - Repeaters and rooms are listed in Contacts tab but not mapped
+
+## Service Layer Architecture
+
+The app uses a service layer pattern to centralize business logic outside of UI components. Three main services handle location tracking, map operations, and validation.
+
+### LocationTrackingService
+
+**Purpose**: Singleton service for GPS tracking and intelligent mesh network location broadcasting.
+
+**Pattern**: Callback-based architecture with configurable thresholds.
+
+**Initialization**:
+```dart
+final locationService = LocationTrackingService();
+await locationService.initialize(bleService);
+
+// Set up callbacks
+locationService.onPositionUpdate = (position) {
+  // Handle GPS position updates
+  print('Position: ${position.latitude}, ${position.longitude}');
+};
+
+locationService.onError = (error) {
+  // Handle errors
+  showSnackBar(error);
+};
+
+locationService.onBroadcastSent = (position) {
+  // Called when location is broadcast to mesh network
+  print('Broadcast sent: ${position.latitude}, ${position.longitude}');
+};
+
+locationService.onTrackingStateChanged = (isTracking) {
+  // Called when tracking starts/stops
+  setState(() => _isTracking = isTracking);
+};
+```
+
+**Configuration Parameters**:
+```dart
+// Minimum distance before considering broadcast (default: 5.0m)
+locationService.minDistanceMeters = 5.0;
+
+// Maximum distance that forces immediate broadcast (default: 100.0m)
+locationService.maxDistanceMeters = 100.0;
+
+// Minimum time between broadcasts (default: 30s)
+locationService.minTimeIntervalSeconds = 30;
+
+// GPS update distance threshold (default: 10.0m)
+locationService.gpsUpdateDistance = 10.0;
+```
+
+**Smart Broadcasting Logic**:
+The service implements intelligent broadcasting that balances network traffic with position accuracy:
+
+1. **First broadcast**: Always sends immediately (no previous position to compare)
+2. **Maximum distance trigger**: If user moves ≥100m (configurable), broadcasts immediately regardless of time
+3. **Combined trigger**: If user moves ≥5m (configurable) AND ≥30s have passed since last broadcast, broadcasts
+
+This prevents flooding the mesh network while ensuring position updates are sent when meaningful movement occurs.
+
+**Usage Example**:
+```dart
+// Request permissions
+final granted = await locationService.requestPermissions();
+if (!granted) {
+  showError('Location permission denied');
+  return;
+}
+
+// Start tracking
+await locationService.startTracking(distanceThreshold: 10);
+
+// Manual broadcast (bypasses smart logic)
+final success = await locationService.broadcastLocationNow();
+
+// Stop tracking
+await locationService.stopTracking();
+
+// Check state
+if (locationService.isTracking) {
+  print('Current: ${locationService.currentPosition?.latitude}');
+}
+```
+
+**Haversine Distance Calculation**:
+The service uses the Haversine formula to calculate accurate distances between GPS coordinates, accounting for Earth's curvature:
+```dart
+double _calculateDistance(Position pos1, Position pos2) {
+  const earthRadius = 6371000.0; // meters
+  final dLat = _degreesToRadians(pos2.latitude - pos1.latitude);
+  final dLon = _degreesToRadians(pos2.longitude - pos1.longitude);
+
+  final a = sin(dLat / 2) * sin(dLat / 2) +
+      cos(_degreesToRadians(pos1.latitude)) * cos(_degreesToRadians(pos2.latitude)) *
+      sin(dLon / 2) * sin(dLon / 2);
+
+  final c = 2 * atan2(sqrt(a), sqrt(1 - a));
+  return earthRadius * c;
+}
+```
+
+### MapMarkerService
+
+**Purpose**: Singleton service for generating map markers and performing geodesic calculations.
+
+**Pattern**: Pure functions for testability and performance.
+
+**Generate Contact Markers**:
+```dart
+final markerService = MapMarkerService();
+
+final contactMarkers = markerService.generateContactMarkers(
+  contacts: contactsWithLocation,
+  onTap: (contact) => showContactDetails(contact),
+  userLat: currentUserLatitude,  // Optional: for distance calculations
+  userLon: currentUserLongitude,
+);
+```
+
+**Generate SAR Markers**:
+```dart
+final sarMarkers = markerService.generateSarMarkers(
+  sarMarkers: allSarMarkers,
+  onTap: (marker) => showSarMarkerDetails(marker),
+);
+```
+
+**Calculate Distance Between Points**:
+```dart
+final distance = markerService.calculateDistance(
+  lat1: 46.0569, lon1: 14.5058,  // Point A
+  lat2: 46.0570, lon2: 14.5060,  // Point B
+);
+print('Distance: ${distance.toStringAsFixed(1)}m');
+```
+
+**Calculate Bearing/Azimuth**:
+```dart
+final bearing = markerService.calculateBearing(
+  lat1: userLat, lon1: userLon,
+  lat2: targetLat, lon2: targetLon,
+);
+print('Bearing: ${bearing.toStringAsFixed(1)}°');
+```
+
+**Format Distance for Display**:
+```dart
+final formatted = markerService.formatDistance(1234.56);
+// Returns: "1.2 km" or "123 m" depending on distance
+```
+
+**Marker Features**:
+- Contact markers show battery level badge and distance from user
+- SAR markers are color-coded by type (green=person, red=fire, orange=staging)
+- Automatic "time ago" labels (e.g., "5m ago", "2h ago")
+- Tap handlers for showing detailed information
+- Custom icons and colors per marker type
+
+**Implementation Notes**:
+- All functions are pure (no side effects)
+- Uses Haversine formula for accurate geodesic calculations
+- Marker widgets are lightweight for performance
+- Distance calculations account for Earth's curvature
+
+### ValidationService
+
+**Purpose**: Singleton service for form validation and input parsing with structured error handling.
+
+**Pattern**: Structured result types (`ValidationResult`, `ParseResult<T>`) for type-safe error handling.
+
+**Coordinate Validation**:
+```dart
+final validator = ValidationService();
+
+// Validate latitude
+final latResult = validator.validateLatitude(46.0569);
+if (!latResult.isValid) {
+  showError(latResult.errorMessage!);
+}
+
+// Validate longitude
+final lonResult = validator.validateLongitude(14.5058);
+if (!lonResult.isValid) {
+  showError(lonResult.errorMessage!);
+}
+
+// Validate both coordinates at once
+final coordResult = validator.validateCoordinates(
+  46.0569,  // latitude
+  14.5058,  // longitude
+);
+if (!coordResult.isValid) {
+  showError(coordResult.errorMessage!);
+}
+
+// Validate bounds (for map region downloads)
+final boundsResult = validator.validateBounds(
+  north: 46.10, south: 46.00,
+  east: 14.60, west: 14.50,
+);
+```
+
+**Parse + Validate Text Input**:
+```dart
+// Parse latitude from text field
+final latResult = validator.parseLatitude(latController.text);
+if (!latResult.isSuccess) {
+  showError(latResult.errorMessage!);
+  return;
+}
+final latitude = latResult.value!;  // Safe to use
+
+// Parse longitude from text field
+final lonResult = validator.parseLongitude(lonController.text);
+if (!lonResult.isSuccess) {
+  showError(lonResult.errorMessage!);
+  return;
+}
+final longitude = lonResult.value!;
+
+// Parse radio frequency
+final freqResult = validator.parseFrequency(freqController.text);
+if (!freqResult.isSuccess) {
+  showError(freqResult.errorMessage!);
+  return;
+}
+final frequency = freqResult.value!;
+```
+
+**Radio Parameter Validation**:
+```dart
+// Frequency (137.0 - 1020.0 MHz)
+final freqValidation = validator.validateFrequency(433.5);
+
+// Bandwidth (7.8 - 500.0 kHz)
+final bwValidation = validator.validateBandwidth(125.0);
+
+// Spreading Factor (5 - 12)
+final sfValidation = validator.validateSpreadingFactor(7);
+
+// Coding Rate (5 - 8)
+final crValidation = validator.validateCodingRate(5);
+
+// TX Power (-9 to +22 dBm, device-dependent)
+final txValidation = validator.validateTxPower(20, maxTxPower: 22);
+```
+
+**Text and Name Validation**:
+```dart
+// Validate name (max length)
+final nameResult = validator.validateName(
+  nameController.text,
+  maxLength: 32,
+);
+
+// Validate with minimum length
+final passwordResult = validator.validateName(
+  passwordController.text,
+  minLength: 4,
+  maxLength: 15,
+);
+```
+
+**Zoom Level Validation**:
+```dart
+final zoomResult = validator.validateZoomLevel(15);
+if (!zoomResult.isValid) {
+  showError('Zoom: ${zoomResult.errorMessage}');
+}
+```
+
+**Validation Ranges**:
+- **Latitude**: -90.0 to +90.0 (decimal degrees)
+- **Longitude**: -180.0 to +180.0 (decimal degrees)
+- **Frequency**: 137.0 to 1020.0 (MHz)
+- **Bandwidth**: 7.8 to 500.0 (kHz)
+- **Spreading Factor**: 5 to 12
+- **Coding Rate**: 5 to 8
+- **TX Power**: -9 to +22 dBm (max depends on device)
+- **Zoom Level**: 0 to 19
+
+**Result Types**:
+```dart
+// ValidationResult - for validation only
+class ValidationResult {
+  final bool isValid;
+  final String? errorMessage;
+
+  const ValidationResult.valid() : isValid = true, errorMessage = null;
+  const ValidationResult.invalid(this.errorMessage) : isValid = false;
+}
+
+// ParseResult<T> - for parsing + validation
+class ParseResult<T> {
+  final T? value;
+  final String? errorMessage;
+
+  const ParseResult.success(this.value) : errorMessage = null;
+  const ParseResult.error(this.errorMessage) : value = null;
+
+  bool get isSuccess => value != null;
+}
+```
+
+**Usage Pattern**:
+```dart
+// Pattern 1: Validate existing value
+final validation = validator.validateLatitude(existingValue);
+if (validation.isValid) {
+  // Use existingValue
+}
+
+// Pattern 2: Parse + validate text input
+final parseResult = validator.parseLatitude(textController.text);
+if (parseResult.isSuccess) {
+  final latitude = parseResult.value!;  // Type-safe
+  // Use latitude
+} else {
+  showError(parseResult.errorMessage!);
+}
+```
+
+### Service Integration Examples
+
+**Settings Screen** (settings_screen.dart):
+```dart
+class _SettingsScreenState extends State<SettingsScreen> {
+  final LocationTrackingService _locationService = LocationTrackingService();
+
+  @override
+  void initState() {
+    super.initState();
+    _initLocationService();
+  }
+
+  Future<void> _initLocationService() async {
+    await _locationService.initialize(bleService);
+
+    _locationService.onError = (error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error), backgroundColor: Colors.orange),
+      );
+    };
+
+    _locationService.onBroadcastSent = (position) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Location broadcast: ${position.latitude.toStringAsFixed(5)}, ${position.longitude.toStringAsFixed(5)}'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    };
+  }
+
+  @override
+  void dispose() {
+    _locationService.stopTracking();
+    super.dispose();
+  }
+}
+```
+
+**Map Tab** (map_tab.dart):
+```dart
+class _MapTabState extends State<MapTab> {
+  final LocationTrackingService _locationService = LocationTrackingService();
+  final MapMarkerService _markerService = MapMarkerService();
+
+  @override
+  Widget build(BuildContext context) {
+    // Generate markers using service
+    final contactMarkers = _markerService.generateContactMarkers(
+      contacts: contactsProvider.contactsWithLocation,
+      onTap: (contact) => _showContactDetails(contact),
+      userLat: _locationService.currentPosition?.latitude,
+      userLon: _locationService.currentPosition?.longitude,
+    );
+
+    final sarMarkers = _markerService.generateSarMarkers(
+      sarMarkers: messagesProvider.sarMarkers,
+      onTap: (marker) => _showSarMarkerDetails(marker),
+    );
+
+    return FlutterMap(
+      children: [
+        TileLayer(...),
+        MarkerLayer(markers: [...contactMarkers, ...sarMarkers]),
+      ],
+    );
+  }
+}
+```
+
+**Device Config Screen** (device_config_screen.dart):
+```dart
+Future<void> _saveRadioParams() async {
+  final validator = ValidationService();
+
+  // Parse and validate all inputs
+  final freqResult = validator.parseFrequency(_freqController.text);
+  if (!freqResult.isSuccess) {
+    _showError(freqResult.errorMessage!);
+    return;
+  }
+
+  final bwResult = validator.parseBandwidth(_bwController.text);
+  if (!bwResult.isSuccess) {
+    _showError(bwResult.errorMessage!);
+    return;
+  }
+
+  final sfResult = validator.parseSpreadingFactor(_sfController.text);
+  if (!sfResult.isSuccess) {
+    _showError(sfResult.errorMessage!);
+    return;
+  }
+
+  // All validation passed, save to device
+  await connectionProvider.setRadioParams(
+    frequency: freqResult.value!,
+    bandwidth: bwResult.value!,
+    spreadingFactor: sfResult.value!,
+    codingRate: crResult.value!,
+  );
+}
+```
 
 ## Map Implementation
 

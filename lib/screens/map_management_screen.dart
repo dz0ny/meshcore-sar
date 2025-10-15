@@ -4,6 +4,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:share_plus/share_plus.dart';
 import '../services/tile_cache_service.dart';
+import '../services/validation_service.dart';
 import '../models/map_layer.dart';
 
 class MapManagementScreen extends StatefulWidget {
@@ -108,25 +109,49 @@ class _MapManagementScreenState extends State<MapManagementScreen> {
   }
 
   Future<void> _downloadRegion() async {
+    final validator = ValidationService();
+
     try {
+      // Parse coordinates
       final north = double.tryParse(_northController.text);
       final south = double.tryParse(_southController.text);
       final east = double.tryParse(_eastController.text);
       final west = double.tryParse(_westController.text);
 
-      if (north == null || south == null || east == null || west == null) {
-        _showError('Invalid coordinates. Please enter valid numbers.');
+      // Validate bounds
+      final boundsResult = validator.validateBounds(
+        north: north,
+        south: south,
+        east: east,
+        west: west,
+      );
+
+      if (!boundsResult.isValid) {
+        _showError(boundsResult.errorMessage!);
         return;
       }
 
-      if (north <= south || east <= west) {
-        _showError('Invalid bounds. North must be > South, East must be > West.');
+      // Validate zoom levels
+      final minZoomResult = validator.validateZoomLevel(_minZoom);
+      if (!minZoomResult.isValid) {
+        _showError('Min zoom: ${minZoomResult.errorMessage}');
+        return;
+      }
+
+      final maxZoomResult = validator.validateZoomLevel(_maxZoom);
+      if (!maxZoomResult.isValid) {
+        _showError('Max zoom: ${maxZoomResult.errorMessage}');
+        return;
+      }
+
+      if (_minZoom > _maxZoom) {
+        _showError('Minimum zoom must be less than or equal to maximum zoom');
         return;
       }
 
       final bounds = LatLngBounds(
-        LatLng(south, west),
-        LatLng(north, east),
+        LatLng(south!, west!),
+        LatLng(north!, east!),
       );
 
       if (!mounted) return;

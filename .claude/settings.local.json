@@ -22,7 +22,8 @@
       "Bash(cat:*)",
       "Read(//Users/dz0ny/.pub-cache/hosted/pub.dev/**)",
       "Bash(find:*)",
-      "Read(//Users/dz0ny/meshcore-sar/**)"
+      "Read(//Users/dz0ny/meshcore-sar/**)",
+      "Bash(git grep:*)"
     ],
     "deny": [],
     "ask": []

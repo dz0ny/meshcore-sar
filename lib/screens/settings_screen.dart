@@ -7,7 +7,7 @@ import 'package:latlong2/latlong.dart';
 import '../providers/contacts_provider.dart';
 import '../providers/messages_provider.dart';
 import '../providers/app_provider.dart';
-import '../services/background_location_service.dart';
+import '../services/location_tracking_service.dart';
 import '../utils/sample_data_generator.dart';
 import '../theme/app_theme.dart';
 
@@ -29,21 +29,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
   late AppThemeMode _selectedTheme;
   PackageInfo? _packageInfo;
   bool _isLoadingSampleData = false;
-  double _gpsUpdateDistance = 10.0;
-  double _gpsMinDistance = 5.0;
-  double _gpsMaxDistance = 100.0;
-  int _minTimeIntervalSeconds = 30;
-  bool _backgroundTrackingEnabled = false;
   bool _isSendingLocationUpdate = false;
-  final BackgroundLocationService _backgroundLocationService =
-      BackgroundLocationService();
+  final LocationTrackingService _locationService = LocationTrackingService();
 
   @override
   void initState() {
     super.initState();
     _selectedTheme = widget.currentTheme;
     _loadPackageInfo();
-    _loadLocationSettings();
+    _initializeLocationService();
   }
 
   Future<void> _loadPackageInfo() async {
@@ -55,45 +49,60 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
-  Future<void> _loadLocationSettings() async {
-    final prefs = await SharedPreferences.getInstance();
-    if (mounted) {
-      setState(() {
-        _gpsUpdateDistance = prefs.getDouble('map_gps_update_distance') ?? 10.0;
-        _gpsMinDistance = prefs.getDouble('map_gps_min_distance') ?? 5.0;
-        _gpsMaxDistance = prefs.getDouble('map_gps_max_distance') ?? 100.0;
-        _minTimeIntervalSeconds = prefs.getInt('map_gps_min_time_interval') ?? 30;
-        _backgroundTrackingEnabled =
-            prefs.getBool('background_tracking_enabled') ?? false;
-      });
+  Future<void> _initializeLocationService() async {
+    // Initialize location service with BLE service
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (mounted) {
+        final appProvider = context.read<AppProvider>();
+        await _locationService.initialize(
+          appProvider.connectionProvider.bleService,
+        );
 
-      // Initialize background location service
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          final appProvider = context.read<AppProvider>();
-          _backgroundLocationService.initialize(
-            appProvider.connectionProvider.bleService,
-          );
-
-          // Restore background tracking state
-          if (_backgroundTrackingEnabled) {
-            _startBackgroundTracking();
+        // Set up callbacks for UI feedback
+        _locationService.onError = (error) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(error),
+                backgroundColor: Colors.orange,
+              ),
+            );
           }
-        }
-      });
-    }
-  }
+        };
 
-  Future<void> _saveLocationSettings() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setDouble('map_gps_update_distance', _gpsUpdateDistance);
-    await prefs.setDouble('map_gps_min_distance', _gpsMinDistance);
-    await prefs.setDouble('map_gps_max_distance', _gpsMaxDistance);
-    await prefs.setInt('map_gps_min_time_interval', _minTimeIntervalSeconds);
-    await prefs.setBool(
-      'background_tracking_enabled',
-      _backgroundTrackingEnabled,
-    );
+        _locationService.onBroadcastSent = (position) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  'Location broadcast: ${position.latitude.toStringAsFixed(5)}, ${position.longitude.toStringAsFixed(5)}',
+                ),
+                backgroundColor: Colors.green,
+                duration: const Duration(seconds: 2),
+              ),
+            );
+          }
+        };
+
+        _locationService.onTrackingStateChanged = (isTracking) {
+          if (mounted) {
+            setState(() {});
+          }
+        };
+
+        // Load settings and restore tracking state
+        final prefs = await SharedPreferences.getInstance();
+        final wasTracking = prefs.getBool('background_tracking_enabled') ?? false;
+
+        if (wasTracking) {
+          await _startBackgroundTracking();
+        }
+
+        if (mounted) {
+          setState(() {});
+        }
+      }
+    });
   }
 
   Future<void> _saveThemePreference(AppThemeMode theme) async {
@@ -198,89 +207,47 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _startBackgroundTracking() async {
-    final success = await _backgroundLocationService.startTracking(
-      distanceThreshold: _gpsUpdateDistance,
+    final success = await _locationService.startTracking(
+      distanceThreshold: _locationService.gpsUpdateDistance,
     );
 
-    if (!success) {
-      if (mounted) {
-        setState(() {
-          _backgroundTrackingEnabled = false;
-        });
-        _saveLocationSettings();
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Failed to start background tracking. Check permissions and BLE connection.',
-            ),
-            duration: Duration(seconds: 3),
+    if (!success && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Failed to start background tracking. Check permissions and BLE connection.',
           ),
-        );
-      }
+          duration: Duration(seconds: 3),
+        ),
+      );
+    }
+
+    if (mounted) {
+      setState(() {});
     }
   }
 
   Future<void> _stopBackgroundTracking() async {
-    await _backgroundLocationService.stopTracking();
+    await _locationService.stopTracking();
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   Future<void> _sendLocationUpdateNow() async {
     setState(() => _isSendingLocationUpdate = true);
 
     try {
-      // Get current location
-      Position position = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.best,
-        ),
-      );
+      final success = await _locationService.broadcastLocationNow();
 
-      if (!mounted) return;
-
-      // Get connection provider
-      final appProvider = context.read<AppProvider>();
-      final connectionProvider = appProvider.connectionProvider;
-
-      if (!connectionProvider.deviceInfo.isConnected) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Not connected to device'),
-              backgroundColor: Colors.orange,
-            ),
-          );
-        }
-        return;
-      }
-
-      // Update device location
-      await connectionProvider.setAdvertLatLon(
-        latitude: position.latitude,
-        longitude: position.longitude,
-      );
-
-      // Send advertisement
-      await connectionProvider.sendSelfAdvert(floodMode: true);
-
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Location broadcast: ${position.latitude.toStringAsFixed(5)}, ${position.longitude.toStringAsFixed(5)}',
+      if (!success && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to send location update'),
+            backgroundColor: Colors.red,
           ),
-          backgroundColor: Colors.green,
-        ),
-      );
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to send location: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
+        );
+      }
     } finally {
       if (mounted) {
         setState(() => _isSendingLocationUpdate = false);
@@ -383,21 +350,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
             secondary: const Icon(Icons.location_on),
             title: const Text('Auto Location Tracking'),
             subtitle: const Text('Automatically broadcast position updates'),
-            value: _backgroundTrackingEnabled,
+            value: _locationService.isTracking,
             onChanged: (value) {
-              setState(() {
-                _backgroundTrackingEnabled = value;
-                if (value) {
-                  _startBackgroundTracking();
-                } else {
-                  _stopBackgroundTracking();
-                }
-              });
-              _saveLocationSettings();
+              if (value) {
+                _startBackgroundTracking();
+              } else {
+                _stopBackgroundTracking();
+              }
             },
           ),
 
-          if (_backgroundTrackingEnabled) ...[
+          if (_locationService.isTracking) ...[
             ListTile(
               leading: const Icon(Icons.tune),
               title: const Text('Configure Tracking'),
@@ -509,9 +472,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   void _showTrackingConfigDialog() {
-    double tempMinDistance = _gpsMinDistance;
-    double tempMaxDistance = _gpsMaxDistance;
-    int tempTimeInterval = _minTimeIntervalSeconds;
+    double tempMinDistance = _locationService.minDistanceMeters;
+    double tempMaxDistance = _locationService.maxDistanceMeters;
+    int tempTimeInterval = _locationService.minTimeIntervalSeconds;
 
     showDialog(
       context: context,
@@ -670,23 +633,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
               child: const Text('Cancel'),
             ),
             TextButton(
-              onPressed: () {
-                setState(() {
-                  _gpsMinDistance = tempMinDistance;
-                  _gpsMaxDistance = tempMaxDistance;
-                  _minTimeIntervalSeconds = tempTimeInterval;
-                  _gpsUpdateDistance = tempMinDistance; // Use min as the primary threshold
-                });
-                _saveLocationSettings();
+              onPressed: () async {
+                // Update location service configuration
+                _locationService.minDistanceMeters = tempMinDistance;
+                _locationService.maxDistanceMeters = tempMaxDistance;
+                _locationService.minTimeIntervalSeconds = tempTimeInterval;
+                _locationService.gpsUpdateDistance = tempMinDistance;
 
-                // Update background tracking if active
-                if (_backgroundTrackingEnabled) {
-                  _backgroundLocationService.updateDistanceThreshold(
-                    tempMinDistance,
-                  );
+                // Save settings
+                await _locationService.saveSettings();
+
+                // Update tracking if active
+                if (_locationService.isTracking) {
+                  await _locationService.updateDistanceThreshold(tempMinDistance);
                 }
 
+                // Close dialog before setState
                 Navigator.pop(context);
+
+                if (mounted) {
+                  setState(() {});
+                }
               },
               child: const Text('Save'),
             ),

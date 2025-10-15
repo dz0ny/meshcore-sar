@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:geolocator/geolocator.dart';
 import '../providers/connection_provider.dart';
+import '../services/validation_service.dart';
 
 class DeviceConfigScreen extends StatefulWidget {
   const DeviceConfigScreen({super.key});
@@ -106,6 +107,7 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
   Future<void> _savePublicInfo() async {
     final connectionProvider = context.read<ConnectionProvider>();
     final deviceInfo = connectionProvider.deviceInfo;
+    final validator = ValidationService();
 
     try {
       // Save name
@@ -115,11 +117,36 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
 
       // Save position and telemetry settings
       if (_telemetryEnabled) {
-        final lat = double.tryParse(_latController.text) ?? 0.0;
-        final lon = double.tryParse(_lonController.text) ?? 0.0;
+        // Parse and validate coordinates
+        final latResult = validator.parseLatitude(_latController.text);
+        if (!latResult.isSuccess) {
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(latResult.errorMessage!),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+          return;
+        }
+
+        final lonResult = validator.parseLongitude(_lonController.text);
+        if (!lonResult.isSuccess) {
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(lonResult.errorMessage!),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+          return;
+        }
+
         await connectionProvider.setAdvertLatLon(
-          latitude: lat,
-          longitude: lon,
+          latitude: latResult.value!,
+          longitude: lonResult.value!,
         );
 
         // Set telemetry modes to "Allow All" (mode 2 for both base and location)
@@ -167,21 +194,53 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
 
   Future<void> _saveRadioSettings() async {
     final connectionProvider = context.read<ConnectionProvider>();
+    final validator = ValidationService();
+    final deviceInfo = connectionProvider.deviceInfo;
 
     try {
-      // Parse and save frequency (convert from MHz to kHz)
-      final freq = (double.tryParse(_freqController.text) ?? 869.618) * 1000;
+      // Parse and validate frequency
+      final freqResult = validator.parseFrequency(_freqController.text);
+      if (!freqResult.isSuccess) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(freqResult.errorMessage!),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        return;
+      }
+
+      // Parse and validate TX power
+      final txPowerResult = validator.parseTxPower(
+        _txPowerController.text,
+        maxPower: deviceInfo.maxTxPower,
+      );
+      if (!txPowerResult.isSuccess) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(txPowerResult.errorMessage!),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        return;
+      }
+
+      // Convert from MHz to kHz for protocol
+      final freqKhz = (freqResult.value! * 1000).round();
 
       await connectionProvider.setRadioParams(
-        frequency: freq.round(),
+        frequency: freqKhz,
         bandwidth: _bandwidthToValue(_selectedBandwidth),
         spreadingFactor: _selectedSpreadingFactor,
         codingRate: _selectedCodingRate,
       );
 
       // Save TX power
-      final txPower = int.tryParse(_txPowerController.text) ?? 20;
-      await connectionProvider.setTxPower(txPower);
+      await connectionProvider.setTxPower(txPowerResult.value!);
 
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

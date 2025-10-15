@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -19,7 +18,8 @@ import '../models/map_layer.dart';
 import '../models/message.dart';
 import '../services/tile_cache_service.dart';
 import '../services/background_location_service.dart';
-import '../widgets/map_markers.dart';
+import '../services/location_tracking_service.dart';
+import '../services/map_marker_service.dart';
 import '../widgets/map_debug_info.dart';
 import '../widgets/map/map_legend.dart';
 import '../widgets/map/compass_widget.dart';
@@ -37,17 +37,17 @@ class MapTab extends StatefulWidget {
 class _MapTabState extends State<MapTab> with AutomaticKeepAliveClientMixin {
   final MapController _mapController = MapController();
   final TileCacheService _tileCache = TileCacheService();
+  final LocationTrackingService _locationService = LocationTrackingService();
+  final MapMarkerService _markerService = MapMarkerService();
   bool _isInitialized = false;
   bool _isMapReady = false; // Track when map widget is actually rendered
   MapLayer _currentLayer = MapLayer.openStreetMap;
-  Position? _currentPosition;
   double? _compassHeading; // Compass sensor heading
   bool _rotateMarkerWithHeading = false; // Toggle for rotation
   bool _showLegend = false;
   bool _showMapDebugInfo = false; // Toggle for debug info
   double _gpsUpdateDistance = 3.0; // meters
   bool _backgroundTrackingEnabled = false; // Toggle for background tracking
-  StreamSubscription<Position>? _positionStreamSubscription;
   StreamSubscription<CompassEvent>? _compassStreamSubscription;
   final BackgroundLocationService _backgroundLocationService = BackgroundLocationService();
 
@@ -72,7 +72,7 @@ class _MapTabState extends State<MapTab> with AutomaticKeepAliveClientMixin {
     super.initState();
     _loadSettings();
     _initializeTileCache();
-    _requestLocationPermission();
+    _initLocationTracking();
     _startCompassTracking();
 
     // Listen to map provider for navigation requests
@@ -87,6 +87,45 @@ class _MapTabState extends State<MapTab> with AutomaticKeepAliveClientMixin {
       // Restore background tracking state
       _restoreBackgroundTracking();
     });
+  }
+
+  Future<void> _initLocationTracking() async {
+    // Initialize LocationTrackingService
+    final appProvider = context.read<AppProvider>();
+    await _locationService.initialize(appProvider.connectionProvider.bleService);
+
+    // Set up callbacks
+    _locationService.onPositionUpdate = (position) {
+      if (mounted) {
+        setState(() {
+          // Position updates are now handled by the service
+        });
+
+        // Rotate map if rotation mode is enabled and heading is available
+        if (_isMapReady && _rotateMarkerWithHeading && position.heading >= 0) {
+          try {
+            final camera = _mapController.camera;
+            _mapController.moveAndRotate(
+              camera.center,
+              camera.zoom,
+              -position.heading,
+            );
+          } catch (e) {
+            // Map not ready yet, ignore
+          }
+        }
+      }
+    };
+
+    _locationService.onError = (error) {
+      debugPrint('Location tracking error: $error');
+    };
+
+    // Request permissions and start tracking
+    final hasPermission = await _locationService.requestPermissions();
+    if (hasPermission) {
+      await _locationService.startTracking(distanceThreshold: _gpsUpdateDistance);
+    }
   }
 
   void _startCompassTracking() {
@@ -178,70 +217,6 @@ class _MapTabState extends State<MapTab> with AutomaticKeepAliveClientMixin {
     }
   }
 
-  Future<void> _requestLocationPermission() async {
-    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      return;
-    }
-
-    LocationPermission permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        return;
-      }
-    }
-
-    if (permission == LocationPermission.deniedForever) {
-      return;
-    }
-
-    // Get initial position
-    try {
-      final position = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.best,
-          distanceFilter: 0,
-        ),
-      );
-      if (mounted) {
-        setState(() {
-          _currentPosition = position;
-        });
-      }
-    } catch (e) {
-      debugPrint('Error getting location: $e');
-    }
-
-    // Start listening to location updates
-    _positionStreamSubscription = Geolocator.getPositionStream(
-      locationSettings: LocationSettings(
-        accuracy: LocationAccuracy.best,
-        distanceFilter: _gpsUpdateDistance.toInt(),
-      ),
-    ).listen((Position position) {
-      if (mounted) {
-        setState(() {
-          _currentPosition = position;
-        });
-
-        // Rotate map if rotation mode is enabled and heading is available
-        // Heading of -1.0 means heading is unavailable
-        if (_isMapReady && _rotateMarkerWithHeading && position.heading != null && position.heading >= 0) {
-          try {
-            final camera = _mapController.camera;
-            _mapController.moveAndRotate(
-              camera.center,
-              camera.zoom,
-              -position.heading,
-            );
-          } catch (e) {
-            // Map not ready yet, ignore
-          }
-        }
-      }
-    });
-  }
 
   void _handleMapNavigation() {
     final mapProvider = context.read<MapProvider>();
@@ -312,8 +287,8 @@ class _MapTabState extends State<MapTab> with AutomaticKeepAliveClientMixin {
 
     final mapProvider = context.read<MapProvider>();
     mapProvider.removeListener(_handleMapNavigation);
-    _positionStreamSubscription?.cancel();
     _compassStreamSubscription?.cancel();
+    _locationService.stopTracking();
     _mapController.dispose();
     _tileCache.dispose();
     super.dispose();
@@ -326,8 +301,9 @@ class _MapTabState extends State<MapTab> with AutomaticKeepAliveClientMixin {
       return _compassHeading;
     }
     // Fall back to GPS heading when moving
-    if (_currentPosition?.heading != null && _currentPosition!.heading >= 0) {
-      return _currentPosition!.heading;
+    final currentPosition = _locationService.currentPosition;
+    if (currentPosition?.heading != null && currentPosition!.heading >= 0) {
+      return currentPosition.heading;
     }
     return null;
   }
@@ -344,27 +320,11 @@ class _MapTabState extends State<MapTab> with AutomaticKeepAliveClientMixin {
   }
 
   LatLng _calculateCenter(List<Contact> contacts, List<SarMarker> sarMarkers) {
-    final allPoints = <LatLng>[];
-
-    for (final contact in contacts) {
-      if (contact.displayLocation != null) {
-        allPoints.add(contact.displayLocation!);
-      }
-    }
-
-    for (final marker in sarMarkers) {
-      allPoints.add(marker.location);
-    }
-
-    if (allPoints.isEmpty) return _defaultCenter;
-
-    double lat = 0, lng = 0;
-    for (final point in allPoints) {
-      lat += point.latitude;
-      lng += point.longitude;
-    }
-
-    return LatLng(lat / allPoints.length, lng / allPoints.length);
+    return _markerService.calculateCenter(
+      contacts: contacts,
+      sarMarkers: sarMarkers,
+      defaultCenter: _defaultCenter,
+    );
   }
 
   void _showLayerSelector(BuildContext context) {
@@ -556,7 +516,7 @@ class _MapTabState extends State<MapTab> with AutomaticKeepAliveClientMixin {
           borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
         ),
         child: DetailedCompassDialog(
-          initialPosition: _currentPosition,
+          initialPosition: _locationService.currentPosition,
           initialHeading: _currentHeading,
           contacts: contacts,
           sarMarkers: sarMarkers,
@@ -582,7 +542,7 @@ class _MapTabState extends State<MapTab> with AutomaticKeepAliveClientMixin {
           borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
         ),
         child: DetailedCompassDialog(
-          initialPosition: _currentPosition,
+          initialPosition: _locationService.currentPosition,
           initialHeading: _currentHeading,
           contacts: contacts,
           sarMarkers: sarMarkers,
@@ -609,7 +569,7 @@ class _MapTabState extends State<MapTab> with AutomaticKeepAliveClientMixin {
           borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
         ),
         child: DetailedCompassDialog(
-          initialPosition: _currentPosition,
+          initialPosition: _locationService.currentPosition,
           initialHeading: _currentHeading,
           contacts: contacts,
           sarMarkers: sarMarkers,
@@ -620,37 +580,8 @@ class _MapTabState extends State<MapTab> with AutomaticKeepAliveClientMixin {
   }
 
   void _restartLocationStream() {
-    // Cancel existing subscription
-    _positionStreamSubscription?.cancel();
-
-    // Start new stream with updated distance
-    _positionStreamSubscription = Geolocator.getPositionStream(
-      locationSettings: LocationSettings(
-        accuracy: LocationAccuracy.best,
-        distanceFilter: _gpsUpdateDistance.toInt(),
-      ),
-    ).listen((Position position) {
-      if (mounted) {
-        setState(() {
-          _currentPosition = position;
-        });
-
-        // Rotate map if rotation mode is enabled and heading is available
-        // Heading of -1.0 means heading is unavailable
-        if (_isMapReady && _rotateMarkerWithHeading && position.heading != null && position.heading >= 0) {
-          try {
-            final camera = _mapController.camera;
-            _mapController.moveAndRotate(
-              camera.center,
-              camera.zoom,
-              -position.heading,
-            );
-          } catch (e) {
-            // Map not ready yet, ignore
-          }
-        }
-      }
-    });
+    // Update distance threshold in location service
+    _locationService.updateDistanceThreshold(_gpsUpdateDistance);
 
     // Update background tracking distance if active
     if (_backgroundTrackingEnabled) {
@@ -695,18 +626,12 @@ class _MapTabState extends State<MapTab> with AutomaticKeepAliveClientMixin {
 
   /// Calculate distance between two points in meters
   double _calculateDistanceInMeters(double lat1, double lon1, double lat2, double lon2) {
-    const R = 6371000; // Earth's radius in meters
-    final dLat = (lat2 - lat1) * pi / 180;
-    final dLon = (lon2 - lon1) * pi / 180;
-
-    final a = sin(dLat / 2) * sin(dLat / 2) +
-        cos(lat1 * pi / 180) *
-            cos(lat2 * pi / 180) *
-            sin(dLon / 2) *
-            sin(dLon / 2);
-
-    final c = 2 * atan2(sqrt(a), sqrt(1 - a));
-    return R * c;
+    return _markerService.calculateDistance(
+      lat1: lat1,
+      lon1: lon1,
+      lat2: lat2,
+      lon2: lon2,
+    );
   }
 
   /// Show SAR dialog with pre-populated location from map long press
@@ -964,11 +889,13 @@ class _MapTabState extends State<MapTab> with AutomaticKeepAliveClientMixin {
                       ),
                       MarkerLayer(
                         markers: [
-                          ...MapMarkers.createTeamMemberMarkers(
-                            contactsWithLocation,
-                            context,
+                          // Contact markers
+                          ..._markerService.generateContactMarkers(
+                            contacts: contactsWithLocation,
+                            context: context,
                             mapRotation: _getMapRotation(),
-                            onContactTap: (contact) {
+                            userPosition: _locationService.currentPosition,
+                            onTap: (contact) {
                               _showDetailedCompassWithContact(
                                 context,
                                 contactsProvider.contactsWithLocation,
@@ -977,11 +904,12 @@ class _MapTabState extends State<MapTab> with AutomaticKeepAliveClientMixin {
                               );
                             },
                           ),
-                          ...MapMarkers.createSarMarkers(
-                            sarMarkers,
-                            context,
+                          // SAR markers
+                          ..._markerService.generateSarMarkers(
+                            sarMarkers: sarMarkers,
+                            context: context,
                             mapRotation: _getMapRotation(),
-                            onSarMarkerTap: (marker) {
+                            onTap: (marker) {
                               _showDetailedCompassWithSarMarker(
                                 context,
                                 contactsProvider.contactsWithLocation,
@@ -991,40 +919,14 @@ class _MapTabState extends State<MapTab> with AutomaticKeepAliveClientMixin {
                             },
                           ),
                           // User location marker
-                          if (_currentPosition != null)
-                            Marker(
-                              point: LatLng(
-                                _currentPosition!.latitude,
-                                _currentPosition!.longitude,
-                              ),
-                              width: 40,
-                              height: 40,
-                              rotate: false, // Don't rotate with map
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Container(
-                                  margin: const EdgeInsets.all(8),
-                                  decoration: BoxDecoration(
-                                    color: Theme.of(context).colorScheme.primary,
-                                    shape: BoxShape.circle,
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black26,
-                                        blurRadius: 4,
-                                      ),
-                                    ],
-                                  ),
-                                  child: const Icon(
-                                    Icons.my_location,
-                                    color: Colors.white,
-                                    size: 16,
-                                  ),
-                                ),
-                              ),
-                            ),
+                          if (_markerService.generateUserLocationMarker(
+                            position: _locationService.currentPosition,
+                            context: context,
+                          ) != null)
+                            _markerService.generateUserLocationMarker(
+                              position: _locationService.currentPosition,
+                              context: context,
+                            )!,
                           // Dropped pin marker with label
                           if (_droppedPinLocation != null)
                             Marker(
@@ -1152,30 +1054,23 @@ class _MapTabState extends State<MapTab> with AutomaticKeepAliveClientMixin {
                     heroTag: 'center_map',
                     onPressed: !_isMapReady ? null : () async {
                       // Force update GPS location and jump to it
-                      try {
-                        final position = await Geolocator.getCurrentPosition(
-                          locationSettings: const LocationSettings(
-                            accuracy: LocationAccuracy.best,
-                            distanceFilter: 0,
-                          ),
+                      final position = await _locationService.getCurrentPosition();
+                      if (position != null && mounted) {
+                        setState(() {
+                          // Position updated in service
+                        });
+                        _mapController.move(
+                          LatLng(position.latitude, position.longitude),
+                          16,
                         );
-                        if (mounted) {
-                          setState(() {
-                            _currentPosition = position;
-                          });
-                          _mapController.move(
-                            LatLng(position.latitude, position.longitude),
-                            16,
-                          );
-                        }
-                      } catch (e) {
-                        debugPrint('Error getting location: $e');
+                      } else {
                         // Fallback to cached position or default center
-                        if (_currentPosition != null) {
+                        final currentPosition = _locationService.currentPosition;
+                        if (currentPosition != null) {
                           _mapController.move(
                             LatLng(
-                              _currentPosition!.latitude,
-                              _currentPosition!.longitude,
+                              currentPosition.latitude,
+                              currentPosition.longitude,
                             ),
                             16,
                           );

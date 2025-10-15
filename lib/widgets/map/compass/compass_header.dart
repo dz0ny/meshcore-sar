@@ -299,11 +299,11 @@ class _LargeCompassPainter extends CustomPainter {
           ..style = PaintingStyle.fill;
         canvas.drawCircle(Offset(dotX, dotY), dotSize, dotPaint);
 
-        // Draw white border
+        // Draw darker shade border (same color family)
         final borderPaint = Paint()
-          ..color = Colors.white
+          ..color = Colors.blue.shade800
           ..style = PaintingStyle.stroke
-          ..strokeWidth = 2;
+          ..strokeWidth = 2.5;
         canvas.drawCircle(Offset(dotX, dotY), dotSize, borderPaint);
 
         // Draw distance label near the contact (only if not too crowded)
@@ -388,21 +388,27 @@ class _LargeCompassPainter extends CustomPainter {
 
         // Determine color based on SAR marker type
         Color markerColor;
+        Color borderColor;
         switch (marker.type) {
           case SarMarkerType.foundPerson:
             markerColor = Colors.green;
+            borderColor = Colors.green.shade900;
             break;
           case SarMarkerType.fire:
             markerColor = Colors.red;
+            borderColor = Colors.red.shade900;
             break;
           case SarMarkerType.stagingArea:
             markerColor = Colors.orange;
+            borderColor = Colors.orange.shade900;
             break;
           case SarMarkerType.object:
             markerColor = Colors.purple;
+            borderColor = Colors.purple.shade900;
             break;
           case SarMarkerType.unknown:
             markerColor = Colors.grey;
+            borderColor = Colors.grey.shade900;
             break;
         }
 
@@ -424,9 +430,9 @@ class _LargeCompassPainter extends CustomPainter {
           ..style = PaintingStyle.fill;
         canvas.drawCircle(Offset(dotX, dotY), dotSize, dotPaint);
 
-        // Draw white border
+        // Draw darker shade border (same color family)
         final borderPaint = Paint()
-          ..color = Colors.white
+          ..color = borderColor
           ..style = PaintingStyle.stroke
           ..strokeWidth = 2.5;
         canvas.drawCircle(Offset(dotX, dotY), dotSize, borderPaint);

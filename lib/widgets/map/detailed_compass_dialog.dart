@@ -63,6 +63,14 @@ class _DetailedCompassDialogState extends State<DetailedCompassDialog> {
     _selectedContact = widget.preSelectedContact;
     _selectedSarMarker = widget.preSelectedSarMarker;
 
+    // Auto-zoom if item is preselected
+    if (_selectedContact != null || _selectedSarMarker != null) {
+      // Use post-frame callback to ensure position is set
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _autoZoomForSelection();
+      });
+    }
+
     // Subscribe to compass updates
     final compassStream = FlutterCompass.events;
     if (compassStream != null) {

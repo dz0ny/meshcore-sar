@@ -710,12 +710,34 @@ class _ContactTile extends StatelessWidget {
                     const SizedBox(height: 16),
                   ],
                   if (contact.telemetry != null) ...[
-                    const Text(
-                      'Telemetry:',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Telemetry:',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                        TextButton.icon(
+                          onPressed: () {
+                            final connectionProvider = context.read<ConnectionProvider>();
+                            connectionProvider.requestTelemetry(contact.publicKey, zeroHop: true);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Requesting telemetry from ${contact.displayName}...'),
+                                duration: const Duration(seconds: 2),
+                              ),
+                            );
+                          },
+                          icon: const Icon(Icons.refresh, size: 18),
+                          label: const Text('Refresh'),
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 8),
                     if (contact.telemetry!.batteryMilliVolts != null)

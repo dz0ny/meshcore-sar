@@ -463,10 +463,12 @@ class ConnectionProvider with ChangeNotifier {
   /// only that it was queued on the companion radio.
   ///
   /// [messageId] - optional message ID to track delivery status
+  /// [contact] - optional contact object for path status logging
   Future<bool> sendTextMessage({
     required Uint8List contactPublicKey,
     required String text,
     String? messageId,
+    Contact? contact,
   }) async {
     if (!_bleService.isConnected) {
       _error = 'Not connected to device';
@@ -475,6 +477,18 @@ class ConnectionProvider with ChangeNotifier {
     }
 
     try {
+      // Log path status if contact info is available
+      if (contact != null) {
+        print('📤 [ConnectionProvider] Sending message to ${contact.advName}');
+        print('   Type: ${contact.type.displayName}');
+        print('   Path status: ${contact.pathDescription}');
+        if (contact.hasPath) {
+          print('   ✅ Using learned path (${contact.outPathLen} bytes)');
+        } else {
+          print('   ⚠️ No path available - will use flood mode');
+        }
+      }
+
       // IMPORTANT: Track pending message BEFORE sending to avoid race condition
       // The SENT response can arrive so quickly that if we track after sending,
       // the callback will fire before we add the message ID to the queue.

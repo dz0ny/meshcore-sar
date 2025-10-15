@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:file_picker/file_picker.dart';
-import 'package:share_plus/share_plus.dart';
 import '../services/tile_cache_service.dart';
 import '../services/validation_service.dart';
 import '../models/map_layer.dart';
@@ -235,77 +233,6 @@ class _MapManagementScreenState extends State<MapManagementScreen> {
     }
   }
 
-  Future<void> _exportMaps() async {
-    if (!mounted) return;
-    setState(() => _isLoading = true);
-    try {
-      final exportPath = await widget.tileCacheService.exportCache();
-      if (!mounted) return;
-      setState(() => _isLoading = false);
-
-      if (mounted) {
-        await Share.shareXFiles(
-          [XFile(exportPath)],
-          subject: 'MeshCore SAR Maps Export',
-          text: 'Offline maps export from MeshCore SAR',
-        );
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Maps exported to: $exportPath'),
-            backgroundColor: Colors.green,
-            duration: const Duration(seconds: 5),
-          ),
-        );
-      }
-    } catch (e) {
-      if (!mounted) return;
-      setState(() => _isLoading = false);
-      _showError('Export failed: $e');
-    }
-  }
-
-  Future<void> _importMaps() async {
-    try {
-      final result = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['fmtc'],
-        allowMultiple: false,
-      );
-
-      if (result == null || result.files.isEmpty) {
-        return;
-      }
-
-      if (!mounted) return;
-      setState(() => _isLoading = true);
-
-      final filePath = result.files.first.path;
-      if (filePath == null) {
-        throw Exception('Invalid file path');
-      }
-
-      await widget.tileCacheService.importCache(filePath);
-
-      if (!mounted) return;
-      setState(() => _isLoading = false);
-      await _loadCacheStats();
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Maps imported successfully!'),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
-    } catch (e) {
-      if (!mounted) return;
-      setState(() => _isLoading = false);
-      _showError('Import failed: $e');
-    }
-  }
-
   Future<void> _clearCache() async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -385,7 +312,7 @@ class _MapManagementScreenState extends State<MapManagementScreen> {
                   _buildDownloadCard(),
                   const SizedBox(height: 16),
 
-                  // Import/Export/Clear
+                  // Clear Cache
                   _buildActionsCard(),
                 ],
               ),
@@ -708,32 +635,10 @@ class _MapManagementScreenState extends State<MapManagementScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Map Actions',
+              'Cache Management',
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 16),
-
-            // Export Button
-            ElevatedButton.icon(
-              onPressed: _isDownloading ? null : _exportMaps,
-              icon: const Icon(Icons.upload),
-              label: const Text('Export Maps'),
-              style: ElevatedButton.styleFrom(
-                minimumSize: const Size.fromHeight(48),
-              ),
-            ),
-            const SizedBox(height: 8),
-
-            // Import Button
-            ElevatedButton.icon(
-              onPressed: _isDownloading ? null : _importMaps,
-              icon: const Icon(Icons.download),
-              label: const Text('Import Maps'),
-              style: ElevatedButton.styleFrom(
-                minimumSize: const Size.fromHeight(48),
-              ),
-            ),
-            const SizedBox(height: 8),
 
             // Clear Cache Button
             OutlinedButton.icon(

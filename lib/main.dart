@@ -68,7 +68,13 @@ class _MeshCoreSarAppState extends State<MeshCoreSarApp> {
       providers: [
         // Core providers
         ChangeNotifierProvider(create: (_) => ConnectionProvider()),
-        ChangeNotifierProvider(create: (_) => ContactsProvider()),
+        ChangeNotifierProvider(
+          create: (_) {
+            // Don't initialize here - it will be initialized in AppProvider.initialize()
+            // after connection is established and device info is available
+            return ContactsProvider();
+          },
+        ),
         ChangeNotifierProvider(
           create: (_) {
             final provider = MessagesProvider();

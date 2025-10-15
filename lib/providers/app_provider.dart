@@ -42,12 +42,20 @@ class AppProvider with ChangeNotifier {
   void _setupCallbacks() {
     // When a contact is received from BLE
     connectionProvider.onContactReceived = (contact) {
-      contactsProvider.addOrUpdateContact(contact);
+      // Pass device public key to filter out our own contact
+      contactsProvider.addOrUpdateContact(
+        contact,
+        devicePublicKey: connectionProvider.deviceInfo.publicKey,
+      );
     };
 
     // When all contacts are received
     connectionProvider.onContactsComplete = (contacts) {
-      contactsProvider.addContacts(contacts);
+      // Pass device public key to filter out our own contact
+      contactsProvider.addContacts(
+        contacts,
+        devicePublicKey: connectionProvider.deviceInfo.publicKey,
+      );
       debugPrint('Received ${contacts.length} contacts');
     };
 
@@ -118,6 +126,14 @@ class AppProvider with ChangeNotifier {
     if (!connectionProvider.deviceInfo.isConnected) return;
 
     try {
+      // Initialize contacts provider with device public key to exclude self
+      // This must happen before getContacts to ensure proper filtering
+      if (!contactsProvider.isInitialized) {
+        await contactsProvider.initialize(
+          devicePublicKey: connectionProvider.deviceInfo.publicKey,
+        );
+      }
+
       // Sync device time
       await connectionProvider.syncDeviceTime();
 

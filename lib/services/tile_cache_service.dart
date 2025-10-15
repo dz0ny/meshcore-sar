@@ -1,8 +1,6 @@
-import 'dart:io';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_tile_caching/flutter_map_tile_caching.dart';
 import 'package:flutter_map_tile_caching/custom_backend_api.dart';
-import 'package:path_provider/path_provider.dart';
 import '../models/map_layer.dart';
 
 class TileCacheService {
@@ -122,42 +120,6 @@ class TileCacheService {
     if (!_isInitialized) return 0.0;
     final stats = await _store.stats.size;
     return stats / (1024 * 1024);
-  }
-
-  Future<String> exportCache() async {
-    if (!_isInitialized) {
-      throw StateError('TileCacheService not initialized. Call initialize() first.');
-    }
-
-    final directory = await getApplicationDocumentsDirectory();
-    final timestamp = DateTime.now().millisecondsSinceEpoch;
-    final exportPath = '${directory.path}/meshcore_maps_$timestamp.fmtc';
-
-    // Export using FMTCBackendAccess
-    await FMTCBackendAccess.internal.exportStores(
-      storeNames: [_storeName],
-      path: exportPath,
-    );
-
-    return exportPath;
-  }
-
-  Future<void> importCache(String filePath) async {
-    if (!_isInitialized) {
-      throw StateError('TileCacheService not initialized. Call initialize() first.');
-    }
-
-    final file = File(filePath);
-    if (!await file.exists()) {
-      throw Exception('Import file not found: $filePath');
-    }
-
-    // Import using FMTCBackendAccess
-    await FMTCBackendAccess.internal.importStores(
-      storeNames: [_storeName],
-      path: filePath,
-      strategy: ImportConflictStrategy.rename,
-    );
   }
 
   Future<List<String>> getAvailableStores() async {

@@ -56,10 +56,11 @@ class _DirectMessageSheetState extends State<DirectMessageSheet> {
     }
 
     try {
-      // Send direct message to contact
+      // Send direct message to contact (include contact for path logging)
       await connectionProvider.sendTextMessage(
         contactPublicKey: widget.contact.publicKey,
         text: text,
+        contact: widget.contact,
       );
 
       _textController.clear();
@@ -88,48 +89,52 @@ class _DirectMessageSheetState extends State<DirectMessageSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Container(
       height: MediaQuery.of(context).size.height * 0.9,
-      decoration: const BoxDecoration(
-        color: Color(0xFF1E1E1E),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
       ),
       child: Column(
         children: [
           // Header
           Container(
             padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: colorScheme.surfaceContainerHighest,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+            ),
             child: Row(
               children: [
                 IconButton(
-                  icon: const Icon(Icons.arrow_back, color: Colors.white),
+                  icon: Icon(Icons.arrow_back, color: colorScheme.onSurface),
                   onPressed: () => Navigator.pop(context),
                 ),
                 Expanded(
                   child: Column(
                     children: [
-                      const Text(
+                      Text(
                         'Direct Message',
                         style: TextStyle(
-                          color: Colors.white,
+                          color: colorScheme.onSurface,
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       Text(
                         widget.contact.displayName,
-                        style: const TextStyle(
-                          color: Colors.grey,
+                        style: TextStyle(
+                          color: colorScheme.onSurfaceVariant,
                           fontSize: 14,
                         ),
                       ),
                     ],
                   ),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.more_vert, color: Colors.white),
-                  onPressed: () {},
-                ),
+                const SizedBox(width: 48), // Spacer to keep title centered
               ],
             ),
           ),
@@ -171,8 +176,8 @@ class _DirectMessageSheetState extends State<DirectMessageSheet> {
               top: 16,
               bottom: 16 + MediaQuery.of(context).viewInsets.bottom,
             ),
-            decoration: const BoxDecoration(
-              color: Color(0xFF2D2D2D),
+            decoration: BoxDecoration(
+              color: colorScheme.surfaceContainerHighest,
             ),
             child: Column(
               children: [
@@ -183,21 +188,21 @@ class _DirectMessageSheetState extends State<DirectMessageSheet> {
                   maxLines: 3,
                   autofocus: true,
                   maxLengthEnforcement: MaxLengthEnforcement.enforced,
-                  style: const TextStyle(color: Colors.white),
+                  style: TextStyle(color: colorScheme.onSurface),
                   decoration: InputDecoration(
                     hintText: 'Type your message...',
-                    hintStyle: const TextStyle(color: Colors.grey),
+                    hintStyle: TextStyle(color: colorScheme.onSurfaceVariant),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Colors.grey),
+                      borderSide: BorderSide(color: colorScheme.outline),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Colors.grey),
+                      borderSide: BorderSide(color: colorScheme.outline),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Colors.white),
+                      borderSide: BorderSide(color: colorScheme.primary, width: 2),
                     ),
                     contentPadding: const EdgeInsets.all(16),
                     counterText: _characterCount >= 150
@@ -207,7 +212,7 @@ class _DirectMessageSheetState extends State<DirectMessageSheet> {
                       fontSize: 11,
                       color: _characterCount > _maxCharacters * 0.9
                           ? Colors.orange
-                          : Colors.grey,
+                          : colorScheme.onSurfaceVariant,
                     ),
                   ),
                   textInputAction: TextInputAction.send,

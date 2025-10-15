@@ -203,6 +203,41 @@ class Contact {
     return advName.substring(emoji.length).trim();
   }
 
+  /// Check if contact has a learned routing path
+  /// When true, messages will use direct routing. When false, messages will use flood mode.
+  bool get hasPath => outPathLen > 0 && outPathLen <= 64;
+
+  /// Get path description for UI display
+  String get pathDescription {
+    if (!hasPath) {
+      return 'No path (flood mode)';
+    }
+
+    // outPathLen includes the number of hops in the path
+    final hops = outPathLen;
+    if (hops == 1) {
+      return 'Direct (0 hops)';
+    } else if (hops <= 3) {
+      return 'Good path (${hops - 1} hop${hops - 1 > 1 ? 's' : ''})';
+    } else if (hops <= 5) {
+      return 'Medium path (${hops - 1} hops)';
+    } else {
+      return 'Long path (${hops - 1} hops)';
+    }
+  }
+
+  /// Get path quality indicator (0-5 scale, higher is better)
+  /// -1 means no path (will use flood mode)
+  int get pathQuality {
+    if (!hasPath) return -1;
+    if (outPathLen == 1) return 5; // Direct connection (0 hops)
+    if (outPathLen <= 2) return 4; // 1 hop
+    if (outPathLen <= 3) return 3; // 2 hops
+    if (outPathLen <= 4) return 2; // 3 hops
+    if (outPathLen <= 5) return 1; // 4 hops
+    return 0; // 5+ hops
+  }
+
   Contact copyWith({
     Uint8List? publicKey,
     ContactType? type,

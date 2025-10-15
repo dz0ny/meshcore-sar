@@ -26,6 +26,15 @@ class _MessagesTabState extends State<MessagesTab> {
   int _characterCount = 0;
   static const int _maxCharacters = 160;
 
+  /// Helper method to compare two public keys for equality
+  bool _publicKeysMatch(Uint8List key1, Uint8List key2) {
+    if (key1.length != key2.length) return false;
+    for (int i = 0; i < key1.length; i++) {
+      if (key1[i] != key2[i]) return false;
+    }
+    return true;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -215,11 +224,19 @@ class _MessagesTabState extends State<MessagesTab> {
         // Add to messages list with "sending" status
         messagesProvider.addSentMessage(sentMessage);
 
+        // Look up the room contact for path logging
+        final contactsProvider = context.read<ContactsProvider>();
+        final roomContact = contactsProvider.contacts.where((c) {
+          return c.publicKey.length >= roomPublicKey!.length &&
+                 _publicKeysMatch(c.publicKey, roomPublicKey!);
+        }).firstOrNull;
+
         // Send SAR message to selected room (persisted and immutable)
         final sentSuccessfully = await connectionProvider.sendTextMessage(
           contactPublicKey: roomPublicKey!,
           text: fullMessage,
           messageId: messageId, // Pass message ID so it can be tracked
+          contact: roomContact, // Include contact for path status logging
         );
 
         if (!sentSuccessfully) {
@@ -407,6 +424,15 @@ class _MessageBubble extends StatelessWidget {
     this.onTap,
   });
 
+  /// Helper method to compare two public keys for equality
+  bool _publicKeysMatch(Uint8List key1, Uint8List key2) {
+    if (key1.length != key2.length) return false;
+    for (int i = 0; i < key1.length; i++) {
+      if (key1[i] != key2[i]) return false;
+    }
+    return true;
+  }
+
   Future<void> _retryFailedMessage(BuildContext context, Message failedMessage) async {
     final connectionProvider = context.read<ConnectionProvider>();
     final messagesProvider = context.read<MessagesProvider>();
@@ -448,11 +474,19 @@ class _MessageBubble extends StatelessWidget {
           return;
         }
 
+        // Look up the room contact for path logging
+        final contactsProvider = context.read<ContactsProvider>();
+        final roomContact = contactsProvider.contacts.where((c) {
+          return c.publicKey.length >= failedMessage.recipientPublicKey!.length &&
+                 _publicKeysMatch(c.publicKey, failedMessage.recipientPublicKey!);
+        }).firstOrNull;
+
         // Resend to the same room
         final sentSuccessfully = await connectionProvider.sendTextMessage(
           contactPublicKey: failedMessage.recipientPublicKey!,
           text: failedMessage.text,
           messageId: retryMessageId,
+          contact: roomContact, // Include contact for path status logging
         );
 
         if (!sentSuccessfully) {

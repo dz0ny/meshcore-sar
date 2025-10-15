@@ -1,17 +1,50 @@
-import 'dart:async';
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import '../models/contact.dart';
-import '../models/contact_telemetry.dart';
 import '../services/cayenne_lpp_parser.dart';
+import '../services/contact_storage_service.dart';
 
 /// Contacts Provider - manages contact list and telemetry
 class ContactsProvider with ChangeNotifier {
   final Map<String, Contact> _contacts = {};
+  final ContactStorageService _storageService = ContactStorageService();
+  bool _isInitialized = false;
 
   // Add default public channel on initialization
   ContactsProvider() {
     _ensurePublicChannelExists();
+  }
+
+  bool get isInitialized => _isInitialized;
+
+  /// Initialize and load persisted contacts
+  /// [devicePublicKey] - device's own public key to exclude from loaded contacts
+  Future<void> initialize({Uint8List? devicePublicKey}) async {
+    if (_isInitialized) return;
+
+    try {
+      print('📦 [ContactsProvider] Loading persisted contacts...');
+      final storedContacts = await _storageService.loadContacts(
+        excludePublicKey: devicePublicKey,
+      );
+
+      // Add stored contacts
+      for (final contact in storedContacts) {
+        _contacts[contact.publicKeyHex] = contact;
+      }
+
+      _isInitialized = true;
+      print('✅ [ContactsProvider] Loaded ${storedContacts.length} persisted contacts');
+
+      // Ensure public channel exists after loading
+      _ensurePublicChannelExists();
+
+      notifyListeners();
+    } catch (e) {
+      print('❌ [ContactsProvider] Error initializing: $e');
+      _isInitialized = true; // Mark as initialized even on error
+      _ensurePublicChannelExists();
+    }
   }
 
   /// Ensure public channel always exists in the list
@@ -31,6 +64,19 @@ class ContactsProvider with ChangeNotifier {
         advLon: 0,
         lastMod: DateTime.now().millisecondsSinceEpoch ~/ 1000,
       );
+    }
+  }
+
+  /// Persist contacts to storage (async, non-blocking)
+  Future<void> _persistContacts() async {
+    try {
+      // Don't persist the public channel pseudo-contact
+      final contactsToSave = _contacts.values
+          .where((c) => c.publicKeyHex != 'public_channel_0')
+          .toList();
+      await _storageService.saveContacts(contactsToSave);
+    } catch (e) {
+      print('❌ [ContactsProvider] Error persisting contacts: $e');
     }
   }
 
@@ -71,16 +117,45 @@ class ContactsProvider with ChangeNotifier {
   }
 
   /// Add or update a contact
-  void addOrUpdateContact(Contact contact) {
+  /// Excludes contacts that match the device's own public key
+  void addOrUpdateContact(Contact contact, {Uint8List? devicePublicKey}) {
+    // Don't add contacts that match our device's public key
+    if (devicePublicKey != null && _publicKeysMatch(contact.publicKey, devicePublicKey)) {
+      print('ℹ️ [ContactsProvider] Ignoring contact with device\'s own public key: ${contact.advName}');
+      return;
+    }
+
     _contacts[contact.publicKeyHex] = contact;
+    _persistContacts();
     notifyListeners();
   }
 
+  /// Compare two public keys for equality
+  bool _publicKeysMatch(Uint8List key1, Uint8List key2) {
+    if (key1.length != key2.length) return false;
+    for (int i = 0; i < key1.length; i++) {
+      if (key1[i] != key2[i]) return false;
+    }
+    return true;
+  }
+
   /// Add multiple contacts
-  void addContacts(List<Contact> contacts) {
+  /// Excludes contacts that match the device's own public key
+  void addContacts(List<Contact> contacts, {Uint8List? devicePublicKey}) {
+    int excluded = 0;
     for (final contact in contacts) {
+      // Don't add contacts that match our device's public key
+      if (devicePublicKey != null && _publicKeysMatch(contact.publicKey, devicePublicKey)) {
+        print('ℹ️ [ContactsProvider] Ignoring contact with device\'s own public key: ${contact.advName}');
+        excluded++;
+        continue;
+      }
       _contacts[contact.publicKeyHex] = contact;
     }
+    if (excluded > 0) {
+      print('ℹ️ [ContactsProvider] Excluded $excluded contact(s) matching device public key');
+    }
+    _persistContacts();
     notifyListeners();
   }
 
@@ -97,6 +172,7 @@ class ContactsProvider with ChangeNotifier {
       // Update contact with new telemetry
       final updatedContact = contact.copyWith(telemetry: telemetry);
       _contacts[contact.publicKeyHex] = updatedContact;
+      _persistContacts();
       notifyListeners();
     } catch (e) {
       debugPrint('Failed to parse telemetry: $e');
@@ -151,13 +227,20 @@ class ContactsProvider with ChangeNotifier {
   /// Clear all contacts
   void clearContacts() {
     _contacts.clear();
+    _persistContacts();
     notifyListeners();
   }
 
   /// Remove a contact
   void removeContact(String publicKeyHex) {
     _contacts.remove(publicKeyHex);
+    _persistContacts();
     notifyListeners();
+  }
+
+  /// Get storage statistics
+  Future<Map<String, dynamic>> getStorageStats() async {
+    return await _storageService.getStorageStats();
   }
 
   /// Get contact count by type

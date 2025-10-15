@@ -139,31 +139,37 @@ class _SarUpdateSheetState extends State<SarUpdateSheet> {
   Widget build(BuildContext context) {
     // Get keyboard height to adjust padding
     final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
     return Container(
       height: MediaQuery.of(context).size.height * 0.9,
-      decoration: const BoxDecoration(
-        color: Color(0xFF1E1E1E),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
       ),
       child: Column(
         children: [
           // Header
           Container(
             padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: colorScheme.surfaceContainerHighest,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+            ),
             child: Row(
               children: [
                 IconButton(
-                  icon: const Icon(Icons.arrow_back, color: Colors.white),
+                  icon: Icon(Icons.arrow_back, color: colorScheme.onSurface),
                   onPressed: () => Navigator.pop(context),
                 ),
-                const Expanded(
+                Expanded(
                   child: Column(
                     children: [
                       Text(
                         'Send SAR Marker',
                         style: TextStyle(
-                          color: Colors.white,
+                          color: colorScheme.onSurface,
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
@@ -171,17 +177,14 @@ class _SarUpdateSheetState extends State<SarUpdateSheet> {
                       Text(
                         'Quick location marker',
                         style: TextStyle(
-                          color: Colors.grey,
+                          color: colorScheme.onSurfaceVariant,
                           fontSize: 14,
                         ),
                       ),
                     ],
                   ),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.more_vert, color: Colors.white),
-                  onPressed: () {},
-                ),
+                const SizedBox(width: 48), // Spacer to keep title centered
               ],
             ),
           ),
@@ -198,10 +201,10 @@ class _SarUpdateSheetState extends State<SarUpdateSheet> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Marker type selection
-                  const Text(
+                  Text(
                     'Marker Type',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: colorScheme.onSurface,
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),
@@ -233,10 +236,10 @@ class _SarUpdateSheetState extends State<SarUpdateSheet> {
                   const SizedBox(height: 24),
 
                   // Destination selection (compact dropdown with rooms and channel)
-                  const Text(
+                  Text(
                     'Send To',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: colorScheme.onSurface,
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),
@@ -279,29 +282,33 @@ class _SarUpdateSheetState extends State<SarUpdateSheet> {
                       return Container(
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF2D2D2D),
+                          color: colorScheme.surfaceContainerHighest,
                           borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: colorScheme.outline.withValues(alpha: 0.3),
+                            width: 1,
+                          ),
                         ),
                         child: DropdownButtonHideUnderline(
                           child: DropdownButton<Contact>(
                             value: _selectedContact,
-                            hint: const Row(
+                            hint: Row(
                               children: [
-                                Icon(Icons.arrow_drop_down_circle, size: 18, color: Colors.grey),
-                                SizedBox(width: 12),
+                                Icon(Icons.arrow_drop_down_circle, size: 18, color: colorScheme.onSurfaceVariant),
+                                const SizedBox(width: 12),
                                 Text(
                                   'Select destination...',
-                                  style: TextStyle(color: Colors.grey),
+                                  style: TextStyle(color: colorScheme.onSurfaceVariant),
                                 ),
                               ],
                             ),
-                            dropdownColor: const Color(0xFF2D2D2D),
+                            dropdownColor: colorScheme.surfaceContainerHighest,
                             isExpanded: true,
-                            style: const TextStyle(
-                              color: Colors.white,
+                            style: TextStyle(
+                              color: colorScheme.onSurface,
                               fontSize: 14,
                             ),
-                            icon: const Icon(Icons.arrow_drop_down, color: Colors.white),
+                            icon: Icon(Icons.arrow_drop_down, color: colorScheme.onSurface),
                             items: destinations.map((contact) {
                               return DropdownMenuItem<Contact>(
                                 value: contact,
@@ -310,7 +317,7 @@ class _SarUpdateSheetState extends State<SarUpdateSheet> {
                                     Icon(
                                       contact.isChannel ? Icons.public : Icons.storage,
                                       size: 18,
-                                      color: Colors.white,
+                                      color: colorScheme.onSurface,
                                     ),
                                     const SizedBox(width: 12),
                                     Expanded(
@@ -381,10 +388,10 @@ class _SarUpdateSheetState extends State<SarUpdateSheet> {
                   // Location display
                   Row(
                     children: [
-                      const Text(
+                      Text(
                         'Location',
                         style: TextStyle(
-                          color: Colors.white,
+                          color: colorScheme.onSurface,
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),
@@ -418,23 +425,23 @@ class _SarUpdateSheetState extends State<SarUpdateSheet> {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF2D2D2D),
+                        color: colorScheme.surfaceContainerHighest,
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Row(
+                      child: Row(
                         children: [
                           SizedBox(
                             width: 20,
                             height: 20,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                              valueColor: AlwaysStoppedAnimation<Color>(colorScheme.primary),
                             ),
                           ),
-                          SizedBox(width: 16),
+                          const SizedBox(width: 16),
                           Text(
                             'Getting location...',
-                            style: TextStyle(color: Colors.white),
+                            style: TextStyle(color: colorScheme.onSurface),
                           ),
                         ],
                       ),
@@ -489,7 +496,7 @@ class _SarUpdateSheetState extends State<SarUpdateSheet> {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF2D2D2D),
+                        color: colorScheme.surfaceContainerHighest,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Column(
@@ -506,18 +513,18 @@ class _SarUpdateSheetState extends State<SarUpdateSheet> {
                               Expanded(
                                 child: Text(
                                   '${_currentPosition!.latitude.toStringAsFixed(5)}, ${_currentPosition!.longitude.toStringAsFixed(5)}',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontFamily: 'monospace',
                                     fontSize: 13,
                                     fontWeight: FontWeight.w500,
-                                    color: Colors.white,
+                                    color: colorScheme.onSurface,
                                   ),
                                 ),
                               ),
                               // Only show refresh button if location updates are allowed
                               if (widget.allowLocationUpdate)
                                 IconButton(
-                                  icon: const Icon(Icons.refresh, size: 20, color: Colors.white),
+                                  icon: Icon(Icons.refresh, size: 20, color: colorScheme.onSurface),
                                   onPressed: _getCurrentLocation,
                                   padding: EdgeInsets.zero,
                                   constraints: const BoxConstraints(),
@@ -529,17 +536,17 @@ class _SarUpdateSheetState extends State<SarUpdateSheet> {
                             const SizedBox(height: 8),
                             Row(
                               children: [
-                                const Icon(
+                                Icon(
                                   Icons.my_location,
                                   size: 14,
-                                  color: Colors.grey,
+                                  color: colorScheme.onSurfaceVariant,
                                 ),
                                 const SizedBox(width: 6),
                                 Text(
                                   'Accuracy: ±${_currentPosition!.accuracy!.round()}m',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 12,
-                                    color: Colors.grey,
+                                    color: colorScheme.onSurfaceVariant,
                                   ),
                                 ),
                               ],
@@ -551,10 +558,10 @@ class _SarUpdateSheetState extends State<SarUpdateSheet> {
                   const SizedBox(height: 24),
 
                   // Optional notes
-                  const Text(
+                  Text(
                     'Notes (optional)',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: colorScheme.onSurface,
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),
@@ -564,12 +571,12 @@ class _SarUpdateSheetState extends State<SarUpdateSheet> {
                     controller: _notesController,
                     maxLines: 3,
                     maxLength: 100,
-                    style: const TextStyle(fontSize: 14, color: Colors.white),
+                    style: TextStyle(fontSize: 14, color: colorScheme.onSurface),
                     decoration: InputDecoration(
                       hintText: 'Add additional information...',
-                      hintStyle: const TextStyle(fontSize: 14, color: Colors.grey),
+                      hintStyle: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant),
                       filled: true,
-                      fillColor: const Color(0xFF2D2D2D),
+                      fillColor: colorScheme.surfaceContainerHighest,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
                         borderSide: BorderSide.none,
@@ -726,6 +733,8 @@ class MarkerTypeChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = _getMarkerColor();
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
     return InkWell(
       onTap: onTap,
@@ -734,10 +743,13 @@ class MarkerTypeChip extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: const Color(0xFF2D2D2D),
+          color: colorScheme.surfaceContainerHighest,
           border: isSelected
               ? Border.all(color: color, width: 2)
-              : null,
+              : Border.all(
+                  color: colorScheme.outline.withValues(alpha: 0.3),
+                  width: 1,
+                ),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Row(
@@ -753,7 +765,7 @@ class MarkerTypeChip extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w500,
-                  color: isSelected ? color : Colors.white,
+                  color: isSelected ? color : colorScheme.onSurface,
                 ),
               ),
             ),

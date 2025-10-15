@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../providers/drawing_provider.dart';
 import '../../providers/connection_provider.dart';
 import '../../providers/contacts_provider.dart';
+import '../../providers/messages_provider.dart';
 import '../../models/map_drawing.dart';
 import '../../models/contact.dart';
 
@@ -480,6 +481,13 @@ class DrawingToolbar extends StatelessWidget {
       return;
     }
 
+    // Add informational message to chat
+    final messagesProvider = Provider.of<MessagesProvider>(context, listen: false);
+    messagesProvider.logSystemMessage(
+      text: '📤 Sent ${drawings.length} map drawing${drawings.length > 1 ? 's' : ''} to Public Channel',
+      level: 'info',
+    );
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
@@ -546,6 +554,13 @@ class DrawingToolbar extends StatelessWidget {
       debugPrint('❌ Context not mounted, cannot show snackbar');
       return;
     }
+
+    // Add informational message to chat
+    final messagesProvider = Provider.of<MessagesProvider>(context, listen: false);
+    messagesProvider.logSystemMessage(
+      text: '📤 Sent ${drawings.length} map drawing${drawings.length > 1 ? 's' : ''} to ${room.advName}',
+      level: 'info',
+    );
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(

@@ -72,10 +72,20 @@ class AppProvider with ChangeNotifier {
         if (drawing != null) {
           debugPrint('🎨 [AppProvider] Drawing parsed successfully: ${drawing.type.name} from ${drawing.senderName ?? "unknown"}');
           drawingProvider.addReceivedDrawing(drawing);
+
+          // Add informational message to chat
+          final drawingTypeStr = drawing.type.name.substring(0, 1).toUpperCase() +
+                                 drawing.type.name.substring(1);
+          final infoMessage = message.copyWith(
+            text: '📍 Received map drawing ($drawingTypeStr) from ${drawing.senderName ?? "unknown"}',
+          );
+          messagesProvider.addMessage(
+            infoMessage,
+            contactLookup: (name) => '',
+          );
         } else {
           debugPrint('⚠️ [AppProvider] Failed to parse drawing message');
         }
-        // Don't add drawing messages to the message list
         return;
       }
 

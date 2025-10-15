@@ -25,8 +25,8 @@ class DrawingMessageParser {
       // Parse JSON
       final json = jsonDecode(jsonStr) as Map<String, dynamic>;
 
-      // Use existing fromJson method
-      return MapDrawing.fromJson(json);
+      // Use compact network format parser
+      return MapDrawing.fromNetworkJson(json);
     } catch (e) {
       return null;
     }

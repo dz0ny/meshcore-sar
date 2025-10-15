@@ -54,11 +54,29 @@ abstract class MapDrawing {
   /// Convert to JSON for persistence
   Map<String, dynamic> toJson();
 
-  /// Convert to JSON for network transmission (includes sender name)
-  Map<String, dynamic> toNetworkJson(String senderName) {
-    final json = toJson();
-    json['sender'] = senderName;
-    return json;
+  /// Convert to JSON for network transmission (compact format)
+  /// Uses short field names and excludes createdAt to minimize message size
+  Map<String, dynamic> toNetworkJson(String senderName);
+
+  /// Parse network JSON (compact format)
+  static MapDrawing? fromNetworkJson(Map<String, dynamic> json) {
+    final typeStr = json['t'] as String?;
+    if (typeStr == null) return null;
+
+    try {
+      final type = DrawingShapeType.values.firstWhere(
+        (e) => e.name == typeStr,
+      );
+
+      switch (type) {
+        case DrawingShapeType.line:
+          return LineDrawing.fromNetworkJson(json);
+        case DrawingShapeType.rectangle:
+          return RectangleDrawing.fromNetworkJson(json);
+      }
+    } catch (e) {
+      return null;
+    }
   }
 
   /// Create from JSON
@@ -107,6 +125,18 @@ class LineDrawing extends MapDrawing {
     };
   }
 
+  @override
+  Map<String, dynamic> toNetworkJson(String senderName) {
+    // Compact format: t=type, c=color, s=sender, p=points
+    // Points are encoded as flat array [lat1,lon1,lat2,lon2,...]
+    return {
+      't': type.name,
+      'c': color.value,
+      's': senderName,
+      'p': points.expand((p) => [p.latitude, p.longitude]).toList(),
+    };
+  }
+
   static LineDrawing fromJson(Map<String, dynamic> json) {
     final pointsJson = json['points'] as List<dynamic>;
     final points = pointsJson.map((p) => LatLng(p['lat'] as double, p['lon'] as double)).toList();
@@ -119,6 +149,25 @@ class LineDrawing extends MapDrawing {
       points: points,
       senderName: senderName,
       isReceived: senderName != null, // Mark as received if sender is present
+    );
+  }
+
+  static LineDrawing fromNetworkJson(Map<String, dynamic> json) {
+    // Parse compact format
+    final pointsFlat = (json['p'] as List<dynamic>).cast<double>();
+    final points = <LatLng>[];
+    for (int i = 0; i < pointsFlat.length; i += 2) {
+      points.add(LatLng(pointsFlat[i], pointsFlat[i + 1]));
+    }
+    final senderName = json['s'] as String?;
+
+    return LineDrawing(
+      id: DateTime.now().millisecondsSinceEpoch.toString(), // Generate new ID
+      color: Color(json['c'] as int),
+      createdAt: DateTime.now(),
+      points: points,
+      senderName: senderName,
+      isReceived: true,
     );
   }
 
@@ -169,6 +218,17 @@ class RectangleDrawing extends MapDrawing {
     };
   }
 
+  @override
+  Map<String, dynamic> toNetworkJson(String senderName) {
+    // Compact format: t=type, c=color, s=sender, b=bounds [lat1,lon1,lat2,lon2]
+    return {
+      't': type.name,
+      'c': color.value,
+      's': senderName,
+      'b': [topLeft.latitude, topLeft.longitude, bottomRight.latitude, bottomRight.longitude],
+    };
+  }
+
   static RectangleDrawing fromJson(Map<String, dynamic> json) {
     final topLeftJson = json['topLeft'] as Map<String, dynamic>;
     final bottomRightJson = json['bottomRight'] as Map<String, dynamic>;
@@ -182,6 +242,22 @@ class RectangleDrawing extends MapDrawing {
       bottomRight: LatLng(bottomRightJson['lat'] as double, bottomRightJson['lon'] as double),
       senderName: senderName,
       isReceived: senderName != null, // Mark as received if sender is present
+    );
+  }
+
+  static RectangleDrawing fromNetworkJson(Map<String, dynamic> json) {
+    // Parse compact format
+    final bounds = (json['b'] as List<dynamic>).cast<double>();
+    final senderName = json['s'] as String?;
+
+    return RectangleDrawing(
+      id: DateTime.now().millisecondsSinceEpoch.toString(), // Generate new ID
+      color: Color(json['c'] as int),
+      createdAt: DateTime.now(),
+      topLeft: LatLng(bounds[0], bounds[1]),
+      bottomRight: LatLng(bounds[2], bounds[3]),
+      senderName: senderName,
+      isReceived: true,
     );
   }
 

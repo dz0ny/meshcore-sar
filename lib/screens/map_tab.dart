@@ -1117,7 +1117,7 @@ class _MapTabState extends State<MapTab> with AutomaticKeepAliveClientMixin {
             // Exit fullscreen button - top left (only shown in fullscreen mode)
             if (_isFullscreen)
               Positioned(
-                top: 16,
+                top: 60,
                 left: 16,
                 child: FloatingActionButton.small(
                   heroTag: 'exit_fullscreen',

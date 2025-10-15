@@ -6,6 +6,7 @@ import 'package:flutter_compass/flutter_compass.dart';
 import 'package:latlong2/latlong.dart';
 import '../../models/contact.dart';
 import '../../models/sar_marker.dart';
+import '../common/location_display.dart';
 import 'compass/compass_header.dart';
 import 'compass/compass_filters.dart';
 import 'compass/compass_sar_list.dart';
@@ -147,6 +148,39 @@ class _DetailedCompassDialogState extends State<DetailedCompassDialog> {
     _previousScale = 1.0;
   }
 
+  // Calculate appropriate zoom level for selected item
+  void _autoZoomForSelection() {
+    if (_currentPosition == null) return;
+
+    double? targetDistance;
+
+    if (_selectedContact != null && _selectedContact!.displayLocation != null) {
+      targetDistance = _calculateDistance(
+        _currentPosition!.latitude,
+        _currentPosition!.longitude,
+        _selectedContact!.displayLocation!.latitude,
+        _selectedContact!.displayLocation!.longitude,
+      );
+    } else if (_selectedSarMarker != null) {
+      targetDistance = _calculateDistance(
+        _currentPosition!.latitude,
+        _currentPosition!.longitude,
+        _selectedSarMarker!.location.latitude,
+        _selectedSarMarker!.location.longitude,
+      );
+    }
+
+    if (targetDistance != null) {
+      // Calculate zoom level to fit target within 70% of compass radius
+      // Base distance at 1x zoom is 1000m
+      // We want target at 70% of radius, so: targetDistance / zoomLevel = 700m
+      final targetZoom = (targetDistance / 700.0).clamp(_minZoom, _maxZoom);
+      setState(() {
+        _zoomLevel = targetZoom;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final heading = currentHeading;
@@ -258,6 +292,7 @@ class _DetailedCompassDialogState extends State<DetailedCompassDialog> {
                     CompassContactList(
                       contacts: widget.contacts,
                       position: position,
+                      heading: heading,
                       selectedContact: _selectedContact,
                       onContactTap: (contact) {
                         setState(() {
@@ -266,6 +301,7 @@ class _DetailedCompassDialogState extends State<DetailedCompassDialog> {
                             _selectedSarMarker = null;
                           }
                         });
+                        _autoZoomForSelection();
                       },
                     ),
                   // SAR Markers list
@@ -273,6 +309,7 @@ class _DetailedCompassDialogState extends State<DetailedCompassDialog> {
                     CompassSarList(
                       sarMarkers: _getFilteredSarMarkers(),
                       position: position,
+                      heading: heading,
                       selectedSarMarker: _selectedSarMarker,
                       onSarMarkerTap: (marker) {
                         setState(() {
@@ -281,6 +318,7 @@ class _DetailedCompassDialogState extends State<DetailedCompassDialog> {
                             _selectedContact = null;
                           }
                         });
+                        _autoZoomForSelection();
                       },
                     ),
                 ],
@@ -384,14 +422,14 @@ class _DetailedCompassDialogState extends State<DetailedCompassDialog> {
       margin: const EdgeInsets.symmetric(horizontal: 16),
       elevation: 4,
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(12),
         child: Column(
           children: [
             // Header with icon and title
             Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
                     color: color.withValues(alpha: 0.2),
                     shape: BoxShape.circle,
@@ -399,25 +437,25 @@ class _DetailedCompassDialogState extends State<DetailedCompassDialog> {
                   child: _selectedContact != null && _selectedContact!.roleEmoji != null
                       ? Text(
                           _selectedContact!.roleEmoji!,
-                          style: const TextStyle(fontSize: 32),
+                          style: const TextStyle(fontSize: 24),
                         )
-                      : Icon(icon, size: 32, color: color),
+                      : Icon(icon, size: 24, color: color),
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         title,
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.bold,
                             ),
                       ),
                       if (additionalInfo != null)
                         Text(
                           additionalInfo,
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                 color: Colors.grey,
                               ),
                         ),
@@ -425,7 +463,9 @@ class _DetailedCompassDialogState extends State<DetailedCompassDialog> {
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.close),
+                  icon: const Icon(Icons.close, size: 20),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
                   onPressed: () {
                     setState(() {
                       _selectedContact = null;
@@ -436,9 +476,9 @@ class _DetailedCompassDialogState extends State<DetailedCompassDialog> {
               ],
             ),
             if (bearing != null && distance != null) ...[
-              const SizedBox(height: 16),
-              const Divider(),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
+              const Divider(height: 1),
+              const SizedBox(height: 12),
               // Distance and bearing info
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -466,29 +506,10 @@ class _DetailedCompassDialogState extends State<DetailedCompassDialog> {
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
-              // Coordinates
+              const SizedBox(height: 8),
+              // Coordinates with modal
               if (targetLocation != null)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.location_on, size: 16),
-                      const SizedBox(width: 8),
-                      Text(
-                        '${targetLocation.latitude.toStringAsFixed(5)}, ${targetLocation.longitude.toStringAsFixed(5)}',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              fontFamily: 'monospace',
-                            ),
-                      ),
-                    ],
-                  ),
-                ),
+                LocationDisplay(location: targetLocation),
             ],
           ],
         ),
@@ -505,18 +526,18 @@ class _DetailedCompassDialogState extends State<DetailedCompassDialog> {
   ) {
     return Column(
       children: [
-        Icon(icon, size: 28, color: color),
-        const SizedBox(height: 8),
+        Icon(icon, size: 20, color: color),
+        const SizedBox(height: 4),
         Text(
           value,
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: color,
               ),
         ),
         Text(
           label,
-          style: Theme.of(context).textTheme.bodySmall,
+          style: Theme.of(context).textTheme.labelSmall,
         ),
       ],
     );

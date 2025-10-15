@@ -8,6 +8,7 @@ import '../../../models/sar_marker.dart';
 class CompassSarList extends StatelessWidget {
   final List<SarMarker> sarMarkers;
   final Position? position;
+  final double? heading;
   final SarMarker? selectedSarMarker;
   final ValueChanged<SarMarker?> onSarMarkerTap;
 
@@ -15,6 +16,7 @@ class CompassSarList extends StatelessWidget {
     super.key,
     required this.sarMarkers,
     required this.position,
+    this.heading,
     required this.selectedSarMarker,
     required this.onSarMarkerTap,
   });
@@ -125,11 +127,24 @@ class CompassSarList extends StatelessWidget {
                 '${_bearingToCardinal(bearing)} • ${_formatDistance(distance)} • ${marker.timeAgo}',
                 style: Theme.of(context).textTheme.bodySmall,
               ),
-              trailing: Text(
-                '${bearing.round()}°',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      fontWeight: FontWeight.bold,
+              trailing: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    '${bearing.round()}°',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                  if (heading != null)
+                    Text(
+                      _formatRelativeBearing(bearing, heading!),
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            color: Colors.grey,
+                          ),
                     ),
+                ],
               ),
               onTap: () {
                 if (selectedSarMarker == marker) {
@@ -190,6 +205,29 @@ class CompassSarList extends StatelessWidget {
       return '${meters.round()}m';
     } else {
       return '${(meters / 1000).toStringAsFixed(1)}km';
+    }
+  }
+
+  String _formatRelativeBearing(double bearing, double heading) {
+    // Calculate relative bearing (how much to turn from current heading)
+    double relative = bearing - heading;
+
+    // Normalize to -180 to +180
+    while (relative > 180) {
+      relative -= 360;
+    }
+    while (relative < -180) {
+      relative += 360;
+    }
+
+    final absRelative = relative.abs().round();
+
+    if (absRelative < 10) {
+      return 'ahead';
+    } else if (relative > 0) {
+      return '$absRelative° right';
+    } else {
+      return '$absRelative° left';
     }
   }
 }

@@ -498,6 +498,79 @@ class _MessageBubble extends StatelessWidget {
     }
   }
 
+  void _showMessageOptions(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Copy text option
+            ListTile(
+              leading: const Icon(Icons.copy),
+              title: const Text('Copy text'),
+              onTap: () {
+                Clipboard.setData(ClipboardData(text: message.text));
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Text copied to clipboard'),
+                    duration: Duration(seconds: 1),
+                  ),
+                );
+              },
+            ),
+            // Delete message option
+            ListTile(
+              leading: const Icon(Icons.delete, color: Colors.red),
+              title: const Text('Delete message', style: TextStyle(color: Colors.red)),
+              onTap: () {
+                Navigator.pop(context);
+                _showDeleteConfirmation(context);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showDeleteConfirmation(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete message'),
+        content: const Text('Are you sure you want to delete this message?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              final messagesProvider = context.read<MessagesProvider>();
+              messagesProvider.deleteMessage(message.id);
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Message deleted'),
+                  duration: Duration(seconds: 1),
+                ),
+              );
+            },
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isSarMarker = message.isSarMarker;
@@ -518,6 +591,7 @@ class _MessageBubble extends StatelessWidget {
 
     return GestureDetector(
       onTap: onTap,
+      onLongPress: () => _showMessageOptions(context),
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(16),

@@ -284,6 +284,37 @@ class MessagesProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  /// Delete a specific message by ID
+  void deleteMessage(String messageId) {
+    final index = _messages.indexWhere((m) => m.id == messageId);
+    if (index != -1) {
+      final message = _messages[index];
+
+      // If it's a SAR marker message, also remove the marker
+      if (message.isSarMarker) {
+        final marker = message.toSarMarker();
+        if (marker != null) {
+          _sarMarkers.remove(marker.id);
+        }
+      }
+
+      // Remove from messages list
+      _messages.removeAt(index);
+
+      // Cancel timeout timer if it exists
+      if (message.expectedAckTag != null) {
+        _timeoutTimers[message.expectedAckTag]?.cancel();
+        _timeoutTimers.remove(message.expectedAckTag);
+        _pendingSentMessages.remove(message.expectedAckTag);
+      }
+
+      print('🗑️ [MessagesProvider] Message $messageId deleted');
+
+      _persistMessages();
+      notifyListeners();
+    }
+  }
+
   /// Clear all messages
   void clearMessages() {
     _messages.clear();

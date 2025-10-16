@@ -9,6 +9,8 @@ class LogRxDataInfo {
   final List<String> embeddedStrings;
   final double entropy;
   final bool isLikelyEncrypted;
+  final double? snrDb;  // Signal-to-Noise Ratio in dB
+  final int? rssiDbm;   // Received Signal Strength Indicator in dBm
 
   LogRxDataInfo({
     this.airtimeMs,
@@ -17,6 +19,8 @@ class LogRxDataInfo {
     this.embeddedStrings = const [],
     required this.entropy,
     required this.isLikelyEncrypted,
+    this.snrDb,
+    this.rssiDbm,
   });
 
   /// Get sender public key as hex string (short)
@@ -30,6 +34,9 @@ class LogRxDataInfo {
 
   String get summary {
     final parts = <String>[];
+    if (rssiDbm != null) parts.add('RSSI:${rssiDbm}dBm');
+    final snr = snrDb;
+    if (snr != null) parts.add('SNR:${snr.toStringAsFixed(1)}dB');
     if (airtimeMs != null) parts.add('airtime:${airtimeMs}ms');
     if (ackCode != null) parts.add('ACK:$ackCode');
     if (senderKeyShort != null) parts.add('from:$senderKeyShort');

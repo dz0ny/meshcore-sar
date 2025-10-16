@@ -587,7 +587,7 @@ class _HomeScreenState extends State<HomeScreen>
                           Text(
                             '${deviceInfo.signalRssi}dBm',
                             style: TextStyle(
-                              fontSize: 12,
+                              fontSize: 14,
                               color: _getSignalColor(deviceInfo.signalRssi!),
                               fontWeight: FontWeight.w500,
                             ),

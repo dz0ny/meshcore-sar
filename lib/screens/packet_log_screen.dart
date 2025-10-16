@@ -515,6 +515,17 @@ class _PacketLogCard extends StatelessWidget {
                         icon: Icons.tag,
                         label: log.opcodeDescription,
                       ),
+                    // Show RSSI and SNR for LOG_RX_DATA packets
+                    if (log.logRxDataInfo?.rssiDbm != null)
+                      _InfoChip(
+                        icon: Icons.signal_cellular_alt,
+                        label: 'RSSI: ${log.logRxDataInfo!.rssiDbm} dBm',
+                      ),
+                    if (log.logRxDataInfo?.snrDb != null)
+                      _InfoChip(
+                        icon: Icons.waves,
+                        label: 'SNR: ${log.logRxDataInfo!.snrDb!.toStringAsFixed(1)} dB',
+                      ),
                   ],
                 ),
               ],

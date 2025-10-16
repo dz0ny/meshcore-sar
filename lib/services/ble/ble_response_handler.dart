@@ -392,10 +392,12 @@ class BleResponseHandler {
       final entropy = uniqueBytes / rawPacketData.length;
       final isLikelyEncrypted = entropy > 0.7;
 
-      // Create decoded info for packet log
+      // Create decoded info for packet log (includes SNR and RSSI)
       final logRxDataInfo = LogRxDataInfo(
         entropy: entropy,
         isLikelyEncrypted: isLikelyEncrypted,
+        snrDb: snrDb,
+        rssiDbm: rssiDbm,
       );
 
       // Update the most recent packet log entry

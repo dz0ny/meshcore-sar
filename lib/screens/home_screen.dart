@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../providers/connection_provider.dart';
 import '../providers/app_provider.dart';
 import '../providers/messages_provider.dart';
@@ -34,6 +35,7 @@ class _HomeScreenState extends State<HomeScreen>
   late TabController _tabController;
   int _currentIndex = 0;
   bool _isMapFullscreen = false;
+  bool _showRxTxIndicators = true;
 
   @override
   void initState() {
@@ -48,6 +50,16 @@ class _HomeScreenState extends State<HomeScreen>
         }
       });
     });
+    _loadRxTxPreference();
+  }
+
+  Future<void> _loadRxTxPreference() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (mounted) {
+      setState(() {
+        _showRxTxIndicators = prefs.getBool('show_rx_tx_indicators') ?? true;
+      });
+    }
   }
 
   @override
@@ -475,8 +487,8 @@ class _HomeScreenState extends State<HomeScreen>
                         ],
                       ),
                       onTap: () {
-                        Future.delayed(Duration.zero, () {
-                          Navigator.push(
+                        Future.delayed(Duration.zero, () async {
+                          await Navigator.push(
                             context,
                             MaterialPageRoute(
                               builder: (context) => SettingsScreen(
@@ -485,6 +497,8 @@ class _HomeScreenState extends State<HomeScreen>
                               ),
                             ),
                           );
+                          // Reload preference when returning from settings
+                          _loadRxTxPreference();
                         });
                       },
                     ),
@@ -580,34 +594,40 @@ class _HomeScreenState extends State<HomeScreen>
                           color: deviceInfo.signalRssi != null
                               ? _getSignalColor(deviceInfo.signalRssi!)
                               : Colors.grey,
-                          size: 16,
+                          size: 14,
                         ),
-                        const SizedBox(width: 4),
+                        const SizedBox(width: 3),
                         if (deviceInfo.signalRssi != null)
-                          Text(
-                            '${deviceInfo.signalRssi}dBm',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: _getSignalColor(deviceInfo.signalRssi!),
-                              fontWeight: FontWeight.w500,
+                          Flexible(
+                            child: Text(
+                              '${deviceInfo.signalRssi}',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: _getSignalColor(deviceInfo.signalRssi!),
+                                fontWeight: FontWeight.w500,
+                              ),
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 8),
                         // Battery indicator
                         if (deviceInfo.batteryPercent != null) ...[
                           Icon(
                             _getBatteryIcon(deviceInfo.batteryPercent!),
                             color: _getBatteryColor(deviceInfo.batteryPercent!),
-                            size: 16,
+                            size: 14,
                           ),
-                          const SizedBox(width: 4),
-                          Text(
-                            '${deviceInfo.batteryPercent!.round()}%',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: _getBatteryColor(
-                                deviceInfo.batteryPercent!,
+                          const SizedBox(width: 3),
+                          Flexible(
+                            child: Text(
+                              '${deviceInfo.batteryPercent!.round()}%',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: _getBatteryColor(
+                                  deviceInfo.batteryPercent!,
+                                ),
                               ),
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                         ],
@@ -687,75 +707,77 @@ class _HomeScreenState extends State<HomeScreen>
                     ),
                     child: const Icon(Icons.campaign, size: 20),
                   ),
-                  const SizedBox(width: 8),
-                  // RX/TX indicators with long press to open packet log
-                  GestureDetector(
-                    onLongPress: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) =>
-                              PacketLogScreen(bleService: provider.bleService),
-                        ),
-                      );
-                    },
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // RX indicator
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Container(
-                              width: 8,
-                              height: 8,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: provider.rxActivity
-                                    ? Colors.green
-                                    : Colors.grey.withOpacity(0.3),
+                  if (_showRxTxIndicators) ...[
+                    const SizedBox(width: 8),
+                    // RX/TX indicators with long press to open packet log
+                    GestureDetector(
+                      onLongPress: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                PacketLogScreen(bleService: provider.bleService),
+                          ),
+                        );
+                      },
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // RX indicator
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                width: 8,
+                                height: 8,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: provider.rxActivity
+                                      ? Colors.green
+                                      : Colors.grey.withOpacity(0.3),
+                                ),
                               ),
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              'RX:${provider.rxPacketCount}',
-                              style: const TextStyle(
-                                fontSize: 11,
-                                color: Colors.grey,
+                              const SizedBox(width: 4),
+                              Text(
+                                'RX:${provider.rxPacketCount}',
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  color: Colors.grey,
+                                ),
                               ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 4),
-                        // TX indicator
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Container(
-                              width: 8,
-                              height: 8,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: provider.txActivity
-                                    ? Colors.blue
-                                    : Colors.grey.withOpacity(0.3),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          // TX indicator
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                width: 8,
+                                height: 8,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: provider.txActivity
+                                      ? Colors.blue
+                                      : Colors.grey.withOpacity(0.3),
+                                ),
                               ),
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              'TX:${provider.txPacketCount}',
-                              style: const TextStyle(
-                                fontSize: 11,
-                                color: Colors.grey,
+                              const SizedBox(width: 4),
+                              Text(
+                                'TX:${provider.txPacketCount}',
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  color: Colors.grey,
+                                ),
                               ),
-                            ),
-                          ],
-                        ),
-                      ],
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 12),
+                    const SizedBox(width: 12),
+                  ],
                   // Settings button (tap for device settings, long press for packet logs)
                   GestureDetector(
                     onTap: () {

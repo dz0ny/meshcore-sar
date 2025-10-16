@@ -29,6 +29,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   late AppThemeMode _selectedTheme;
   PackageInfo? _packageInfo;
   bool _isLoadingSampleData = false;
+  bool _showRxTxIndicators = true;
   final LocationTrackingService _locationService = LocationTrackingService();
 
   @override
@@ -37,6 +38,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _selectedTheme = widget.currentTheme;
     _loadPackageInfo();
     _initializeLocationService();
+    _loadRxTxPreference();
   }
 
   Future<void> _loadPackageInfo() async {
@@ -46,6 +48,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
         _packageInfo = info;
       });
     }
+  }
+
+  Future<void> _loadRxTxPreference() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (mounted) {
+      setState(() {
+        _showRxTxIndicators = prefs.getBool('show_rx_tx_indicators') ?? true;
+      });
+    }
+  }
+
+  Future<void> _saveRxTxPreference(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('show_rx_tx_indicators', value);
   }
 
   Future<void> _initializeLocationService() async {
@@ -293,6 +309,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
             subtitle: Text(AppTheme.getThemeDisplayName(_selectedTheme)),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => _showThemeDialog(),
+          ),
+          SwitchListTile(
+            secondary: const Icon(Icons.radar),
+            title: const Text('Show RX/TX Indicators'),
+            subtitle: const Text('Display packet activity indicators in top bar'),
+            value: _showRxTxIndicators,
+            onChanged: (value) async {
+              setState(() {
+                _showRxTxIndicators = value;
+              });
+              await _saveRxTxPreference(value);
+            },
           ),
           const Divider(),
 

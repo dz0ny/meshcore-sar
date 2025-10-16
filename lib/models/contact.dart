@@ -4,6 +4,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:flutter/material.dart';
 import 'contact_telemetry.dart';
 import 'advert_location.dart';
+import '../l10n/app_localizations.dart';
 
 /// MeshCore contact types
 enum ContactType {
@@ -211,6 +212,16 @@ class Contact {
 
     // Remove the emoji from the beginning
     return advName.substring(emoji.length).trim();
+  }
+
+  /// Get localized display name (for Public Channel and other special contacts)
+  String getLocalizedDisplayName(BuildContext context) {
+    // Check if this is the Public Channel (all-zeros public key)
+    if (publicKeyHex == '0000000000000000000000000000000000000000000000000000000000000000') {
+      return AppLocalizations.of(context)!.publicChannel;
+    }
+    // For all other contacts, use the regular display name
+    return displayName;
   }
 
   /// Check if contact has a learned routing path

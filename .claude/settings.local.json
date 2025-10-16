@@ -10,7 +10,8 @@
       "Bash(dart pub global deactivate:*)",
       "Bash(flutter precache:*)",
       "Bash(flutter analyze:*)",
-      "Bash(flutter pub get:*)"
+      "Bash(flutter pub get:*)",
+      "Bash(dart:*)"
     ],
     "deny": [],
     "ask": []

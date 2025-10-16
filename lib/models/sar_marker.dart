@@ -1,5 +1,7 @@
 import 'dart:typed_data';
+import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
+import '../l10n/app_localizations.dart';
 
 /// SAR (Search & Rescue) marker types
 enum SarMarkerType {
@@ -12,6 +14,23 @@ enum SarMarkerType {
   const SarMarkerType(this.emoji, this.displayName);
   final String emoji;
   final String displayName;
+
+  /// Get localized display name
+  String getLocalizedName(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    switch (this) {
+      case SarMarkerType.foundPerson:
+        return l10n.sarMarkerFoundPerson;
+      case SarMarkerType.fire:
+        return l10n.sarMarkerFire;
+      case SarMarkerType.stagingArea:
+        return l10n.sarMarkerStagingArea;
+      case SarMarkerType.object:
+        return l10n.sarMarkerObject;
+      case SarMarkerType.unknown:
+        return 'Unknown';
+    }
+  }
 
   static SarMarkerType fromEmoji(String emoji) {
     switch (emoji) {

@@ -28,8 +28,13 @@ class ContactsProvider with ChangeNotifier {
         excludePublicKey: devicePublicKey,
       );
 
-      // Add stored contacts
+      // Add stored contacts (excluding any with all-zeros public key)
+      const publicChannelKey = '0000000000000000000000000000000000000000000000000000000000000000';
       for (final contact in storedContacts) {
+        // Skip any contacts with all-zeros public key (shouldn't happen, but safety check)
+        if (contact.publicKeyHex == publicChannelKey) {
+          continue;
+        }
         _contacts[contact.publicKeyHex] = contact;
       }
 
@@ -49,7 +54,8 @@ class ContactsProvider with ChangeNotifier {
 
   /// Ensure public channel always exists in the list
   void _ensurePublicChannelExists() {
-    const publicChannelKey = 'public_channel_0';
+    // Public channel has all-zeros public key (32 bytes = 64 hex chars)
+    const publicChannelKey = '0000000000000000000000000000000000000000000000000000000000000000';
     if (!_contacts.containsKey(publicChannelKey)) {
       // Create a pseudo-contact for the public channel (ephemeral broadcast)
       _contacts[publicChannelKey] = Contact(
@@ -70,9 +76,11 @@ class ContactsProvider with ChangeNotifier {
   /// Persist contacts to storage (async, non-blocking)
   Future<void> _persistContacts() async {
     try {
-      // Don't persist the public channel pseudo-contact
-      final contactsToSave = _contacts.values
-          .where((c) => c.publicKeyHex != 'public_channel_0')
+      // Don't persist the public channel pseudo-contact (all zeros key)
+      const publicChannelKey = '0000000000000000000000000000000000000000000000000000000000000000';
+      final contactsToSave = _contacts.entries
+          .where((entry) => entry.key != publicChannelKey)
+          .map((entry) => entry.value)
           .toList();
       await _storageService.saveContacts(contactsToSave);
     } catch (e) {

@@ -172,7 +172,7 @@ class MapMarkers {
                     borderRadius: BorderRadius.circular(3),
                   ),
                   child: Text(
-                    marker.type.displayName,
+                    marker.type.getLocalizedName(context),
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 9,
@@ -254,7 +254,7 @@ class MapMarkers {
           children: [
             Text(marker.type.emoji, style: const TextStyle(fontSize: 24)),
             const SizedBox(width: 8),
-            Expanded(child: Text(marker.type.displayName)),
+            Expanded(child: Text(marker.type.getLocalizedName(context))),
           ],
         ),
         content: Column(

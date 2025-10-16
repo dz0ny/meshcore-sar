@@ -323,7 +323,7 @@ class _SarUpdateSheetState extends State<SarUpdateSheet> {
                                     const SizedBox(width: 12),
                                     Expanded(
                                       child: Text(
-                                        contact.displayName,
+                                        contact.getLocalizedDisplayName(context),
                                         overflow: TextOverflow.ellipsis,
                                       ),
                                     ),
@@ -764,7 +764,7 @@ class MarkerTypeChip extends StatelessWidget {
             const SizedBox(width: 16),
             Expanded(
               child: Text(
-                type.displayName,
+                type.getLocalizedName(context),
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w500,

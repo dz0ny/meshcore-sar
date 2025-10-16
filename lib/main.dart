@@ -136,30 +136,35 @@ class _MeshCoreSarAppState extends State<MeshCoreSarApp> {
               ),
         ),
       ],
-      child: Builder(
-        builder: (context) {
-          final systemBrightness = MediaQuery.platformBrightnessOf(context);
-          return MaterialApp(
-            title: 'MeshCore SAR',
-            debugShowCheckedModeBanner: false,
-            theme: AppTheme.getTheme(_themeMode, systemBrightness),
-            locale: _locale,
-            localizationsDelegates: const [
-              AppLocalizations.delegate,
-              GlobalMaterialLocalizations.delegate,
-              GlobalWidgetsLocalizations.delegate,
-              GlobalCupertinoLocalizations.delegate,
-            ],
-            supportedLocales: LocalePreferences.supportedLocales,
-            home: HomeScreen(
-              onThemeChanged: _handleThemeChanged,
-              onLocaleChanged: _handleLocaleChanged,
-              currentTheme: _themeMode,
-              currentLocale: _locale,
-            ),
-          );
-        },
-      ),
+      child: _buildMaterialApp(),
+    );
+  }
+
+  Widget _buildMaterialApp() {
+    return Builder(
+      builder: (context) {
+        final systemBrightness = MediaQuery.platformBrightnessOf(context);
+        return MaterialApp(
+          key: ValueKey<String?>('${_locale?.languageCode ?? 'system'}_${_themeMode.name}'),
+          title: 'MeshCore SAR',
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.getTheme(_themeMode, systemBrightness),
+          locale: _locale,
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: LocalePreferences.supportedLocales,
+          home: HomeScreen(
+            onThemeChanged: _handleThemeChanged,
+            onLocaleChanged: _handleLocaleChanged,
+            currentTheme: _themeMode,
+            currentLocale: _locale,
+          ),
+        );
+      },
     );
   }
 }

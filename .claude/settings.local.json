@@ -16,7 +16,8 @@
       "Bash(flutter analyze lib/main.dart lib/screens/home_screen.dart)",
       "Bash(flutter analyze lib/main.dart)",
       "Bash(flutter analyze lib/providers/app_provider.dart lib/services/meshcore_ble_service.dart)",
-      "Bash(flutter analyze lib/services/meshcore_ble_service.dart)"
+      "Bash(flutter analyze lib/services/meshcore_ble_service.dart)",
+      "Bash(flutter analyze lib/services/meshcore_ble_service.dart lib/services/location_tracking_service.dart)"
     ],
     "deny": [],
     "ask": []

@@ -29,6 +29,8 @@
 
   "locationPermissionPermanentlyDenied": "Dovoljenje za lokacijo trajno zavrnjeno. Prosimo, omogočite v Nastavitvah.",
 
+  "locationPermissionRequired": "Dovoljenje za lokacijo je potrebno za GPS sledenje in usklajevanje ekipe. Lahko ga omogočite kasneje v Nastavitvah.",
+
   "locationServicesDisabled": "Lokacijske storitve so onemogočene. Prosimo, omogočite jih v Nastavitvah.",
 
   "failedToGetGpsLocation": "Pridobitev GPS lokacije ni uspela",
@@ -137,7 +139,7 @@
 
   "sampleDataDescription": "Naložite ali počistite vzorčne stike, sporočila kanalov in SAR označevalce za testiranje",
 
-  "loadSampleData": "Naloži vzorčne podatke",
+  "loadSampleData": "Naloži vzorec",
 
   "clearAllData": "Počisti vse podatke",
 
@@ -404,6 +406,8 @@
   "repeaters": "Repetitorji",
 
   "rooms": "Sobe",
+
+  "channels": "Kanali",
 
   "cacheStatistics": "Statistika predpomnilnika",
 

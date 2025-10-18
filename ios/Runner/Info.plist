@@ -43,7 +43,7 @@
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleVersion</key>
-	<string>28</string>
+	<string>31</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSBluetoothAlwaysUsageDescription</key>
@@ -60,6 +60,8 @@
 	<string>MeshCore SAR needs location access to display team members and SAR markers on the map</string>
 	<key>NSMotionUsageDescription</key>
 	<string>MeshCore SAR needs access to the compass to show your heading direction on the map</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>MeshCore SAR may need access to your photo library to attach images to messages or save map screenshots for documentation during SAR operations</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UIBackgroundModes</key>

@@ -246,19 +246,20 @@ class LocationTrackingService {
   /// Returns true if successful, false otherwise.
   /// Note: This method returns immediately after starting the position stream.
   /// Initial position acquisition happens asynchronously in the background.
+  ///
+  /// GPS tracking works WITHOUT BLE connection - device broadcasts are simply skipped.
   Future<bool> startTracking({double? distanceThreshold}) async {
-    if (!_isInitialized || _bleService == null) {
+    if (!_isInitialized) {
       debugPrint(
-        '⚠️ [LocationTracking] Service not initialized or BLE service null',
+        '⚠️ [LocationTracking] Service not initialized',
       );
       onError?.call('Location tracking service not initialized');
       return false;
     }
 
-    if (!_bleService!.isConnected) {
-      debugPrint('⚠️ [LocationTracking] BLE not connected');
-      onError?.call('Not connected to mesh device');
-      return false;
+    // Allow tracking without BLE connection - broadcasts will be skipped
+    if (_bleService == null || !_bleService!.isConnected) {
+      debugPrint('ℹ️ [LocationTracking] Starting GPS tracking without BLE connection (broadcasts disabled)');
     }
 
     // Check permissions

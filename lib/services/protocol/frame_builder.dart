@@ -243,4 +243,31 @@ class FrameBuilder {
     writer.writeBytes(contactPublicKey); // 32 bytes
     return writer.toBytes();
   }
+
+  /// Build GetChannel command - retrieves information for a specific channel
+  static Uint8List buildGetChannel(int channelIdx) {
+    final writer = BufferWriter();
+    writer.writeByte(MeshCoreConstants.cmdGetChannel); // 0x1F (31)
+    writer.writeByte(channelIdx); // 0-39 typically
+    return writer.toBytes();
+  }
+
+  /// Build SetChannel command - sets the name for a specific channel
+  static Uint8List buildSetChannel({
+    required int channelIdx,
+    required String channelName,
+  }) {
+    final writer = BufferWriter();
+    writer.writeByte(MeshCoreConstants.cmdSetChannel); // 0x20 (32)
+    writer.writeByte(channelIdx); // 0-39 typically
+
+    // Write channel name as null-terminated string in 32-byte field
+    final nameBytes = Uint8List(32);
+    final encoded = utf8.encode(channelName);
+    final copyLen = encoded.length > 31 ? 31 : encoded.length;
+    nameBytes.setRange(0, copyLen, encoded);
+    writer.writeBytes(nameBytes);
+
+    return writer.toBytes();
+  }
 }

@@ -4,7 +4,19 @@
       "Bash(magick Icon-App-1024x1024@1x.png -background white -alpha remove -alpha off Icon-App-1024x1024@1x.png)",
       "Bash(convert Icon-App-1024x1024@1x.png -background white -alpha remove -alpha off Icon-App-1024x1024@1x-noalpha.png)",
       "Bash(sips -s format jpeg Icon-App-1024x1024@1x.png --out /tmp/icon_flattened.jpg)",
-      "Bash(sips -s format png /tmp/icon_flattened.jpg --out Icon-App-1024x1024@1x.png)"
+      "Bash(sips -s format png /tmp/icon_flattened.jpg --out Icon-App-1024x1024@1x.png)",
+      "Bash(flutter analyze lib/services/ble/)",
+      "Bash(flutter analyze lib/models/location_trail.dart lib/providers/map_provider.dart lib/widgets/map/location_trail_layer.dart lib/widgets/map/trail_controls.dart lib/widgets/map/compass/compass_filters.dart)",
+      "Bash(flutter analyze lib/screens/map_tab.dart)",
+      "Bash(flutter gen-l10n)",
+      "Bash(flutter analyze lib/screens/contacts_tab.dart)",
+      "Bash(flutter analyze lib/widgets/permission_request_dialog.dart lib/main.dart)",
+      "Bash(flutter analyze lib/screens/settings_screen.dart)",
+      "Bash(flutter analyze lib/services/location_tracking_service.dart)",
+      "Bash(flutter analyze lib/main.dart lib/screens/home_screen.dart)",
+      "Bash(flutter analyze lib/main.dart)",
+      "Bash(flutter analyze lib/providers/app_provider.dart lib/services/meshcore_ble_service.dart)",
+      "Bash(flutter analyze lib/services/meshcore_ble_service.dart)"
     ],
     "deny": [],
     "ask": []

@@ -184,6 +184,12 @@ abstract class AppLocalizations {
   /// **'Location permission permanently denied. Please enable in Settings.'**
   String get locationPermissionPermanentlyDenied;
 
+  /// Message when location permission is needed
+  ///
+  /// In en, this message translates to:
+  /// **'Location permission is required for GPS tracking and team coordination. You can enable it later in Settings.'**
+  String get locationPermissionRequired;
+
   /// Error when location services are disabled
   ///
   /// In en, this message translates to:
@@ -1311,11 +1317,17 @@ abstract class AppLocalizations {
   /// **'Repeaters'**
   String get repeaters;
 
-  /// Section header for rooms/channels
+  /// Section header for rooms
   ///
   /// In en, this message translates to:
   /// **'Rooms'**
   String get rooms;
+
+  /// Section header for broadcast channels
+  ///
+  /// In en, this message translates to:
+  /// **'Channels'**
+  String get channels;
 
   /// Title for cache statistics section
   ///

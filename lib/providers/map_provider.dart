@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:latlong2/latlong.dart';
+import '../models/location_trail.dart';
 
 class MapProvider with ChangeNotifier {
   LatLng? _targetLocation;
@@ -9,10 +10,21 @@ class MapProvider with ChangeNotifier {
   // Track which contact paths are currently visible
   final Set<String> _visibleContactPaths = {};
 
+  // Location trail tracking
+  LocationTrail? _currentTrail;
+  bool _isTrailVisible = true;
+  final List<LocationTrail> _trailHistory = [];
+
   LatLng? get targetLocation => _targetLocation;
   double? get targetZoom => _targetZoom;
   bool get shouldAnimate => _shouldAnimate;
   Set<String> get visibleContactPaths => Set.unmodifiable(_visibleContactPaths);
+
+  // Trail getters
+  LocationTrail? get currentTrail => _currentTrail;
+  bool get isTrailVisible => _isTrailVisible;
+  List<LocationTrail> get trailHistory => List.unmodifiable(_trailHistory);
+  bool get isTrailActive => _currentTrail?.isActive ?? false;
 
   void navigateToLocation({
     required LatLng location,
@@ -63,5 +75,81 @@ class MapProvider with ChangeNotifier {
     _visibleContactPaths.clear();
     _visibleContactPaths.add(publicKeyHex);
     notifyListeners();
+  }
+
+  /// Start a new location trail
+  void startTrail() {
+    // End current trail if active
+    if (_currentTrail != null && _currentTrail!.isActive) {
+      endTrail();
+    }
+
+    _currentTrail = LocationTrail(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      startTime: DateTime.now(),
+    );
+    _isTrailVisible = true;
+    notifyListeners();
+  }
+
+  /// Add a point to the current trail
+  void addTrailPoint(LatLng position, {double? accuracy, double? speed}) {
+    if (_currentTrail == null || !_currentTrail!.isActive) {
+      startTrail();
+    }
+
+    _currentTrail!.addPoint(TrailPoint(
+      position: position,
+      timestamp: DateTime.now(),
+      accuracy: accuracy,
+      speed: speed,
+    ));
+    notifyListeners();
+  }
+
+  /// End the current trail
+  void endTrail() {
+    if (_currentTrail != null) {
+      _currentTrail!.isActive = false;
+      _currentTrail!.endTime = DateTime.now();
+      if (_currentTrail!.points.isNotEmpty) {
+        _trailHistory.add(_currentTrail!);
+      }
+      _currentTrail = null;
+      notifyListeners();
+    }
+  }
+
+  /// Toggle trail visibility
+  void toggleTrailVisibility() {
+    _isTrailVisible = !_isTrailVisible;
+    notifyListeners();
+  }
+
+  /// Clear the current trail
+  void clearCurrentTrail() {
+    if (_currentTrail != null) {
+      _currentTrail = null;
+      notifyListeners();
+    }
+  }
+
+  /// Clear all trail history
+  void clearAllTrails() {
+    _currentTrail = null;
+    _trailHistory.clear();
+    notifyListeners();
+  }
+
+  /// Get total trail distance in meters
+  double get totalTrailDistance {
+    if (_currentTrail == null) return 0;
+    return _currentTrail!.totalDistance;
+  }
+
+  /// Get trail duration
+  Duration get trailDuration {
+    if (_currentTrail == null) return Duration.zero;
+    return _currentTrail!.duration;
   }
 }

@@ -5,6 +5,7 @@ import 'connection_provider.dart';
 import 'contacts_provider.dart';
 import 'messages_provider.dart';
 import 'drawing_provider.dart';
+import 'channels_provider.dart';
 import '../services/tile_cache_service.dart';
 import '../services/location_tracking_service.dart';
 import '../models/contact.dart';
@@ -16,6 +17,7 @@ class AppProvider with ChangeNotifier {
   final ContactsProvider contactsProvider;
   final MessagesProvider messagesProvider;
   final DrawingProvider drawingProvider;
+  final ChannelsProvider channelsProvider;
   final TileCacheService tileCacheService;
   final LocationTrackingService locationTrackingService = LocationTrackingService();
 
@@ -27,6 +29,7 @@ class AppProvider with ChangeNotifier {
     required this.contactsProvider,
     required this.messagesProvider,
     required this.drawingProvider,
+    required this.channelsProvider,
     required this.tileCacheService,
   }) {
     _setupCallbacks();
@@ -95,6 +98,12 @@ class AppProvider with ChangeNotifier {
         devicePublicKey: connectionProvider.deviceInfo.publicKey,
       );
       debugPrint('Received ${contacts.length} contacts');
+    };
+
+    // When channel info is received
+    connectionProvider.onChannelInfoReceived = (channelIdx, channelName) {
+      channelsProvider.addOrUpdateChannel(channelIdx, channelName);
+      debugPrint('📻 [AppProvider] Channel $channelIdx: "$channelName"');
     };
 
     // When a message is received
@@ -242,6 +251,11 @@ class AppProvider with ChangeNotifier {
       // Small delay to ensure contacts are fully loaded
       await Future.delayed(const Duration(milliseconds: 500));
 
+      // Sync all channels to get channel names
+      debugPrint('📻 [AppProvider] Syncing channels...');
+      await connectionProvider.syncChannels();
+      debugPrint('✅ [AppProvider] Channel sync complete');
+
       // Automatically login to all saved rooms
       await _autoLoginToRooms();
 
@@ -252,6 +266,10 @@ class AppProvider with ChangeNotifier {
       debugPrint('📥 [AppProvider] Initial sync retrieved $initialMessageCount message(s)');
 
       // Note: Future messages are synced automatically via PUSH_CODE_MSG_WAITING events
+
+      // Start location tracking AFTER all initialization is complete
+      debugPrint('📍 [AppProvider] Starting location tracking after successful initialization');
+      await _startLocationTracking();
 
       notifyListeners();
     } catch (e) {
@@ -395,11 +413,9 @@ class AppProvider with ChangeNotifier {
     final isConnected = connectionProvider.deviceInfo.isConnected;
     final wasTracking = locationTrackingService.isTracking;
 
-    if (isConnected && !wasTracking) {
-      // Connection established - start location tracking
-      debugPrint('🔵 [AppProvider] BLE connected - starting location tracking');
-      _startLocationTracking();
-    } else if (!isConnected && wasTracking) {
+    // Only stop tracking on disconnect - DON'T start on connect
+    // Location tracking will be started AFTER initialization completes
+    if (!isConnected && wasTracking) {
       // Connection lost - stop location tracking
       debugPrint('🔴 [AppProvider] BLE disconnected - stopping location tracking');
       _stopLocationTracking();

@@ -10,6 +10,7 @@ import '../buffer_reader.dart';
 import '../meshcore_constants.dart';
 import '../meshcore_opcode_names.dart';
 import '../protocol/frame_parser.dart';
+import 'ble_command_queue.dart';
 
 /// Callback types for response events
 typedef OnContactCallback = void Function(Contact contact);
@@ -31,6 +32,7 @@ typedef OnBinaryResponseCallback = void Function(Uint8List publicKeyPrefix, int 
 typedef OnBatteryAndStorageCallback = void Function(int millivolts, int? usedKb, int? totalKb);
 typedef OnErrorCallback = void Function(String error, {int? errorCode});
 typedef OnContactNotFoundCallback = void Function(Uint8List? contactPublicKey);
+typedef OnChannelInfoCallback = void Function(int channelIdx, String channelName);
 
 /// Processes incoming responses from the BLE device
 class BleResponseHandler {
@@ -39,6 +41,9 @@ class BleResponseHandler {
   int _rxPacketCount = 0;
   final List<BlePacketLog> _packetLogs = [];
   static const int _maxLogSize = 1000;
+
+  // Reference to command queue for completing pending commands
+  BleCommandQueue? _commandQueue;
 
   // Callbacks
   OnContactCallback? onContactReceived;
@@ -60,6 +65,7 @@ class BleResponseHandler {
   OnBatteryAndStorageCallback? onBatteryAndStorage;
   OnErrorCallback? onError;
   OnContactNotFoundCallback? onContactNotFound;
+  OnChannelInfoCallback? onChannelInfoReceived;
   VoidCallback? onRxActivity;
 
   // Track the last command that was sent, so we can retry if it fails with ERR_CODE_NOT_FOUND
@@ -68,6 +74,11 @@ class BleResponseHandler {
   // Getters
   int get rxPacketCount => _rxPacketCount;
   List<BlePacketLog> get packetLogs => List.unmodifiable(_packetLogs);
+
+  /// Set the command queue for completing pending commands
+  void setCommandQueue(BleCommandQueue? queue) {
+    _commandQueue = queue;
+  }
 
   /// Subscribe to TX characteristic notifications
   void subscribeToNotifications(BluetoothCharacteristic txCharacteristic) {
@@ -195,12 +206,18 @@ class BleResponseHandler {
           print('  → Handling BatteryAndStorage');
           _handleBatteryAndStorage(reader);
           break;
+        case MeshCoreConstants.respChannelInfo:
+          print('  → Handling ChannelInfo');
+          _handleChannelInfo(reader);
+          break;
         case MeshCoreConstants.respNoMoreMessages:
           print('  → Response: No More Messages');
           onNoMoreMessages?.call();
           break;
         case MeshCoreConstants.respOk:
           print('  → Response: OK');
+          // Complete any pending ACK command
+          _commandQueue?.completeCommand<void>(MeshCoreConstants.respOk, null);
           break;
         case MeshCoreConstants.respErr:
           print('  → Response: ERROR');
@@ -249,6 +266,13 @@ class BleResponseHandler {
       final result = FrameParser.parseSentConfirmation(reader);
       if (result.isNotEmpty) {
         print('  ✅ [Sent] Message sent successfully');
+
+        // Complete any pending command waiting for sent confirmation
+        _commandQueue?.completeCommand<Map<String, dynamic>>(
+          MeshCoreConstants.respSent,
+          result,
+        );
+
         onMessageSent?.call(
           result['expectedAckTag'] as int,
           result['suggestedTimeout'] as int,
@@ -319,6 +343,13 @@ class BleResponseHandler {
   void _handleDeviceInfo(BufferReader reader) {
     try {
       final info = FrameParser.parseDeviceInfo(reader);
+
+      // Complete any pending command waiting for device info
+      _commandQueue?.completeCommand<Map<String, dynamic>>(
+        MeshCoreConstants.respDeviceInfo,
+        info,
+      );
+
       onDeviceInfoReceived?.call(info);
       print('  ✅ [DeviceInfo] Parsed successfully');
     } catch (e) {
@@ -331,9 +362,16 @@ class BleResponseHandler {
   void _handleSelfInfo(BufferReader reader) {
     try {
       final info = FrameParser.parseSelfInfo(reader);
+
+      // Complete any pending command waiting for self info
       if (info.isNotEmpty) {
+        _commandQueue?.completeCommand<Map<String, dynamic>>(
+          MeshCoreConstants.respSelfInfo,
+          info,
+        );
         onSelfInfoReceived?.call(info);
       }
+
       print('  ✅ [SelfInfo] Parsed successfully');
     } catch (e) {
       print('  ❌ [SelfInfo] Parsing error: $e');
@@ -572,6 +610,23 @@ class BleResponseHandler {
     }
   }
 
+  /// Handle ChannelInfo response
+  void _handleChannelInfo(BufferReader reader) {
+    try {
+      final info = FrameParser.parseChannelInfo(reader);
+      if (info.isNotEmpty) {
+        final channelIdx = info['channelIdx'] as int;
+        final channelName = info['channelName'] as String;
+
+        print('  ✅ [ChannelInfo] Channel $channelIdx: "${channelName}"');
+        onChannelInfoReceived?.call(channelIdx, channelName);
+      }
+    } catch (e) {
+      print('  ❌ [ChannelInfo] Parsing error: $e');
+      onError?.call('ChannelInfo parsing error: $e');
+    }
+  }
+
   /// Handle Error response
   void _handleError(BufferReader reader) {
     try {
@@ -579,6 +634,13 @@ class BleResponseHandler {
       if (errorCode != null) {
         final errorMsg = FrameParser.getErrorMessage(errorCode);
         print('  ❌ [Error] $errorMsg');
+
+        // Complete any pending ACK command with error
+        _commandQueue?.completeCommandWithError(
+          MeshCoreConstants.respOk,  // Command was expecting OK, got ERR
+          errorMsg,
+          errorCode: errorCode,
+        );
 
         // Special handling for ERR_CODE_NOT_FOUND (2) - contact not in radio
         if (errorCode == 2) {  // ERR_CODE_NOT_FOUND

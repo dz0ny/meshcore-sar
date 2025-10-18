@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:geolocator/geolocator.dart';
 import 'providers/connection_provider.dart';
 import 'providers/contacts_provider.dart';
 import 'providers/messages_provider.dart';
 import 'providers/map_provider.dart';
 import 'providers/drawing_provider.dart';
+import 'providers/channels_provider.dart';
 import 'providers/app_provider.dart';
 import 'services/tile_cache_service.dart';
 import 'services/notification_service.dart';
@@ -30,6 +32,7 @@ class _MeshCoreSarAppState extends State<MeshCoreSarApp> {
   AppThemeMode _themeMode = AppThemeMode.system;
   Locale? _locale;
   bool _isInitialized = false;
+  bool _shouldShowPermissionDialog = false;
 
   @override
   void initState() {
@@ -42,9 +45,27 @@ class _MeshCoreSarAppState extends State<MeshCoreSarApp> {
     await _loadLocalePreference();
     // Initialize notification service
     await NotificationService().initialize();
+
+    // Check if we need to request location permissions
+    await _checkLocationPermissions();
+
     setState(() {
       _isInitialized = true;
     });
+  }
+
+  Future<void> _checkLocationPermissions() async {
+    try {
+      final permission = await Geolocator.checkPermission();
+
+      // Show dialog if permission is denied or not determined
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        _shouldShowPermissionDialog = true;
+      }
+    } catch (e) {
+      debugPrint('Error checking location permissions: $e');
+    }
   }
 
   Future<void> _loadThemePreference() async {
@@ -114,27 +135,30 @@ class _MeshCoreSarAppState extends State<MeshCoreSarApp> {
             return provider;
           },
         ),
+        ChangeNotifierProvider(create: (_) => ChannelsProvider()),
 
         // Tile cache service
         Provider(create: (_) => TileCacheService()),
 
         // App provider that coordinates everything
-        ChangeNotifierProxyProvider5<ConnectionProvider, ContactsProvider,
-            MessagesProvider, DrawingProvider, TileCacheService, AppProvider>(
+        ChangeNotifierProxyProvider6<ConnectionProvider, ContactsProvider,
+            MessagesProvider, DrawingProvider, ChannelsProvider, TileCacheService, AppProvider>(
           create: (context) => AppProvider(
             connectionProvider: context.read<ConnectionProvider>(),
             contactsProvider: context.read<ContactsProvider>(),
             messagesProvider: context.read<MessagesProvider>(),
             drawingProvider: context.read<DrawingProvider>(),
+            channelsProvider: context.read<ChannelsProvider>(),
             tileCacheService: context.read<TileCacheService>(),
           ),
-          update: (context, conn, contacts, messages, drawings, tileCache, previous) =>
+          update: (context, conn, contacts, messages, drawings, channels, tileCache, previous) =>
               previous ??
               AppProvider(
                 connectionProvider: conn,
                 contactsProvider: contacts,
                 messagesProvider: messages,
                 drawingProvider: drawings,
+                channelsProvider: channels,
                 tileCacheService: tileCache,
               ),
         ),
@@ -165,6 +189,7 @@ class _MeshCoreSarAppState extends State<MeshCoreSarApp> {
             onLocaleChanged: _handleLocaleChanged,
             currentTheme: _themeMode,
             currentLocale: _locale,
+            shouldShowPermissionDialog: _shouldShowPermissionDialog,
           ),
         );
       },

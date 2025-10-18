@@ -9,6 +9,7 @@ import 'ble/ble_connection_manager.dart';
 import 'ble/ble_command_sender.dart';
 import 'ble/ble_response_handler.dart';
 import 'protocol/frame_builder.dart';
+import 'meshcore_constants.dart';
 
 /// Callback types for MeshCore events
 typedef OnContactCallback = void Function(Contact contact);
@@ -30,6 +31,7 @@ typedef OnBinaryResponseCallback = void Function(Uint8List publicKeyPrefix, int 
 typedef OnBatteryAndStorageCallback = void Function(int millivolts, int? usedKb, int? totalKb);
 typedef OnErrorCallback = void Function(String error, {int? errorCode});
 typedef OnContactNotFoundCallback = void Function(Uint8List? contactPublicKey);
+typedef OnChannelInfoCallback = void Function(int channelIdx, String channelName);
 typedef OnConnectionStateCallback = void Function(bool isConnected);
 typedef OnReconnectionAttemptCallback = void Function(int attemptNumber, int maxAttempts);
 typedef OnRssiUpdateCallback = void Function(int rssi);
@@ -64,6 +66,7 @@ class MeshCoreBleService {
   OnBatteryAndStorageCallback? onBatteryAndStorage;
   OnErrorCallback? onError;
   OnContactNotFoundCallback? onContactNotFound;
+  OnChannelInfoCallback? onChannelInfoReceived;
 
   // Activity callbacks (for blinking indicators)
   VoidCallback? onRxActivity;
@@ -157,6 +160,9 @@ class MeshCoreBleService {
     _responseHandler.onContactNotFound = (contactPublicKey) {
       onContactNotFound?.call(contactPublicKey);
     };
+    _responseHandler.onChannelInfoReceived = (channelIdx, channelName) {
+      onChannelInfoReceived?.call(channelIdx, channelName);
+    };
     _responseHandler.onRxActivity = () {
       onRxActivity?.call();
     };
@@ -185,16 +191,30 @@ class MeshCoreBleService {
   Future<bool> connect(BluetoothDevice device) async {
     final success = await _connectionManager.connect(device);
     if (success) {
-      // Setup command sender with RX characteristic
-      _commandSender.setRxCharacteristic(_connectionManager.rxCharacteristic);
+      try {
+        // Setup command sender with RX characteristic
+        _commandSender.setRxCharacteristic(_connectionManager.rxCharacteristic);
 
-      // Setup response handler with TX characteristic
-      if (_connectionManager.txCharacteristic != null) {
-        _responseHandler.subscribeToNotifications(_connectionManager.txCharacteristic!);
+        // Wire up command queue between sender and response handler
+        _responseHandler.setCommandQueue(_commandSender.commandQueue);
+
+        // Setup response handler with TX characteristic
+        if (_connectionManager.txCharacteristic != null) {
+          _responseHandler.subscribeToNotifications(_connectionManager.txCharacteristic!);
+        }
+
+        // Send initial device query and wait for responses
+        await _sendDeviceQuery();
+
+        print('✅ [Service] Device initialization complete');
+        return true;
+      } catch (e) {
+        print('❌ [Service] Device initialization failed: $e');
+        // Disconnect on initialization failure
+        await disconnect();
+        onError?.call('Device initialization failed: $e');
+        return false;
       }
-
-      // Send initial device query
-      await _sendDeviceQuery();
     }
     return success;
   }
@@ -206,17 +226,30 @@ class MeshCoreBleService {
 
   /// Send initial device query and sync clock
   Future<void> _sendDeviceQuery() async {
-    // CRITICAL: Set device clock FIRST, before any other commands
-    // This ensures the device has correct timestamps for all operations
-    print('⏰ [Service] Setting device clock before device query');
+    // STEP 1: Send device query FIRST to get device capabilities
+    // This is the first command to send per protocol documentation
+    print('🔍 [Service] Querying device information (CMD_DEVICE_QUERY)...');
+    final deviceInfo = await _commandSender.writeDataAndWaitForResponse<Map<String, dynamic>>(
+      FrameBuilder.buildDeviceQuery(),
+      MeshCoreConstants.respDeviceInfo,
+    );
+    print('✅ [Service] Device info received: firmware=${deviceInfo['firmwareVersion']}');
+
+    // STEP 2: Send app start to initialize the app session
+    // This is the first command after connection per protocol documentation
+    print('🚀 [Service] Sending app start (CMD_APP_START)...');
+    final selfInfo = await _commandSender.writeDataAndWaitForResponse<Map<String, dynamic>>(
+      FrameBuilder.buildAppStart(),
+      MeshCoreConstants.respSelfInfo,
+    );
+    print('✅ [Service] Self info received: node initialized');
+
+    // STEP 3: Set device clock AFTER initialization
+    // This ensures the device has correct timestamps for all subsequent operations
+    // Note: This command does not return an ACK, so we use writeData (fire-and-forget)
+    print('⏰ [Service] Setting device clock (CMD_SET_DEVICE_TIME)...');
     await _commandSender.writeData(FrameBuilder.buildSetDeviceTime());
-
-    // Small delay to ensure clock is set before proceeding
-    await Future.delayed(const Duration(milliseconds: 100));
-
-    // Now send device query and app start
-    await _commandSender.writeData(FrameBuilder.buildDeviceQuery());
-    await _commandSender.writeData(FrameBuilder.buildAppStart());
+    print('✅ [Service] Device clock sent (no ACK expected)');
   }
 
   /// Refresh device info (public method)
@@ -333,7 +366,7 @@ class MeshCoreBleService {
 
   /// Set advertised name
   Future<void> setAdvertName(String name) async {
-    await _commandSender.writeData(FrameBuilder.buildSetAdvertName(name));
+    await _commandSender.writeDataAndWaitForAck(FrameBuilder.buildSetAdvertName(name));
   }
 
   /// Set advertised latitude and longitude
@@ -341,7 +374,7 @@ class MeshCoreBleService {
     required double latitude,
     required double longitude,
   }) async {
-    await _commandSender.writeData(FrameBuilder.buildSetAdvertLatLon(
+    await _commandSender.writeDataAndWaitForAck(FrameBuilder.buildSetAdvertLatLon(
       latitude: latitude,
       longitude: longitude,
     ));
@@ -354,7 +387,7 @@ class MeshCoreBleService {
     required int spreadingFactor,
     required int codingRate,
   }) async {
-    await _commandSender.writeData(FrameBuilder.buildSetRadioParams(
+    await _commandSender.writeDataAndWaitForAck(FrameBuilder.buildSetRadioParams(
       frequency: frequency,
       bandwidth: bandwidth,
       spreadingFactor: spreadingFactor,
@@ -364,7 +397,7 @@ class MeshCoreBleService {
 
   /// Set transmit power
   Future<void> setTxPower(int powerDbm) async {
-    await _commandSender.writeData(FrameBuilder.buildSetTxPower(powerDbm));
+    await _commandSender.writeDataAndWaitForAck(FrameBuilder.buildSetTxPower(powerDbm));
   }
 
   /// Set other parameters
@@ -374,7 +407,7 @@ class MeshCoreBleService {
     required int advertLocationPolicy,
     int multiAcks = 0,
   }) async {
-    await _commandSender.writeData(FrameBuilder.buildSetOtherParams(
+    await _commandSender.writeDataAndWaitForAck(FrameBuilder.buildSetOtherParams(
       manualAddContacts: manualAddContacts,
       telemetryModes: telemetryModes,
       advertLocationPolicy: advertLocationPolicy,
@@ -424,6 +457,41 @@ class MeshCoreBleService {
 
     await _commandSender.writeData(FrameBuilder.buildRemoveContact(contactPublicKey));
     print('✅ [BLE] CMD_REMOVE_CONTACT sent');
+  }
+
+  /// Get information for a specific channel
+  Future<void> getChannel(int channelIdx) async {
+    await _commandSender.writeData(FrameBuilder.buildGetChannel(channelIdx));
+  }
+
+  /// Set the name for a specific channel
+  Future<void> setChannel({
+    required int channelIdx,
+    required String channelName,
+  }) async {
+    print('📻 [BLE] Setting channel name:');
+    print('    Channel index: $channelIdx');
+    print('    Channel name: $channelName');
+
+    await _commandSender.writeDataAndWaitForAck(FrameBuilder.buildSetChannel(
+      channelIdx: channelIdx,
+      channelName: channelName,
+    ));
+    print('✅ [BLE] CMD_SET_CHANNEL sent');
+  }
+
+  /// Sync all channels from the device (typically 0-39)
+  /// This queries each channel to get its name and metadata
+  Future<void> syncAllChannels({int maxChannels = 40}) async {
+    print('📻 [Service] Syncing channels (0-${maxChannels - 1})...');
+
+    for (int i = 0; i < maxChannels; i++) {
+      await getChannel(i);
+      // Small delay to avoid overwhelming the device
+      await Future.delayed(const Duration(milliseconds: 50));
+    }
+
+    print('✅ [Service] Channel sync complete');
   }
 
   /// Clear packet logs

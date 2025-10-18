@@ -92,8 +92,14 @@ class _ContactsTabState extends State<ContactsTab> {
         final chatContacts = contactsProvider.chatContacts;
         final repeaters = contactsProvider.repeaters;
         final rooms = contactsProvider.rooms;
+        final channels = contactsProvider.channels;
 
-        if (contactsProvider.contacts.isEmpty) {
+        // Check if there are any displayable contacts (excluding channels)
+        final hasDisplayableContacts = chatContacts.isNotEmpty ||
+                                      repeaters.isNotEmpty ||
+                                      rooms.isNotEmpty;
+
+        if (!hasDisplayableContacts) {
           return Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -160,7 +166,7 @@ class _ContactsTabState extends State<ContactsTab> {
                 const Divider(height: 32),
               ],
 
-              // Rooms/Channels
+              // Rooms
               if (rooms.isNotEmpty) ...[
                 _SectionHeader(
                   title: l10n.rooms,
@@ -168,6 +174,24 @@ class _ContactsTabState extends State<ContactsTab> {
                   icon: Icons.tag,
                 ),
                 ...rooms.map(
+                  (contact) => ContactTile(
+                    contact: contact,
+                    currentPosition: _currentPosition,
+                    calculateDistance: _calculateDistanceInMeters,
+                    formatDistance: _formatDistance,
+                  ),
+                ),
+                const Divider(height: 32),
+              ],
+
+              // Channels
+              if (channels.isNotEmpty) ...[
+                _SectionHeader(
+                  title: l10n.channels,
+                  count: channels.length,
+                  icon: Icons.broadcast_on_personal,
+                ),
+                ...channels.map(
                   (contact) => ContactTile(
                     contact: contact,
                     currentPosition: _currentPosition,

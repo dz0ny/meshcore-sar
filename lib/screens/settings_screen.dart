@@ -249,6 +249,89 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
+  Future<void> _handleLocationPermissionTap() async {
+    try {
+      final permission = await Geolocator.checkPermission();
+
+      if (permission == LocationPermission.deniedForever) {
+        // Show dialog to open app settings
+        if (!mounted) return;
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Row(
+              children: [
+                Icon(Icons.settings, size: 24),
+                SizedBox(width: 12),
+                Text('Location Permission'),
+              ],
+            ),
+            content: const Text(
+              'Location permission is permanently denied. Please enable it in your device settings to use GPS tracking and location sharing features.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  Navigator.pop(context);
+                  await Geolocator.openAppSettings();
+                },
+                child: const Text('Open Settings'),
+              ),
+            ],
+          ),
+        );
+      } else if (permission == LocationPermission.denied) {
+        // Request permission
+        final newPermission = await Geolocator.requestPermission();
+
+        if (!mounted) return;
+
+        if (newPermission == LocationPermission.whileInUse ||
+            newPermission == LocationPermission.always) {
+          // Permission granted
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Location permission granted!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          setState(() {}); // Refresh UI to show new status
+        } else {
+          // Permission denied
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Location permission is required for GPS tracking and location sharing.'),
+              backgroundColor: Colors.orange,
+              duration: Duration(seconds: 4),
+            ),
+          );
+        }
+      } else {
+        // Already granted - show info
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Location permission is already granted.'),
+            backgroundColor: Colors.blue,
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('Error handling location permission: $e');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
   Future<void> _startBackgroundTracking() async {
     final success = await _locationService.startTracking(
       distanceThreshold: _locationService.gpsUpdateDistance,
@@ -356,6 +439,54 @@ class _SettingsScreenState extends State<SettingsScreen> {
             subtitle: Text(LocalePreferences.getDisplayName(_selectedLocale)),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => _showLanguageDialog(),
+          ),
+          const Divider(),
+
+          // Permissions Section
+          _buildSectionHeader('Permissions'),
+          ListTile(
+            leading: const Icon(Icons.location_on),
+            title: const Text('Location Permission'),
+            subtitle: FutureBuilder<LocationPermission>(
+              future: Geolocator.checkPermission(),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) {
+                  return const Text('Checking...');
+                }
+                final permission = snapshot.data!;
+                String statusText;
+                Color statusColor;
+
+                switch (permission) {
+                  case LocationPermission.always:
+                    statusText = 'Granted (Always)';
+                    statusColor = Colors.green;
+                    break;
+                  case LocationPermission.whileInUse:
+                    statusText = 'Granted (While In Use)';
+                    statusColor = Colors.green;
+                    break;
+                  case LocationPermission.denied:
+                    statusText = 'Denied - Tap to request';
+                    statusColor = Colors.orange;
+                    break;
+                  case LocationPermission.deniedForever:
+                    statusText = 'Permanently Denied - Open Settings';
+                    statusColor = Colors.red;
+                    break;
+                  default:
+                    statusText = 'Unknown';
+                    statusColor = Colors.grey;
+                }
+
+                return Text(
+                  statusText,
+                  style: TextStyle(color: statusColor),
+                );
+              },
+            ),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => _handleLocationPermissionTap(),
           ),
           const Divider(),
 

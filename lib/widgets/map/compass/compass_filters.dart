@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../../providers/map_provider.dart';
 
 /// Filter controls for the compass dialog.
 /// Allows filtering of contacts and SAR marker types.
@@ -38,6 +40,8 @@ class CompassFilters extends StatefulWidget {
 class _CompassFiltersState extends State<CompassFilters> {
   void _showFilterDialog() {
     final l10n = AppLocalizations.of(context)!;
+    final mapProvider = Provider.of<MapProvider>(context, listen: false);
+
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
@@ -54,6 +58,20 @@ class _CompassFiltersState extends State<CompassFilters> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Trail visibility toggle
+              _CompactFilterItem(
+                icon: Icons.timeline,
+                color: Colors.blue,
+                label: 'Location Trail',
+                value: mapProvider.isTrailVisible,
+                onChanged: (value) {
+                  mapProvider.toggleTrailVisibility();
+                  setDialogState(() {});
+                },
+              ),
+              const SizedBox(height: 4),
+              const Divider(height: 8),
+              const SizedBox(height: 4),
               // Contacts filter
               _CompactFilterItem(
                 icon: Icons.person,

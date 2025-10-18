@@ -387,6 +387,28 @@ class FrameParser {
     return null;
   }
 
+  /// Parse ChannelInfo response
+  static Map<String, dynamic> parseChannelInfo(BufferReader reader) {
+    if (reader.remainingBytesCount < 33) {
+      return {};
+    }
+
+    final channelIdx = reader.readByte();
+    final channelName = reader.readCString(32);
+
+    // Additional fields if present in protocol
+    int? flags;
+    if (reader.hasRemaining) {
+      flags = reader.readByte();
+    }
+
+    return {
+      'channelIdx': channelIdx,
+      'channelName': channelName,
+      'flags': flags,
+    };
+  }
+
   /// Get error message from error code
   static String getErrorMessage(int errorCode) {
     switch (errorCode) {

@@ -52,6 +52,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Location permission permanently denied. Please enable in Settings.';
 
   @override
+  String get locationPermissionRequired =>
+      'Location permission is required for GPS tracking and team coordination. You can enable it later in Settings.';
+
+  @override
   String get locationServicesDisabled =>
       'Location services are disabled. Please enable them in Settings.';
 
@@ -700,6 +704,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get rooms => 'Rooms';
+
+  @override
+  String get channels => 'Channels';
 
   @override
   String get cacheStatistics => 'Cache Statistics';

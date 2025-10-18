@@ -29,6 +29,8 @@
 
   "locationPermissionPermanentlyDenied": "Dopuštenje za lokaciju trajno odbijeno. Molimo omogućite u Postavkama.",
 
+  "locationPermissionRequired": "Dopuštenje za lokaciju potrebno je za GPS praćenje i koordinaciju tima. Možete ga omogućiti kasnije u Postavkama.",
+
   "locationServicesDisabled": "Usluge lokacije su onemogućene. Molimo omogućite ih u Postavkama.",
 
   "failedToGetGpsLocation": "Neuspjelo dobivanje GPS lokacije",
@@ -137,7 +139,7 @@
 
   "sampleDataDescription": "Učitajte ili očistite primjere kontakata, poruka kanala i SAR markera za testiranje",
 
-  "loadSampleData": "Učitaj primjer podataka",
+  "loadSampleData": "Učitaj primjer",
 
   "clearAllData": "Očisti sve podatke",
 
@@ -404,6 +406,8 @@
   "repeaters": "Repetitori",
 
   "rooms": "Sobe",
+
+  "channels": "Kanali",
 
   "cacheStatistics": "Statistika predmemorije",
 

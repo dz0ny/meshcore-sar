@@ -123,6 +123,7 @@ class ConnectionProvider with ChangeNotifier {
   Function(List<Contact>)? onContactsComplete;
   Function(Message)? onMessageReceived;
   Function(Uint8List publicKey, Uint8List lppData)? onTelemetryReceived;
+  Function(int channelIdx, String channelName)? onChannelInfoReceived;
   Function(Uint8List publicKeyPrefix, int tag, Uint8List responseData)?
   onBinaryResponse;
   Function(Uint8List publicKey)? onPathUpdated;
@@ -247,6 +248,10 @@ class ConnectionProvider with ChangeNotifier {
 
     _bleService.onContactsComplete = (contacts) {
       onContactsComplete?.call(contacts);
+    };
+
+    _bleService.onChannelInfoReceived = (channelIdx, channelName) {
+      onChannelInfoReceived?.call(channelIdx, channelName);
     };
 
     _bleService.onMessageReceived = (message) {
@@ -624,6 +629,24 @@ class ConnectionProvider with ChangeNotifier {
       await _bleService.getContacts();
     } catch (e) {
       _error = 'Failed to get contacts: $e';
+      notifyListeners();
+    }
+  }
+
+  /// Sync all channels from device
+  Future<void> syncChannels({int? maxChannels}) async {
+    if (!_bleService.isConnected) {
+      _error = 'Not connected to device';
+      notifyListeners();
+      return;
+    }
+
+    try {
+      // Use maxChannels from device info if available, otherwise default to 40
+      final channelCount = maxChannels ?? _deviceInfo.maxChannels ?? 40;
+      await _bleService.syncAllChannels(maxChannels: channelCount);
+    } catch (e) {
+      _error = 'Failed to sync channels: $e';
       notifyListeners();
     }
   }

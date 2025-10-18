@@ -33,6 +33,8 @@ import '../widgets/map/compass_widget.dart';
 import '../widgets/map/detailed_compass_dialog.dart';
 import '../widgets/map/drawing_layer.dart';
 import '../widgets/map/drawing_toolbar.dart';
+import '../widgets/map/location_trail_layer.dart';
+import '../widgets/map/trail_controls.dart';
 import '../widgets/messages/sar_update_sheet.dart';
 import '../l10n/app_localizations.dart';
 import 'map_management_screen.dart';
@@ -134,6 +136,16 @@ class _MapTabState extends State<MapTab> with AutomaticKeepAliveClientMixin {
         setState(() {
           // Position updates trigger UI rebuild for markers
         });
+
+        // Add location point to trail when tracking is active
+        final mapProvider = context.read<MapProvider>();
+        if (_locationService.isTracking) {
+          mapProvider.addTrailPoint(
+            LatLng(position.latitude, position.longitude),
+            accuracy: position.accuracy,
+            speed: position.speed,
+          );
+        }
 
         // Rotate map if rotation mode is enabled and heading is available
         if (_isMapReady && _rotateMarkerWithHeading && position.heading >= 0) {
@@ -1149,6 +1161,8 @@ class _MapTabState extends State<MapTab> with AutomaticKeepAliveClientMixin {
                           );
                         },
                       ),
+                      // Location trail layer (rendered after paths, before drawings)
+                      const LocationTrailLayer(),
                       // Drawing layer (rendered after paths, before markers)
                       DrawingLayer(
                         drawings: drawingProvider.drawings,
@@ -1339,6 +1353,9 @@ class _MapTabState extends State<MapTab> with AutomaticKeepAliveClientMixin {
                   objectCount: messagesProvider.objectMarkers.length,
                 ),
               ),
+            // Trail stats overlay (top-left, below legend if shown)
+            if (!_isFullscreen)
+              const TrailStatsOverlay(),
             // Map controls - right side (hidden in fullscreen mode)
             if (!_isFullscreen)
               Positioned(
@@ -1382,6 +1399,9 @@ class _MapTabState extends State<MapTab> with AutomaticKeepAliveClientMixin {
                       },
                       child: const Icon(Icons.my_location),
                     ),
+                    const SizedBox(height: 8),
+                    // Trail controls button
+                    const TrailControls(),
                     const SizedBox(height: 8),
                     FloatingActionButton.small(
                       heroTag: 'layer_selector',

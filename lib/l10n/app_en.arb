@@ -71,6 +71,11 @@
     "description": "Error when location permission is permanently denied"
   },
 
+  "locationPermissionRequired": "Location permission is required for GPS tracking and team coordination. You can enable it later in Settings.",
+  "@locationPermissionRequired": {
+    "description": "Message when location permission is needed"
+  },
+
   "locationServicesDisabled": "Location services are disabled. Please enable them in Settings.",
   "@locationServicesDisabled": {
     "description": "Error when location services are disabled"
@@ -1197,7 +1202,12 @@
 
   "rooms": "Rooms",
   "@rooms": {
-    "description": "Section header for rooms/channels"
+    "description": "Section header for rooms"
+  },
+
+  "channels": "Channels",
+  "@channels": {
+    "description": "Section header for broadcast channels"
   },
 
   "cacheStatistics": "Cache Statistics",

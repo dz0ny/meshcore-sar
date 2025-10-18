@@ -18,12 +18,14 @@ import 'device_config_screen.dart';
 import 'packet_log_screen.dart';
 import '../utils/toast_logger.dart';
 import '../l10n/app_localizations.dart';
+import '../widgets/permission_request_dialog.dart';
 
 class HomeScreen extends StatefulWidget {
   final Function(AppThemeMode) onThemeChanged;
   final Function(Locale?) onLocaleChanged;
   final AppThemeMode currentTheme;
   final Locale? currentLocale;
+  final bool shouldShowPermissionDialog;
 
   const HomeScreen({
     super.key,
@@ -31,6 +33,7 @@ class HomeScreen extends StatefulWidget {
     required this.onLocaleChanged,
     required this.currentTheme,
     required this.currentLocale,
+    this.shouldShowPermissionDialog = false,
   });
 
   @override
@@ -58,6 +61,13 @@ class _HomeScreenState extends State<HomeScreen>
       });
     });
     _loadRxTxPreference();
+
+    // Show permission dialog after the first frame if needed
+    if (widget.shouldShowPermissionDialog) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _showPermissionDialog();
+      });
+    }
   }
 
   Future<void> _loadRxTxPreference() async {
@@ -73,6 +83,34 @@ class _HomeScreenState extends State<HomeScreen>
   void dispose() {
     _tabController.dispose();
     super.dispose();
+  }
+
+  void _showPermissionDialog() {
+    if (!mounted) return;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => PermissionRequestDialog(
+        onPermissionsGranted: () {
+          debugPrint('✅ Location permissions granted');
+        },
+        onPermissionsDenied: () {
+          debugPrint('⚠️ Location permissions denied');
+          // Show a snackbar to inform the user
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  AppLocalizations.of(context)!.locationPermissionRequired,
+                ),
+                duration: const Duration(seconds: 5),
+              ),
+            );
+          }
+        },
+      ),
+    );
   }
 
   Future<void> _advertiseDevice(BuildContext context) async {

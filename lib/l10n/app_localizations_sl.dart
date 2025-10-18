@@ -52,6 +52,10 @@ class AppLocalizationsSl extends AppLocalizations {
       'Dovoljenje za lokacijo trajno zavrnjeno. Prosimo, omogočite v Nastavitvah.';
 
   @override
+  String get locationPermissionRequired =>
+      'Dovoljenje za lokacijo je potrebno za GPS sledenje in usklajevanje ekipe. Lahko ga omogočite kasneje v Nastavitvah.';
+
+  @override
   String get locationServicesDisabled =>
       'Lokacijske storitve so onemogočene. Prosimo, omogočite jih v Nastavitvah.';
 
@@ -233,7 +237,7 @@ class AppLocalizationsSl extends AppLocalizations {
       'Naložite ali počistite vzorčne stike, sporočila kanalov in SAR označevalce za testiranje';
 
   @override
-  String get loadSampleData => 'Naloži vzorčne podatke';
+  String get loadSampleData => 'Naloži vzorec';
 
   @override
   String get clearAllData => 'Počisti vse podatke';
@@ -700,6 +704,9 @@ class AppLocalizationsSl extends AppLocalizations {
 
   @override
   String get rooms => 'Sobe';
+
+  @override
+  String get channels => 'Kanali';
 
   @override
   String get cacheStatistics => 'Statistika predpomnilnika';

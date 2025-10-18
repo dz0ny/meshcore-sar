@@ -52,6 +52,10 @@ class AppLocalizationsHr extends AppLocalizations {
       'Dopuštenje za lokaciju trajno odbijeno. Molimo omogućite u Postavkama.';
 
   @override
+  String get locationPermissionRequired =>
+      'Dopuštenje za lokaciju potrebno je za GPS praćenje i koordinaciju tima. Možete ga omogućiti kasnije u Postavkama.';
+
+  @override
   String get locationServicesDisabled =>
       'Usluge lokacije su onemogućene. Molimo omogućite ih u Postavkama.';
 
@@ -233,7 +237,7 @@ class AppLocalizationsHr extends AppLocalizations {
       'Učitajte ili očistite primjere kontakata, poruka kanala i SAR markera za testiranje';
 
   @override
-  String get loadSampleData => 'Učitaj primjer podataka';
+  String get loadSampleData => 'Učitaj primjer';
 
   @override
   String get clearAllData => 'Očisti sve podatke';
@@ -700,6 +704,9 @@ class AppLocalizationsHr extends AppLocalizations {
 
   @override
   String get rooms => 'Sobe';
+
+  @override
+  String get channels => 'Kanali';
 
   @override
   String get cacheStatistics => 'Statistika predmemorije';

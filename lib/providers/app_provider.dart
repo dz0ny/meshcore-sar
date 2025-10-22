@@ -186,8 +186,8 @@ class AppProvider with ChangeNotifier {
         final contact = contactsProvider
             .findContactByKey(message.senderPublicKeyPrefix!);
         if (contact != null) {
-          final updatedMessage = message.copyWith(senderName: contact.advName);
-          // Note: You might want to update the message in the list
+          // Note: Message sender name could be updated here if needed
+          // final updatedMessage = message.copyWith(senderName: contact.advName);
         }
       }
     };

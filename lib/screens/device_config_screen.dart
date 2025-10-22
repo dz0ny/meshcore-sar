@@ -21,7 +21,6 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
   late TextEditingController _txPowerController;
 
   bool _telemetryEnabled = false;
-  bool _isBroadcasting = false;
   String _selectedBandwidth = '62.5 kHz';
   int _selectedSpreadingFactor = 8;
   int _selectedCodingRate = 8;
@@ -376,62 +375,6 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
             ),
           ),
         );
-      }
-    }
-  }
-
-  Future<void> _broadcastNow() async {
-    final connectionProvider = context.read<ConnectionProvider>();
-
-    if (!connectionProvider.deviceInfo.isConnected) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(AppLocalizations.of(context)!.deviceNotConnected),
-            backgroundColor: Colors.orange,
-          ),
-        );
-      }
-      return;
-    }
-
-    setState(() => _isBroadcasting = true);
-
-    try {
-      // Send self advertisement to mesh network
-      await connectionProvider.sendSelfAdvert(floodMode: true);
-
-      if (context.mounted) {
-        final deviceInfo = connectionProvider.deviceInfo;
-        final lat = deviceInfo.advLat != null
-            ? (deviceInfo.advLat! / 1000000).toStringAsFixed(6)
-            : '0.0';
-        final lon = deviceInfo.advLon != null
-            ? (deviceInfo.advLon! / 1000000).toStringAsFixed(6)
-            : '0.0';
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              AppLocalizations.of(context)!.advertisedAtLocation(lat, lon),
-            ),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              AppLocalizations.of(context)!.failedToAdvertise(e.toString()),
-            ),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isBroadcasting = false);
       }
     }
   }

@@ -229,9 +229,9 @@ class FrameParser {
     final advLon = ByteData.sublistView(Uint8List.fromList(advLonBytes))
         .getInt32(0, Endian.little);
 
-    final multiAcks = reader.readByte();
-    final advertLocPolicy = reader.readByte();
-    final telemetryModes = reader.readByte();
+    reader.readByte(); // multiAcks (reserved for future use)
+    reader.readByte(); // advertLocPolicy (reserved for future use)
+    reader.readByte(); // telemetryModes (reserved for future use)
     final manualAddContacts = reader.readByte();
 
     final radioFreqBytes = reader.readBytes(4);

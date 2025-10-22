@@ -281,11 +281,10 @@ class MeshCoreBleService {
     // STEP 2: Send app start to initialize the app session
     // This is the first command after connection per protocol documentation
     debugPrint('🚀 [Service] Sending app start (CMD_APP_START)...');
-    final selfInfo = await _commandSender
-        .writeDataAndWaitForResponse<Map<String, dynamic>>(
-          FrameBuilder.buildAppStart(),
-          MeshCoreConstants.respSelfInfo,
-        );
+    await _commandSender.writeDataAndWaitForResponse<Map<String, dynamic>>(
+      FrameBuilder.buildAppStart(),
+      MeshCoreConstants.respSelfInfo,
+    );
     debugPrint('✅ [Service] Self info received: node initialized');
 
     // STEP 3: Set device clock AFTER initialization

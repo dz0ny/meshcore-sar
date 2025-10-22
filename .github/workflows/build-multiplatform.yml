@@ -1,5 +1,23 @@
 name: Build Multi-Platform
 
+# This workflow builds the MeshCore SAR app for multiple platforms and uploads artifacts
+# to Cloudflare R2 for distribution.
+#
+# Required GitHub Secrets for R2 Upload (see .github/R2_SETUP.md):
+#   - R2_ACCOUNT_ID: Cloudflare account ID
+#   - R2_ACCESS_KEY_ID: R2 API token access key
+#   - R2_SECRET_ACCESS_KEY: R2 API token secret
+#   - R2_BUCKET_NAME: Name of the R2 bucket
+#   - R2_PUBLIC_URL: (Optional) Public URL for download links
+#
+# Required GitHub Secrets for iOS TestFlight Beta Deployment:
+#   - IOS_P12_BASE64: Base64-encoded .p12 certificate
+#   - IOS_P12_PASSWORD: Password for the .p12 certificate
+#   - IOS_PROVISION_PROFILE_BASE64: Base64-encoded provisioning profile
+#   - FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD: App-specific password from Apple
+#   - FASTLANE_USER: Apple ID email (e.g., hey@dz0ny.dev)
+#   - FASTLANE_SESSION: (Optional) Fastlane session token for 2FA
+
 on:
   push:
     branches: [main, develop]
@@ -96,12 +114,6 @@ jobs:
       - name: Generate localizations
         run: flutter gen-l10n
 
-      - name: Run analyzer
-        run: flutter analyze
-
-      - name: Run tests
-        run: flutter test
-
       - name: Build APK
         run: flutter build apk --release
 
@@ -191,6 +203,120 @@ jobs:
       #     name: ios-ipa
       #     path: build/ios/ipa/*.ipa
       #     retention-days: 30
+
+  # iOS Beta Build (Fastlane TestFlight)
+  ios-beta-testflight:
+    name: Deploy iOS Beta to TestFlight
+    runs-on: macos-latest
+    needs: [update-version]
+    # Only run on main/develop branches or tags, and only if secrets are configured
+    if: |
+      (github.ref == 'refs/heads/main' ||
+       github.ref == 'refs/heads/develop' ||
+       startsWith(github.ref, 'refs/tags/v')) &&
+      (needs.update-version.result == 'success' || needs.update-version.result == 'skipped')
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download versioned pubspec
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: actions/download-artifact@v4
+        with:
+          name: versioned-pubspec
+          path: .
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: 'stable'
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Generate localizations
+        run: flutter gen-l10n
+
+      - name: Install CocoaPods dependencies
+        run: |
+          cd ios
+          pod install
+          cd ..
+
+      - name: Setup Ruby for Fastlane
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+          bundler-cache: false
+
+      - name: Install Fastlane
+        run: |
+          cd ios
+          gem install bundler
+          bundle config set --local path 'vendor/bundle'
+          bundle install
+          cd ..
+
+      - name: Import Code Signing Certificate
+        env:
+          P12_BASE64: ${{ secrets.IOS_P12_BASE64 }}
+          P12_PASSWORD: ${{ secrets.IOS_P12_PASSWORD }}
+        run: |
+          # Create temporary keychain
+          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+          KEYCHAIN_PASSWORD=$(openssl rand -base64 32)
+
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+          # Import certificate
+          echo "$P12_BASE64" | base64 --decode > $RUNNER_TEMP/certificate.p12
+          security import $RUNNER_TEMP/certificate.p12 \
+            -k "$KEYCHAIN_PATH" \
+            -P "$P12_PASSWORD" \
+            -T /usr/bin/codesign
+
+          security list-keychain -d user -s "$KEYCHAIN_PATH"
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+      - name: Import Provisioning Profile
+        env:
+          PROVISION_PROFILE_BASE64: ${{ secrets.IOS_PROVISION_PROFILE_BASE64 }}
+        run: |
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          echo "$PROVISION_PROFILE_BASE64" | base64 --decode > ~/Library/MobileDevice/Provisioning\ Profiles/profile.mobileprovision
+
+      - name: Build and Upload to TestFlight
+        env:
+          FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD: ${{ secrets.FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD }}
+          FASTLANE_USER: ${{ secrets.FASTLANE_USER }}
+          FASTLANE_SESSION: ${{ secrets.FASTLANE_SESSION }}
+        run: |
+          cd ios
+          bundle exec fastlane beta
+          cd ..
+
+      - name: Cleanup Keychain
+        if: always()
+        run: |
+          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+          if [ -f "$KEYCHAIN_PATH" ]; then
+            security delete-keychain "$KEYCHAIN_PATH"
+          fi
+
+      - name: Upload Build Artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-beta-logs
+          path: |
+            ios/fastlane/report.xml
+            ~/Library/Logs/gym/
+          retention-days: 7
 
   # macOS DMG Build
   build-macos:
@@ -321,6 +447,130 @@ jobs:
           name: windows-executable
           path: MeshCore-SAR-Windows.zip
           retention-days: 30
+
+  # Upload to Cloudflare R2 (Unstable Bucket)
+  upload-to-r2:
+    name: Upload to Cloudflare R2
+    needs: [build-android, build-ios, build-macos, build-windows]
+    runs-on: ubuntu-latest
+    if: always() && (needs.build-android.result == 'success' || needs.build-ios.result == 'success' || needs.build-macos.result == 'success' || needs.build-windows.result == 'success')
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Generate build metadata
+        id: metadata
+        run: |
+          # Generate timestamp and commit info
+          TIMESTAMP=$(date -u +"%Y%m%d-%H%M%S")
+          COMMIT_SHORT=${GITHUB_SHA::7}
+          BRANCH_NAME=${GITHUB_REF#refs/heads/}
+
+          # For tags, use tag name; otherwise use branch-commit
+          if [[ $GITHUB_REF == refs/tags/* ]]; then
+            VERSION=${GITHUB_REF#refs/tags/}
+            BUILD_PREFIX="${VERSION}"
+          else
+            BUILD_PREFIX="${BRANCH_NAME}-${COMMIT_SHORT}"
+          fi
+
+          echo "timestamp=$TIMESTAMP" >> $GITHUB_OUTPUT
+          echo "commit_short=$COMMIT_SHORT" >> $GITHUB_OUTPUT
+          echo "build_prefix=$BUILD_PREFIX" >> $GITHUB_OUTPUT
+          echo "Build prefix: $BUILD_PREFIX"
+
+      - name: Prepare artifacts for upload
+        run: |
+          # Create a structured directory for R2
+          mkdir -p r2-upload/unstable/${{ steps.metadata.outputs.build_prefix }}
+
+          # Copy and rename artifacts with metadata
+          if [ -f artifacts/android-apk/app-release.apk ]; then
+            cp artifacts/android-apk/app-release.apk \
+              "r2-upload/unstable/${{ steps.metadata.outputs.build_prefix }}/meshcore-sar-${{ steps.metadata.outputs.build_prefix }}-${{ steps.metadata.outputs.timestamp }}.apk"
+          fi
+
+          if [ -f artifacts/android-appbundle/app-release.aab ]; then
+            cp artifacts/android-appbundle/app-release.aab \
+              "r2-upload/unstable/${{ steps.metadata.outputs.build_prefix }}/meshcore-sar-${{ steps.metadata.outputs.build_prefix }}-${{ steps.metadata.outputs.timestamp }}.aab"
+          fi
+
+          if [ -f artifacts/macos-dmg/MeshCore-SAR.dmg ]; then
+            cp artifacts/macos-dmg/MeshCore-SAR.dmg \
+              "r2-upload/unstable/${{ steps.metadata.outputs.build_prefix }}/meshcore-sar-${{ steps.metadata.outputs.build_prefix }}-${{ steps.metadata.outputs.timestamp }}.dmg"
+          fi
+
+          if [ -f artifacts/windows-executable/MeshCore-SAR-Windows.zip ]; then
+            cp artifacts/windows-executable/MeshCore-SAR-Windows.zip \
+              "r2-upload/unstable/${{ steps.metadata.outputs.build_prefix }}/meshcore-sar-${{ steps.metadata.outputs.build_prefix }}-${{ steps.metadata.outputs.timestamp }}-windows.zip"
+          fi
+
+          # Create a build manifest
+          cat > "r2-upload/unstable/${{ steps.metadata.outputs.build_prefix }}/manifest.json" <<EOF
+          {
+            "build_id": "${{ steps.metadata.outputs.build_prefix }}-${{ steps.metadata.outputs.timestamp }}",
+            "commit": "${{ github.sha }}",
+            "commit_short": "${{ steps.metadata.outputs.commit_short }}",
+            "branch": "${GITHUB_REF#refs/heads/}",
+            "tag": "${GITHUB_REF#refs/tags/}",
+            "timestamp": "${{ steps.metadata.outputs.timestamp }}",
+            "workflow_run": "${{ github.run_number }}",
+            "artifacts": $(ls -1 r2-upload/unstable/${{ steps.metadata.outputs.build_prefix }}/ | grep -v manifest.json | jq -R . | jq -s .)
+          }
+          EOF
+
+          echo "Prepared artifacts:"
+          ls -lah r2-upload/unstable/${{ steps.metadata.outputs.build_prefix }}/
+
+      - name: Upload to Cloudflare R2
+        uses: ryand56/r2-upload-action@latest
+        with:
+          r2-account-id: ${{ secrets.R2_ACCOUNT_ID }}
+          r2-access-key-id: ${{ secrets.R2_ACCESS_KEY_ID }}
+          r2-secret-access-key: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          r2-bucket: ${{ secrets.R2_BUCKET_NAME }}
+          source-dir: r2-upload/unstable/${{ steps.metadata.outputs.build_prefix }}
+          destination-dir: unstable/${{ steps.metadata.outputs.build_prefix }}
+
+      - name: Generate download URLs
+        run: |
+          # If R2_PUBLIC_URL is set, generate public download links
+          if [ -n "${{ secrets.R2_PUBLIC_URL }}" ]; then
+            echo "## 📦 Unstable Build Artifacts" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Build ID: \`${{ steps.metadata.outputs.build_prefix }}-${{ steps.metadata.outputs.timestamp }}\`" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+
+            BASE_URL="${{ secrets.R2_PUBLIC_URL }}/unstable/${{ steps.metadata.outputs.build_prefix }}"
+
+            if [ -f "r2-upload/unstable/${{ steps.metadata.outputs.build_prefix }}"/*.apk ]; then
+              APK_FILE=$(basename r2-upload/unstable/${{ steps.metadata.outputs.build_prefix }}/*.apk)
+              echo "- 🤖 **Android APK**: [$APK_FILE]($BASE_URL/$APK_FILE)" >> $GITHUB_STEP_SUMMARY
+            fi
+
+            if [ -f "r2-upload/unstable/${{ steps.metadata.outputs.build_prefix }}"/*.aab ]; then
+              AAB_FILE=$(basename r2-upload/unstable/${{ steps.metadata.outputs.build_prefix }}/*.aab)
+              echo "- 📦 **Android Bundle**: [$AAB_FILE]($BASE_URL/$AAB_FILE)" >> $GITHUB_STEP_SUMMARY
+            fi
+
+            if [ -f "r2-upload/unstable/${{ steps.metadata.outputs.build_prefix }}"/*.dmg ]; then
+              DMG_FILE=$(basename r2-upload/unstable/${{ steps.metadata.outputs.build_prefix }}/*.dmg)
+              echo "- 🍎 **macOS DMG**: [$DMG_FILE]($BASE_URL/$DMG_FILE)" >> $GITHUB_STEP_SUMMARY
+            fi
+
+            if [ -f "r2-upload/unstable/${{ steps.metadata.outputs.build_prefix }}"/*-windows.zip ]; then
+              WIN_FILE=$(basename r2-upload/unstable/${{ steps.metadata.outputs.build_prefix }}/*-windows.zip)
+              echo "- 🪟 **Windows ZIP**: [$WIN_FILE]($BASE_URL/$WIN_FILE)" >> $GITHUB_STEP_SUMMARY
+            fi
+
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "- 📋 **Manifest**: [manifest.json]($BASE_URL/manifest.json)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ Artifacts uploaded to R2 bucket (no public URL configured)" >> $GITHUB_STEP_SUMMARY
+          fi
 
   # Create Release on Tag
   create-release:

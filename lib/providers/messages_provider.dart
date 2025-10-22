@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import '../models/message.dart';
 import '../models/contact.dart';
@@ -41,7 +40,8 @@ class MessagesProvider with ChangeNotifier {
     required String messageId,
     required Contact contact,
     int retryAttempt,
-  })? sendMessageCallback;
+  })?
+  sendMessageCallback;
 
   List<Message> get messages => List.unmodifiable(_messages);
 
@@ -93,10 +93,7 @@ class MessagesProvider with ChangeNotifier {
 
   /// Get count of unread messages (excluding sent messages and system messages)
   int get unreadCount => _messages
-      .where((m) =>
-          !m.isRead &&
-          !m.isSentMessage &&
-          !m.isSystemMessage)
+      .where((m) => !m.isRead && !m.isSentMessage && !m.isSystemMessage)
       .length;
 
   /// Initialize and load persisted messages
@@ -124,7 +121,9 @@ class MessagesProvider with ChangeNotifier {
       }
 
       _isInitialized = true;
-      debugPrint('✅ [MessagesProvider] Loaded ${storedMessages.length} persisted messages');
+      debugPrint(
+        '✅ [MessagesProvider] Loaded ${storedMessages.length} persisted messages',
+      );
       notifyListeners();
     } catch (e) {
       debugPrint('❌ [MessagesProvider] Error initializing: $e');
@@ -135,7 +134,10 @@ class MessagesProvider with ChangeNotifier {
   /// Add a message
   /// If [contactLookup] function is provided, it will be used to match channel
   /// message senders with known contacts by name
-  void addMessage(Message message, {String Function(String name)? contactLookup}) {
+  void addMessage(
+    Message message, {
+    String Function(String name)? contactLookup,
+  }) {
     // Always enhance message with SAR parser to detect SAR markers
     final enhancedMessage = SarMessageParser.enhanceMessage(message);
 
@@ -165,7 +167,9 @@ class MessagesProvider with ChangeNotifier {
 
     // Debug: Check if message is SAR
     if (message.text.startsWith('S:')) {
-      debugPrint('🔍 [MessagesProvider] Processing SAR message: ${message.text}');
+      debugPrint(
+        '🔍 [MessagesProvider] Processing SAR message: ${message.text}',
+      );
       debugPrint('   isSarMarker: ${finalMessage.isSarMarker}');
       debugPrint('   sarMarkerType: ${finalMessage.sarMarkerType}');
     }
@@ -176,8 +180,12 @@ class MessagesProvider with ChangeNotifier {
     // - Multiple paths in the network
     // - Syncing messages from device queue
     if (_isDuplicate(finalMessage)) {
-      debugPrint('⚠️ [MessagesProvider] Duplicate message detected, skipping: ${finalMessage.id}');
-      debugPrint('   Text: ${finalMessage.text.substring(0, finalMessage.text.length > 50 ? 50 : finalMessage.text.length)}...');
+      debugPrint(
+        '⚠️ [MessagesProvider] Duplicate message detected, skipping: ${finalMessage.id}',
+      );
+      debugPrint(
+        '   Text: ${finalMessage.text.substring(0, finalMessage.text.length > 50 ? 50 : finalMessage.text.length)}...',
+      );
       return; // Skip duplicate
     }
 
@@ -282,7 +290,9 @@ class MessagesProvider with ChangeNotifier {
       }
     }
 
-    debugPrint('📥 [MessagesProvider] Added $addedCount messages, skipped $duplicateCount duplicates');
+    debugPrint(
+      '📥 [MessagesProvider] Added $addedCount messages, skipped $duplicateCount duplicates',
+    );
 
     // Persist to storage asynchronously
     _persistMessages();
@@ -291,15 +301,22 @@ class MessagesProvider with ChangeNotifier {
   }
 
   /// Trigger urgent notification for SAR marker
-  Future<void> _triggerSarNotification(Message message, SarMarker marker) async {
+  Future<void> _triggerSarNotification(
+    Message message,
+    SarMarker marker,
+  ) async {
     try {
       // Format coordinates
-      final coords = '${marker.location.latitude.toStringAsFixed(5)}, ${marker.location.longitude.toStringAsFixed(5)}';
+      final coords =
+          '${marker.location.latitude.toStringAsFixed(5)}, ${marker.location.longitude.toStringAsFixed(5)}';
 
       // Get sender name from message
-      final senderName = message.senderName ?? message.senderKeyShort ?? 'Unknown';
+      final senderName =
+          message.senderName ?? message.senderKeyShort ?? 'Unknown';
 
-      debugPrint('🔔 [MessagesProvider] Triggering SAR notification for ${marker.type.displayName}');
+      debugPrint(
+        '🔔 [MessagesProvider] Triggering SAR notification for ${marker.type.displayName}',
+      );
       debugPrint('   Sender: $senderName');
       debugPrint('   Coordinates: $coords');
 
@@ -319,7 +336,8 @@ class MessagesProvider with ChangeNotifier {
   Future<void> _triggerMessageNotification(Message message) async {
     try {
       // Get sender name from message
-      final senderName = message.senderName ?? message.senderKeyShort ?? 'Unknown';
+      final senderName =
+          message.senderName ?? message.senderKeyShort ?? 'Unknown';
 
       // Determine if it's a channel message
       final isChannelMessage = message.isChannelMessage;
@@ -329,13 +347,17 @@ class MessagesProvider with ChangeNotifier {
       if (isChannelMessage) {
         // You could map channelIdx to channel name here if needed
         // For now, use "Public" for channel 0
-        channelName = message.channelIdx == 0 ? 'Public' : 'Channel ${message.channelIdx}';
+        channelName = message.channelIdx == 0
+            ? 'Public'
+            : 'Channel ${message.channelIdx}';
       }
 
       debugPrint('🔔 [MessagesProvider] Triggering message notification');
       debugPrint('   Sender: $senderName');
       debugPrint('   Type: ${isChannelMessage ? "Channel" : "Direct"}');
-      debugPrint('   Message: ${message.text.substring(0, message.text.length > 50 ? 50 : message.text.length)}...');
+      debugPrint(
+        '   Message: ${message.text.substring(0, message.text.length > 50 ? 50 : message.text.length)}...',
+      );
 
       await _notificationService.showMessageNotification(
         senderName: senderName,
@@ -345,7 +367,9 @@ class MessagesProvider with ChangeNotifier {
         localizations: _localizations,
       );
     } catch (e) {
-      debugPrint('❌ [MessagesProvider] Error triggering message notification: $e');
+      debugPrint(
+        '❌ [MessagesProvider] Error triggering message notification: $e',
+      );
     }
   }
 
@@ -361,10 +385,12 @@ class MessagesProvider with ChangeNotifier {
   /// Get messages for a specific contact
   List<Message> getMessagesForContact(String senderKeyShort) {
     return _messages
-        .where((m) =>
-            m.isContactMessage &&
-            m.senderKeyShort != null &&
-            m.senderKeyShort!.startsWith(senderKeyShort))
+        .where(
+          (m) =>
+              m.isContactMessage &&
+              m.senderKeyShort != null &&
+              m.senderKeyShort!.startsWith(senderKeyShort),
+        )
         .toList();
   }
 
@@ -417,7 +443,9 @@ class MessagesProvider with ChangeNotifier {
   void markAllAsRead() {
     bool hasChanges = false;
     for (int i = 0; i < _messages.length; i++) {
-      if (!_messages[i].isRead && !_messages[i].isSentMessage && !_messages[i].isSystemMessage) {
+      if (!_messages[i].isRead &&
+          !_messages[i].isSentMessage &&
+          !_messages[i].isSystemMessage) {
         _messages[i] = _messages[i].copyWith(isRead: true);
         hasChanges = true;
       }
@@ -552,14 +580,18 @@ class MessagesProvider with ChangeNotifier {
     debugPrint('  Message ID: ${message.id}');
     debugPrint('  Message type: ${message.messageType}');
     debugPrint('  Initial status: ${message.deliveryStatus}');
-    debugPrint('  Message text preview: ${message.text.substring(0, message.text.length > 30 ? 30 : message.text.length)}...');
+    debugPrint(
+      '  Message text preview: ${message.text.substring(0, message.text.length > 30 ? 30 : message.text.length)}...',
+    );
 
     // Always enhance message with SAR parser to detect SAR markers
     final enhancedMessage = SarMessageParser.enhanceMessage(message);
 
     // Check for duplicates (shouldn't happen for sent messages, but be safe)
     if (_isDuplicate(enhancedMessage)) {
-      debugPrint('⚠️ [MessagesProvider] Duplicate sent message detected, skipping: ${enhancedMessage.id}');
+      debugPrint(
+        '⚠️ [MessagesProvider] Duplicate sent message detected, skipping: ${enhancedMessage.id}',
+      );
       return;
     }
 
@@ -597,12 +629,20 @@ class MessagesProvider with ChangeNotifier {
   }
 
   /// Update message status to sent with ACK tag
-  void markMessageSent(String messageId, int expectedAckTag, int suggestedTimeoutMs) {
+  void markMessageSent(
+    String messageId,
+    int expectedAckTag,
+    int suggestedTimeoutMs,
+  ) {
     debugPrint('📤 [MessagesProvider] markMessageSent called');
     debugPrint('  Message ID: $messageId');
-    debugPrint('  Expected ACK tag: $expectedAckTag (0x${expectedAckTag.toRadixString(16).padLeft(8, '0')})');
+    debugPrint(
+      '  Expected ACK tag: $expectedAckTag (0x${expectedAckTag.toRadixString(16).padLeft(8, '0')})',
+    );
     debugPrint('  Timeout: ${suggestedTimeoutMs}ms');
-    debugPrint('  Current pending ACKs before adding: ${_pendingSentMessages.keys.toList()}');
+    debugPrint(
+      '  Current pending ACKs before adding: ${_pendingSentMessages.keys.toList()}',
+    );
 
     final index = _messages.indexWhere((m) => m.id == messageId);
     debugPrint('  Message index in list: $index');
@@ -611,7 +651,9 @@ class MessagesProvider with ChangeNotifier {
       final message = _messages[index];
       debugPrint('  Current status: ${message.deliveryStatus}');
       debugPrint('  Message type: ${message.messageType}');
-      debugPrint('  Message text preview: ${message.text.substring(0, message.text.length > 30 ? 30 : message.text.length)}...');
+      debugPrint(
+        '  Message text preview: ${message.text.substring(0, message.text.length > 30 ? 30 : message.text.length)}...',
+      );
 
       final updatedMessage = message.copyWith(
         deliveryStatus: MessageDeliveryStatus.sent,
@@ -624,24 +666,34 @@ class MessagesProvider with ChangeNotifier {
       if (expectedAckTag > 0 && suggestedTimeoutMs > 0) {
         // Track by ACK tag for matching with delivery confirmation
         _pendingSentMessages[expectedAckTag] = updatedMessage;
-        debugPrint('  ✅ Added to pending messages map with ACK: $expectedAckTag');
+        debugPrint(
+          '  ✅ Added to pending messages map with ACK: $expectedAckTag',
+        );
         debugPrint('  Total pending messages: ${_pendingSentMessages.length}');
-        debugPrint('  Pending ACKs after adding: ${_pendingSentMessages.keys.toList()}');
+        debugPrint(
+          '  Pending ACKs after adding: ${_pendingSentMessages.keys.toList()}',
+        );
 
         // Start timeout timer
         _timeoutTimers[expectedAckTag] = Timer(
           Duration(milliseconds: suggestedTimeoutMs),
           () {
-            debugPrint('⏱️ [MessagesProvider] Timeout for message $messageId (ACK $expectedAckTag)');
+            debugPrint(
+              '⏱️ [MessagesProvider] Timeout for message $messageId (ACK $expectedAckTag)',
+            );
             if (_pendingSentMessages.containsKey(expectedAckTag)) {
               markMessageFailed(messageId);
             }
           },
         );
 
-        debugPrint('⏱️ [MessagesProvider] Started ${suggestedTimeoutMs}ms timeout timer for message $messageId (ACK $expectedAckTag)');
+        debugPrint(
+          '⏱️ [MessagesProvider] Started ${suggestedTimeoutMs}ms timeout timer for message $messageId (ACK $expectedAckTag)',
+        );
       } else {
-        debugPrint('  ℹ️ Channel message (no ACK tracking) - marked as sent immediately');
+        debugPrint(
+          '  ℹ️ Channel message (no ACK tracking) - marked as sent immediately',
+        );
       }
 
       debugPrint('  Calling notifyListeners() to update UI with "sent" status');
@@ -661,7 +713,12 @@ class MessagesProvider with ChangeNotifier {
   }
 
   /// Handle echo detection for public channel messages
-  void handleMessageEcho(String messageId, int echoCount, int snrRaw, int rssiDbm) {
+  void handleMessageEcho(
+    String messageId,
+    int echoCount,
+    int snrRaw,
+    int rssiDbm,
+  ) {
     debugPrint('🔊 [MessagesProvider] handleMessageEcho called');
     debugPrint('  Message ID: $messageId');
     debugPrint('  Echo count: $echoCount');
@@ -672,7 +729,9 @@ class MessagesProvider with ChangeNotifier {
     final index = _messages.indexWhere((m) => m.id == messageId);
     if (index != -1) {
       final message = _messages[index];
-      debugPrint('  ✅ Found message: ${message.text.substring(0, message.text.length > 30 ? 30 : message.text.length)}...');
+      debugPrint(
+        '  ✅ Found message: ${message.text.substring(0, message.text.length > 30 ? 30 : message.text.length)}...',
+      );
 
       // Update echo count
       final updatedMessage = message.copyWith(
@@ -692,8 +751,12 @@ class MessagesProvider with ChangeNotifier {
 
   /// Update message status to delivered with RTT
   void markMessageDelivered(int ackCode, int roundTripTimeMs) {
-    debugPrint('🔍 [MessagesProvider] markMessageDelivered called with ACK: $ackCode, RTT: ${roundTripTimeMs}ms');
-    debugPrint('  Current pending messages: ${_pendingSentMessages.keys.toList()}');
+    debugPrint(
+      '🔍 [MessagesProvider] markMessageDelivered called with ACK: $ackCode, RTT: ${roundTripTimeMs}ms',
+    );
+    debugPrint(
+      '  Current pending messages: ${_pendingSentMessages.keys.toList()}',
+    );
     debugPrint('  Total messages in list: ${_messages.length}');
     debugPrint('  Looking for ACK: $ackCode');
 
@@ -722,7 +785,9 @@ class MessagesProvider with ChangeNotifier {
         // Clear retry tracking on successful delivery
         _retryManager.clearRetry(message.id);
 
-        debugPrint('✅ [MessagesProvider] Message ${message.id} delivered in ${roundTripTimeMs}ms (ACK $ackCode)');
+        debugPrint(
+          '✅ [MessagesProvider] Message ${message.id} delivered in ${roundTripTimeMs}ms (ACK $ackCode)',
+        );
         debugPrint('  Updated status to: ${updatedMessage.deliveryStatus}');
         debugPrint('  Calling notifyListeners() to update UI');
 
@@ -731,33 +796,58 @@ class MessagesProvider with ChangeNotifier {
 
         debugPrint('  ✅ notifyListeners() called successfully');
       } else {
-        debugPrint('⚠️ [MessagesProvider] Message not found in messages list (index=-1)');
-        debugPrint('  This should never happen - message was in pending map but not in messages list');
+        debugPrint(
+          '⚠️ [MessagesProvider] Message not found in messages list (index=-1)',
+        );
+        debugPrint(
+          '  This should never happen - message was in pending map but not in messages list',
+        );
       }
     } else {
-      debugPrint('⚠️ [MessagesProvider] No pending message found for ACK code: $ackCode');
+      debugPrint(
+        '⚠️ [MessagesProvider] No pending message found for ACK code: $ackCode',
+      );
       debugPrint('  Pending ACK codes: ${_pendingSentMessages.keys.toList()}');
       debugPrint('  This means either:');
-      debugPrint('  1. markMessageSent() was never called for this message (ACK tag not stored)');
-      debugPrint('  2. The ACK code from PUSH_CODE_SEND_CONFIRMED doesn\'t match the expected ACK tag from RESP_CODE_SENT');
+      debugPrint(
+        '  1. markMessageSent() was never called for this message (ACK tag not stored)',
+      );
+      debugPrint(
+        '  2. The ACK code from PUSH_CODE_SEND_CONFIRMED doesn\'t match the expected ACK tag from RESP_CODE_SENT',
+      );
       debugPrint('  3. The message was already delivered or timed out');
       debugPrint('  Searching all messages for debugging...');
 
       // Debug: Search for any message with this ACK tag
-      final matchingMessages = _messages.where((m) => m.expectedAckTag == ackCode).toList();
+      final matchingMessages = _messages
+          .where((m) => m.expectedAckTag == ackCode)
+          .toList();
       if (matchingMessages.isNotEmpty) {
-        debugPrint('  ⚠️ Found ${matchingMessages.length} message(s) with matching ACK tag but NOT in pending map:');
+        debugPrint(
+          '  ⚠️ Found ${matchingMessages.length} message(s) with matching ACK tag but NOT in pending map:',
+        );
         for (final m in matchingMessages) {
-          debugPrint('     - Message ID: ${m.id}, Status: ${m.deliveryStatus}, ACK: ${m.expectedAckTag}');
+          debugPrint(
+            '     - Message ID: ${m.id}, Status: ${m.deliveryStatus}, ACK: ${m.expectedAckTag}',
+          );
         }
-        debugPrint('  This indicates the message was sent but never added to _pendingSentMessages map');
-        debugPrint('  Likely cause: markMessageSent() was not called with correct message ID');
+        debugPrint(
+          '  This indicates the message was sent but never added to _pendingSentMessages map',
+        );
+        debugPrint(
+          '  Likely cause: markMessageSent() was not called with correct message ID',
+        );
       } else {
         debugPrint('  No messages found with ACK tag $ackCode');
         debugPrint('  Recent sent messages:');
-        final sentMessages = _messages.where((m) => m.isSentMessage).take(5).toList();
+        final sentMessages = _messages
+            .where((m) => m.isSentMessage)
+            .take(5)
+            .toList();
         for (final m in sentMessages) {
-          debugPrint('     - ID: ${m.id}, Status: ${m.deliveryStatus}, ACK: ${m.expectedAckTag}');
+          debugPrint(
+            '     - ID: ${m.id}, Status: ${m.deliveryStatus}, ACK: ${m.expectedAckTag}',
+          );
         }
       }
     }
@@ -767,7 +857,9 @@ class MessagesProvider with ChangeNotifier {
   void markMessageFailed(String messageId) {
     final index = _messages.indexWhere((m) => m.id == messageId);
     if (index == -1) {
-      debugPrint('⚠️ [MessagesProvider] markMessageFailed: Message not found: $messageId');
+      debugPrint(
+        '⚠️ [MessagesProvider] markMessageFailed: Message not found: $messageId',
+      );
       return;
     }
 
@@ -783,7 +875,8 @@ class MessagesProvider with ChangeNotifier {
     if (contact != null && _retryManager.canRetry(message, contact)) {
       // RETRY: Contact has path and retry attempts < 3
       _scheduleRetry(messageId, message, contact);
-    } else if (contact != null && _retryManager.shouldUseFloodFallback(message, contact)) {
+    } else if (contact != null &&
+        _retryManager.shouldUseFloodFallback(message, contact)) {
       // FLOOD FALLBACK: After 3 retries failed, try flood once
       _sendWithFloodMode(messageId, message, contact);
     } else {
@@ -797,7 +890,9 @@ class MessagesProvider with ChangeNotifier {
     final nextAttempt = message.retryAttempt + 1;
     final timeout = _retryManager.getTimeoutForAttempt(message.retryAttempt);
 
-    debugPrint('🔄 [MessagesProvider] Scheduling retry $nextAttempt/3 for message $messageId');
+    debugPrint(
+      '🔄 [MessagesProvider] Scheduling retry $nextAttempt/3 for message $messageId',
+    );
     debugPrint('   Timeout: ${timeout}ms');
 
     // Update message with new retry attempt
@@ -823,7 +918,9 @@ class MessagesProvider with ChangeNotifier {
 
       // Schedule actual retry after delay
       Timer(Duration(milliseconds: timeout), () async {
-        debugPrint('⏰ [MessagesProvider] Executing retry $nextAttempt for message $messageId');
+        debugPrint(
+          '⏰ [MessagesProvider] Executing retry $nextAttempt for message $messageId',
+        );
         if (sendMessageCallback != null) {
           await sendMessageCallback!(
             contactPublicKey: contact.publicKey,
@@ -833,7 +930,9 @@ class MessagesProvider with ChangeNotifier {
             retryAttempt: nextAttempt,
           );
         } else {
-          debugPrint('⚠️ [MessagesProvider] sendMessageCallback not set, cannot retry');
+          debugPrint(
+            '⚠️ [MessagesProvider] sendMessageCallback not set, cannot retry',
+          );
         }
       });
 
@@ -842,8 +941,14 @@ class MessagesProvider with ChangeNotifier {
   }
 
   /// Send message with flood mode as last resort
-  Future<void> _sendWithFloodMode(String messageId, Message message, Contact contact) async {
-    debugPrint('🌊 [MessagesProvider] Trying flood mode for message $messageId');
+  Future<void> _sendWithFloodMode(
+    String messageId,
+    Message message,
+    Contact contact,
+  ) async {
+    debugPrint(
+      '🌊 [MessagesProvider] Trying flood mode for message $messageId',
+    );
 
     final index = _messages.indexWhere((m) => m.id == messageId);
     if (index != -1) {
@@ -871,7 +976,9 @@ class MessagesProvider with ChangeNotifier {
           retryAttempt: 0, // Reset attempt for flood
         );
       } else {
-        debugPrint('⚠️ [MessagesProvider] sendMessageCallback not set, cannot send flood');
+        debugPrint(
+          '⚠️ [MessagesProvider] sendMessageCallback not set, cannot send flood',
+        );
       }
 
       _persistMessages();
@@ -907,7 +1014,9 @@ class MessagesProvider with ChangeNotifier {
   Future<void> resendMessage(String messageId) async {
     final index = _messages.indexWhere((m) => m.id == messageId);
     if (index == -1) {
-      debugPrint('⚠️ [MessagesProvider] resendMessage: Message not found: $messageId');
+      debugPrint(
+        '⚠️ [MessagesProvider] resendMessage: Message not found: $messageId',
+      );
       return;
     }
 
@@ -915,7 +1024,9 @@ class MessagesProvider with ChangeNotifier {
     final contact = _messageContactMap[messageId];
 
     if (contact == null) {
-      debugPrint('⚠️ [MessagesProvider] Cannot resend: Contact not found for message $messageId');
+      debugPrint(
+        '⚠️ [MessagesProvider] Cannot resend: Contact not found for message $messageId',
+      );
       return;
     }
 
@@ -944,7 +1055,9 @@ class MessagesProvider with ChangeNotifier {
         retryAttempt: 0,
       );
     } else {
-      debugPrint('⚠️ [MessagesProvider] sendMessageCallback not set, cannot resend');
+      debugPrint(
+        '⚠️ [MessagesProvider] sendMessageCallback not set, cannot resend',
+      );
     }
 
     _persistMessages();

@@ -62,7 +62,7 @@ class ConnectionProvider with ChangeNotifier {
   DeviceInfo _deviceInfo = DeviceInfo();
   DeviceInfo get deviceInfo => _deviceInfo;
 
-  List<ScannedDevice> _scannedDevices = [];
+  final List<ScannedDevice> _scannedDevices = [];
   List<ScannedDevice> get scannedDevices => _scannedDevices;
 
   bool _isScanning = false;
@@ -162,14 +162,18 @@ class ConnectionProvider with ChangeNotifier {
       debugPrint(
         '  Updated deviceInfo.connectionState: ${_deviceInfo.connectionState}',
       );
-      debugPrint('  Updated deviceInfo.isConnected: ${_deviceInfo.isConnected}');
+      debugPrint(
+        '  Updated deviceInfo.isConnected: ${_deviceInfo.isConnected}',
+      );
       debugPrint('  isReconnecting: ${_bleService.isReconnecting}');
       notifyListeners();
       debugPrint('  Notified listeners');
     };
 
     _bleService.onReconnectionAttempt = (attemptNumber, maxAttempts) {
-      debugPrint('🔄 [Provider] Reconnection attempt $attemptNumber/$maxAttempts');
+      debugPrint(
+        '🔄 [Provider] Reconnection attempt $attemptNumber/$maxAttempts',
+      );
       // Notify UI to update reconnection status display
       notifyListeners();
     };
@@ -198,7 +202,9 @@ class ConnectionProvider with ChangeNotifier {
     };
 
     _bleService.onContactNotFound = (contactPublicKey) async {
-      debugPrint('🔧 [Provider] Contact not found error detected - initiating auto-recovery');
+      debugPrint(
+        '🔧 [Provider] Contact not found error detected - initiating auto-recovery',
+      );
 
       if (contactPublicKey == null) {
         debugPrint('  ⚠️ No contact public key available for recovery');
@@ -206,15 +212,22 @@ class ConnectionProvider with ChangeNotifier {
       }
 
       // Generate operation ID from public key
-      final operationId = contactPublicKey.sublist(0, 6).map((b) => b.toRadixString(16).padLeft(2, '0')).join(':');
+      final operationId = contactPublicKey
+          .sublist(0, 6)
+          .map((b) => b.toRadixString(16).padLeft(2, '0'))
+          .join(':');
       final pendingOp = _pendingSendOperations[operationId];
 
       if (pendingOp == null || pendingOp.contact == null) {
-        debugPrint('  ⚠️ No pending operation found for recovery: $operationId');
+        debugPrint(
+          '  ⚠️ No pending operation found for recovery: $operationId',
+        );
         return;
       }
 
-      debugPrint('  📋 Found pending operation for: ${pendingOp.contact!.advName}');
+      debugPrint(
+        '  📋 Found pending operation for: ${pendingOp.contact!.advName}',
+      );
       debugPrint('  📤 Step 1: Adding contact to radio...');
 
       try {
@@ -266,7 +279,8 @@ class ConnectionProvider with ChangeNotifier {
       onMessageReceived?.call(enhancedMessage);
 
       // Complete sync response completer (message received = continue syncing)
-      if (_syncResponseCompleter != null && !_syncResponseCompleter!.isCompleted) {
+      if (_syncResponseCompleter != null &&
+          !_syncResponseCompleter!.isCompleted) {
         _syncResponseCompleter!.complete(true);
       }
     };
@@ -295,7 +309,8 @@ class ConnectionProvider with ChangeNotifier {
       _noMoreMessages = true;
 
       // Complete sync response completer (no more messages = stop syncing)
-      if (_syncResponseCompleter != null && !_syncResponseCompleter!.isCompleted) {
+      if (_syncResponseCompleter != null &&
+          !_syncResponseCompleter!.isCompleted) {
         _syncResponseCompleter!.complete(false);
       }
     };
@@ -397,7 +412,8 @@ class ConnectionProvider with ChangeNotifier {
       onMessageDelivered?.call(ackCode, roundTripTimeMs);
     };
 
-    _bleService.onMessageEchoDetected = (messageId, echoCount, snrRaw, rssiDbm) {
+    _bleService
+        .onMessageEchoDetected = (messageId, echoCount, snrRaw, rssiDbm) {
       debugPrint(
         '🔊 [Provider] Echo detected - Message: $messageId, Count: $echoCount',
       );
@@ -588,7 +604,9 @@ class ConnectionProvider with ChangeNotifier {
 
   /// Connect to a device
   Future<bool> connect(BluetoothDevice device) async {
-    debugPrint('🔵 [Provider] connect() called for device: ${device.platformName}');
+    debugPrint(
+      '🔵 [Provider] connect() called for device: ${device.platformName}',
+    );
 
     _deviceInfo = _deviceInfo.copyWith(
       deviceId: device.remoteId.toString(),
@@ -690,8 +708,12 @@ class ConnectionProvider with ChangeNotifier {
     }
 
     try {
-      debugPrint('📻 [Provider] Configuring default public channel (channel 0)');
-      debugPrint('  Using secret: ${MeshCoreConstants.defaultPublicChannelSecret.map((b) => b.toRadixString(16).padLeft(2, '0')).join('')}');
+      debugPrint(
+        '📻 [Provider] Configuring default public channel (channel 0)',
+      );
+      debugPrint(
+        '  Using secret: ${MeshCoreConstants.defaultPublicChannelSecret.map((b) => b.toRadixString(16).padLeft(2, '0')).join('')}',
+      );
       await _bleService.setChannel(
         channelIdx: 0,
         channelName: 'Public Channel',
@@ -701,7 +723,9 @@ class ConnectionProvider with ChangeNotifier {
     } catch (e) {
       _error = 'Failed to configure public channel: $e';
       debugPrint('❌ [Provider] Public channel configuration failed: $e');
-      debugPrint('  This may be normal if the channel is pre-configured in firmware');
+      debugPrint(
+        '  This may be normal if the channel is pre-configured in firmware',
+      );
       notifyListeners();
       rethrow; // Re-throw to notify caller of failure
     }
@@ -752,9 +776,13 @@ class ConnectionProvider with ChangeNotifier {
       // Log path status and retry info
       if (contact != null) {
         if (retryAttempt > 0) {
-          debugPrint('🔄 [ConnectionProvider] Sending message to ${contact.advName} (retry $retryAttempt/3)');
+          debugPrint(
+            '🔄 [ConnectionProvider] Sending message to ${contact.advName} (retry $retryAttempt/3)',
+          );
         } else {
-          debugPrint('📤 [ConnectionProvider] Sending message to ${contact.advName}');
+          debugPrint(
+            '📤 [ConnectionProvider] Sending message to ${contact.advName}',
+          );
         }
         debugPrint('   Type: ${contact.type.displayName}');
         debugPrint('   Path status: ${contact.pathDescription}');
@@ -764,12 +792,17 @@ class ConnectionProvider with ChangeNotifier {
           debugPrint('   ⚠️ No path available - will use flood mode');
         }
       } else if (retryAttempt > 0) {
-        debugPrint('🔄 [ConnectionProvider] Sending message (retry $retryAttempt/3)');
+        debugPrint(
+          '🔄 [ConnectionProvider] Sending message (retry $retryAttempt/3)',
+        );
       }
 
       // Track pending operation for auto-recovery (if contact not found in radio)
       if (contact != null) {
-        final operationId = contactPublicKey.sublist(0, 6).map((b) => b.toRadixString(16).padLeft(2, '0')).join(':');
+        final operationId = contactPublicKey
+            .sublist(0, 6)
+            .map((b) => b.toRadixString(16).padLeft(2, '0'))
+            .join(':');
         _pendingSendOperations[operationId] = _PendingSendOperation(
           contactPublicKey: contactPublicKey,
           text: text,
@@ -777,7 +810,9 @@ class ConnectionProvider with ChangeNotifier {
           contact: contact,
           retryAttempt: retryAttempt,
         );
-        debugPrint('  📝 Tracked pending operation for auto-recovery: $operationId');
+        debugPrint(
+          '  📝 Tracked pending operation for auto-recovery: $operationId',
+        );
       }
 
       // IMPORTANT: Track pending message BEFORE sending to avoid race condition
@@ -785,7 +820,9 @@ class ConnectionProvider with ChangeNotifier {
       // the callback will fire before we add the message ID to the queue.
       if (messageId != null) {
         _messageDeliveryTracker.trackPendingMessage(messageId);
-        debugPrint('  Added message ID to pending queue BEFORE sending: $messageId');
+        debugPrint(
+          '  Added message ID to pending queue BEFORE sending: $messageId',
+        );
       }
 
       // Send the message with retry attempt info
@@ -798,7 +835,10 @@ class ConnectionProvider with ChangeNotifier {
       // Clear pending operation after successful send (no error)
       // If ERR_CODE_NOT_FOUND occurs, the operation will be recovered automatically
       if (contact != null) {
-        final operationId = contactPublicKey.sublist(0, 6).map((b) => b.toRadixString(16).padLeft(2, '0')).join(':');
+        final operationId = contactPublicKey
+            .sublist(0, 6)
+            .map((b) => b.toRadixString(16).padLeft(2, '0'))
+            .join(':');
         // Use a small delay to allow error response to arrive before clearing
         Future.delayed(const Duration(milliseconds: 500), () {
           _pendingSendOperations.remove(operationId);
@@ -838,7 +878,9 @@ class ConnectionProvider with ChangeNotifier {
       await _bleService.sendChannelMessage(channelIdx: channelIdx, text: text);
 
       debugPrint('✅ [ConnectionProvider] BLE send completed');
-      debugPrint('  Checking messageId: ${messageId != null ? "Present ($messageId)" : "NULL"}');
+      debugPrint(
+        '  Checking messageId: ${messageId != null ? "Present ($messageId)" : "NULL"}',
+      );
 
       // Channel messages are ephemeral (not persisted) - mark as "sent" immediately
       // They don't have ACK/TAG mechanism like direct messages
@@ -1347,7 +1389,9 @@ class ConnectionProvider with ChangeNotifier {
           },
         );
 
-        debugPrint('  After iteration ${i + 1}: hasMore=$hasMore, _noMoreMessages=$_noMoreMessages');
+        debugPrint(
+          '  After iteration ${i + 1}: hasMore=$hasMore, _noMoreMessages=$_noMoreMessages',
+        );
 
         if (!hasMore) {
           debugPrint('  ✅ No more messages available, stopping sync');

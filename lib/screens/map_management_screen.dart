@@ -109,7 +109,9 @@ class _MapManagementScreenState extends State<MapManagementScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _statusMessage = AppLocalizations.of(context)!.errorLoadingStats(e.toString());
+        _statusMessage = AppLocalizations.of(
+          context,
+        )!.errorLoadingStats(e.toString());
         _isLoading = false;
       });
     }
@@ -153,7 +155,9 @@ class _MapManagementScreenState extends State<MapManagementScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(AppLocalizations.of(context)!.mbtilesImportedSuccessfully),
+              content: Text(
+                AppLocalizations.of(context)!.mbtilesImportedSuccessfully,
+              ),
               backgroundColor: Colors.green,
             ),
           );
@@ -174,7 +178,9 @@ class _MapManagementScreenState extends State<MapManagementScreen> {
       builder: (context) => AlertDialog(
         title: Text(AppLocalizations.of(context)!.deleteMbtilesConfirmTitle),
         content: Text(
-          AppLocalizations.of(context)!.deleteMbtilesConfirmMessage(metadata.name),
+          AppLocalizations.of(
+            context,
+          )!.deleteMbtilesConfirmMessage(metadata.name),
         ),
         actions: [
           TextButton(
@@ -205,7 +211,9 @@ class _MapManagementScreenState extends State<MapManagementScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(AppLocalizations.of(context)!.mbtilesDeletedSuccessfully),
+              content: Text(
+                AppLocalizations.of(context)!.mbtilesDeletedSuccessfully,
+              ),
               backgroundColor: Colors.green,
             ),
           );
@@ -246,13 +254,21 @@ class _MapManagementScreenState extends State<MapManagementScreen> {
       // Validate zoom levels
       final minZoomResult = validator.validateZoomLevel(_minZoom);
       if (!minZoomResult.isValid) {
-        _showError(AppLocalizations.of(context)!.minZoomError(minZoomResult.errorMessage!));
+        _showError(
+          AppLocalizations.of(
+            context,
+          )!.minZoomError(minZoomResult.errorMessage!),
+        );
         return;
       }
 
       final maxZoomResult = validator.validateZoomLevel(_maxZoom);
       if (!maxZoomResult.isValid) {
-        _showError(AppLocalizations.of(context)!.maxZoomError(maxZoomResult.errorMessage!));
+        _showError(
+          AppLocalizations.of(
+            context,
+          )!.maxZoomError(maxZoomResult.errorMessage!),
+        );
         return;
       }
 
@@ -261,10 +277,7 @@ class _MapManagementScreenState extends State<MapManagementScreen> {
         return;
       }
 
-      final bounds = LatLngBounds(
-        LatLng(south!, west!),
-        LatLng(north!, east!),
-      );
+      final bounds = LatLngBounds(LatLng(south!, west!), LatLng(north!, east!));
 
       if (!mounted) return;
       setState(() {
@@ -291,7 +304,9 @@ class _MapManagementScreenState extends State<MapManagementScreen> {
       if (!mounted) return;
       setState(() {
         _isDownloading = false;
-        _statusMessage = AppLocalizations.of(context)!.downloadCompletedSuccessfully;
+        _statusMessage = AppLocalizations.of(
+          context,
+        )!.downloadCompletedSuccessfully;
       });
 
       await _loadCacheStats();
@@ -308,7 +323,9 @@ class _MapManagementScreenState extends State<MapManagementScreen> {
       if (!mounted) return;
       setState(() {
         _isDownloading = false;
-        _statusMessage = AppLocalizations.of(context)!.downloadFailed(e.toString());
+        _statusMessage = AppLocalizations.of(
+          context,
+        )!.downloadFailed(e.toString());
       });
       _showError(AppLocalizations.of(context)!.downloadFailed(e.toString()));
     }
@@ -317,7 +334,9 @@ class _MapManagementScreenState extends State<MapManagementScreen> {
   Future<void> _cancelDownload() async {
     try {
       if (!mounted) return;
-      setState(() => _statusMessage = AppLocalizations.of(context)!.cancellingDownload);
+      setState(
+        () => _statusMessage = AppLocalizations.of(context)!.cancellingDownload,
+      );
 
       await widget.tileCacheService.cancelDownload();
 
@@ -341,7 +360,9 @@ class _MapManagementScreenState extends State<MapManagementScreen> {
       if (!mounted) return;
       setState(() {
         _isDownloading = false;
-        _statusMessage = AppLocalizations.of(context)!.cancelFailed(e.toString());
+        _statusMessage = AppLocalizations.of(
+          context,
+        )!.cancelFailed(e.toString());
       });
       _showError(AppLocalizations.of(context)!.cancelFailed(e.toString()));
     }
@@ -352,9 +373,7 @@ class _MapManagementScreenState extends State<MapManagementScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(AppLocalizations.of(context)!.clearMapsConfirmTitle),
-        content: Text(
-          AppLocalizations.of(context)!.clearMapsConfirmMessage,
-        ),
+        content: Text(AppLocalizations.of(context)!.clearMapsConfirmMessage),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -382,7 +401,9 @@ class _MapManagementScreenState extends State<MapManagementScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(AppLocalizations.of(context)!.cacheClearedSuccessfully),
+            content: Text(
+              AppLocalizations.of(context)!.cacheClearedSuccessfully,
+            ),
             backgroundColor: Colors.green,
           ),
         );
@@ -410,10 +431,13 @@ class _MapManagementScreenState extends State<MapManagementScreen> {
 
       // Export to temporary directory first (works on all platforms)
       final tempDir = await getTemporaryDirectory();
-      final fileName = 'meshcore_tiles_${DateTime.now().millisecondsSinceEpoch}.fmtc';
+      final fileName =
+          'meshcore_tiles_${DateTime.now().millisecondsSinceEpoch}.fmtc';
       final tempFilePath = '${tempDir.path}/$fileName';
 
-      final exportedCount = await widget.tileCacheService.exportStore(tempFilePath);
+      final exportedCount = await widget.tileCacheService.exportStore(
+        tempFilePath,
+      );
 
       if (!mounted) return;
       setState(() {
@@ -443,7 +467,9 @@ class _MapManagementScreenState extends State<MapManagementScreen> {
           if (result.status == ShareResultStatus.success) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(AppLocalizations.of(context)!.exportSuccess(exportedCount)),
+                content: Text(
+                  AppLocalizations.of(context)!.exportSuccess(exportedCount),
+                ),
                 backgroundColor: Colors.green,
               ),
             );
@@ -484,7 +510,9 @@ class _MapManagementScreenState extends State<MapManagementScreen> {
 
       // Optional: Preview stores in archive before importing
       try {
-        final stores = await widget.tileCacheService.listArchiveStores(filePath);
+        final stores = await widget.tileCacheService.listArchiveStores(
+          filePath,
+        );
         debugPrint('Archive contains stores: $stores');
       } catch (e) {
         debugPrint('Could not list stores: $e');
@@ -504,7 +532,9 @@ class _MapManagementScreenState extends State<MapManagementScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              AppLocalizations.of(context)!.importSuccess(importResult['successfulStores'] as int),
+              AppLocalizations.of(
+                context,
+              )!.importSuccess(importResult['successfulStores'] as int),
             ),
             backgroundColor: Colors.green,
           ),
@@ -535,9 +565,7 @@ class _MapManagementScreenState extends State<MapManagementScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(AppLocalizations.of(context)!.mapManagement),
-      ),
+      appBar: AppBar(title: Text(AppLocalizations.of(context)!.mapManagement)),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
@@ -622,7 +650,10 @@ class _MapManagementScreenState extends State<MapManagementScreen> {
           Icon(icon, size: 20, color: Colors.grey[600]),
           const SizedBox(width: 12),
           Expanded(
-            child: Text(label, style: const TextStyle(fontWeight: FontWeight.w500)),
+            child: Text(
+              label,
+              style: const TextStyle(fontWeight: FontWeight.w500),
+            ),
           ),
           Text(value, style: TextStyle(color: Colors.grey[600])),
         ],
@@ -667,7 +698,11 @@ class _MapManagementScreenState extends State<MapManagementScreen> {
                   padding: const EdgeInsets.all(16),
                   child: Column(
                     children: [
-                      Icon(Icons.map_outlined, size: 48, color: Colors.grey[400]),
+                      Icon(
+                        Icons.map_outlined,
+                        size: 48,
+                        color: Colors.grey[400],
+                      ),
                       const SizedBox(height: 8),
                       Text(
                         AppLocalizations.of(context)!.noMbtilesFiles,
@@ -678,74 +713,79 @@ class _MapManagementScreenState extends State<MapManagementScreen> {
                 ),
               )
             else
-              ..._mbtilesFiles.map((metadata) => Card(
-                    color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                    margin: const EdgeInsets.only(bottom: 8),
-                    child: ExpansionTile(
-                      leading: Icon(
-                        metadata.isVector ? Icons.layers : Icons.image,
-                        color: metadata.isVector ? Colors.blue : Colors.orange,
-                      ),
-                      title: Text(
-                        metadata.name,
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      subtitle: Text(
-                        '${metadata.fileSizeFormatted} • ${metadata.format?.toUpperCase() ?? "Unknown"}',
-                      ),
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              if (metadata.description != null) ...[
-                                Text(
-                                  metadata.description!,
-                                  style: TextStyle(color: Colors.grey[700]),
-                                ),
-                                const SizedBox(height: 12),
-                              ],
-                              _buildInfoRow(
-                                AppLocalizations.of(context)!.zoomLevels,
-                                '${metadata.minZoom ?? "?"} - ${metadata.maxZoom ?? "?"}',
+              ..._mbtilesFiles.map(
+                (metadata) => Card(
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                  margin: const EdgeInsets.only(bottom: 8),
+                  child: ExpansionTile(
+                    leading: Icon(
+                      metadata.isVector ? Icons.layers : Icons.image,
+                      color: metadata.isVector ? Colors.blue : Colors.orange,
+                    ),
+                    title: Text(
+                      metadata.name,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    subtitle: Text(
+                      '${metadata.fileSizeFormatted} • ${metadata.format?.toUpperCase() ?? "Unknown"}',
+                    ),
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (metadata.description != null) ...[
+                              Text(
+                                metadata.description!,
+                                style: TextStyle(color: Colors.grey[700]),
                               ),
-                              if (metadata.bounds != null)
-                                _buildInfoRow(
-                                  AppLocalizations.of(context)!.bounds,
-                                  metadata.bounds!,
-                                ),
-                              if (metadata.isVector) ...[
-                                _buildInfoRow(
-                                  AppLocalizations.of(context)!.type,
-                                  AppLocalizations.of(context)!.vectorTiles,
-                                ),
-                                _buildInfoRow(
-                                  AppLocalizations.of(context)!.schema,
-                                  _mbtilesService.getVectorSchema(metadata) ??
-                                    AppLocalizations.of(context)!.unknown,
-                                ),
-                              ],
                               const SizedBox(height: 12),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                children: [
-                                  TextButton.icon(
-                                    onPressed: () => _deleteMbtilesFile(metadata),
-                                    icon: const Icon(Icons.delete, color: Colors.red),
-                                    label: Text(
-                                      AppLocalizations.of(context)!.delete,
-                                      style: const TextStyle(color: Colors.red),
-                                    ),
-                                  ),
-                                ],
+                            ],
+                            _buildInfoRow(
+                              AppLocalizations.of(context)!.zoomLevels,
+                              '${metadata.minZoom ?? "?"} - ${metadata.maxZoom ?? "?"}',
+                            ),
+                            if (metadata.bounds != null)
+                              _buildInfoRow(
+                                AppLocalizations.of(context)!.bounds,
+                                metadata.bounds!,
+                              ),
+                            if (metadata.isVector) ...[
+                              _buildInfoRow(
+                                AppLocalizations.of(context)!.type,
+                                AppLocalizations.of(context)!.vectorTiles,
+                              ),
+                              _buildInfoRow(
+                                AppLocalizations.of(context)!.schema,
+                                _mbtilesService.getVectorSchema(metadata) ??
+                                    AppLocalizations.of(context)!.unknown,
                               ),
                             ],
-                          ),
+                            const SizedBox(height: 12),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                TextButton.icon(
+                                  onPressed: () => _deleteMbtilesFile(metadata),
+                                  icon: const Icon(
+                                    Icons.delete,
+                                    color: Colors.red,
+                                  ),
+                                  label: Text(
+                                    AppLocalizations.of(context)!.delete,
+                                    style: const TextStyle(color: Colors.red),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                  )),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
 
             const SizedBox(height: 16),
 
@@ -840,10 +880,7 @@ class _MapManagementScreenState extends State<MapManagementScreen> {
             ),
           ),
           Expanded(
-            child: Text(
-              value,
-              style: TextStyle(color: Colors.grey[800]),
-            ),
+            child: Text(value, style: TextStyle(color: Colors.grey[800])),
           ),
         ],
       ),
@@ -865,7 +902,7 @@ class _MapManagementScreenState extends State<MapManagementScreen> {
 
             // Map Layer Selection
             DropdownButtonFormField<MapLayer>(
-              value: _selectedLayer,
+              initialValue: _selectedLayer,
               decoration: InputDecoration(
                 labelText: AppLocalizations.of(context)!.mapLayer,
                 border: const OutlineInputBorder(),
@@ -876,11 +913,13 @@ class _MapManagementScreenState extends State<MapManagementScreen> {
                   child: Text(layer.getLocalizedName(context)),
                 );
               }).toList(),
-              onChanged: _isDownloading ? null : (layer) {
-                if (layer != null) {
-                  setState(() => _selectedLayer = layer);
-                }
-              },
+              onChanged: _isDownloading
+                  ? null
+                  : (layer) {
+                      if (layer != null) {
+                        setState(() => _selectedLayer = layer);
+                      }
+                    },
             ),
             const SizedBox(height: 16),
 
@@ -900,7 +939,9 @@ class _MapManagementScreenState extends State<MapManagementScreen> {
                       border: const OutlineInputBorder(),
                       hintText: '46.1',
                     ),
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
                     enabled: !_isDownloading,
                   ),
                 ),
@@ -913,7 +954,9 @@ class _MapManagementScreenState extends State<MapManagementScreen> {
                       border: const OutlineInputBorder(),
                       hintText: '46.0',
                     ),
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
                     enabled: !_isDownloading,
                   ),
                 ),
@@ -930,7 +973,9 @@ class _MapManagementScreenState extends State<MapManagementScreen> {
                       border: const OutlineInputBorder(),
                       hintText: '14.6',
                     ),
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
                     enabled: !_isDownloading,
                   ),
                 ),
@@ -943,7 +988,9 @@ class _MapManagementScreenState extends State<MapManagementScreen> {
                       border: const OutlineInputBorder(),
                       hintText: '14.4',
                     ),
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
                     enabled: !_isDownloading,
                   ),
                 ),
@@ -970,14 +1017,16 @@ class _MapManagementScreenState extends State<MapManagementScreen> {
                         max: 19,
                         divisions: 18,
                         label: '$_minZoom',
-                        onChanged: _isDownloading ? null : (value) {
-                          setState(() {
-                            _minZoom = value.toInt();
-                            if (_minZoom > _maxZoom) {
-                              _maxZoom = _minZoom;
-                            }
-                          });
-                        },
+                        onChanged: _isDownloading
+                            ? null
+                            : (value) {
+                                setState(() {
+                                  _minZoom = value.toInt();
+                                  if (_minZoom > _maxZoom) {
+                                    _maxZoom = _minZoom;
+                                  }
+                                });
+                              },
                       ),
                     ],
                   ),
@@ -994,14 +1043,16 @@ class _MapManagementScreenState extends State<MapManagementScreen> {
                         max: 19,
                         divisions: 18,
                         label: '$_maxZoom',
-                        onChanged: _isDownloading ? null : (value) {
-                          setState(() {
-                            _maxZoom = value.toInt();
-                            if (_maxZoom < _minZoom) {
-                              _minZoom = _maxZoom;
-                            }
-                          });
-                        },
+                        onChanged: _isDownloading
+                            ? null
+                            : (value) {
+                                setState(() {
+                                  _maxZoom = value.toInt();
+                                  if (_maxZoom < _minZoom) {
+                                    _minZoom = _maxZoom;
+                                  }
+                                });
+                              },
                       ),
                     ],
                   ),
@@ -1018,7 +1069,9 @@ class _MapManagementScreenState extends State<MapManagementScreen> {
                   color: Theme.of(context).colorScheme.primaryContainer,
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.primary.withOpacity(0.3),
                   ),
                 ),
                 child: Column(
@@ -1029,10 +1082,13 @@ class _MapManagementScreenState extends State<MapManagementScreen> {
                       children: [
                         Expanded(
                           child: Text(
-                            _statusMessage ?? AppLocalizations.of(context)!.downloadingDots,
+                            _statusMessage ??
+                                AppLocalizations.of(context)!.downloadingDots,
                             style: TextStyle(
                               fontWeight: FontWeight.w500,
-                              color: Theme.of(context).colorScheme.onPrimaryContainer,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onPrimaryContainer,
                             ),
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -1043,7 +1099,9 @@ class _MapManagementScreenState extends State<MapManagementScreen> {
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
-                            color: Theme.of(context).colorScheme.onPrimaryContainer,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onPrimaryContainer,
                           ),
                         ),
                       ],
@@ -1054,7 +1112,9 @@ class _MapManagementScreenState extends State<MapManagementScreen> {
                       child: LinearProgressIndicator(
                         value: _downloadProgress / 100,
                         minHeight: 8,
-                        backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+                        backgroundColor: Theme.of(
+                          context,
+                        ).colorScheme.primary.withOpacity(0.2),
                         valueColor: AlwaysStoppedAnimation<Color>(
                           Theme.of(context).colorScheme.primary,
                         ),

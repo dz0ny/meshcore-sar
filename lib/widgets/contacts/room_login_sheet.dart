@@ -1,4 +1,3 @@
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -86,7 +85,9 @@ class _RoomLoginSheetState extends State<RoomLoginSheet> {
     });
 
     // 🕐 CLOCK DRIFT CHECK: Get device time to detect synchronization issues
-    debugPrint('🕐 [RoomLogin] Checking for clock drift between app and radio...');
+    debugPrint(
+      '🕐 [RoomLogin] Checking for clock drift between app and radio...',
+    );
     try {
       await connectionProvider.getDeviceTime();
       // Give time for response to be logged
@@ -97,18 +98,26 @@ class _RoomLoginSheetState extends State<RoomLoginSheet> {
     }
 
     // 🔍 PRE-LOGIN CHECK: Ensure room contact exists in device
-    debugPrint('🔍 [RoomLogin] Checking if room "${widget.contact.advName}" exists in contacts...');
-    debugPrint('   Target public key prefix: ${widget.contact.publicKeyPrefix.map((b) => b.toRadixString(16).padLeft(2, '0')).join(':')}');
+    debugPrint(
+      '🔍 [RoomLogin] Checking if room "${widget.contact.advName}" exists in contacts...',
+    );
+    debugPrint(
+      '   Target public key prefix: ${widget.contact.publicKeyPrefix.map((b) => b.toRadixString(16).padLeft(2, '0')).join(':')}',
+    );
 
     // Check if the room exists in our local contacts
     bool roomExists = contactsProvider.rooms.any(
       (room) => room.publicKeyHex == widget.contact.publicKeyHex,
     );
 
-    debugPrint('   Local contact list: ${roomExists ? "✅ Found" : "❌ Not found"}');
+    debugPrint(
+      '   Local contact list: ${roomExists ? "✅ Found" : "❌ Not found"}',
+    );
 
     if (!roomExists) {
-      debugPrint('⚠️ [RoomLogin] Room not in local contacts - syncing with device...');
+      debugPrint(
+        '⚠️ [RoomLogin] Room not in local contacts - syncing with device...',
+      );
 
       try {
         // Sync contacts from device
@@ -122,24 +131,32 @@ class _RoomLoginSheetState extends State<RoomLoginSheet> {
           (room) => room.publicKeyHex == widget.contact.publicKeyHex,
         );
 
-        debugPrint('   After sync: ${roomExists ? "✅ Found" : "❌ Still not found"}');
+        debugPrint(
+          '   After sync: ${roomExists ? "✅ Found" : "❌ Still not found"}',
+        );
 
         if (!roomExists) {
           // Room still doesn't exist on the device - try to add it manually
           debugPrint('❌ [RoomLogin] Room still not found after sync');
-          debugPrint('🔧 [RoomLogin] Attempting to add room contact to companion radio...');
+          debugPrint(
+            '🔧 [RoomLogin] Attempting to add room contact to companion radio...',
+          );
 
           try {
             // Manually add the room contact to the radio's flash storage
             await connectionProvider.addOrUpdateContact(widget.contact);
 
-            debugPrint('✅ [RoomLogin] Room contact added via CMD_ADD_UPDATE_CONTACT');
+            debugPrint(
+              '✅ [RoomLogin] Room contact added via CMD_ADD_UPDATE_CONTACT',
+            );
             debugPrint('   Waiting 500ms for radio to save to flash...');
 
             // Give the radio time to save the contact to flash
             await Future.delayed(const Duration(milliseconds: 500));
 
-            debugPrint('✅ [RoomLogin] Room contact should now be available - proceeding with login');
+            debugPrint(
+              '✅ [RoomLogin] Room contact should now be available - proceeding with login',
+            );
           } catch (e) {
             debugPrint('❌ [RoomLogin] Failed to add room contact: $e');
 
@@ -151,7 +168,9 @@ class _RoomLoginSheetState extends State<RoomLoginSheet> {
 
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(AppLocalizations.of(context)!.failedToAddRoom(e.toString())),
+                content: Text(
+                  AppLocalizations.of(context)!.failedToAddRoom(e.toString()),
+                ),
                 backgroundColor: Theme.of(context).colorScheme.error,
                 duration: const Duration(seconds: 7),
               ),
@@ -159,16 +178,22 @@ class _RoomLoginSheetState extends State<RoomLoginSheet> {
 
             // Log available rooms for debugging
             final availableRooms = contactsProvider.rooms;
-            debugPrint('📋 [RoomLogin] Available rooms on device (${availableRooms.length}):');
+            debugPrint(
+              '📋 [RoomLogin] Available rooms on device (${availableRooms.length}):',
+            );
             for (final room in availableRooms) {
-              debugPrint('   - ${room.advName} (${room.publicKeyPrefix.map((b) => b.toRadixString(16).padLeft(2, '0')).join(':')})');
+              debugPrint(
+                '   - ${room.advName} (${room.publicKeyPrefix.map((b) => b.toRadixString(16).padLeft(2, '0')).join(':')})',
+              );
             }
 
             return;
           }
         }
 
-        debugPrint('✅ [RoomLogin] Room contact found after sync - proceeding with login');
+        debugPrint(
+          '✅ [RoomLogin] Room contact found after sync - proceeding with login',
+        );
       } catch (e) {
         debugPrint('❌ [RoomLogin] Contact sync failed: $e');
 
@@ -180,14 +205,18 @@ class _RoomLoginSheetState extends State<RoomLoginSheet> {
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(AppLocalizations.of(context)!.failedToSyncContacts(e.toString())),
+            content: Text(
+              AppLocalizations.of(context)!.failedToSyncContacts(e.toString()),
+            ),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
         return;
       }
     } else {
-      debugPrint('✅ [RoomLogin] Room contact found in local contacts - proceeding with login');
+      debugPrint(
+        '✅ [RoomLogin] Room contact found in local contacts - proceeding with login',
+      );
     }
 
     // Save password before sending
@@ -200,14 +229,21 @@ class _RoomLoginSheetState extends State<RoomLoginSheet> {
     originalOnSuccess = connectionProvider.onLoginSuccess;
     originalOnFail = connectionProvider.onLoginFail;
 
-    connectionProvider.onLoginSuccess = (publicKeyPrefix, permissions, isAdmin, tag) async {
+    connectionProvider
+        .onLoginSuccess = (publicKeyPrefix, permissions, isAdmin, tag) async {
       // Restore original callback
       connectionProvider.onLoginSuccess = originalOnSuccess;
       connectionProvider.onLoginFail = originalOnFail;
 
-      debugPrint('✅ [RoomLogin] Login successful! Tag: $tag, Permissions: $permissions, Admin: $isAdmin');
-      debugPrint('📡 [RoomLogin] Room server will now push messages automatically via PUSH_CODE_MSG_WAITING');
-      debugPrint('   Messages will be fetched when onMessageWaiting callback is triggered');
+      debugPrint(
+        '✅ [RoomLogin] Login successful! Tag: $tag, Permissions: $permissions, Admin: $isAdmin',
+      );
+      debugPrint(
+        '📡 [RoomLogin] Room server will now push messages automatically via PUSH_CODE_MSG_WAITING',
+      );
+      debugPrint(
+        '   Messages will be fetched when onMessageWaiting callback is triggered',
+      );
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -252,7 +288,9 @@ class _RoomLoginSheetState extends State<RoomLoginSheet> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(AppLocalizations.of(context)!.loggingIn(widget.contact.displayName)),
+          content: Text(
+            AppLocalizations.of(context)!.loggingIn(widget.contact.displayName),
+          ),
           backgroundColor: Theme.of(context).colorScheme.primary,
           duration: const Duration(seconds: 2),
         ),
@@ -265,7 +303,9 @@ class _RoomLoginSheetState extends State<RoomLoginSheet> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(AppLocalizations.of(context)!.failedToSendLogin(e.toString())),
+          content: Text(
+            AppLocalizations.of(context)!.failedToSendLogin(e.toString()),
+          ),
           backgroundColor: Theme.of(context).colorScheme.error,
         ),
       );
@@ -350,7 +390,11 @@ class _RoomLoginSheetState extends State<RoomLoginSheet> {
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Icon(Icons.info_outline, color: colorScheme.onPrimaryContainer, size: 20),
+                          Icon(
+                            Icons.info_outline,
+                            color: colorScheme.onPrimaryContainer,
+                            size: 20,
+                          ),
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(
@@ -378,72 +422,83 @@ class _RoomLoginSheetState extends State<RoomLoginSheet> {
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: _passwordController,
-                  focusNode: _focusNode,
-                  maxLength: 15, // Max password length from protocol
-                  obscureText: _obscurePassword,
-                  autofocus: true,
-                  maxLengthEnforcement: MaxLengthEnforcement.enforced,
-                  style: TextStyle(color: colorScheme.onSurface),
-                  decoration: InputDecoration(
-                    labelText: AppLocalizations.of(context)!.password,
-                    labelStyle: TextStyle(color: colorScheme.onSurfaceVariant),
-                    hintText: AppLocalizations.of(context)!.enterRoomPassword,
-                    hintStyle: TextStyle(color: colorScheme.onSurfaceVariant),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: colorScheme.outline),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: colorScheme.outline),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: colorScheme.primary, width: 2),
-                    ),
-                    contentPadding: const EdgeInsets.all(16),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscurePassword ? Icons.visibility : Icons.visibility_off,
+                children: [
+                  TextField(
+                    controller: _passwordController,
+                    focusNode: _focusNode,
+                    maxLength: 15, // Max password length from protocol
+                    obscureText: _obscurePassword,
+                    autofocus: true,
+                    maxLengthEnforcement: MaxLengthEnforcement.enforced,
+                    style: TextStyle(color: colorScheme.onSurface),
+                    decoration: InputDecoration(
+                      labelText: AppLocalizations.of(context)!.password,
+                      labelStyle: TextStyle(
                         color: colorScheme.onSurfaceVariant,
                       ),
-                      onPressed: () {
-                        setState(() {
-                          _obscurePassword = !_obscurePassword;
-                        });
-                      },
+                      hintText: AppLocalizations.of(context)!.enterRoomPassword,
+                      hintStyle: TextStyle(color: colorScheme.onSurfaceVariant),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: colorScheme.outline),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: colorScheme.outline),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                          color: colorScheme.primary,
+                          width: 2,
+                        ),
+                      ),
+                      contentPadding: const EdgeInsets.all(16),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _obscurePassword
+                              ? Icons.visibility
+                              : Icons.visibility_off,
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _obscurePassword = !_obscurePassword;
+                          });
+                        },
+                      ),
+                    ),
+                    textInputAction: TextInputAction.done,
+                    onSubmitted: (_) => _loginToRoom(),
+                  ),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: _isLoggingIn ? null : _loginToRoom,
+                      icon: _isLoggingIn
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.login),
+                      label: Text(
+                        _isLoggingIn
+                            ? AppLocalizations.of(context)!.loggingInDots
+                            : AppLocalizations.of(context)!.login,
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                      ),
                     ),
                   ),
-                  textInputAction: TextInputAction.done,
-                  onSubmitted: (_) => _loginToRoom(),
-                ),
-                const SizedBox(height: 16),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: _isLoggingIn ? null : _loginToRoom,
-                    icon: _isLoggingIn
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.login),
-                    label: Text(_isLoggingIn ? AppLocalizations.of(context)!.loggingInDots : AppLocalizations.of(context)!.login),
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                    ),
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
-    ),
     );
   }
 }

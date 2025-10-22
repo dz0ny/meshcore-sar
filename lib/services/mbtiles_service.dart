@@ -129,7 +129,7 @@ class MbtilesService {
       final mbtiles = MbTiles(mbtilesPath: file.path);
 
       // Get metadata from MBTiles
-      final metadata = await mbtiles.getMetadata();
+      final metadata = mbtiles.getMetadata();
 
       // Convert bounds object to string if available
       String? boundsStr;
@@ -222,7 +222,7 @@ class MbtilesService {
       final mbtiles = MbTiles(mbtilesPath: file.path);
 
       // Try to get metadata to check for compression hints
-      final metadata = await mbtiles.getMetadata();
+      final metadata = mbtiles.getMetadata();
       final format = metadata.format;
 
       // For Geofabrik files, format is 'pbf' and data is gzipped

@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 
 /// Type of response expected from a command
@@ -95,7 +94,8 @@ class BleCommandQueue {
     Duration? timeout,
   }) async {
     // Determine timeout based on response type
-    final cmdTimeout = timeout ??
+    final cmdTimeout =
+        timeout ??
         (responseType == CommandResponseType.data
             ? const Duration(seconds: 10)
             : const Duration(seconds: 5));
@@ -114,7 +114,9 @@ class BleCommandQueue {
     _queue.add(command);
     onQueueSizeChanged?.call(_queue.length);
 
-    debugPrint('📋 [CommandQueue] Enqueued command 0x${commandCode.toRadixString(16).padLeft(2, '0')} (queue size: ${_queue.length})');
+    debugPrint(
+      '📋 [CommandQueue] Enqueued command 0x${commandCode.toRadixString(16).padLeft(2, '0')} (queue size: ${_queue.length})',
+    );
 
     // Start processing if not already running
     if (!_isProcessing) {
@@ -125,9 +127,13 @@ class BleCommandQueue {
     return command.completer.future.timeout(
       cmdTimeout,
       onTimeout: () {
-        debugPrint('⏱️ [CommandQueue] Command 0x${commandCode.toRadixString(16).padLeft(2, '0')} timed out after ${cmdTimeout.inSeconds}s');
+        debugPrint(
+          '⏱️ [CommandQueue] Command 0x${commandCode.toRadixString(16).padLeft(2, '0')} timed out after ${cmdTimeout.inSeconds}s',
+        );
         _pendingResponses.remove(commandCode);
-        throw TimeoutException('Command 0x${commandCode.toRadixString(16).padLeft(2, '0')} timed out');
+        throw TimeoutException(
+          'Command 0x${commandCode.toRadixString(16).padLeft(2, '0')} timed out',
+        );
       },
     );
   }
@@ -152,7 +158,9 @@ class BleCommandQueue {
           final remainingDelay = _minDelayMs - elapsed.inMilliseconds;
 
           if (remainingDelay > 0) {
-            debugPrint('⏸️ [CommandQueue] Waiting ${remainingDelay}ms before next command');
+            debugPrint(
+              '⏸️ [CommandQueue] Waiting ${remainingDelay}ms before next command',
+            );
             await Future.delayed(Duration(milliseconds: remainingDelay));
           }
         }
@@ -170,7 +178,9 @@ class BleCommandQueue {
 
         // Execute command (handled by BleCommandSender)
         // The completer will be completed by completeCommand() when response arrives
-        debugPrint('📤 [CommandQueue] Executing command 0x${command.commandCode.toRadixString(16).padLeft(2, '0')}');
+        debugPrint(
+          '📤 [CommandQueue] Executing command 0x${command.commandCode.toRadixString(16).padLeft(2, '0')}',
+        );
 
         // For fire-and-forget commands, complete immediately
         if (command.responseType == CommandResponseType.none) {
@@ -209,7 +219,9 @@ class BleCommandQueue {
   void completeCommand<T>(int responseCode, T data) {
     final command = _pendingResponses.remove(responseCode);
     if (command != null) {
-      debugPrint('✅ [CommandQueue] Completing command 0x${command.commandCode.toRadixString(16).padLeft(2, '0')} with response 0x${responseCode.toRadixString(16).padLeft(2, '0')}');
+      debugPrint(
+        '✅ [CommandQueue] Completing command 0x${command.commandCode.toRadixString(16).padLeft(2, '0')} with response 0x${responseCode.toRadixString(16).padLeft(2, '0')}',
+      );
       if (!command.completer.isCompleted) {
         command.completer.complete(data);
       }
@@ -219,10 +231,16 @@ class BleCommandQueue {
   /// Complete a pending command with error
   ///
   /// Called by BleResponseHandler when RESP_CODE_ERR is received
-  void completeCommandWithError(int commandCode, String error, {int? errorCode}) {
+  void completeCommandWithError(
+    int commandCode,
+    String error, {
+    int? errorCode,
+  }) {
     final command = _pendingResponses.remove(commandCode);
     if (command != null) {
-      debugPrint('❌ [CommandQueue] Command 0x${commandCode.toRadixString(16).padLeft(2, '0')} failed: $error (code: $errorCode)');
+      debugPrint(
+        '❌ [CommandQueue] Command 0x${commandCode.toRadixString(16).padLeft(2, '0')} failed: $error (code: $errorCode)',
+      );
       if (!command.completer.isCompleted) {
         command.completer.completeError(
           Exception('Command failed: $error (error code: $errorCode)'),
@@ -245,7 +263,9 @@ class BleCommandQueue {
 
   /// Clear all pending commands (use with caution)
   void clear() {
-    debugPrint('🗑️ [CommandQueue] Clearing queue (${_queue.length} commands, ${_pendingResponses.length} pending responses)');
+    debugPrint(
+      '🗑️ [CommandQueue] Clearing queue (${_queue.length} commands, ${_pendingResponses.length} pending responses)',
+    );
 
     // Complete all pending commands with error
     for (final command in _pendingResponses.values) {

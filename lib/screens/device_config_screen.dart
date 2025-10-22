@@ -209,7 +209,9 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(AppLocalizations.of(context)!.failedToSave(e.toString())),
+            content: Text(
+              AppLocalizations.of(context)!.failedToSave(e.toString()),
+            ),
             backgroundColor: Colors.red,
           ),
         );
@@ -282,7 +284,9 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(AppLocalizations.of(context)!.failedToSave(e.toString())),
+            content: Text(
+              AppLocalizations.of(context)!.failedToSave(e.toString()),
+            ),
             backgroundColor: Colors.red,
           ),
         );
@@ -365,9 +369,13 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.failedToGetLocation(e.toString()))));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)!.failedToGetLocation(e.toString()),
+            ),
+          ),
+        );
       }
     }
   }
@@ -452,14 +460,33 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  _InfoRow(AppLocalizations.of(context)!.bleName, deviceInfo.deviceName ?? AppLocalizations.of(context)!.unknown),
-                  _InfoRow(AppLocalizations.of(context)!.meshName, deviceInfo.selfName ?? AppLocalizations.of(context)!.notSet),
-                  _InfoRow(AppLocalizations.of(context)!.type, _getDeviceTypeString(context, deviceInfo.deviceType)),
-                  _InfoRow(AppLocalizations.of(context)!.model, deviceInfo.manufacturerModel ?? AppLocalizations.of(context)!.unknown),
-                  _InfoRow(AppLocalizations.of(context)!.version, deviceInfo.semanticVersion ?? AppLocalizations.of(context)!.unknown),
+                  _InfoRow(
+                    AppLocalizations.of(context)!.bleName,
+                    deviceInfo.deviceName ??
+                        AppLocalizations.of(context)!.unknown,
+                  ),
+                  _InfoRow(
+                    AppLocalizations.of(context)!.meshName,
+                    deviceInfo.selfName ?? AppLocalizations.of(context)!.notSet,
+                  ),
+                  _InfoRow(
+                    AppLocalizations.of(context)!.type,
+                    _getDeviceTypeString(context, deviceInfo.deviceType),
+                  ),
+                  _InfoRow(
+                    AppLocalizations.of(context)!.model,
+                    deviceInfo.manufacturerModel ??
+                        AppLocalizations.of(context)!.unknown,
+                  ),
+                  _InfoRow(
+                    AppLocalizations.of(context)!.version,
+                    deviceInfo.semanticVersion ??
+                        AppLocalizations.of(context)!.unknown,
+                  ),
                   _InfoRow(
                     AppLocalizations.of(context)!.buildDate,
-                    deviceInfo.firmwareBuildDate ?? AppLocalizations.of(context)!.unknown,
+                    deviceInfo.firmwareBuildDate ??
+                        AppLocalizations.of(context)!.unknown,
                   ),
                   _InfoRow(
                     AppLocalizations.of(context)!.firmware,
@@ -467,11 +494,13 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
                   ),
                   _InfoRow(
                     AppLocalizations.of(context)!.maxContacts,
-                    deviceInfo.maxContacts?.toString() ?? AppLocalizations.of(context)!.unknown,
+                    deviceInfo.maxContacts?.toString() ??
+                        AppLocalizations.of(context)!.unknown,
                   ),
                   _InfoRow(
                     AppLocalizations.of(context)!.maxChannels,
-                    deviceInfo.maxChannels?.toString() ?? AppLocalizations.of(context)!.unknown,
+                    deviceInfo.maxChannels?.toString() ??
+                        AppLocalizations.of(context)!.unknown,
                   ),
                   _CopyableInfoRow(
                     AppLocalizations.of(context)!.publicKey,
@@ -521,7 +550,9 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
                     decoration: InputDecoration(
                       labelText: AppLocalizations.of(context)!.meshNetworkName,
                       border: const OutlineInputBorder(),
-                      helperText: AppLocalizations.of(context)!.nameBroadcastInMesh,
+                      helperText: AppLocalizations.of(
+                        context,
+                      )!.nameBroadcastInMesh,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -531,7 +562,9 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
                     children: [
                       Expanded(
                         child: Text(
-                          AppLocalizations.of(context)!.telemetryAndLocationSharing,
+                          AppLocalizations.of(
+                            context,
+                          )!.telemetryAndLocationSharing,
                           style: theme.textTheme.bodyMedium,
                         ),
                       ),
@@ -584,7 +617,9 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
                         IconButton.filled(
                           onPressed: _useCurrentLocation,
                           icon: const Icon(Icons.my_location, size: 20),
-                          tooltip: AppLocalizations.of(context)!.useCurrentLocation,
+                          tooltip: AppLocalizations.of(
+                            context,
+                          )!.useCurrentLocation,
                         ),
                       ],
                     ),
@@ -627,7 +662,9 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
                     decoration: InputDecoration(
                       labelText: AppLocalizations.of(context)!.frequencyMHz,
                       border: const OutlineInputBorder(),
-                      helperText: AppLocalizations.of(context)!.frequencyExample,
+                      helperText: AppLocalizations.of(
+                        context,
+                      )!.frequencyExample,
                     ),
                     keyboardType: const TextInputType.numberWithOptions(
                       decimal: true,
@@ -637,7 +674,7 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
 
                   // Bandwidth
                   DropdownButtonFormField<String>(
-                    value: _selectedBandwidth,
+                    initialValue: _selectedBandwidth,
                     decoration: InputDecoration(
                       labelText: AppLocalizations.of(context)!.bandwidth,
                       border: const OutlineInputBorder(),
@@ -660,7 +697,7 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
 
                   // Spreading Factor
                   DropdownButtonFormField<int>(
-                    value: _selectedSpreadingFactor,
+                    initialValue: _selectedSpreadingFactor,
                     decoration: InputDecoration(
                       labelText: AppLocalizations.of(context)!.spreadingFactor,
                       border: const OutlineInputBorder(),
@@ -685,7 +722,7 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
 
                   // Coding Rate
                   DropdownButtonFormField<int>(
-                    value: _selectedCodingRate,
+                    initialValue: _selectedCodingRate,
                     decoration: InputDecoration(
                       labelText: AppLocalizations.of(context)!.codingRate,
                       border: const OutlineInputBorder(),
@@ -714,7 +751,9 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
                     decoration: InputDecoration(
                       labelText: AppLocalizations.of(context)!.txPowerDbm,
                       border: const OutlineInputBorder(),
-                      helperText: AppLocalizations.of(context)!.maxPowerDbm(deviceInfo.maxTxPower ?? 22),
+                      helperText: AppLocalizations.of(
+                        context,
+                      )!.maxPowerDbm(deviceInfo.maxTxPower ?? 22),
                     ),
                     keyboardType: TextInputType.number,
                   ),
@@ -815,7 +854,11 @@ class _CopyableInfoRow extends StatelessWidget {
                 Clipboard.setData(ClipboardData(text: value));
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text(AppLocalizations.of(context)!.copiedToClipboardShort(label)),
+                    content: Text(
+                      AppLocalizations.of(
+                        context,
+                      )!.copiedToClipboardShort(label),
+                    ),
                     duration: const Duration(seconds: 2),
                     backgroundColor: Colors.green,
                   ),

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest_all.dart' as tz;
 import '../models/sar_marker.dart';
 import '../l10n/app_localizations.dart';
@@ -44,7 +43,9 @@ class NotificationService {
       tz.initializeTimeZones();
 
       // Android initialization settings
-      const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+      const androidSettings = AndroidInitializationSettings(
+        '@mipmap/ic_launcher',
+      );
 
       // iOS initialization settings
       final darwinSettings = DarwinInitializationSettings(
@@ -85,25 +86,34 @@ class NotificationService {
     try {
       // iOS permissions
       final iosPlugin = _notificationsPlugin
-          .resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>();
+          .resolvePlatformSpecificImplementation<
+            IOSFlutterLocalNotificationsPlugin
+          >();
       if (iosPlugin != null) {
         final granted = await iosPlugin.requestPermissions(
           alert: true,
           badge: true,
           sound: true,
-          critical: true, // Request critical alert permission for urgent SAR notifications
+          critical:
+              true, // Request critical alert permission for urgent SAR notifications
         );
         _permissionGranted = granted ?? false;
-        debugPrint('📱 [NotificationService] iOS permissions granted: $_permissionGranted');
+        debugPrint(
+          '📱 [NotificationService] iOS permissions granted: $_permissionGranted',
+        );
       }
 
       // Android 13+ permissions
       final androidPlugin = _notificationsPlugin
-          .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >();
       if (androidPlugin != null) {
         final granted = await androidPlugin.requestNotificationsPermission();
         _permissionGranted = granted ?? false;
-        debugPrint('🤖 [NotificationService] Android permissions granted: $_permissionGranted');
+        debugPrint(
+          '🤖 [NotificationService] Android permissions granted: $_permissionGranted',
+        );
       }
     } catch (e) {
       debugPrint('⚠️ [NotificationService] Error requesting permissions: $e');
@@ -114,7 +124,9 @@ class NotificationService {
   Future<void> _createNotificationChannels() async {
     try {
       final androidPlugin = _notificationsPlugin
-          .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >();
 
       if (androidPlugin == null) return;
 
@@ -152,7 +164,9 @@ class NotificationService {
 
   /// Handle notification tap (foreground)
   void _onNotificationResponse(NotificationResponse response) {
-    debugPrint('🔔 [NotificationService] Notification tapped: ${response.payload}');
+    debugPrint(
+      '🔔 [NotificationService] Notification tapped: ${response.payload}',
+    );
     // TODO: Navigate to map tab and show SAR marker
     // This would require a callback to the app layer
   }
@@ -166,18 +180,23 @@ class NotificationService {
     AppLocalizations? localizations,
   }) async {
     if (!_isInitialized) {
-      debugPrint('⚠️ [NotificationService] Not initialized, skipping notification');
+      debugPrint(
+        '⚠️ [NotificationService] Not initialized, skipping notification',
+      );
       return;
     }
 
     if (!_permissionGranted) {
-      debugPrint('⚠️ [NotificationService] Permission not granted, skipping notification');
+      debugPrint(
+        '⚠️ [NotificationService] Permission not granted, skipping notification',
+      );
       return;
     }
 
     try {
       // Generate unique notification ID based on timestamp
-      final notificationId = _sarNotificationId + (DateTime.now().millisecondsSinceEpoch % 1000);
+      final notificationId =
+          _sarNotificationId + (DateTime.now().millisecondsSinceEpoch % 1000);
 
       // Build notification title and body
       final title = _buildNotificationTitle(type, localizations);
@@ -222,7 +241,8 @@ class NotificationService {
         badgeNumber: 1,
         threadIdentifier: 'sar_markers',
         categoryIdentifier: 'SAR_ALERT',
-        interruptionLevel: InterruptionLevel.critical, // Critical alert (bypasses silent mode)
+        interruptionLevel:
+            InterruptionLevel.critical, // Critical alert (bypasses silent mode)
       );
 
       // Combined notification details
@@ -250,7 +270,10 @@ class NotificationService {
   }
 
   /// Build notification title based on SAR marker type
-  String _buildNotificationTitle(SarMarkerType type, AppLocalizations? localizations) {
+  String _buildNotificationTitle(
+    SarMarkerType type,
+    AppLocalizations? localizations,
+  ) {
     if (localizations == null) {
       return '🚨 ${type.displayName} Detected';
     }
@@ -330,27 +353,33 @@ class NotificationService {
     AppLocalizations? localizations,
   }) async {
     if (!_isInitialized) {
-      debugPrint('⚠️ [NotificationService] Not initialized, skipping notification');
+      debugPrint(
+        '⚠️ [NotificationService] Not initialized, skipping notification',
+      );
       return;
     }
 
     if (!_permissionGranted) {
-      debugPrint('⚠️ [NotificationService] Permission not granted, skipping notification');
+      debugPrint(
+        '⚠️ [NotificationService] Permission not granted, skipping notification',
+      );
       return;
     }
 
     try {
       // Generate unique notification ID based on timestamp
-      final notificationId = _messageNotificationId + (DateTime.now().millisecondsSinceEpoch % 1000);
+      final notificationId =
+          _messageNotificationId +
+          (DateTime.now().millisecondsSinceEpoch % 1000);
 
       // Build notification title and body
       final title = isChannelMessage
           ? (localizations != null
-              ? '${localizations.channel}: ${channelName ?? "Public"}'
-              : 'Channel: ${channelName ?? "Public"}')
+                ? '${localizations.channel}: ${channelName ?? "Public"}'
+                : 'Channel: ${channelName ?? "Public"}')
           : (localizations != null
-              ? '${localizations.newMessage} ${localizations.from} $senderName'
-              : 'New message from $senderName');
+                ? '${localizations.newMessage} ${localizations.from} $senderName'
+                : 'New message from $senderName');
 
       final body = messageText.length > 200
           ? '${messageText.substring(0, 200)}...'
@@ -381,7 +410,9 @@ class NotificationService {
         presentBadge: true,
         presentSound: true,
         sound: 'default',
-        threadIdentifier: isChannelMessage ? 'channel_messages' : 'direct_messages',
+        threadIdentifier: isChannelMessage
+            ? 'channel_messages'
+            : 'direct_messages',
         subtitle: senderName,
       );
 
@@ -404,7 +435,9 @@ class NotificationService {
       debugPrint('   Sender: $senderName');
       debugPrint('   Type: ${isChannelMessage ? "Channel" : "Direct"}');
     } catch (e) {
-      debugPrint('❌ [NotificationService] Error showing message notification: $e');
+      debugPrint(
+        '❌ [NotificationService] Error showing message notification: $e',
+      );
     }
   }
 
@@ -432,7 +465,9 @@ class NotificationService {
   Future<bool> areNotificationsEnabled() async {
     try {
       final androidPlugin = _notificationsPlugin
-          .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >();
       if (androidPlugin != null) {
         final enabled = await androidPlugin.areNotificationsEnabled();
         return enabled ?? false;
@@ -441,7 +476,9 @@ class NotificationService {
       // For iOS, assume enabled if permission was granted
       return _permissionGranted;
     } catch (e) {
-      debugPrint('⚠️ [NotificationService] Error checking notification status: $e');
+      debugPrint(
+        '⚠️ [NotificationService] Error checking notification status: $e',
+      );
       return false;
     }
   }
@@ -451,7 +488,9 @@ class NotificationService {
     try {
       return await _notificationsPlugin.pendingNotificationRequests();
     } catch (e) {
-      debugPrint('⚠️ [NotificationService] Error getting pending notifications: $e');
+      debugPrint(
+        '⚠️ [NotificationService] Error getting pending notifications: $e',
+      );
       return [];
     }
   }

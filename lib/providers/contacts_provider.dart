@@ -1,4 +1,3 @@
-import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import '../models/contact.dart';
 import '../services/cayenne_lpp_parser.dart';
@@ -23,11 +22,14 @@ class ContactsProvider with ChangeNotifier {
     if (_isInitialized) return;
 
     try {
-      debugPrint('📦 [ContactsProvider] Early loading persisted contacts (no filtering)...');
+      debugPrint(
+        '📦 [ContactsProvider] Early loading persisted contacts (no filtering)...',
+      );
       final storedContacts = await _storageService.loadContacts();
 
       // Add stored contacts (excluding any with all-zeros public key)
-      const publicChannelKey = '0000000000000000000000000000000000000000000000000000000000000000';
+      const publicChannelKey =
+          '0000000000000000000000000000000000000000000000000000000000000000';
       for (final contact in storedContacts) {
         // Skip any contacts with all-zeros public key (shouldn't happen, but safety check)
         if (contact.publicKeyHex == publicChannelKey) {
@@ -37,7 +39,9 @@ class ContactsProvider with ChangeNotifier {
       }
 
       _isInitialized = true;
-      debugPrint('✅ [ContactsProvider] Early loaded ${storedContacts.length} persisted contacts');
+      debugPrint(
+        '✅ [ContactsProvider] Early loaded ${storedContacts.length} persisted contacts',
+      );
 
       // Ensure public channel exists after loading
       _ensurePublicChannelExists();
@@ -68,7 +72,8 @@ class ContactsProvider with ChangeNotifier {
       );
 
       // Add stored contacts (excluding any with all-zeros public key)
-      const publicChannelKey = '0000000000000000000000000000000000000000000000000000000000000000';
+      const publicChannelKey =
+          '0000000000000000000000000000000000000000000000000000000000000000';
       for (final contact in storedContacts) {
         // Skip any contacts with all-zeros public key (shouldn't happen, but safety check)
         if (contact.publicKeyHex == publicChannelKey) {
@@ -78,7 +83,9 @@ class ContactsProvider with ChangeNotifier {
       }
 
       _isInitialized = true;
-      debugPrint('✅ [ContactsProvider] Loaded ${storedContacts.length} persisted contacts');
+      debugPrint(
+        '✅ [ContactsProvider] Loaded ${storedContacts.length} persisted contacts',
+      );
 
       // Ensure public channel exists after loading
       _ensurePublicChannelExists();
@@ -93,10 +100,14 @@ class ContactsProvider with ChangeNotifier {
 
   /// Remove self-contact from loaded contacts (called after BLE connection established)
   void _removeSelfContact(Uint8List devicePublicKey) {
-    final selfKeyHex = devicePublicKey.map((b) => b.toRadixString(16).padLeft(2, '0')).join('');
+    final selfKeyHex = devicePublicKey
+        .map((b) => b.toRadixString(16).padLeft(2, '0'))
+        .join('');
     if (_contacts.containsKey(selfKeyHex)) {
       final selfContact = _contacts[selfKeyHex]!;
-      debugPrint('🗑️ [ContactsProvider] Removing self-contact: ${selfContact.advName}');
+      debugPrint(
+        '🗑️ [ContactsProvider] Removing self-contact: ${selfContact.advName}',
+      );
       _contacts.remove(selfKeyHex);
       _persistContacts();
       notifyListeners();
@@ -106,11 +117,14 @@ class ContactsProvider with ChangeNotifier {
   /// Ensure public channel always exists in the list
   void _ensurePublicChannelExists() {
     // Public channel has all-zeros public key (32 bytes = 64 hex chars)
-    const publicChannelKey = '0000000000000000000000000000000000000000000000000000000000000000';
+    const publicChannelKey =
+        '0000000000000000000000000000000000000000000000000000000000000000';
     if (!_contacts.containsKey(publicChannelKey)) {
       // Create a pseudo-contact for the public channel (ephemeral broadcast)
       _contacts[publicChannelKey] = Contact(
-        publicKey: Uint8List.fromList(List.filled(32, 0)), // Zero key for public
+        publicKey: Uint8List.fromList(
+          List.filled(32, 0),
+        ), // Zero key for public
         type: ContactType.channel, // Channel type (not room!)
         flags: 0,
         outPathLen: 0,
@@ -128,7 +142,8 @@ class ContactsProvider with ChangeNotifier {
   Future<void> _persistContacts() async {
     try {
       // Don't persist the public channel pseudo-contact (all zeros key)
-      const publicChannelKey = '0000000000000000000000000000000000000000000000000000000000000000';
+      const publicChannelKey =
+          '0000000000000000000000000000000000000000000000000000000000000000';
       final contactsToSave = _contacts.entries
           .where((entry) => entry.key != publicChannelKey)
           .map((entry) => entry.value)
@@ -159,7 +174,8 @@ class ContactsProvider with ChangeNotifier {
   /// Get both rooms and channels (destinations for SAR markers)
   List<Contact> get roomsAndChannels {
     _ensurePublicChannelExists();
-    return contacts.where((c) => c.isRoom || c.isChannel).toList()..sort(_sortByLastSeen);
+    return contacts.where((c) => c.isRoom || c.isChannel).toList()
+      ..sort(_sortByLastSeen);
   }
 
   /// Get contacts with location (for map display)
@@ -179,8 +195,11 @@ class ContactsProvider with ChangeNotifier {
   /// Excludes contacts that match the device's own public key
   void addOrUpdateContact(Contact contact, {Uint8List? devicePublicKey}) {
     // Don't add contacts that match our device's public key
-    if (devicePublicKey != null && _publicKeysMatch(contact.publicKey, devicePublicKey)) {
-      debugPrint('ℹ️ [ContactsProvider] Ignoring contact with device\'s own public key: ${contact.advName}');
+    if (devicePublicKey != null &&
+        _publicKeysMatch(contact.publicKey, devicePublicKey)) {
+      debugPrint(
+        'ℹ️ [ContactsProvider] Ignoring contact with device\'s own public key: ${contact.advName}',
+      );
       return;
     }
 
@@ -192,8 +211,13 @@ class ContactsProvider with ChangeNotifier {
       // New contact - add initial location to history if available
       updatedContact = contact.copyWith(isNew: true);
       if (contact.advertLocation != null) {
-        final timestamp = DateTime.fromMillisecondsSinceEpoch(contact.lastAdvert * 1000);
-        updatedContact = updatedContact.addAdvertLocation(contact.advertLocation!, timestamp);
+        final timestamp = DateTime.fromMillisecondsSinceEpoch(
+          contact.lastAdvert * 1000,
+        );
+        updatedContact = updatedContact.addAdvertLocation(
+          contact.advertLocation!,
+          timestamp,
+        );
       }
     } else {
       // Existing contact - preserve history and isNew status
@@ -207,8 +231,13 @@ class ContactsProvider with ChangeNotifier {
 
       // Add new location to history if location has changed
       if (contact.advertLocation != null) {
-        final timestamp = DateTime.fromMillisecondsSinceEpoch(contact.lastAdvert * 1000);
-        updatedContact = updatedContact.addAdvertLocation(contact.advertLocation!, timestamp);
+        final timestamp = DateTime.fromMillisecondsSinceEpoch(
+          contact.lastAdvert * 1000,
+        );
+        updatedContact = updatedContact.addAdvertLocation(
+          contact.advertLocation!,
+          timestamp,
+        );
       }
     }
 
@@ -232,15 +261,20 @@ class ContactsProvider with ChangeNotifier {
     int excluded = 0;
     for (final contact in contacts) {
       // Don't add contacts that match our device's public key
-      if (devicePublicKey != null && _publicKeysMatch(contact.publicKey, devicePublicKey)) {
-        debugPrint('ℹ️ [ContactsProvider] Ignoring contact with device\'s own public key: ${contact.advName}');
+      if (devicePublicKey != null &&
+          _publicKeysMatch(contact.publicKey, devicePublicKey)) {
+        debugPrint(
+          'ℹ️ [ContactsProvider] Ignoring contact with device\'s own public key: ${contact.advName}',
+        );
         excluded++;
         continue;
       }
       _contacts[contact.publicKeyHex] = contact;
     }
     if (excluded > 0) {
-      debugPrint('ℹ️ [ContactsProvider] Excluded $excluded contact(s) matching device public key');
+      debugPrint(
+        'ℹ️ [ContactsProvider] Excluded $excluded contact(s) matching device public key',
+      );
     }
     _persistContacts();
     notifyListeners();
@@ -249,7 +283,9 @@ class ContactsProvider with ChangeNotifier {
   /// Update contact telemetry
   void updateTelemetry(Uint8List publicKeyPrefix, Uint8List lppData) {
     debugPrint('📊 [ContactsProvider] updateTelemetry() called');
-    debugPrint('  Public key prefix (hex): ${publicKeyPrefix.map((b) => b.toRadixString(16).padLeft(2, '0')).join(':')}');
+    debugPrint(
+      '  Public key prefix (hex): ${publicKeyPrefix.map((b) => b.toRadixString(16).padLeft(2, '0')).join(':')}',
+    );
     debugPrint('  LPP data size: ${lppData.length} bytes');
 
     // Find contact by public key prefix
@@ -303,8 +339,9 @@ class ContactsProvider with ChangeNotifier {
 
   /// Find contact by public key
   Contact? findContactByKey(Uint8List publicKey) {
-    final keyHex =
-        publicKey.map((b) => b.toRadixString(16).padLeft(2, '0')).join('');
+    final keyHex = publicKey
+        .map((b) => b.toRadixString(16).padLeft(2, '0'))
+        .join('');
     return _contacts[keyHex];
   }
 

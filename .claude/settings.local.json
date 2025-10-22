@@ -21,7 +21,8 @@
       "Bash(do)",
       "Bash(wc:*)",
       "Bash(for lang in de es fr it hr sl)",
-      "Bash(do echo \"=== $lang ===\")"
+      "Bash(do echo \"=== $lang ===\")",
+      "Bash(flutter --version:*)"
     ],
     "deny": [],
     "ask": []

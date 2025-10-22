@@ -1,7 +1,5 @@
 import 'dart:async';
-import 'dart:ui';
 import 'package:flutter/widgets.dart';
-import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'meshcore_ble_service.dart';
@@ -32,7 +30,9 @@ class BackgroundLocationService {
   /// additional platform-specific configuration is required.
   Future<bool> startTracking({double distanceThreshold = 10.0}) async {
     if (!_isInitialized || _bleService == null) {
-      debugPrint('⚠️ [BackgroundLocation] Service not initialized or BLE service null');
+      debugPrint(
+        '⚠️ [BackgroundLocation] Service not initialized or BLE service null',
+      );
       return false;
     }
 
@@ -52,7 +52,9 @@ class BackgroundLocationService {
     }
 
     if (permission == LocationPermission.deniedForever) {
-      debugPrint('⚠️ [BackgroundLocation] Location permission permanently denied');
+      debugPrint(
+        '⚠️ [BackgroundLocation] Location permission permanently denied',
+      );
       return false;
     }
 
@@ -64,60 +66,77 @@ class BackgroundLocationService {
     // Start listening to position updates
     Position? lastPosition;
     try {
-      _positionSubscription = Geolocator.getPositionStream(
-        locationSettings: LocationSettings(
-          accuracy: LocationAccuracy.best,
-          distanceFilter: distanceThreshold.toInt(),
-        ),
-      ).listen((Position position) async {
-        debugPrint('📍 [BackgroundLocation] New position: ${position.latitude}, ${position.longitude}');
-
-        // Calculate distance from last position
-        if (lastPosition != null) {
-          final distance = Geolocator.distanceBetween(
-            lastPosition!.latitude,
-            lastPosition!.longitude,
-            position.latitude,
-            position.longitude,
-          );
-
-          debugPrint('   Distance moved: ${distance.toStringAsFixed(1)}m (threshold: ${distanceThreshold}m)');
-
-          // Skip if haven't moved enough
-          if (distance < distanceThreshold) {
-            return;
-          }
-        }
-
-        // Update last position
-        lastPosition = position;
-
-        // Save to preferences
-        await prefs.setDouble(_prefKeyLastLat, position.latitude);
-        await prefs.setDouble(_prefKeyLastLon, position.longitude);
-
-        // Update device's advertised location
-        if (_bleService != null && _bleService!.isConnected) {
-          try {
-            debugPrint('📤 [BackgroundLocation] Updating device location...');
-            await _bleService!.setAdvertLatLon(
-              latitude: position.latitude,
-              longitude: position.longitude,
+      _positionSubscription =
+          Geolocator.getPositionStream(
+            locationSettings: LocationSettings(
+              accuracy: LocationAccuracy.best,
+              distanceFilter: distanceThreshold.toInt(),
+            ),
+          ).listen((Position position) async {
+            debugPrint(
+              '📍 [BackgroundLocation] New position: ${position.latitude}, ${position.longitude}',
             );
 
-            // Send advertisement to mesh network
-            debugPrint('📡 [BackgroundLocation] Broadcasting self advertisement...');
-            await _bleService!.sendSelfAdvert(floodMode: true);
-            debugPrint('✅ [BackgroundLocation] Location update sent successfully');
-          } catch (e) {
-            debugPrint('❌ [BackgroundLocation] Failed to send location update: $e');
-          }
-        } else {
-          debugPrint('⚠️ [BackgroundLocation] BLE disconnected, cannot send update');
-        }
-      });
+            // Calculate distance from last position
+            if (lastPosition != null) {
+              final distance = Geolocator.distanceBetween(
+                lastPosition!.latitude,
+                lastPosition!.longitude,
+                position.latitude,
+                position.longitude,
+              );
 
-      debugPrint('✅ [BackgroundLocation] Tracking started with ${distanceThreshold}m threshold');
+              debugPrint(
+                '   Distance moved: ${distance.toStringAsFixed(1)}m (threshold: ${distanceThreshold}m)',
+              );
+
+              // Skip if haven't moved enough
+              if (distance < distanceThreshold) {
+                return;
+              }
+            }
+
+            // Update last position
+            lastPosition = position;
+
+            // Save to preferences
+            await prefs.setDouble(_prefKeyLastLat, position.latitude);
+            await prefs.setDouble(_prefKeyLastLon, position.longitude);
+
+            // Update device's advertised location
+            if (_bleService != null && _bleService!.isConnected) {
+              try {
+                debugPrint(
+                  '📤 [BackgroundLocation] Updating device location...',
+                );
+                await _bleService!.setAdvertLatLon(
+                  latitude: position.latitude,
+                  longitude: position.longitude,
+                );
+
+                // Send advertisement to mesh network
+                debugPrint(
+                  '📡 [BackgroundLocation] Broadcasting self advertisement...',
+                );
+                await _bleService!.sendSelfAdvert(floodMode: true);
+                debugPrint(
+                  '✅ [BackgroundLocation] Location update sent successfully',
+                );
+              } catch (e) {
+                debugPrint(
+                  '❌ [BackgroundLocation] Failed to send location update: $e',
+                );
+              }
+            } else {
+              debugPrint(
+                '⚠️ [BackgroundLocation] BLE disconnected, cannot send update',
+              );
+            }
+          });
+
+      debugPrint(
+        '✅ [BackgroundLocation] Tracking started with ${distanceThreshold}m threshold',
+      );
       return true;
     } catch (e) {
       debugPrint('❌ [BackgroundLocation] Failed to start tracking: $e');
@@ -141,7 +160,9 @@ class BackgroundLocationService {
   Future<void> updateDistanceThreshold(double distance) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setDouble(_prefKeyDistance, distance);
-    debugPrint('📏 [BackgroundLocation] Distance threshold updated to ${distance}m');
+    debugPrint(
+      '📏 [BackgroundLocation] Distance threshold updated to ${distance}m',
+    );
 
     // Restart tracking if currently enabled
     final isEnabled = prefs.getBool(_prefKeyEnabled) ?? false;

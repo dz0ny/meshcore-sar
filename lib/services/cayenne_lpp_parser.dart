@@ -12,7 +12,9 @@ class CayenneLppParser {
   static ContactTelemetry parse(Uint8List data) {
     debugPrint('  [CayenneLPP] Parsing LPP data...');
     debugPrint('    Data length: ${data.length} bytes');
-    debugPrint('    Data (hex): ${data.map((b) => b.toRadixString(16).padLeft(2, '0')).join(' ')}');
+    debugPrint(
+      '    Data (hex): ${data.map((b) => b.toRadixString(16).padLeft(2, '0')).join(' ')}',
+    );
 
     final reader = BufferReader(data);
 
@@ -28,13 +30,17 @@ class CayenneLppParser {
     while (reader.hasRemaining) {
       try {
         fieldCount++;
-        debugPrint('    [Field $fieldCount] Position: ${data.length - reader.remainingBytesCount}');
+        debugPrint(
+          '    [Field $fieldCount] Position: ${data.length - reader.remainingBytesCount}',
+        );
 
         final channel = reader.readByte();
         debugPrint('      Channel: $channel');
 
         final type = reader.readByte();
-        debugPrint('      Type: $type (0x${type.toRadixString(16).padLeft(2, '0')})');
+        debugPrint(
+          '      Type: $type (0x${type.toRadixString(16).padLeft(2, '0')})',
+        );
 
         switch (type) {
           case MeshCoreConstants.lppDigitalInput:
@@ -59,7 +65,9 @@ class CayenneLppParser {
             if (channel == 0 || channel == 1) {
               batteryMilliVolts = value * 1000;
               batteryPercentage = _calculateBatteryPercentage(value);
-              debugPrint('      → Battery: ${batteryPercentage?.toStringAsFixed(1)}% (${batteryMilliVolts?.toStringAsFixed(0)}mV)');
+              debugPrint(
+                '      → Battery: ${batteryPercentage.toStringAsFixed(1)}% (${batteryMilliVolts.toStringAsFixed(0)}mV)',
+              );
             }
             break;
 
@@ -87,14 +95,16 @@ class CayenneLppParser {
             final rawValue = reader.readInt16BE();
             temperature = rawValue / 10.0;
             debugPrint('      Temperature (raw): $rawValue');
-            debugPrint('      Temperature: ${temperature?.toStringAsFixed(1)}°C');
+            debugPrint(
+              '      Temperature: ${temperature.toStringAsFixed(1)}°C',
+            );
             break;
 
           case MeshCoreConstants.lppHumiditySensor:
             final rawValue = reader.readByte();
             humidity = rawValue / 2.0;
             debugPrint('      Humidity (raw): $rawValue');
-            debugPrint('      Humidity: ${humidity?.toStringAsFixed(1)}%');
+            debugPrint('      Humidity: ${humidity.toStringAsFixed(1)}%');
             break;
 
           case MeshCoreConstants.lppAccelerometer:
@@ -102,14 +112,18 @@ class CayenneLppParser {
             final y = reader.readInt16BE() / 1000.0;
             final z = reader.readInt16BE() / 1000.0;
             debugPrint('      Accelerometer: x=$x, y=$y, z=$z');
-            extraSensorData['accelerometer_$channel'] = {'x': x, 'y': y, 'z': z};
+            extraSensorData['accelerometer_$channel'] = {
+              'x': x,
+              'y': y,
+              'z': z,
+            };
             break;
 
           case MeshCoreConstants.lppBarometer:
             final rawValue = reader.readUInt16BE();
             pressure = rawValue / 10.0;
             debugPrint('      Barometer (raw): $rawValue');
-            debugPrint('      Barometer: ${pressure?.toStringAsFixed(1)} hPa');
+            debugPrint('      Barometer: ${pressure.toStringAsFixed(1)} hPa');
             break;
 
           case MeshCoreConstants.lppVoltageSensor:
@@ -120,7 +134,9 @@ class CayenneLppParser {
             // Treat voltage sensor as battery reading
             batteryMilliVolts = value * 1000;
             batteryPercentage = _calculateBatteryPercentage(value);
-            debugPrint('      → Battery: ${batteryPercentage?.toStringAsFixed(1)}% (${batteryMilliVolts?.toStringAsFixed(0)}mV)');
+            debugPrint(
+              '      → Battery: ${batteryPercentage.toStringAsFixed(1)}% (${batteryMilliVolts.toStringAsFixed(0)}mV)',
+            );
             break;
 
           case MeshCoreConstants.lppGyrometer:
@@ -138,14 +154,18 @@ class CayenneLppParser {
             final lat = rawLat / 1000000.0;
             final lon = rawLon / 1000000.0;
             final alt = rawAlt / 100.0;
-            debugPrint('      GPS Location (raw): lat=$rawLat, lon=$rawLon, alt=$rawAlt');
-            debugPrint('      GPS Location: ${lat}°, ${lon}°, altitude=${alt}m');
+            debugPrint(
+              '      GPS Location (raw): lat=$rawLat, lon=$rawLon, alt=$rawAlt',
+            );
+            debugPrint('      GPS Location: $lat°, $lon°, altitude=${alt}m');
             gpsLocation = LatLng(lat, lon);
             extraSensorData['altitude_$channel'] = alt;
             break;
 
           default:
-            debugPrint('      ⚠️ Unknown type, skipping remaining ${reader.remainingBytesCount} bytes');
+            debugPrint(
+              '      ⚠️ Unknown type, skipping remaining ${reader.remainingBytesCount} bytes',
+            );
             // Unknown type, skip remaining to avoid parsing errors
             reader.skip(reader.remainingBytesCount);
             break;
@@ -159,9 +179,15 @@ class CayenneLppParser {
 
     debugPrint('    Parsed $fieldCount fields');
     debugPrint('  ✅ [CayenneLPP] Parsing complete');
-    debugPrint('    GPS: ${gpsLocation != null ? '${gpsLocation.latitude}°, ${gpsLocation.longitude}°' : 'none'}');
-    debugPrint('    Battery: ${batteryPercentage != null ? '${batteryPercentage.toStringAsFixed(1)}%' : 'none'}');
-    debugPrint('    Temperature: ${temperature != null ? '${temperature.toStringAsFixed(1)}°C' : 'none'}');
+    debugPrint(
+      '    GPS: ${gpsLocation != null ? '${gpsLocation.latitude}°, ${gpsLocation.longitude}°' : 'none'}',
+    );
+    debugPrint(
+      '    Battery: ${batteryPercentage != null ? '${batteryPercentage.toStringAsFixed(1)}%' : 'none'}',
+    );
+    debugPrint(
+      '    Temperature: ${temperature != null ? '${temperature.toStringAsFixed(1)}°C' : 'none'}',
+    );
 
     // IMPORTANT: Cayenne LPP format does NOT include a timestamp field.
     // We use DateTime.now() as the timestamp, which represents when the data
@@ -173,7 +199,9 @@ class CayenneLppParser {
     // - The actual age of the telemetry data cannot be determined from the LPP format
     // - Devices may cache telemetry for hours and send it later when requested
     final parseTimestamp = DateTime.now();
-    debugPrint('    Timestamp: $parseTimestamp (parse time, NOT device collection time)');
+    debugPrint(
+      '    Timestamp: $parseTimestamp (parse time, NOT device collection time)',
+    );
 
     return ContactTelemetry(
       gpsLocation: gpsLocation,

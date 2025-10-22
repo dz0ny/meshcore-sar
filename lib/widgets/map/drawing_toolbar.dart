@@ -1,4 +1,3 @@
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/drawing_provider.dart';
@@ -352,10 +351,18 @@ class DrawingToolbar extends StatelessWidget {
 
     // Read providers BEFORE any async operations or dialogs
     // This ensures we have the correct BuildContext
-    final connectionProvider = Provider.of<ConnectionProvider>(context, listen: false);
-    final contactsProvider = Provider.of<ContactsProvider>(context, listen: false);
+    final connectionProvider = Provider.of<ConnectionProvider>(
+      context,
+      listen: false,
+    );
+    final contactsProvider = Provider.of<ContactsProvider>(
+      context,
+      listen: false,
+    );
 
-    debugPrint('  Connection status: ${connectionProvider.deviceInfo.isConnected}');
+    debugPrint(
+      '  Connection status: ${connectionProvider.deviceInfo.isConnected}',
+    );
 
     if (!connectionProvider.deviceInfo.isConnected) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -444,9 +451,13 @@ class DrawingToolbar extends StatelessWidget {
                 (room) => ListTile(
                   leading: const Icon(Icons.meeting_room, color: Colors.green),
                   title: Text(room.advName),
-                  subtitle: Text(AppLocalizations.of(context)!.storedPermanently),
+                  subtitle: Text(
+                    AppLocalizations.of(context)!.storedPermanently,
+                  ),
                   onTap: () async {
-                    debugPrint('📤 [DrawingToolbar] Room ${room.advName} tapped');
+                    debugPrint(
+                      '📤 [DrawingToolbar] Room ${room.advName} tapped',
+                    );
                     // Share BEFORE popping the navigator
                     await _shareDrawingsToRoom(
                       sheetContext,
@@ -485,7 +496,10 @@ class DrawingToolbar extends StatelessWidget {
       return;
     }
 
-    final drawingProvider = Provider.of<DrawingProvider>(context, listen: false);
+    final drawingProvider = Provider.of<DrawingProvider>(
+      context,
+      listen: false,
+    );
     int successCount = 0;
 
     for (final drawing in drawings) {
@@ -493,7 +507,9 @@ class DrawingToolbar extends StatelessWidget {
         debugPrint('  Creating message for drawing ${drawing.id}...');
         // Sender name is no longer included in JSON - will be extracted from packet metadata
         final message = drawingProvider.createDrawingBroadcastMessage(drawing);
-        debugPrint('  Message created (${message.length} chars): ${message.substring(0, message.length > 100 ? 100 : message.length)}...');
+        debugPrint(
+          '  Message created (${message.length} chars): ${message.substring(0, message.length > 100 ? 100 : message.length)}...',
+        );
         debugPrint('  Sending to channel 0...');
         await connectionProvider.sendChannelMessage(
           channelIdx: 0,
@@ -518,10 +534,14 @@ class DrawingToolbar extends StatelessWidget {
     }
 
     // Add informational message to chat
-    final messagesProvider = Provider.of<MessagesProvider>(context, listen: false);
+    final messagesProvider = Provider.of<MessagesProvider>(
+      context,
+      listen: false,
+    );
     final l10n = AppLocalizations.of(context)!;
     messagesProvider.logSystemMessage(
-      text: '📤 ${l10n.drawingsSentToPublicChannel(drawings.length, drawings.length > 1 ? 's' : '')}',
+      text:
+          '📤 ${l10n.drawingsSentToPublicChannel(drawings.length, drawings.length > 1 ? 's' : '')}',
       level: 'info',
     );
 
@@ -556,7 +576,10 @@ class DrawingToolbar extends StatelessWidget {
       return;
     }
 
-    final drawingProvider = Provider.of<DrawingProvider>(context, listen: false);
+    final drawingProvider = Provider.of<DrawingProvider>(
+      context,
+      listen: false,
+    );
     int successCount = 0;
 
     for (final drawing in drawings) {
@@ -564,7 +587,9 @@ class DrawingToolbar extends StatelessWidget {
         debugPrint('  Creating message for drawing ${drawing.id}...');
         // Sender name is no longer included in JSON - will be extracted from packet metadata
         final message = drawingProvider.createDrawingBroadcastMessage(drawing);
-        debugPrint('  Message created (${message.length} chars): ${message.substring(0, message.length > 100 ? 100 : message.length)}...');
+        debugPrint(
+          '  Message created (${message.length} chars): ${message.substring(0, message.length > 100 ? 100 : message.length)}...',
+        );
         debugPrint('  Sending to room ${room.advName}...');
         await connectionProvider.sendTextMessage(
           contactPublicKey: room.publicKey,
@@ -591,9 +616,13 @@ class DrawingToolbar extends StatelessWidget {
     }
 
     // Add informational message to chat
-    final messagesProvider = Provider.of<MessagesProvider>(context, listen: false);
+    final messagesProvider = Provider.of<MessagesProvider>(
+      context,
+      listen: false,
+    );
     messagesProvider.logSystemMessage(
-      text: '📤 Sent ${drawings.length} map drawing${drawings.length > 1 ? 's' : ''} to ${room.advName}',
+      text:
+          '📤 Sent ${drawings.length} map drawing${drawings.length > 1 ? 's' : ''} to ${room.advName}',
       level: 'info',
     );
 

@@ -1,4 +1,3 @@
-import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import '../meshcore_opcode_names.dart';
@@ -130,10 +129,13 @@ class BleCommandSender {
 
       debugPrint('📤 [TX] Sending command: $opcodeName ($opcodeHex)');
       debugPrint('  Data size: ${data.length} bytes');
-      debugPrint('  Hex: ${data.map((b) => b.toRadixString(16).padLeft(2, '0')).join(' ')}');
+      debugPrint(
+        '  Hex: ${data.map((b) => b.toRadixString(16).padLeft(2, '0')).join(' ')}',
+      );
 
       // Check if the characteristic supports write without response
-      final supportsWriteWithoutResponse = _rxCharacteristic!.properties.writeWithoutResponse;
+      final supportsWriteWithoutResponse =
+          _rxCharacteristic!.properties.writeWithoutResponse;
       final supportsWrite = _rxCharacteristic!.properties.write;
 
       if (supportsWriteWithoutResponse) {
@@ -160,15 +162,21 @@ class BleCommandSender {
   }
 
   /// Log a packet
-  void _logPacket(Uint8List data, PacketDirection direction, {int? responseCode}) {
+  void _logPacket(
+    Uint8List data,
+    PacketDirection direction, {
+    int? responseCode,
+  }) {
     // Add new packet
-    _packetLogs.add(BlePacketLog(
-      timestamp: DateTime.now(),
-      rawData: data,
-      direction: direction,
-      responseCode: responseCode,
-      description: _getPacketDescription(responseCode),
-    ));
+    _packetLogs.add(
+      BlePacketLog(
+        timestamp: DateTime.now(),
+        rawData: data,
+        direction: direction,
+        responseCode: responseCode,
+        description: _getPacketDescription(responseCode),
+      ),
+    );
 
     // Limit log size to prevent memory issues
     if (_packetLogs.length > _maxLogSize) {

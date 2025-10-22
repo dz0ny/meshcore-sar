@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import '../models/contact.dart';
@@ -15,26 +14,41 @@ import 'meshcore_constants.dart';
 typedef OnContactCallback = void Function(Contact contact);
 typedef OnContactsCompleteCallback = void Function(List<Contact> contacts);
 typedef OnMessageCallback = void Function(Message message);
-typedef OnTelemetryCallback = void Function(Uint8List publicKey, Uint8List lppData);
+typedef OnTelemetryCallback =
+    void Function(Uint8List publicKey, Uint8List lppData);
 typedef OnSelfInfoCallback = void Function(Map<String, dynamic> selfInfo);
 typedef OnDeviceInfoCallback = void Function(Map<String, dynamic> deviceInfo);
 typedef OnNoMoreMessagesCallback = void Function();
 typedef OnMessageWaitingCallback = void Function();
-typedef OnLoginSuccessCallback = void Function(Uint8List publicKeyPrefix, int permissions, bool isAdmin, int tag);
+typedef OnLoginSuccessCallback =
+    void Function(
+      Uint8List publicKeyPrefix,
+      int permissions,
+      bool isAdmin,
+      int tag,
+    );
 typedef OnLoginFailCallback = void Function(Uint8List publicKeyPrefix);
 typedef OnAdvertReceivedCallback = void Function(Uint8List publicKey);
 typedef OnPathUpdatedCallback = void Function(Uint8List publicKey);
-typedef OnMessageSentCallback = void Function(int expectedAckTag, int suggestedTimeoutMs, bool isFloodMode);
-typedef OnMessageDeliveredCallback = void Function(int ackCode, int roundTripTimeMs);
-typedef OnMessageEchoDetectedCallback = void Function(String messageId, int echoCount, int snrRaw, int rssiDbm);
-typedef OnStatusResponseCallback = void Function(Uint8List publicKeyPrefix, Uint8List statusData);
-typedef OnBinaryResponseCallback = void Function(Uint8List publicKeyPrefix, int tag, Uint8List responseData);
-typedef OnBatteryAndStorageCallback = void Function(int millivolts, int? usedKb, int? totalKb);
+typedef OnMessageSentCallback =
+    void Function(int expectedAckTag, int suggestedTimeoutMs, bool isFloodMode);
+typedef OnMessageDeliveredCallback =
+    void Function(int ackCode, int roundTripTimeMs);
+typedef OnMessageEchoDetectedCallback =
+    void Function(String messageId, int echoCount, int snrRaw, int rssiDbm);
+typedef OnStatusResponseCallback =
+    void Function(Uint8List publicKeyPrefix, Uint8List statusData);
+typedef OnBinaryResponseCallback =
+    void Function(Uint8List publicKeyPrefix, int tag, Uint8List responseData);
+typedef OnBatteryAndStorageCallback =
+    void Function(int millivolts, int? usedKb, int? totalKb);
 typedef OnErrorCallback = void Function(String error, {int? errorCode});
 typedef OnContactNotFoundCallback = void Function(Uint8List? contactPublicKey);
-typedef OnChannelInfoCallback = void Function(int channelIdx, String channelName);
+typedef OnChannelInfoCallback =
+    void Function(int channelIdx, String channelName);
 typedef OnConnectionStateCallback = void Function(bool isConnected);
-typedef OnReconnectionAttemptCallback = void Function(int attemptNumber, int maxAttempts);
+typedef OnReconnectionAttemptCallback =
+    void Function(int attemptNumber, int maxAttempts);
 typedef OnRssiUpdateCallback = void Function(int rssi);
 
 /// MeshCore BLE Service - coordinates BLE communication components
@@ -89,7 +103,9 @@ class MeshCoreBleService {
       onError?.call(error);
     };
     _connectionManager.onReconnectionAttempt = (attemptNumber, maxAttempts) {
-      debugPrint('🔄 [Service] Reconnection attempt $attemptNumber/$maxAttempts');
+      debugPrint(
+        '🔄 [Service] Reconnection attempt $attemptNumber/$maxAttempts',
+      );
       onReconnectionAttempt?.call(attemptNumber, maxAttempts);
     };
     _connectionManager.onRssiUpdate = (rssi) {
@@ -136,9 +152,10 @@ class MeshCoreBleService {
     _responseHandler.onMessageWaiting = () {
       onMessageWaiting?.call();
     };
-    _responseHandler.onLoginSuccess = (publicKeyPrefix, permissions, isAdmin, tag) {
-      onLoginSuccess?.call(publicKeyPrefix, permissions, isAdmin, tag);
-    };
+    _responseHandler.onLoginSuccess =
+        (publicKeyPrefix, permissions, isAdmin, tag) {
+          onLoginSuccess?.call(publicKeyPrefix, permissions, isAdmin, tag);
+        };
     _responseHandler.onLoginFail = (publicKeyPrefix) {
       onLoginFail?.call(publicKeyPrefix);
     };
@@ -148,15 +165,17 @@ class MeshCoreBleService {
     _responseHandler.onPathUpdated = (publicKey) {
       onPathUpdated?.call(publicKey);
     };
-    _responseHandler.onMessageSent = (expectedAckTag, suggestedTimeoutMs, isFloodMode) {
-      onMessageSent?.call(expectedAckTag, suggestedTimeoutMs, isFloodMode);
-    };
+    _responseHandler.onMessageSent =
+        (expectedAckTag, suggestedTimeoutMs, isFloodMode) {
+          onMessageSent?.call(expectedAckTag, suggestedTimeoutMs, isFloodMode);
+        };
     _responseHandler.onMessageDelivered = (ackCode, roundTripTimeMs) {
       onMessageDelivered?.call(ackCode, roundTripTimeMs);
     };
-    _responseHandler.onMessageEchoDetected = (messageId, echoCount, snrRaw, rssiDbm) {
-      onMessageEchoDetected?.call(messageId, echoCount, snrRaw, rssiDbm);
-    };
+    _responseHandler.onMessageEchoDetected =
+        (messageId, echoCount, snrRaw, rssiDbm) {
+          onMessageEchoDetected?.call(messageId, echoCount, snrRaw, rssiDbm);
+        };
     _responseHandler.onStatusResponse = (publicKeyPrefix, statusData) {
       onStatusResponse?.call(publicKeyPrefix, statusData);
     };
@@ -189,13 +208,18 @@ class MeshCoreBleService {
   int get txPacketCount => _commandSender.txPacketCount;
   List<BlePacketLog> get packetLogs {
     // Merge logs from both sender and handler
-    final allLogs = [..._commandSender.packetLogs, ..._responseHandler.packetLogs];
+    final allLogs = [
+      ..._commandSender.packetLogs,
+      ..._responseHandler.packetLogs,
+    ];
     allLogs.sort((a, b) => a.timestamp.compareTo(b.timestamp));
     return allLogs;
   }
 
   /// Scan for MeshCore devices
-  Stream<ScanResult> scanForDevices({Duration timeout = const Duration(seconds: 10)}) {
+  Stream<ScanResult> scanForDevices({
+    Duration timeout = const Duration(seconds: 10),
+  }) {
     return _connectionManager.scanForDevices(timeout: timeout);
   }
 
@@ -212,7 +236,9 @@ class MeshCoreBleService {
 
         // Setup response handler with TX characteristic
         if (_connectionManager.txCharacteristic != null) {
-          _responseHandler.subscribeToNotifications(_connectionManager.txCharacteristic!);
+          _responseHandler.subscribeToNotifications(
+            _connectionManager.txCharacteristic!,
+          );
         }
 
         // Send initial device query and wait for responses
@@ -240,20 +266,26 @@ class MeshCoreBleService {
   Future<void> _sendDeviceQuery() async {
     // STEP 1: Send device query FIRST to get device capabilities
     // This is the first command to send per protocol documentation
-    debugPrint('🔍 [Service] Querying device information (CMD_DEVICE_QUERY)...');
-    final deviceInfo = await _commandSender.writeDataAndWaitForResponse<Map<String, dynamic>>(
-      FrameBuilder.buildDeviceQuery(),
-      MeshCoreConstants.respDeviceInfo,
+    debugPrint(
+      '🔍 [Service] Querying device information (CMD_DEVICE_QUERY)...',
     );
-    debugPrint('✅ [Service] Device info received: firmware=${deviceInfo['firmwareVersion']}');
+    final deviceInfo = await _commandSender
+        .writeDataAndWaitForResponse<Map<String, dynamic>>(
+          FrameBuilder.buildDeviceQuery(),
+          MeshCoreConstants.respDeviceInfo,
+        );
+    debugPrint(
+      '✅ [Service] Device info received: firmware=${deviceInfo['firmwareVersion']}',
+    );
 
     // STEP 2: Send app start to initialize the app session
     // This is the first command after connection per protocol documentation
     debugPrint('🚀 [Service] Sending app start (CMD_APP_START)...');
-    final selfInfo = await _commandSender.writeDataAndWaitForResponse<Map<String, dynamic>>(
-      FrameBuilder.buildAppStart(),
-      MeshCoreConstants.respSelfInfo,
-    );
+    final selfInfo = await _commandSender
+        .writeDataAndWaitForResponse<Map<String, dynamic>>(
+          FrameBuilder.buildAppStart(),
+          MeshCoreConstants.respSelfInfo,
+        );
     debugPrint('✅ [Service] Self info received: node initialized');
 
     // STEP 3: Set device clock AFTER initialization
@@ -278,7 +310,9 @@ class MeshCoreBleService {
   Future<void> addOrUpdateContact(Contact contact) async {
     debugPrint('📝 [BLE] Adding/updating contact on companion radio:');
     debugPrint('    Name: ${contact.advName}');
-    debugPrint('    Public key prefix: ${contact.publicKey.sublist(0, 6).map((b) => b.toRadixString(16).padLeft(2, '0')).join(':')}');
+    debugPrint(
+      '    Public key prefix: ${contact.publicKey.sublist(0, 6).map((b) => b.toRadixString(16).padLeft(2, '0')).join(':')}',
+    );
     debugPrint('    Type: ${contact.type} (${contact.type.value})');
 
     await _commandSender.writeData(FrameBuilder.buildAddUpdateContact(contact));
@@ -300,18 +334,22 @@ class MeshCoreBleService {
     // Track the last contact for auto-recovery if contact not found
     _responseHandler.setLastContactPublicKey(contactPublicKey);
 
-    await _commandSender.writeData(FrameBuilder.buildSendTxtMsg(
-      contactPublicKey: contactPublicKey,
-      text: text,
-      textType: textType,
-      attempt: attempt,
-    ));
+    await _commandSender.writeData(
+      FrameBuilder.buildSendTxtMsg(
+        contactPublicKey: contactPublicKey,
+        text: text,
+        textType: textType,
+        attempt: attempt,
+      ),
+    );
   }
 
   /// Send flood-mode text message to channel
   /// Track a sent channel message for echo detection
   void trackSentChannelMessage(String messageId) {
-    debugPrint('🔵 [MeshCoreBleService] trackSentChannelMessage called for: $messageId');
+    debugPrint(
+      '🔵 [MeshCoreBleService] trackSentChannelMessage called for: $messageId',
+    );
     _responseHandler.trackSentMessage(messageId, null);
   }
 
@@ -333,20 +371,24 @@ class MeshCoreBleService {
 
     // Channel messages use fire-and-forget (no ACK expected)
     // The firmware responds with RESP_CODE_OK but we don't wait for it
-    await _commandSender.writeData(FrameBuilder.buildSendChannelTxtMsg(
-      channelIdx: channelIdx,
-      text: text,
-      textType: textType,
-    ));
+    await _commandSender.writeData(
+      FrameBuilder.buildSendChannelTxtMsg(
+        channelIdx: channelIdx,
+        text: text,
+        textType: textType,
+      ),
+    );
   }
 
   /// Request telemetry from contact (deprecated)
   @Deprecated('Use sendBinaryRequest() instead for better functionality')
-  Future<void> requestTelemetry(Uint8List contactPublicKey, {bool zeroHop = false}) async {
-    await _commandSender.writeData(FrameBuilder.buildSendTelemetryReq(
-      contactPublicKey,
-      zeroHop: zeroHop,
-    ));
+  Future<void> requestTelemetry(
+    Uint8List contactPublicKey, {
+    bool zeroHop = false,
+  }) async {
+    await _commandSender.writeData(
+      FrameBuilder.buildSendTelemetryReq(contactPublicKey, zeroHop: zeroHop),
+    );
   }
 
   /// Send binary request to contact
@@ -354,10 +396,12 @@ class MeshCoreBleService {
     required Uint8List contactPublicKey,
     required Uint8List requestData,
   }) async {
-    await _commandSender.writeData(FrameBuilder.buildSendBinaryReq(
-      contactPublicKey: contactPublicKey,
-      requestData: requestData,
-    ));
+    await _commandSender.writeData(
+      FrameBuilder.buildSendBinaryReq(
+        contactPublicKey: contactPublicKey,
+        requestData: requestData,
+      ),
+    );
   }
 
   /// Get battery voltage and storage information
@@ -388,12 +432,16 @@ class MeshCoreBleService {
 
   /// Send self advertisement packet to mesh network
   Future<void> sendSelfAdvert({bool floodMode = true}) async {
-    await _commandSender.writeData(FrameBuilder.buildSendSelfAdvert(floodMode: floodMode));
+    await _commandSender.writeData(
+      FrameBuilder.buildSendSelfAdvert(floodMode: floodMode),
+    );
   }
 
   /// Set advertised name
   Future<void> setAdvertName(String name) async {
-    await _commandSender.writeDataAndWaitForAck(FrameBuilder.buildSetAdvertName(name));
+    await _commandSender.writeDataAndWaitForAck(
+      FrameBuilder.buildSetAdvertName(name),
+    );
   }
 
   /// Set advertised latitude and longitude
@@ -402,10 +450,12 @@ class MeshCoreBleService {
     required double longitude,
   }) async {
     // This command returns OK (0x00) response, so wait for acknowledgment
-    await _commandSender.writeDataAndWaitForAck(FrameBuilder.buildSetAdvertLatLon(
-      latitude: latitude,
-      longitude: longitude,
-    ));
+    await _commandSender.writeDataAndWaitForAck(
+      FrameBuilder.buildSetAdvertLatLon(
+        latitude: latitude,
+        longitude: longitude,
+      ),
+    );
   }
 
   /// Set radio parameters
@@ -415,17 +465,21 @@ class MeshCoreBleService {
     required int spreadingFactor,
     required int codingRate,
   }) async {
-    await _commandSender.writeDataAndWaitForAck(FrameBuilder.buildSetRadioParams(
-      frequency: frequency,
-      bandwidth: bandwidth,
-      spreadingFactor: spreadingFactor,
-      codingRate: codingRate,
-    ));
+    await _commandSender.writeDataAndWaitForAck(
+      FrameBuilder.buildSetRadioParams(
+        frequency: frequency,
+        bandwidth: bandwidth,
+        spreadingFactor: spreadingFactor,
+        codingRate: codingRate,
+      ),
+    );
   }
 
   /// Set transmit power
   Future<void> setTxPower(int powerDbm) async {
-    await _commandSender.writeDataAndWaitForAck(FrameBuilder.buildSetTxPower(powerDbm));
+    await _commandSender.writeDataAndWaitForAck(
+      FrameBuilder.buildSetTxPower(powerDbm),
+    );
   }
 
   /// Set other parameters
@@ -435,12 +489,14 @@ class MeshCoreBleService {
     required int advertLocationPolicy,
     int multiAcks = 0,
   }) async {
-    await _commandSender.writeDataAndWaitForAck(FrameBuilder.buildSetOtherParams(
-      manualAddContacts: manualAddContacts,
-      telemetryModes: telemetryModes,
-      advertLocationPolicy: advertLocationPolicy,
-      multiAcks: multiAcks,
-    ));
+    await _commandSender.writeDataAndWaitForAck(
+      FrameBuilder.buildSetOtherParams(
+        manualAddContacts: manualAddContacts,
+        telemetryModes: telemetryModes,
+        advertLocationPolicy: advertLocationPolicy,
+        multiAcks: multiAcks,
+      ),
+    );
   }
 
   /// Send login request to room or repeater
@@ -453,37 +509,55 @@ class MeshCoreBleService {
     }
 
     debugPrint('🔐 [BLE] Preparing login request:');
-    debugPrint('    Room public key prefix: ${roomPublicKey.sublist(0, 6).map((b) => b.toRadixString(16).padLeft(2, '0')).join(':')}');
-    debugPrint('    Password: ${"*" * password.length} (${password.length} chars)');
+    debugPrint(
+      '    Room public key prefix: ${roomPublicKey.sublist(0, 6).map((b) => b.toRadixString(16).padLeft(2, '0')).join(':')}',
+    );
+    debugPrint(
+      '    Password: ${"*" * password.length} (${password.length} chars)',
+    );
 
-    await _commandSender.writeData(FrameBuilder.buildSendLogin(
-      roomPublicKey: roomPublicKey,
-      password: password,
-    ));
+    await _commandSender.writeData(
+      FrameBuilder.buildSendLogin(
+        roomPublicKey: roomPublicKey,
+        password: password,
+      ),
+    );
   }
 
   /// Send status request to repeater or sensor node
   Future<void> sendStatusRequest(Uint8List contactPublicKey) async {
     debugPrint('📊 [BLE] Preparing status request:');
-    debugPrint('    Target node public key prefix: ${contactPublicKey.sublist(0, 6).map((b) => b.toRadixString(16).padLeft(2, '0')).join(':')}');
+    debugPrint(
+      '    Target node public key prefix: ${contactPublicKey.sublist(0, 6).map((b) => b.toRadixString(16).padLeft(2, '0')).join(':')}',
+    );
 
-    await _commandSender.writeData(FrameBuilder.buildSendStatusReq(contactPublicKey));
+    await _commandSender.writeData(
+      FrameBuilder.buildSendStatusReq(contactPublicKey),
+    );
   }
 
   /// Reset path for a contact - forces next message to flood and re-learn route
   Future<void> resetPath(Uint8List contactPublicKey) async {
     debugPrint('🔄 [BLE] Resetting path for contact:');
-    debugPrint('    Contact public key prefix: ${contactPublicKey.sublist(0, 6).map((b) => b.toRadixString(16).padLeft(2, '0')).join(':')}');
+    debugPrint(
+      '    Contact public key prefix: ${contactPublicKey.sublist(0, 6).map((b) => b.toRadixString(16).padLeft(2, '0')).join(':')}',
+    );
 
-    await _commandSender.writeData(FrameBuilder.buildResetPath(contactPublicKey));
+    await _commandSender.writeData(
+      FrameBuilder.buildResetPath(contactPublicKey),
+    );
   }
 
   /// Remove a contact from the companion radio
   Future<void> removeContact(Uint8List contactPublicKey) async {
     debugPrint('🗑️ [BLE] Removing contact from companion radio:');
-    debugPrint('    Public key prefix: ${contactPublicKey.sublist(0, 6).map((b) => b.toRadixString(16).padLeft(2, '0')).join(':')}');
+    debugPrint(
+      '    Public key prefix: ${contactPublicKey.sublist(0, 6).map((b) => b.toRadixString(16).padLeft(2, '0')).join(':')}',
+    );
 
-    await _commandSender.writeData(FrameBuilder.buildRemoveContact(contactPublicKey));
+    await _commandSender.writeData(
+      FrameBuilder.buildRemoveContact(contactPublicKey),
+    );
     debugPrint('✅ [BLE] CMD_REMOVE_CONTACT sent');
   }
 
@@ -506,11 +580,13 @@ class MeshCoreBleService {
     debugPrint('    Channel name: $channelName');
     debugPrint('    Secret length: ${secret.length} bytes');
 
-    await _commandSender.writeDataAndWaitForAck(FrameBuilder.buildSetChannel(
-      channelIdx: channelIdx,
-      channelName: channelName,
-      secret: secret,
-    ));
+    await _commandSender.writeDataAndWaitForAck(
+      FrameBuilder.buildSetChannel(
+        channelIdx: channelIdx,
+        channelName: channelName,
+        secret: secret,
+      ),
+    );
     debugPrint('✅ [BLE] CMD_SET_CHANNEL sent successfully');
   }
 

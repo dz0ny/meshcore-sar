@@ -35,7 +35,8 @@ class _MessagesTabState extends State<MessagesTab> {
   String? _highlightedMessageId;
 
   // Message destination state
-  String _destinationType = MessageDestinationPreferences.destinationTypeChannel;
+  String _destinationType =
+      MessageDestinationPreferences.destinationTypeChannel;
   Contact? _selectedRecipient;
 
   /// Helper method to compare two public keys for equality
@@ -129,7 +130,8 @@ class _MessagesTabState extends State<MessagesTab> {
 
   /// Load saved message destination from preferences
   Future<void> _loadSavedDestination() async {
-    final savedDestination = await MessageDestinationPreferences.getDestination();
+    final savedDestination =
+        await MessageDestinationPreferences.getDestination();
 
     if (savedDestination == null || !mounted) {
       // Default to public channel
@@ -160,7 +162,8 @@ class _MessagesTabState extends State<MessagesTab> {
           '⚠️ [MessagesTab] Saved recipient not found, falling back to public channel',
         );
         setState(() {
-          _destinationType = MessageDestinationPreferences.destinationTypeChannel;
+          _destinationType =
+              MessageDestinationPreferences.destinationTypeChannel;
           _selectedRecipient = null;
         });
         await MessageDestinationPreferences.clearDestination();
@@ -197,7 +200,8 @@ class _MessagesTabState extends State<MessagesTab> {
   /// Handle recipient selection
   Future<void> _onRecipientSelected(String type, Contact? recipient) async {
     // Get display name before async gap
-    final recipientName = type == MessageDestinationPreferences.destinationTypeChannel
+    final recipientName =
+        type == MessageDestinationPreferences.destinationTypeChannel
         ? AppLocalizations.of(context)!.publicChannel
         : (recipient?.displayName ?? recipient?.advName ?? 'Unknown');
 
@@ -214,17 +218,16 @@ class _MessagesTabState extends State<MessagesTab> {
 
     // Show confirmation toast
     if (!mounted) return;
-    ToastLogger.success(
-      context,
-      'Messages will be sent to: $recipientName',
-    );
+    ToastLogger.success(context, 'Messages will be sent to: $recipientName');
   }
 
   /// Get icon for current destination type
   IconData _getDestinationIcon() {
-    if (_destinationType == MessageDestinationPreferences.destinationTypeChannel) {
+    if (_destinationType ==
+        MessageDestinationPreferences.destinationTypeChannel) {
       return Icons.public;
-    } else if (_destinationType == MessageDestinationPreferences.destinationTypeRoom) {
+    } else if (_destinationType ==
+        MessageDestinationPreferences.destinationTypeRoom) {
       return Icons.meeting_room;
     } else {
       return Icons.person;
@@ -234,10 +237,12 @@ class _MessagesTabState extends State<MessagesTab> {
   /// Get tooltip for destination button
   String _getDestinationTooltip() {
     final l10n = AppLocalizations.of(context)!;
-    if (_destinationType == MessageDestinationPreferences.destinationTypeChannel) {
+    if (_destinationType ==
+        MessageDestinationPreferences.destinationTypeChannel) {
       return '${l10n.publicChannel} (tap to change)';
     } else if (_selectedRecipient != null) {
-      final recipientName = _selectedRecipient!.displayName ?? _selectedRecipient!.advName;
+      final recipientName =
+          _selectedRecipient!.displayName ?? _selectedRecipient!.advName;
       return '$recipientName (tap to change)';
     }
     return 'Select recipient';
@@ -259,7 +264,8 @@ class _MessagesTabState extends State<MessagesTab> {
 
     try {
       // Check destination type and send accordingly
-      if (_destinationType == MessageDestinationPreferences.destinationTypeChannel) {
+      if (_destinationType ==
+          MessageDestinationPreferences.destinationTypeChannel) {
         // Send to public channel
         await _sendToChannel(text, connectionProvider, messagesProvider);
       } else if (_selectedRecipient != null) {
@@ -272,7 +278,9 @@ class _MessagesTabState extends State<MessagesTab> {
         );
       } else {
         // Fallback to public channel if no recipient selected
-        debugPrint('⚠️ [MessagesTab] No recipient selected, falling back to channel');
+        debugPrint(
+          '⚠️ [MessagesTab] No recipient selected, falling back to channel',
+        );
         await _sendToChannel(text, connectionProvider, messagesProvider);
       }
 
@@ -422,7 +430,8 @@ class _MessagesTabState extends State<MessagesTab> {
 
       if (sendToChannel) {
         // Create message ID
-        final messageId = '${DateTime.now().millisecondsSinceEpoch}_channel_sent';
+        final messageId =
+            '${DateTime.now().millisecondsSinceEpoch}_channel_sent';
         final timestamp = DateTime.now().millisecondsSinceEpoch ~/ 1000;
 
         // Get current device's public key (first 6 bytes)
@@ -455,10 +464,7 @@ class _MessagesTabState extends State<MessagesTab> {
         );
 
         if (!mounted) return;
-        ToastLogger.success(
-          context,
-          'SAR marker broadcast to public channel',
-        );
+        ToastLogger.success(context, 'SAR marker broadcast to public channel');
       } else {
         // Create message ID
         final messageId = '${DateTime.now().millisecondsSinceEpoch}_sent';
@@ -490,7 +496,7 @@ class _MessagesTabState extends State<MessagesTab> {
         final contactsProvider = context.read<ContactsProvider>();
         final roomContact = contactsProvider.contacts.where((c) {
           return c.publicKey.length >= roomPublicKey!.length &&
-              _publicKeysMatch(c.publicKey, roomPublicKey!);
+              _publicKeysMatch(c.publicKey, roomPublicKey);
         }).firstOrNull;
 
         // Send SAR message to selected room (persisted and immutable)
@@ -507,10 +513,7 @@ class _MessagesTabState extends State<MessagesTab> {
         }
 
         if (!mounted) return;
-        ToastLogger.success(
-          context,
-          'SAR marker sent to room',
-        );
+        ToastLogger.success(context, 'SAR marker sent to room');
       }
     } catch (e) {
       if (!mounted) return;
@@ -615,7 +618,8 @@ class _MessagesTabState extends State<MessagesTab> {
                         itemCount: messages.length,
                         itemBuilder: (context, index) {
                           final message = messages[index];
-                          final isHighlighted = message.id == _highlightedMessageId;
+                          final isHighlighted =
+                              message.id == _highlightedMessageId;
 
                           // Display system messages with minimal styling
                           if (message.isSystemMessage) {
@@ -680,10 +684,18 @@ class _MessagesTabState extends State<MessagesTab> {
                     tooltip: _getDestinationTooltip(),
                     onPressed: _showRecipientSelector,
                     style: IconButton.styleFrom(
-                      backgroundColor: _destinationType == MessageDestinationPreferences.destinationTypeChannel
-                          ? Theme.of(context).colorScheme.surfaceContainerHighest
+                      backgroundColor:
+                          _destinationType ==
+                              MessageDestinationPreferences
+                                  .destinationTypeChannel
+                          ? Theme.of(
+                              context,
+                            ).colorScheme.surfaceContainerHighest
                           : Theme.of(context).colorScheme.secondaryContainer,
-                      foregroundColor: _destinationType == MessageDestinationPreferences.destinationTypeChannel
+                      foregroundColor:
+                          _destinationType ==
+                              MessageDestinationPreferences
+                                  .destinationTypeChannel
                           ? Theme.of(context).colorScheme.onSurface
                           : Theme.of(context).colorScheme.onSecondaryContainer,
                     ),
@@ -699,9 +711,7 @@ class _MessagesTabState extends State<MessagesTab> {
                       maxLengthEnforcement: MaxLengthEnforcement.enforced,
                       style: const TextStyle(fontSize: 14),
                       decoration: InputDecoration(
-                        hintText: AppLocalizations.of(
-                          context,
-                        )!.typeYourMessage,
+                        hintText: AppLocalizations.of(context)!.typeYourMessage,
                         hintStyle: const TextStyle(fontSize: 14),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(24),
@@ -718,9 +728,7 @@ class _MessagesTabState extends State<MessagesTab> {
                           fontSize: 10,
                           color: _characterCount > _maxCharacters * 0.9
                               ? Colors.orange
-                              : Theme.of(
-                                context,
-                              ).textTheme.bodySmall?.color,
+                              : Theme.of(context).textTheme.bodySmall?.color,
                         ),
                         suffixIcon: IconButton(
                           icon: Icon(
@@ -885,7 +893,10 @@ class _MessageBubble extends StatelessWidget {
               onTap: () {
                 Clipboard.setData(ClipboardData(text: message.text));
                 Navigator.pop(context);
-                ToastLogger.success(context, AppLocalizations.of(context)!.textCopiedToClipboard);
+                ToastLogger.success(
+                  context,
+                  AppLocalizations.of(context)!.textCopiedToClipboard,
+                );
               },
             ),
             // Delete message option
@@ -1100,8 +1111,8 @@ class _MessageBubble extends StatelessWidget {
           color: isHighlighted
               ? Theme.of(context).colorScheme.primaryContainer
               : isSarMarker
-                  ? _getSarMarkerColor(context, isDarkMode)
-                  : _getMessageBubbleColor(context, isOwnMessage, isDarkMode),
+              ? _getSarMarkerColor(context, isDarkMode)
+              : _getMessageBubbleColor(context, isOwnMessage, isDarkMode),
           borderRadius: BorderRadius.circular(12),
           border: isHighlighted
               ? Border.all(
@@ -1109,43 +1120,45 @@ class _MessageBubble extends StatelessWidget {
                   width: 3,
                 )
               : isSarMarker
-                  ? Border.all(
-                      color: _getSarMarkerBorderColor(context, isDarkMode),
-                      width: 2,
-                    )
-                  : isOwnMessage
-                  ? Border.all(
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.primary.withValues(alpha: 0.3),
-                      width: 1.5,
-                    )
-                  : !message.isRead &&
-                        !message.isSentMessage &&
-                        !message.isSystemMessage
-                  ? Border.all(color: Colors.blue, width: 1.5)
-                  : null,
+              ? Border.all(
+                  color: _getSarMarkerBorderColor(context, isDarkMode),
+                  width: 2,
+                )
+              : isOwnMessage
+              ? Border.all(
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.primary.withValues(alpha: 0.3),
+                  width: 1.5,
+                )
+              : !message.isRead &&
+                    !message.isSentMessage &&
+                    !message.isSystemMessage
+              ? Border.all(color: Colors.blue, width: 1.5)
+              : null,
           boxShadow: isHighlighted
               ? [
                   BoxShadow(
-                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.primary.withValues(alpha: 0.5),
                     blurRadius: 12,
                     spreadRadius: 2,
                     offset: const Offset(0, 2),
                   ),
                 ]
               : isSarMarker
-                  ? [
-                      BoxShadow(
-                        color: _getSarMarkerBorderColor(
-                          context,
-                          isDarkMode,
-                        ).withValues(alpha: 0.3),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ]
-                  : null,
+              ? [
+                  BoxShadow(
+                    color: _getSarMarkerBorderColor(
+                      context,
+                      isDarkMode,
+                    ).withValues(alpha: 0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1272,9 +1285,12 @@ class _MessageBubble extends StatelessWidget {
                       children: [
                         Text(
                           // Show template name (sarNotes) if available, otherwise show localized type name
-                          message.sarNotes != null && message.sarNotes!.isNotEmpty
+                          message.sarNotes != null &&
+                                  message.sarNotes!.isNotEmpty
                               ? message.sarNotes!
-                              : message.sarMarkerType!.getLocalizedName(context),
+                              : message.sarMarkerType!.getLocalizedName(
+                                  context,
+                                ),
                           style: Theme.of(context).textTheme.titleSmall
                               ?.copyWith(fontWeight: FontWeight.bold),
                         ),
@@ -1411,7 +1427,7 @@ class _MessageBubble extends StatelessWidget {
             ).colorScheme.primaryContainer.withValues(alpha: 0.15);
     } else {
       // Others' messages: default surface color
-      return Theme.of(context).colorScheme.surfaceVariant;
+      return Theme.of(context).colorScheme.surfaceContainerHighest;
     }
   }
 

@@ -86,10 +86,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         _locationService.onError = (error) {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(error),
-                backgroundColor: Colors.orange,
-              ),
+              SnackBar(content: Text(error), backgroundColor: Colors.orange),
             );
           }
         };
@@ -119,7 +116,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
         // Load settings and restore tracking state
         final prefs = await SharedPreferences.getInstance();
-        final wasTracking = prefs.getBool('background_tracking_enabled') ?? false;
+        final wasTracking =
+            prefs.getBool('background_tracking_enabled') ?? false;
 
         if (wasTracking) {
           await _startBackgroundTracking();
@@ -239,7 +237,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(AppLocalizations.of(context)!.failedToLoadSampleData(e.toString())),
+          content: Text(
+            AppLocalizations.of(context)!.failedToLoadSampleData(e.toString()),
+          ),
           backgroundColor: Colors.red,
         ),
       );
@@ -296,7 +296,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
           // Permission granted
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(AppLocalizations.of(context)!.locationPermissionGranted),
+              content: Text(
+                AppLocalizations.of(context)!.locationPermissionGranted,
+              ),
               backgroundColor: Colors.green,
             ),
           );
@@ -305,7 +307,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
           // Permission denied
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(AppLocalizations.of(context)!.locationPermissionRequiredForGps),
+              content: Text(
+                AppLocalizations.of(context)!.locationPermissionRequiredForGps,
+              ),
               backgroundColor: Colors.orange,
               duration: const Duration(seconds: 4),
             ),
@@ -316,7 +320,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(AppLocalizations.of(context)!.locationPermissionAlreadyGranted),
+            content: Text(
+              AppLocalizations.of(context)!.locationPermissionAlreadyGranted,
+            ),
             backgroundColor: Colors.blue,
           ),
         );
@@ -325,10 +331,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       debugPrint('Error handling location permission: $e');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error: $e'),
-          backgroundColor: Colors.red,
-        ),
+        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
       );
     }
   }
@@ -366,9 +369,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(AppLocalizations.of(context)!.clearAllDataConfirmTitle),
-        content: Text(
-          AppLocalizations.of(context)!.clearAllDataConfirmMessage,
-        ),
+        content: Text(AppLocalizations.of(context)!.clearAllDataConfirmMessage),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -438,7 +439,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
             builder: (context, appProvider, child) => SwitchListTile(
               secondary: const Icon(Icons.visibility_off),
               title: Text(AppLocalizations.of(context)!.simpleMode),
-              subtitle: Text(AppLocalizations.of(context)!.simpleModeDescription),
+              subtitle: Text(
+                AppLocalizations.of(context)!.simpleModeDescription,
+              ),
               value: appProvider.isSimpleMode,
               onChanged: (value) async {
                 await appProvider.toggleSimpleMode(value);
@@ -485,19 +488,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
                 switch (permission) {
                   case LocationPermission.always:
-                    statusText = AppLocalizations.of(context)!.locationPermissionGrantedAlways;
+                    statusText = AppLocalizations.of(
+                      context,
+                    )!.locationPermissionGrantedAlways;
                     statusColor = Colors.green;
                     break;
                   case LocationPermission.whileInUse:
-                    statusText = AppLocalizations.of(context)!.locationPermissionGrantedWhileInUse;
+                    statusText = AppLocalizations.of(
+                      context,
+                    )!.locationPermissionGrantedWhileInUse;
                     statusColor = Colors.green;
                     break;
                   case LocationPermission.denied:
-                    statusText = AppLocalizations.of(context)!.locationPermissionDeniedTapToRequest;
+                    statusText = AppLocalizations.of(
+                      context,
+                    )!.locationPermissionDeniedTapToRequest;
                     statusColor = Colors.orange;
                     break;
                   case LocationPermission.deniedForever:
-                    statusText = AppLocalizations.of(context)!.locationPermissionPermanentlyDeniedOpenSettings;
+                    statusText = AppLocalizations.of(
+                      context,
+                    )!.locationPermissionPermanentlyDeniedOpenSettings;
                     statusColor = Colors.red;
                     break;
                   default:
@@ -505,10 +516,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     statusColor = Colors.grey;
                 }
 
-                return Text(
-                  statusText,
-                  style: TextStyle(color: statusColor),
-                );
+                return Text(statusText, style: TextStyle(color: statusColor));
               },
             ),
             trailing: const Icon(Icons.chevron_right),
@@ -517,13 +525,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const Divider(),
 
           // Location Settings Section
-          _buildSectionHeader(AppLocalizations.of(context)!.locationBroadcasting),
+          _buildSectionHeader(
+            AppLocalizations.of(context)!.locationBroadcasting,
+          ),
 
           // Automatic tracking settings
           SwitchListTile(
             secondary: const Icon(Icons.location_on),
             title: Text(AppLocalizations.of(context)!.autoLocationTracking),
-            subtitle: Text(AppLocalizations.of(context)!.automaticallyBroadcastPosition),
+            subtitle: Text(
+              AppLocalizations.of(context)!.automaticallyBroadcastPosition,
+            ),
             value: _locationService.isTracking,
             onChanged: (value) {
               if (value) {
@@ -538,7 +550,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ListTile(
               leading: const Icon(Icons.tune),
               title: Text(AppLocalizations.of(context)!.configureTracking),
-              subtitle: Text(AppLocalizations.of(context)!.distanceAndTimeThresholds),
+              subtitle: Text(
+                AppLocalizations.of(context)!.distanceAndTimeThresholds,
+              ),
               trailing: const Icon(Icons.chevron_right),
               onTap: () => _showTrackingConfigDialog(),
             ),
@@ -654,7 +668,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
-          title: Text(AppLocalizations.of(context)!.locationTrackingConfiguration),
+          title: Text(
+            AppLocalizations.of(context)!.locationTrackingConfiguration,
+          ),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -663,29 +679,31 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 // Description
                 Text(
                   AppLocalizations.of(context)!.configureWhenLocationBroadcasts,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Colors.grey,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.copyWith(color: Colors.grey),
                 ),
                 const SizedBox(height: 24),
 
                 // Minimum Distance
                 Text(
                   AppLocalizations.of(context)!.minimumDistance,
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  AppLocalizations.of(context)!.broadcastAfterMoving(tempMinDistance.toStringAsFixed(0)),
+                  AppLocalizations.of(
+                    context,
+                  )!.broadcastAfterMoving(tempMinDistance.toStringAsFixed(0)),
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
                 const SizedBox(height: 8),
                 SliderTheme(
-                  data: SliderTheme.of(context).copyWith(
-                    showValueIndicator: ShowValueIndicator.always,
-                  ),
+                  data: SliderTheme.of(
+                    context,
+                  ).copyWith(showValueIndicator: ShowValueIndicator.onDrag),
                   child: Slider(
                     value: tempMinDistance,
                     min: 1,
@@ -718,20 +736,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 // Maximum Distance
                 Text(
                   AppLocalizations.of(context)!.maximumDistance,
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  AppLocalizations.of(context)!.alwaysBroadcastAfterMoving(tempMaxDistance.toStringAsFixed(0)),
+                  AppLocalizations.of(context)!.alwaysBroadcastAfterMoving(
+                    tempMaxDistance.toStringAsFixed(0),
+                  ),
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
                 const SizedBox(height: 8),
                 SliderTheme(
-                  data: SliderTheme.of(context).copyWith(
-                    showValueIndicator: ShowValueIndicator.always,
-                  ),
+                  data: SliderTheme.of(
+                    context,
+                  ).copyWith(showValueIndicator: ShowValueIndicator.onDrag),
                   child: Slider(
                     value: tempMaxDistance,
                     min: tempMinDistance,
@@ -750,9 +770,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('${tempMinDistance.toStringAsFixed(0)}m',
-                        style: Theme.of(context).textTheme.bodySmall),
-                      Text('500m', style: Theme.of(context).textTheme.bodySmall),
+                      Text(
+                        '${tempMinDistance.toStringAsFixed(0)}m',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                      Text(
+                        '500m',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
                     ],
                   ),
                 ),
@@ -761,20 +786,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 // Minimum Time Interval
                 Text(
                   AppLocalizations.of(context)!.minimumTimeInterval,
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  AppLocalizations.of(context)!.alwaysBroadcastEvery(_formatDuration(tempTimeInterval)),
+                  AppLocalizations.of(
+                    context,
+                  )!.alwaysBroadcastEvery(_formatDuration(tempTimeInterval)),
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
                 const SizedBox(height: 8),
                 SliderTheme(
-                  data: SliderTheme.of(context).copyWith(
-                    showValueIndicator: ShowValueIndicator.always,
-                  ),
+                  data: SliderTheme.of(
+                    context,
+                  ).copyWith(showValueIndicator: ShowValueIndicator.onDrag),
                   child: Slider(
                     value: tempTimeInterval.toDouble(),
                     min: 10,
@@ -794,7 +821,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text('10s', style: Theme.of(context).textTheme.bodySmall),
-                      Text('10min', style: Theme.of(context).textTheme.bodySmall),
+                      Text(
+                        '10min',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
                     ],
                   ),
                 ),
@@ -819,7 +849,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
                 // Update tracking if active
                 if (_locationService.isTracking) {
-                  await _locationService.updateDistanceThreshold(tempMinDistance);
+                  await _locationService.updateDistanceThreshold(
+                    tempMinDistance,
+                  );
                 }
 
                 // Close dialog before setState
@@ -897,7 +929,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                   ],
                 ),
-                subtitle: Text(AppLocalizations.of(context)!.alertEmergencyMode),
+                subtitle: Text(
+                  AppLocalizations.of(context)!.alertEmergencyMode,
+                ),
                 value: AppThemeMode.sarRed,
                 groupValue: _selectedTheme,
                 onChanged: (value) {
@@ -945,7 +979,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                   ],
                 ),
-                subtitle: Text(AppLocalizations.of(context)!.sarNavyBlueDescription),
+                subtitle: Text(
+                  AppLocalizations.of(context)!.sarNavyBlueDescription,
+                ),
                 value: AppThemeMode.sarNavyBlue,
                 groupValue: _selectedTheme,
                 onChanged: (value) {
@@ -1043,9 +1079,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
               const SizedBox(height: 16),
-              Text(
-                AppLocalizations.of(context)!.aboutDescription,
-              ),
+              Text(AppLocalizations.of(context)!.aboutDescription),
               const SizedBox(height: 16),
               Text(
                 AppLocalizations.of(context)!.technologiesUsed,
@@ -1054,9 +1088,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
-              Text(
-                AppLocalizations.of(context)!.technologiesList,
-              ),
+              Text(AppLocalizations.of(context)!.technologiesList),
             ],
           ),
         ),

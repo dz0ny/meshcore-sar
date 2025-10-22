@@ -426,7 +426,7 @@ class _HomeScreenState extends State<HomeScreen>
                               ),
                               const SizedBox(width: 8),
                               Text(
-                                '${rssi} dBm',
+                                '$rssi dBm',
                                 style: TextStyle(
                                   color: signalColor,
                                   fontSize: 12,
@@ -789,8 +789,9 @@ class _HomeScreenState extends State<HomeScreen>
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) =>
-                                PacketLogScreen(bleService: provider.bleService),
+                            builder: (context) => PacketLogScreen(
+                              bleService: provider.bleService,
+                            ),
                           ),
                         );
                       },

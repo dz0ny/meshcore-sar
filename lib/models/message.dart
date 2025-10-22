@@ -29,11 +29,11 @@ enum MessageType {
 
 /// Message delivery status
 enum MessageDeliveryStatus {
-  sending,     // Message is being sent
-  sent,        // Message queued with expected ACK
-  delivered,   // Delivery confirmed (ACK received)
-  failed,      // Delivery failed
-  received,    // Message received from another contact
+  sending, // Message is being sent
+  sent, // Message queued with expected ACK
+  delivered, // Delivery confirmed (ACK received)
+  failed, // Delivery failed
+  received, // Message received from another contact
 }
 
 /// MeshCore message model
@@ -64,12 +64,14 @@ class Message {
   final int? suggestedTimeoutMs; // Suggested timeout from SENT response
   final int? roundTripTimeMs; // RTT from SEND_CONFIRMED
   final DateTime? deliveredAt; // When delivery was confirmed
-  final Uint8List? recipientPublicKey; // Full 32-byte public key of recipient (for retry)
+  final Uint8List?
+  recipientPublicKey; // Full 32-byte public key of recipient (for retry)
 
   // Retry tracking (for automatic retry with progressive timeouts)
   final int retryAttempt; // Current retry attempt (0-3), 0 = first send
   final DateTime? lastRetryAt; // When last retry was sent
-  final bool usedFloodFallback; // Whether message fell back to flood mode after retries
+  final bool
+  usedFloodFallback; // Whether message fell back to flood mode after retries
 
   // Read status tracking
   final bool isRead; // Whether message has been read by user
@@ -176,10 +178,10 @@ class Message {
 
     // Debug: Check what's in sarNotes
     debugPrint('📍 [Message.toSarMarker] Converting to marker:');
-    debugPrint('   message.text: "${text}"');
-    debugPrint('   message.sarNotes: "${sarNotes}"');
-    debugPrint('   message.sarMarkerType: ${sarMarkerType}');
-    debugPrint('   message.sarCustomEmoji: "${sarCustomEmoji}"');
+    debugPrint('   message.text: "$text"');
+    debugPrint('   message.sarNotes: "$sarNotes"');
+    debugPrint('   message.sarMarkerType: $sarMarkerType');
+    debugPrint('   message.sarCustomEmoji: "$sarCustomEmoji"');
 
     return SarMarker(
       id: id,
@@ -263,11 +265,11 @@ class Message {
     // Compare sender public key prefix with self public key prefix
     if (senderPublicKeyPrefix != null && senderPublicKeyPrefix!.length >= 6) {
       return senderPublicKeyPrefix![0] == selfPublicKey[0] &&
-             senderPublicKeyPrefix![1] == selfPublicKey[1] &&
-             senderPublicKeyPrefix![2] == selfPublicKey[2] &&
-             senderPublicKeyPrefix![3] == selfPublicKey[3] &&
-             senderPublicKeyPrefix![4] == selfPublicKey[4] &&
-             senderPublicKeyPrefix![5] == selfPublicKey[5];
+          senderPublicKeyPrefix![1] == selfPublicKey[1] &&
+          senderPublicKeyPrefix![2] == selfPublicKey[2] &&
+          senderPublicKeyPrefix![3] == selfPublicKey[3] &&
+          senderPublicKeyPrefix![4] == selfPublicKey[4] &&
+          senderPublicKeyPrefix![5] == selfPublicKey[5];
     }
 
     return false;
@@ -305,7 +307,8 @@ class Message {
     return Message(
       id: id ?? this.id,
       messageType: messageType ?? this.messageType,
-      senderPublicKeyPrefix: senderPublicKeyPrefix ?? this.senderPublicKeyPrefix,
+      senderPublicKeyPrefix:
+          senderPublicKeyPrefix ?? this.senderPublicKeyPrefix,
       channelIdx: channelIdx ?? this.channelIdx,
       pathLen: pathLen ?? this.pathLen,
       textType: textType ?? this.textType,

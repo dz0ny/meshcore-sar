@@ -17,24 +17,38 @@ import 'ble_command_queue.dart';
 typedef OnContactCallback = void Function(Contact contact);
 typedef OnContactsCompleteCallback = void Function(List<Contact> contacts);
 typedef OnMessageCallback = void Function(Message message);
-typedef OnTelemetryCallback = void Function(Uint8List publicKey, Uint8List lppData);
+typedef OnTelemetryCallback =
+    void Function(Uint8List publicKey, Uint8List lppData);
 typedef OnSelfInfoCallback = void Function(Map<String, dynamic> selfInfo);
 typedef OnDeviceInfoCallback = void Function(Map<String, dynamic> deviceInfo);
 typedef OnNoMoreMessagesCallback = void Function();
 typedef OnMessageWaitingCallback = void Function();
-typedef OnLoginSuccessCallback = void Function(Uint8List publicKeyPrefix, int permissions, bool isAdmin, int tag);
+typedef OnLoginSuccessCallback =
+    void Function(
+      Uint8List publicKeyPrefix,
+      int permissions,
+      bool isAdmin,
+      int tag,
+    );
 typedef OnLoginFailCallback = void Function(Uint8List publicKeyPrefix);
 typedef OnAdvertReceivedCallback = void Function(Uint8List publicKey);
 typedef OnPathUpdatedCallback = void Function(Uint8List publicKey);
-typedef OnMessageSentCallback = void Function(int expectedAckTag, int suggestedTimeoutMs, bool isFloodMode);
-typedef OnMessageDeliveredCallback = void Function(int ackCode, int roundTripTimeMs);
-typedef OnStatusResponseCallback = void Function(Uint8List publicKeyPrefix, Uint8List statusData);
-typedef OnBinaryResponseCallback = void Function(Uint8List publicKeyPrefix, int tag, Uint8List responseData);
-typedef OnBatteryAndStorageCallback = void Function(int millivolts, int? usedKb, int? totalKb);
+typedef OnMessageSentCallback =
+    void Function(int expectedAckTag, int suggestedTimeoutMs, bool isFloodMode);
+typedef OnMessageDeliveredCallback =
+    void Function(int ackCode, int roundTripTimeMs);
+typedef OnStatusResponseCallback =
+    void Function(Uint8List publicKeyPrefix, Uint8List statusData);
+typedef OnBinaryResponseCallback =
+    void Function(Uint8List publicKeyPrefix, int tag, Uint8List responseData);
+typedef OnBatteryAndStorageCallback =
+    void Function(int millivolts, int? usedKb, int? totalKb);
 typedef OnErrorCallback = void Function(String error, {int? errorCode});
 typedef OnContactNotFoundCallback = void Function(Uint8List? contactPublicKey);
-typedef OnChannelInfoCallback = void Function(int channelIdx, String channelName);
-typedef OnMessageEchoDetectedCallback = void Function(String messageId, int echoCount, int snrRaw, int rssiDbm);
+typedef OnChannelInfoCallback =
+    void Function(int channelIdx, String channelName);
+typedef OnMessageEchoDetectedCallback =
+    void Function(String messageId, int echoCount, int snrRaw, int rssiDbm);
 
 /// Processes incoming responses from the BLE device
 class BleResponseHandler {
@@ -118,12 +132,18 @@ class BleResponseHandler {
       final responseCode = reader.readByte();
 
       // Get opcode name for logging
-      final opcodeName = MeshCoreOpcodeNames.getOpcodeName(responseCode, isTx: false);
-      final opcodeHex = '0x${responseCode.toRadixString(16).padLeft(2, '0').toUpperCase()}';
+      final opcodeName = MeshCoreOpcodeNames.getOpcodeName(
+        responseCode,
+        isTx: false,
+      );
+      final opcodeHex =
+          '0x${responseCode.toRadixString(16).padLeft(2, '0').toUpperCase()}';
 
       debugPrint('📥 [RX] Received: $opcodeName ($opcodeHex)');
       debugPrint('  Data size: ${data.length} bytes');
-      debugPrint('  Hex: ${data.map((b) => b.toRadixString(16).padLeft(2, '0')).join(' ')}');
+      debugPrint(
+        '  Hex: ${data.map((b) => b.toRadixString(16).padLeft(2, '0')).join(' ')}',
+      );
       debugPrint('  Payload: ${reader.remainingBytesCount} bytes');
 
       // Log RX packet (before processing so we capture everything)
@@ -254,7 +274,9 @@ class BleResponseHandler {
     try {
       final contact = FrameParser.parseContact(reader);
       debugPrint('  ✅ [Contact] Parsed successfully: ${contact.advName}');
-      debugPrint('     outPathLen: ${contact.outPathLen} (${contact.pathDescription})');
+      debugPrint(
+        '     outPathLen: ${contact.outPathLen} (${contact.pathDescription})',
+      );
       _pendingContacts.add(contact);
       onContactReceived?.call(contact);
     } catch (e) {
@@ -416,7 +438,9 @@ class BleResponseHandler {
   /// Handle LogRxData push - includes extensive decoding logic
   void _handleLogRxData(BufferReader reader) {
     try {
-      debugPrint('  [LogRxData] Parsing log rx data from over-the-air packet...');
+      debugPrint(
+        '  [LogRxData] Parsing log rx data from over-the-air packet...',
+      );
       final data = reader.readRemainingBytes();
 
       if (data.length < 2) {
@@ -445,25 +469,35 @@ class BleResponseHandler {
         final payloadType = (header >> 2) & 0x0F;
         final pathLen = rawPacketData[1];
 
-        debugPrint('    Packet type: 0x${payloadType.toRadixString(16).padLeft(2, '0')}');
+        debugPrint(
+          '    Packet type: 0x${payloadType.toRadixString(16).padLeft(2, '0')}',
+        );
 
         if (pathLen > 0 && rawPacketData.length >= 2 + pathLen) {
           final path = rawPacketData.sublist(2, 2 + pathLen);
-          final pathStr = path.map((b) => '0x${b.toRadixString(16).padLeft(2, '0')}').join(' → ');
+          final pathStr = path
+              .map((b) => '0x${b.toRadixString(16).padLeft(2, '0')}')
+              .join(' → ');
           debugPrint('    Path ($pathLen hops): $pathStr');
 
           // Highlight multi-hop packets
           if (pathLen > 1) {
-            debugPrint('    🔄 MULTI-HOP PACKET! Original sender: 0x${path[0].toRadixString(16).padLeft(2, '0')}');
+            debugPrint(
+              '    🔄 MULTI-HOP PACKET! Original sender: 0x${path[0].toRadixString(16).padLeft(2, '0')}',
+            );
           }
 
           // Check if our node hash is in the path
           if (_ourNodeHash != null && path.contains(_ourNodeHash!)) {
-            debugPrint('    ✅✅✅ ECHO DETECTED! Path contains our hash (0x${_ourNodeHash!.toRadixString(16).padLeft(2, '0')}) ✅✅✅');
+            debugPrint(
+              '    ✅✅✅ ECHO DETECTED! Path contains our hash (0x${_ourNodeHash!.toRadixString(16).padLeft(2, '0')}) ✅✅✅',
+            );
             if (path[0] == _ourNodeHash) {
               debugPrint('    👉 WE are the original sender!');
             } else {
-              debugPrint('    👉 Original sender: 0x${path[0].toRadixString(16).padLeft(2, '0')}, WE sent it to the network');
+              debugPrint(
+                '    👉 Original sender: 0x${path[0].toRadixString(16).padLeft(2, '0')}, WE sent it to the network',
+              );
             }
           } else {
             debugPrint('    ℹ️  Does NOT contain our hash (not our message)');
@@ -526,7 +560,11 @@ class BleResponseHandler {
       hash = hash & 0xFFFFFFFF; // Keep 32-bit
     }
     if (packet.length > 16) {
-      for (int i = packet.length ~/ 2; i < packet.length ~/ 2 + 8 && i < packet.length; i++) {
+      for (
+        int i = packet.length ~/ 2;
+        i < packet.length ~/ 2 + 8 && i < packet.length;
+        i++
+      ) {
         hash = ((hash << 5) - hash) + packet[i];
         hash = hash & 0xFFFFFFFF;
       }
@@ -543,7 +581,9 @@ class BleResponseHandler {
   /// Check if received packet is an echo of a sent message
   void _checkForEcho(Uint8List rawPacket, int snrRaw, int rssiDbm) {
     try {
-      debugPrint('  🔍 [Echo] _checkForEcho called, packet size: ${rawPacket.length} bytes');
+      debugPrint(
+        '  🔍 [Echo] _checkForEcho called, packet size: ${rawPacket.length} bytes',
+      );
 
       // Need at least header + path_len
       if (rawPacket.length < 2) {
@@ -553,7 +593,9 @@ class BleResponseHandler {
 
       final header = rawPacket[0];
       final payloadType = (header >> 2) & 0x0F;
-      debugPrint('  🔍 [Echo] Payload type: 0x${payloadType.toRadixString(16).padLeft(2, '0')}');
+      debugPrint(
+        '  🔍 [Echo] Payload type: 0x${payloadType.toRadixString(16).padLeft(2, '0')}',
+      );
       if (payloadType != 0x05) {
         debugPrint('  ⚠️ [Echo] Not GRP_TXT, ignoring');
         return; // Only track GRP_TXT
@@ -568,10 +610,13 @@ class BleResponseHandler {
 
       // Extract path for unique echo tracking
       final path = rawPacket.sublist(2, 2 + pathLen);
-      final pathSignature = path.map((b) => b.toRadixString(16).padLeft(2, '0')).join(':');
+      final pathSignature = path
+          .map((b) => b.toRadixString(16).padLeft(2, '0'))
+          .join(':');
 
       // Check if our node hash is in the path (meaning this is our message being rebroadcast)
-      final containsOurHash = _ourNodeHash != null && path.contains(_ourNodeHash!);
+      final containsOurHash =
+          _ourNodeHash != null && path.contains(_ourNodeHash!);
       if (!containsOurHash) {
         // This packet doesn't have our hash in the path, so it's not our message
         return;
@@ -599,9 +644,16 @@ class BleResponseHandler {
           debugPrint('     Unique paths: ${tracker.uniqueEchoPaths.length}');
 
           // Notify callback
-          onMessageEchoDetected?.call(tracker.messageId, tracker.echoCount, snrRaw, rssiDbm);
+          onMessageEchoDetected?.call(
+            tracker.messageId,
+            tracker.echoCount,
+            snrRaw,
+            rssiDbm,
+          );
         } else {
-          debugPrint('  ♻️ [Echo] Duplicate path (already counted): $pathSignature');
+          debugPrint(
+            '  ♻️ [Echo] Duplicate path (already counted): $pathSignature',
+          );
         }
       }
 
@@ -631,7 +683,9 @@ class BleResponseHandler {
 
       // Store by message ID temporarily
       _sentMessageTrackers[messageId] = tracker;
-      debugPrint('  📤 [Echo] Tracking message $messageId (will match any GRP_TXT within 10000ms)');
+      debugPrint(
+        '  📤 [Echo] Tracking message $messageId (will match any GRP_TXT within 10000ms)',
+      );
       debugPrint('  📊 [Echo] Total trackers: ${_sentMessageTrackers.length}');
 
       // Cleanup if too many trackers
@@ -649,8 +703,12 @@ class BleResponseHandler {
   /// Set our node hash for packet identification
   void setOurNodeHash(int nodeHash) {
     _ourNodeHash = nodeHash;
-    debugPrint('  🔑 [Echo] Our node hash set to: 0x${nodeHash.toRadixString(16).padLeft(2, '0')}');
-    debugPrint('  ℹ️  [Echo] Will track packets containing our hash in the path');
+    debugPrint(
+      '  🔑 [Echo] Our node hash set to: 0x${nodeHash.toRadixString(16).padLeft(2, '0')}',
+    );
+    debugPrint(
+      '  ℹ️  [Echo] Will track packets containing our hash in the path',
+    );
   }
 
   /// Associate a captured packet with a sent message
@@ -666,7 +724,9 @@ class BleResponseHandler {
   /// [3+] = rest of path + encrypted payload
   void _associatePacketWithSentMessage(Uint8List rawPacket) {
     try {
-      debugPrint('  🔍 [Echo] _associatePacketWithSentMessage called, packet size: ${rawPacket.length}');
+      debugPrint(
+        '  🔍 [Echo] _associatePacketWithSentMessage called, packet size: ${rawPacket.length}',
+      );
 
       // Need at least 3 bytes: header + path_len + first path byte
       if (rawPacket.length < 3) {
@@ -677,8 +737,11 @@ class BleResponseHandler {
       // Check if this is a GRP_TXT packet (payload type = 0x05)
       final header = rawPacket[0];
       final payloadType = (header >> 2) & 0x0F;
-      debugPrint('  🔍 [Echo] Association check - Payload type: 0x${payloadType.toRadixString(16).padLeft(2, '0')}');
-      if (payloadType != 0x05) { // Not a group message
+      debugPrint(
+        '  🔍 [Echo] Association check - Payload type: 0x${payloadType.toRadixString(16).padLeft(2, '0')}',
+      );
+      if (payloadType != 0x05) {
+        // Not a group message
         debugPrint('  ⚠️ [Echo] Not GRP_TXT, skipping association');
         return;
       }
@@ -694,16 +757,21 @@ class BleResponseHandler {
 
       // Extract the path from the packet for unique echo tracking
       final path = rawPacket.sublist(2, 2 + pathLen);
-      final pathSignature = path.map((b) => b.toRadixString(16).padLeft(2, '0')).join(':');
+      final pathSignature = path
+          .map((b) => b.toRadixString(16).padLeft(2, '0'))
+          .join(':');
 
       // Check if our node hash is in the path (meaning this is our message being rebroadcast)
-      final containsOurHash = _ourNodeHash != null && path.contains(_ourNodeHash!);
+      final containsOurHash =
+          _ourNodeHash != null && path.contains(_ourNodeHash!);
       if (!containsOurHash) {
         // This packet doesn't have our hash in the path, so it's not our message
         return;
       }
 
-      debugPrint('  ✅ [Echo] Packet contains our hash (0x${_ourNodeHash!.toRadixString(16).padLeft(2, '0')}) in path: $pathSignature');
+      debugPrint(
+        '  ✅ [Echo] Packet contains our hash (0x${_ourNodeHash!.toRadixString(16).padLeft(2, '0')}) in path: $pathSignature',
+      );
 
       // Extract encrypted payload (everything after path)
       final payloadStart = 2 + pathLen;
@@ -754,13 +822,17 @@ class BleResponseHandler {
 
   /// Remove expired trackers
   void _cleanupExpiredTrackers() {
-    final expiredCount = _sentMessageTrackers.values.where((t) => t.isExpired).length;
+    final expiredCount = _sentMessageTrackers.values
+        .where((t) => t.isExpired)
+        .length;
     if (expiredCount > 0) {
       debugPrint('  🧹 [Echo] Cleaning up $expiredCount expired tracker(s)');
     }
     _sentMessageTrackers.removeWhere((key, tracker) {
       if (tracker.isExpired && tracker.packetHashHex == 'pending') {
-        debugPrint('  ⏱️ [Echo] Tracker expired without capturing: ${tracker.messageId}');
+        debugPrint(
+          '  ⏱️ [Echo] Tracker expired without capturing: ${tracker.messageId}',
+        );
       }
       return tracker.isExpired;
     });
@@ -774,7 +846,9 @@ class BleResponseHandler {
     final sortedEntries = _sentMessageTrackers.entries.toList()
       ..sort((a, b) => a.value.sentTime.compareTo(b.value.sentTime));
 
-    final toRemove = sortedEntries.take(_sentMessageTrackers.length - _maxTrackers);
+    final toRemove = sortedEntries.take(
+      _sentMessageTrackers.length - _maxTrackers,
+    );
     for (final entry in toRemove) {
       _sentMessageTrackers.remove(entry.key);
     }
@@ -787,7 +861,9 @@ class BleResponseHandler {
     try {
       final contact = FrameParser.parseContact(reader);
       debugPrint('  ✅ [NewAdvert] Parsed successfully: ${contact.advName}');
-      debugPrint('     outPathLen: ${contact.outPathLen} (${contact.pathDescription})');
+      debugPrint(
+        '     outPathLen: ${contact.outPathLen} (${contact.pathDescription})',
+      );
       onContactReceived?.call(contact);
     } catch (e) {
       debugPrint('  ❌ [NewAdvert] Parsing error: $e');
@@ -937,7 +1013,7 @@ class BleResponseHandler {
         final channelIdx = info['channelIdx'] as int;
         final channelName = info['channelName'] as String;
 
-        debugPrint('  ✅ [ChannelInfo] Channel $channelIdx: "${channelName}"');
+        debugPrint('  ✅ [ChannelInfo] Channel $channelIdx: "$channelName"');
         onChannelInfoReceived?.call(channelIdx, channelName);
       }
     } catch (e) {
@@ -956,14 +1032,17 @@ class BleResponseHandler {
 
         // Complete any pending ACK command with error
         _commandQueue?.completeCommandWithError(
-          MeshCoreConstants.respOk,  // Command was expecting OK, got ERR
+          MeshCoreConstants.respOk, // Command was expecting OK, got ERR
           errorMsg,
           errorCode: errorCode,
         );
 
         // Special handling for ERR_CODE_NOT_FOUND (2) - contact not in radio
-        if (errorCode == 2) {  // ERR_CODE_NOT_FOUND
-          debugPrint('  ⚠️ [Error] Contact not found in radio - attempting auto-recovery');
+        if (errorCode == 2) {
+          // ERR_CODE_NOT_FOUND
+          debugPrint(
+            '  ⚠️ [Error] Contact not found in radio - attempting auto-recovery',
+          );
           onContactNotFound?.call(_lastContactPublicKey);
         }
 
@@ -980,14 +1059,20 @@ class BleResponseHandler {
   }
 
   /// Log a packet
-  void _logPacket(Uint8List data, PacketDirection direction, {int? responseCode}) {
-    _packetLogs.add(BlePacketLog(
-      timestamp: DateTime.now(),
-      rawData: data,
-      direction: direction,
-      responseCode: responseCode,
-      description: _getPacketDescription(responseCode),
-    ));
+  void _logPacket(
+    Uint8List data,
+    PacketDirection direction, {
+    int? responseCode,
+  }) {
+    _packetLogs.add(
+      BlePacketLog(
+        timestamp: DateTime.now(),
+        rawData: data,
+        direction: direction,
+        responseCode: responseCode,
+        description: _getPacketDescription(responseCode),
+      ),
+    );
 
     if (_packetLogs.length > _maxLogSize) {
       _packetLogs.removeAt(0);

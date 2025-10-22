@@ -37,7 +37,8 @@ class _RecipientSelectorSheetState extends State<RecipientSelectorSheet> {
     if (_searchQuery.isEmpty) return contacts;
     final query = _searchQuery.toLowerCase();
     return contacts.where((contact) {
-      final name = contact.displayName?.toLowerCase() ?? contact.advName.toLowerCase();
+      final name =
+          contact.displayName.toLowerCase() ?? contact.advName.toLowerCase();
       return name.contains(query);
     }).toList();
   }
@@ -81,9 +82,9 @@ class _RecipientSelectorSheetState extends State<RecipientSelectorSheet> {
               children: [
                 Text(
                   l10n.selectRecipient,
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 const Spacer(),
                 IconButton(
@@ -254,17 +255,19 @@ class _RecipientSelectorSheetState extends State<RecipientSelectorSheet> {
                         const SizedBox(height: 16),
                         Text(
                           l10n.noContactsOrRoomsAvailable,
-                          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                            color: Theme.of(context).disabledColor,
-                          ),
+                          style: Theme.of(context).textTheme.bodyLarge
+                              ?.copyWith(
+                                color: Theme.of(context).disabledColor,
+                              ),
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 8),
                         Text(
                           l10n.messagesWillBeSentToPublicChannel,
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Theme.of(context).disabledColor,
-                          ),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: Theme.of(context).disabledColor,
+                              ),
                           textAlign: TextAlign.center,
                         ),
                       ],
@@ -297,7 +300,7 @@ class _RecipientSelectorSheetState extends State<RecipientSelectorSheet> {
         decoration: BoxDecoration(
           color: isSelected
               ? Theme.of(context).colorScheme.primaryContainer
-              : Theme.of(context).colorScheme.surfaceVariant,
+              : Theme.of(context).colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(20),
         ),
         child: Icon(
@@ -325,11 +328,10 @@ class _RecipientSelectorSheetState extends State<RecipientSelectorSheet> {
       ),
       subtitle: Text(
         subtitle,
-        style: const TextStyle(
-          fontSize: 12,
-          fontFamily: 'monospace',
-        ).copyWith(
-          color: Theme.of(context).textTheme.bodySmall?.color?.withValues(alpha: 0.6),
+        style: const TextStyle(fontSize: 12, fontFamily: 'monospace').copyWith(
+          color: Theme.of(
+            context,
+          ).textTheme.bodySmall?.color?.withValues(alpha: 0.6),
         ),
       ),
       trailing: isSelected

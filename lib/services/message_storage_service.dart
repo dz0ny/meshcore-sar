@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/message.dart';
@@ -27,7 +26,9 @@ class MessageStorageService {
       final jsonString = jsonEncode(limitedList);
       await prefs.setString(_messagesKey, jsonString);
 
-      debugPrint('✅ [MessageStorage] Saved ${limitedList.length} messages to storage');
+      debugPrint(
+        '✅ [MessageStorage] Saved ${limitedList.length} messages to storage',
+      );
     } catch (e) {
       debugPrint('❌ [MessageStorage] Error saving messages: $e');
     }
@@ -51,7 +52,9 @@ class MessageStorageService {
           .cast<Message>()
           .toList();
 
-      debugPrint('✅ [MessageStorage] Loaded ${messages.length} messages from storage');
+      debugPrint(
+        '✅ [MessageStorage] Loaded ${messages.length} messages from storage',
+      );
       return messages;
     } catch (e) {
       debugPrint('❌ [MessageStorage] Error loading messages: $e');
@@ -77,11 +80,7 @@ class MessageStorageService {
       final jsonString = prefs.getString(_messagesKey);
 
       if (jsonString == null || jsonString.isEmpty) {
-        return {
-          'messageCount': 0,
-          'storageSizeBytes': 0,
-          'storageSizeKB': 0,
-        };
+        return {'messageCount': 0, 'storageSizeBytes': 0, 'storageSizeKB': 0};
       }
 
       final sizeBytes = jsonString.length;
@@ -94,11 +93,7 @@ class MessageStorageService {
       };
     } catch (e) {
       debugPrint('❌ [MessageStorage] Error getting storage stats: $e');
-      return {
-        'messageCount': 0,
-        'storageSizeBytes': 0,
-        'storageSizeKB': 0,
-      };
+      return {'messageCount': 0, 'storageSizeBytes': 0, 'storageSizeKB': 0};
     }
   }
 
@@ -144,7 +139,8 @@ class MessageStorageService {
         ),
         senderPublicKeyPrefix: json['senderPublicKeyPrefix'] != null
             ? Uint8List.fromList(
-                base64Decode(json['senderPublicKeyPrefix'] as String))
+                base64Decode(json['senderPublicKeyPrefix'] as String),
+              )
             : null,
         channelIdx: json['channelIdx'] as int?,
         pathLen: json['pathLen'] as int,
@@ -158,12 +154,13 @@ class MessageStorageService {
                 orElse: () => SarMarkerType.unknown,
               )
             : null,
-        sarGpsCoordinates: json['sarGpsLat'] != null &&
-                json['sarGpsLon'] != null
+        sarGpsCoordinates:
+            json['sarGpsLat'] != null && json['sarGpsLon'] != null
             ? LatLng(json['sarGpsLat'] as double, json['sarGpsLon'] as double)
             : null,
         receivedAt: DateTime.fromMillisecondsSinceEpoch(
-            json['receivedAtMillis'] as int),
+          json['receivedAtMillis'] as int,
+        ),
         senderName: json['senderName'] as String?,
         deliveryStatus: json['deliveryStatus'] != null
             ? MessageDeliveryStatus.values.firstWhere(
@@ -176,11 +173,13 @@ class MessageStorageService {
         roundTripTimeMs: json['roundTripTimeMs'] as int?,
         deliveredAt: json['deliveredAtMillis'] != null
             ? DateTime.fromMillisecondsSinceEpoch(
-                json['deliveredAtMillis'] as int)
+                json['deliveredAtMillis'] as int,
+              )
             : null,
         recipientPublicKey: json['recipientPublicKey'] != null
             ? Uint8List.fromList(
-                base64Decode(json['recipientPublicKey'] as String))
+                base64Decode(json['recipientPublicKey'] as String),
+              )
             : null,
         isRead: json['isRead'] as bool? ?? false,
       );

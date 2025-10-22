@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/contact.dart';
@@ -17,7 +16,9 @@ class ContactStorageService {
       final prefs = await SharedPreferences.getInstance();
 
       // Convert contacts to JSON
-      final jsonList = contacts.map((contact) => _contactToJson(contact)).toList();
+      final jsonList = contacts
+          .map((contact) => _contactToJson(contact))
+          .toList();
 
       // Limit to max stored contacts (keep most recent)
       final limitedList = jsonList.length > _maxStoredContacts
@@ -27,7 +28,9 @@ class ContactStorageService {
       final jsonString = jsonEncode(limitedList);
       await prefs.setString(_contactsKey, jsonString);
 
-      debugPrint('✅ [ContactStorage] Saved ${limitedList.length} contacts to storage');
+      debugPrint(
+        '✅ [ContactStorage] Saved ${limitedList.length} contacts to storage',
+      );
     } catch (e) {
       debugPrint('❌ [ContactStorage] Error saving contacts: $e');
     }
@@ -55,16 +58,23 @@ class ContactStorageService {
       // Filter out contacts with the excluded public key
       final filteredContacts = excludePublicKey != null
           ? contacts.where((contact) {
-              final matches = _publicKeysMatch(contact.publicKey, excludePublicKey);
+              final matches = _publicKeysMatch(
+                contact.publicKey,
+                excludePublicKey,
+              );
               if (matches) {
-                debugPrint('ℹ️ [ContactStorage] Excluding contact with matching public key: ${contact.advName}');
+                debugPrint(
+                  'ℹ️ [ContactStorage] Excluding contact with matching public key: ${contact.advName}',
+                );
               }
               return !matches;
             }).toList()
           : contacts;
 
-      debugPrint('✅ [ContactStorage] Loaded ${filteredContacts.length} contacts from storage'
-          '${excludePublicKey != null ? ' (${contacts.length - filteredContacts.length} excluded)' : ''}');
+      debugPrint(
+        '✅ [ContactStorage] Loaded ${filteredContacts.length} contacts from storage'
+        '${excludePublicKey != null ? ' (${contacts.length - filteredContacts.length} excluded)' : ''}',
+      );
       return filteredContacts;
     } catch (e) {
       debugPrint('❌ [ContactStorage] Error loading contacts: $e');
@@ -99,11 +109,7 @@ class ContactStorageService {
       final jsonString = prefs.getString(_contactsKey);
 
       if (jsonString == null || jsonString.isEmpty) {
-        return {
-          'contactCount': 0,
-          'storageSizeBytes': 0,
-          'storageSizeKB': 0,
-        };
+        return {'contactCount': 0, 'storageSizeBytes': 0, 'storageSizeKB': 0};
       }
 
       final sizeBytes = jsonString.length;
@@ -116,11 +122,7 @@ class ContactStorageService {
       };
     } catch (e) {
       debugPrint('❌ [ContactStorage] Error getting storage stats: $e');
-      return {
-        'contactCount': 0,
-        'storageSizeBytes': 0,
-        'storageSizeKB': 0,
-      };
+      return {'contactCount': 0, 'storageSizeBytes': 0, 'storageSizeKB': 0};
     }
   }
 
@@ -137,7 +139,9 @@ class ContactStorageService {
       'advLat': contact.advLat,
       'advLon': contact.advLon,
       'lastMod': contact.lastMod,
-      'telemetry': contact.telemetry != null ? _telemetryToJson(contact.telemetry!) : null,
+      'telemetry': contact.telemetry != null
+          ? _telemetryToJson(contact.telemetry!)
+          : null,
     };
   }
 
@@ -145,7 +149,9 @@ class ContactStorageService {
   Contact? _contactFromJson(Map<String, dynamic> json) {
     try {
       return Contact(
-        publicKey: Uint8List.fromList(base64Decode(json['publicKey'] as String)),
+        publicKey: Uint8List.fromList(
+          base64Decode(json['publicKey'] as String),
+        ),
         type: ContactType.fromValue(json['type'] as int),
         flags: json['flags'] as int,
         outPathLen: json['outPathLen'] as int,
@@ -200,7 +206,8 @@ class ContactStorageService {
         humidity: json['humidity'] as double?,
         pressure: json['pressure'] as double?,
         timestamp: DateTime.fromMillisecondsSinceEpoch(
-            json['timestampMillis'] as int),
+          json['timestampMillis'] as int,
+        ),
         extraSensorData: json['extraSensorData'] as Map<String, dynamic>?,
       );
     } catch (e) {

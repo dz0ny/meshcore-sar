@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -7,11 +6,7 @@ import '../models/map_drawing.dart';
 import '../utils/drawing_message_parser.dart';
 
 /// Drawing mode state
-enum DrawingMode {
-  none,
-  line,
-  rectangle,
-}
+enum DrawingMode { none, line, rectangle }
 
 /// Provider for managing map drawings
 class DrawingProvider with ChangeNotifier {
@@ -123,7 +118,8 @@ class DrawingProvider with ChangeNotifier {
 
   /// Update rectangle end point (for preview)
   void updateRectangleEndPoint(LatLng endPoint) {
-    if (_drawingMode != DrawingMode.rectangle || _rectangleStartPoint == null) return;
+    if (_drawingMode != DrawingMode.rectangle || _rectangleStartPoint == null)
+      return;
 
     // Create preview rectangle
     _currentDrawing = RectangleDrawing(
@@ -270,7 +266,8 @@ class DrawingProvider with ChangeNotifier {
         createdAt: DateTime.now(),
         points: _currentLinePoints,
       );
-    } else if (_drawingMode == DrawingMode.rectangle && _currentDrawing != null) {
+    } else if (_drawingMode == DrawingMode.rectangle &&
+        _currentDrawing != null) {
       return _currentDrawing;
     }
     return null;

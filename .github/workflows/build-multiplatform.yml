@@ -117,21 +117,11 @@ jobs:
       - name: Build APK
         run: flutter build apk --release
 
-      - name: Build App Bundle
-        run: flutter build appbundle --release
-
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: android-apk
           path: build/app/outputs/flutter-apk/app-release.apk
-          retention-days: 30
-
-      - name: Upload App Bundle
-        uses: actions/upload-artifact@v4
-        with:
-          name: android-appbundle
-          path: build/app/outputs/bundle/release/app-release.aab
           retention-days: 30
 
   # iOS IPA Build
@@ -524,14 +514,6 @@ jobs:
           name: android-apk
           path: artifacts/android-apk
 
-      - name: Download Android App Bundle
-        if: needs.build-android.result == 'success'
-        uses: actions/download-artifact@v4
-        continue-on-error: true
-        with:
-          name: android-appbundle
-          path: artifacts/android-appbundle
-
       - name: Download macOS DMG
         if: needs.build-macos.result == 'success'
         uses: actions/download-artifact@v4
@@ -658,17 +640,6 @@ jobs:
               "Android APK"
           else
             echo "⚠️  Skipping Android APK: Directory artifacts/android-apk not found"
-          fi
-
-          # Copy Android App Bundle (search for any .aab file)
-          if [ -d "artifacts/android-appbundle" ]; then
-            copy_artifact \
-              "artifacts/android-appbundle" \
-              "*.aab" \
-              "meshcore-sar-${{ steps.metadata.outputs.build_prefix }}-${{ steps.metadata.outputs.timestamp }}.aab" \
-              "Android App Bundle"
-          else
-            echo "⚠️  Skipping Android App Bundle: Directory artifacts/android-appbundle not found"
           fi
 
           # Copy macOS DMG (search for any .dmg file)
@@ -1038,26 +1009,6 @@ jobs:
           HTMLEOF
           fi
 
-          # Add Android AAB if exists
-          AAB_PATH=$(get_latest_file "*.aab")
-          if [ -n "$AAB_PATH" ]; then
-            AAB_FILE=$(basename "$AAB_PATH")
-            AAB_SIZE=$(get_size "$AAB_PATH")
-            cat >> "$BUILD_DIR/index.html" <<HTMLEOF
-                <div class="download-card">
-                  <div class="download-info">
-                    <div class="download-platform">
-                      <span class="platform-icon">📦</span>
-                      <span class="platform-name">Android App Bundle</span>
-                    </div>
-                    <div class="file-name">$AAB_FILE</div>
-                    <div class="file-size">Size: $AAB_SIZE</div>
-                  </div>
-                  <a href="$BASE_URL/$AAB_FILE" class="download-btn" download>Download</a>
-                </div>
-          HTMLEOF
-          fi
-
           # Add macOS DMG if exists
           DMG_PATH=$(get_latest_file "*.dmg")
           if [ -n "$DMG_PATH" ]; then
@@ -1314,11 +1265,6 @@ jobs:
               echo "- 🤖 **Android APK**: [$APK_FILE]($BASE_URL/$APK_FILE)" >> $GITHUB_STEP_SUMMARY
             fi
 
-            if [ -f "r2-upload/unstable/${{ steps.metadata.outputs.build_prefix }}"/*.aab ]; then
-              AAB_FILE=$(basename r2-upload/unstable/${{ steps.metadata.outputs.build_prefix }}/*.aab)
-              echo "- 📦 **Android Bundle**: [$AAB_FILE]($BASE_URL/$AAB_FILE)" >> $GITHUB_STEP_SUMMARY
-            fi
-
             if [ -f "r2-upload/unstable/${{ steps.metadata.outputs.build_prefix }}"/*.dmg ]; then
               DMG_FILE=$(basename r2-upload/unstable/${{ steps.metadata.outputs.build_prefix }}/*.dmg)
               echo "- 🍎 **macOS DMG**: [$DMG_FILE]($BASE_URL/$DMG_FILE)" >> $GITHUB_STEP_SUMMARY
@@ -1359,7 +1305,6 @@ jobs:
         with:
           files: |
             artifacts/android-apk/*.apk
-            artifacts/android-appbundle/*.aab
             artifacts/macos-dmg/*.dmg
             artifacts/windows-executable/*.zip
             artifacts/linux-executable/*.tar.gz

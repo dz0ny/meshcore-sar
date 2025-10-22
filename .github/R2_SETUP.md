@@ -7,9 +7,11 @@ This document describes how to configure Cloudflare R2 for automatic artifact up
 The CI/CD pipeline uploads build artifacts (APK, AAB, DMG, Windows ZIP) to a Cloudflare R2 bucket in the `unstable/` directory for every successful build. This provides:
 
 - **Automatic artifact hosting** for all branches and commits
+- **Latest builds** from main branch always available at `unstable/latest/`
 - **Version tracking** with timestamps and commit hashes
 - **Public download URLs** (optional) for testers and developers
 - **Build manifests** with metadata for each build
+- **Commit history** showing last 10 commits for each build
 
 ## Required GitHub Secrets
 
@@ -122,21 +124,47 @@ Artifacts are uploaded with the following structure:
 
 ```
 unstable/
+├── latest/                                # ⭐ Always has the latest main branch build
+│   ├── index.html                         # 🌐 Download page with last 10 commits
+│   ├── meshcore-sar-latest.apk
+│   ├── meshcore-sar-latest.aab
+│   ├── meshcore-sar-latest.dmg
+│   ├── meshcore-sar-latest-windows.zip
+│   ├── manifest.json
+│   └── commits.json                       # Last 10 commit messages
 ├── main-abc1234/                          # Branch + commit hash
+│   ├── index.html                         # 🌐 Download page with last 10 commits
 │   ├── meshcore-sar-main-abc1234-20241022-143022.apk
 │   ├── meshcore-sar-main-abc1234-20241022-143022.aab
 │   ├── meshcore-sar-main-abc1234-20241022-143022.dmg
 │   ├── meshcore-sar-main-abc1234-20241022-143022-windows.zip
-│   └── manifest.json
+│   ├── manifest.json
+│   └── commits.json                       # Last 10 commit messages
 ├── v1.2.3/                                # Release tag
+│   ├── index.html                         # 🌐 Download page with last 10 commits
 │   ├── meshcore-sar-v1.2.3-20241022-150045.apk
 │   ├── meshcore-sar-v1.2.3-20241022-150045.aab
 │   ├── meshcore-sar-v1.2.3-20241022-150045.dmg
 │   ├── meshcore-sar-v1.2.3-20241022-150045-windows.zip
-│   └── manifest.json
+│   ├── manifest.json
+│   └── commits.json                       # Last 10 commit messages
 └── develop-def5678/
     └── ...
 ```
+
+### Download Page (index.html)
+
+Each build includes a beautiful, responsive HTML download page with:
+- **Build Information**: Build ID, timestamp, commit hash, workflow run number
+- **Download Buttons**: One-click downloads for all available platforms
+- **File Sizes**: Displayed for each artifact
+- **Commit History**: Last 10 commit messages with hash, date, author, and message
+- **Direct Links**: Links to manifest.json, commits.json, and GitHub repository
+- **Mobile Responsive**: Works perfectly on phones, tablets, and desktops
+
+Access the download pages:
+- **Latest main branch build**: `https://meshcore-sar.dz0ny.dev/unstable/latest/`
+- **Specific build**: `https://meshcore-sar.dz0ny.dev/unstable/<build-prefix>/`
 
 ### Manifest Example
 
@@ -158,6 +186,27 @@ Each build includes a `manifest.json` file:
     "meshcore-sar-main-abc1234-20241022-143022-windows.zip"
   ]
 }
+```
+
+### Commits Data (commits.json)
+
+Each build includes a `commits.json` file with the last 10 commits:
+
+```json
+[
+  {
+    "hash": "abc1234",
+    "date": "2024-10-22 14:30:22 +0000",
+    "message": "feat: Add Fastlane TestFlight setup documentation",
+    "author": "John Doe"
+  },
+  {
+    "hash": "def5678",
+    "date": "2024-10-22 12:15:10 +0000",
+    "message": "fix: Correctly set BASE_URL for unstable build artifacts",
+    "author": "Jane Smith"
+  }
+]
 ```
 
 ## Testing the Setup

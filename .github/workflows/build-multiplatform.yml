@@ -461,6 +461,11 @@ jobs:
         with:
           path: artifacts
 
+      - name: Checkout code for git log
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 10  # Fetch last 10 commits
+
       - name: Generate build metadata
         id: metadata
         run: |
@@ -480,32 +485,75 @@ jobs:
           echo "timestamp=$TIMESTAMP" >> $GITHUB_OUTPUT
           echo "commit_short=$COMMIT_SHORT" >> $GITHUB_OUTPUT
           echo "build_prefix=$BUILD_PREFIX" >> $GITHUB_OUTPUT
+          echo "branch_name=$BRANCH_NAME" >> $GITHUB_OUTPUT
           echo "Build prefix: $BUILD_PREFIX"
+
+      - name: Extract last 10 commits
+        id: commits
+        run: |
+          # Get last 10 commit messages with hash and date
+          git log -10 --pretty=format:'{"hash":"%h","date":"%ci","message":"%s","author":"%an"}' | \
+            jq -s '.' > commits.json
+
+          # Also create a simple text version for easier parsing
+          git log -10 --pretty=format:'%h|%ci|%s|%an' > commits.txt
+
+          cat commits.json
+          echo "Commits extracted to commits.json"
 
       - name: Prepare artifacts for upload
         run: |
-          # Create a structured directory for R2
+          # Create directories for R2
           mkdir -p r2-upload/unstable/${{ steps.metadata.outputs.build_prefix }}
+
+          # For main branch, also prepare the 'latest' directory
+          if [ "${{ steps.metadata.outputs.branch_name }}" == "main" ]; then
+            mkdir -p r2-upload/unstable/latest
+          fi
 
           # Copy and rename artifacts with metadata
           if [ -f artifacts/android-apk/app-release.apk ]; then
             cp artifacts/android-apk/app-release.apk \
               "r2-upload/unstable/${{ steps.metadata.outputs.build_prefix }}/meshcore-sar-${{ steps.metadata.outputs.build_prefix }}-${{ steps.metadata.outputs.timestamp }}.apk"
+            if [ "${{ steps.metadata.outputs.branch_name }}" == "main" ]; then
+              cp artifacts/android-apk/app-release.apk \
+                "r2-upload/unstable/latest/meshcore-sar-latest.apk"
+            fi
           fi
 
           if [ -f artifacts/android-appbundle/app-release.aab ]; then
             cp artifacts/android-appbundle/app-release.aab \
               "r2-upload/unstable/${{ steps.metadata.outputs.build_prefix }}/meshcore-sar-${{ steps.metadata.outputs.build_prefix }}-${{ steps.metadata.outputs.timestamp }}.aab"
+            if [ "${{ steps.metadata.outputs.branch_name }}" == "main" ]; then
+              cp artifacts/android-appbundle/app-release.aab \
+                "r2-upload/unstable/latest/meshcore-sar-latest.aab"
+            fi
           fi
 
           if [ -f artifacts/macos-dmg/MeshCore-SAR.dmg ]; then
             cp artifacts/macos-dmg/MeshCore-SAR.dmg \
               "r2-upload/unstable/${{ steps.metadata.outputs.build_prefix }}/meshcore-sar-${{ steps.metadata.outputs.build_prefix }}-${{ steps.metadata.outputs.timestamp }}.dmg"
+            if [ "${{ steps.metadata.outputs.branch_name }}" == "main" ]; then
+              cp artifacts/macos-dmg/MeshCore-SAR.dmg \
+                "r2-upload/unstable/latest/meshcore-sar-latest.dmg"
+            fi
           fi
 
           if [ -f artifacts/windows-executable/MeshCore-SAR-Windows.zip ]; then
             cp artifacts/windows-executable/MeshCore-SAR-Windows.zip \
               "r2-upload/unstable/${{ steps.metadata.outputs.build_prefix }}/meshcore-sar-${{ steps.metadata.outputs.build_prefix }}-${{ steps.metadata.outputs.timestamp }}-windows.zip"
+            if [ "${{ steps.metadata.outputs.branch_name }}" == "main" ]; then
+              cp artifacts/windows-executable/MeshCore-SAR-Windows.zip \
+                "r2-upload/unstable/latest/meshcore-sar-latest-windows.zip"
+            fi
+          fi
+
+          # Copy commits data
+          if [ -f commits.json ]; then
+            cp commits.json "r2-upload/unstable/${{ steps.metadata.outputs.build_prefix }}/"
+            if [ "${{ steps.metadata.outputs.branch_name }}" == "main" ]; then
+              cp commits.json "r2-upload/unstable/latest/"
+            fi
           fi
 
           # Create a build manifest
@@ -514,32 +562,50 @@ jobs:
             "build_id": "${{ steps.metadata.outputs.build_prefix }}-${{ steps.metadata.outputs.timestamp }}",
             "commit": "${{ github.sha }}",
             "commit_short": "${{ steps.metadata.outputs.commit_short }}",
-            "branch": "${GITHUB_REF#refs/heads/}",
+            "branch": "${{ steps.metadata.outputs.branch_name }}",
             "tag": "${GITHUB_REF#refs/tags/}",
             "timestamp": "${{ steps.metadata.outputs.timestamp }}",
             "workflow_run": "${{ github.run_number }}",
-            "artifacts": $(ls -1 r2-upload/unstable/${{ steps.metadata.outputs.build_prefix }}/ | grep -v manifest.json | jq -R . | jq -s .)
+            "artifacts": $(ls -1 r2-upload/unstable/${{ steps.metadata.outputs.build_prefix }}/ | grep -v manifest.json | grep -v commits.json | jq -R . | jq -s .)
           }
           EOF
+
+          # Create manifest for 'latest' if main branch
+          if [ "${{ steps.metadata.outputs.branch_name }}" == "main" ]; then
+            cat > "r2-upload/unstable/latest/manifest.json" <<EOF
+          {
+            "build_id": "${{ steps.metadata.outputs.build_prefix }}-${{ steps.metadata.outputs.timestamp }}",
+            "commit": "${{ github.sha }}",
+            "commit_short": "${{ steps.metadata.outputs.commit_short }}",
+            "branch": "${{ steps.metadata.outputs.branch_name }}",
+            "tag": "${GITHUB_REF#refs/tags/}",
+            "timestamp": "${{ steps.metadata.outputs.timestamp }}",
+            "workflow_run": "${{ github.run_number }}",
+            "artifacts": $(ls -1 r2-upload/unstable/latest/ | grep -v manifest.json | grep -v commits.json | jq -R . | jq -s .)
+          }
+          EOF
+          fi
 
       - name: Generate index.html
         env:
           R2_PUBLIC_URL: ${{ secrets.R2_PUBLIC_URL }}
         run: |
-          BUILD_DIR="r2-upload/unstable/${{ steps.metadata.outputs.build_prefix }}"
-          BASE_URL="${R2_PUBLIC_URL:-https://meshcore-sar.dz0ny.dev}/unstable/${{ steps.metadata.outputs.build_prefix }}"
+          generate_index() {
+            local BUILD_DIR="$1"
+            local BASE_URL="$2"
+            local IS_LATEST="$3"
 
-          # Get file sizes
-          get_size() {
-            if [ -f "$1" ]; then
-              ls -lh "$1" | awk '{print $5}'
-            else
-              echo "N/A"
-            fi
-          }
+            # Get file sizes
+            get_size() {
+              if [ -f "$1" ]; then
+                ls -lh "$1" | awk '{print $5}'
+              else
+                echo "N/A"
+              fi
+            }
 
-          # Generate download links HTML
-          cat > "$BUILD_DIR/index.html" <<'HTMLEOF'
+            # Generate download links HTML
+            cat > "$BUILD_DIR/index.html" <<'HTMLEOF'
           <!DOCTYPE html>
           <html lang="en">
           <head>
@@ -690,11 +756,72 @@ jobs:
               .footer a:hover {
                 text-decoration: underline;
               }
+              .commits-section {
+                margin-top: 30px;
+                padding-top: 20px;
+                border-top: 2px solid #f0f0f0;
+              }
+              .commits-section h2 {
+                color: #333;
+                font-size: 24px;
+                margin-bottom: 20px;
+              }
+              #commits-list {
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+              }
+              .commit-item {
+                background: #f8f9fa;
+                border-left: 4px solid #667eea;
+                border-radius: 6px;
+                padding: 15px;
+                transition: all 0.2s ease;
+              }
+              .commit-item:hover {
+                background: #e9ecef;
+                border-left-color: #764ba2;
+                transform: translateX(2px);
+              }
+              .commit-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 8px;
+                flex-wrap: wrap;
+                gap: 10px;
+              }
+              .commit-hash {
+                font-family: 'Monaco', 'Courier New', monospace;
+                background: #667eea;
+                color: white;
+                padding: 4px 10px;
+                border-radius: 4px;
+                font-size: 13px;
+                font-weight: 600;
+              }
+              .commit-date {
+                color: #888;
+                font-size: 12px;
+              }
+              .commit-message {
+                color: #333;
+                font-size: 15px;
+                line-height: 1.5;
+                margin-bottom: 6px;
+                font-weight: 500;
+              }
+              .commit-author {
+                color: #666;
+                font-size: 13px;
+                font-style: italic;
+              }
               @media (max-width: 600px) {
                 .container { padding: 20px; }
                 h1 { font-size: 24px; }
                 .download-card { flex-direction: column; align-items: flex-start; }
                 .download-btn { margin-top: 15px; width: 100%; text-align: center; }
+                .commit-header { flex-direction: column; align-items: flex-start; }
               }
             </style>
           </head>
@@ -807,8 +934,72 @@ jobs:
           HTMLEOF
           fi
 
-          # Close HTML
-          cat >> "$BUILD_DIR/index.html" <<'HTMLEOF'
+          # Add commit history section
+          if [ -f "$BUILD_DIR/commits.json" ]; then
+            cat >> "$BUILD_DIR/index.html" <<'HTMLEOF'
+              </div>
+
+              <div class="commits-section">
+                <h2>📝 Last 10 Commits</h2>
+                <div id="commits-list">Loading commits...</div>
+              </div>
+
+              <div class="footer">
+                <p>
+                  <a href="manifest.json">📋 View Build Manifest</a> •
+                  <a href="commits.json">🔗 Commits JSON</a> •
+                  <a href="https://github.com/${{ github.repository }}">📦 GitHub Repository</a>
+                </p>
+                <p style="margin-top: 10px; font-size: 12px;">
+                  Built with ❤️ by GitHub Actions
+                </p>
+              </div>
+            </div>
+
+            <script>
+              // Load and display commits
+              fetch('commits.json')
+                .then(response => response.json())
+                .then(commits => {
+                  const list = document.getElementById('commits-list');
+                  if (commits.length === 0) {
+                    list.innerHTML = '<p style="color: #888;">No commit data available</p>';
+                    return;
+                  }
+
+                  list.innerHTML = commits.map(commit => {
+                    const date = new Date(commit.date);
+                    const dateStr = date.toLocaleString('en-US', {
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    });
+
+                    return \`
+                      <div class="commit-item">
+                        <div class="commit-header">
+                          <span class="commit-hash">\${commit.hash}</span>
+                          <span class="commit-date">\${dateStr}</span>
+                        </div>
+                        <div class="commit-message">\${commit.message}</div>
+                        <div class="commit-author">by \${commit.author}</div>
+                      </div>
+                    \`;
+                  }).join('');
+                })
+                .catch(error => {
+                  document.getElementById('commits-list').innerHTML =
+                    '<p style="color: #888;">Failed to load commits</p>';
+                });
+            </script>
+          </body>
+          </html>
+          HTMLEOF
+          else
+            # No commits file, close HTML normally
+            cat >> "$BUILD_DIR/index.html" <<'HTMLEOF'
               </div>
 
               <div class="footer">
@@ -824,12 +1015,27 @@ jobs:
           </body>
           </html>
           HTMLEOF
+          fi
+          }
 
-          echo "Generated index.html with download links"
-          echo "Prepared artifacts:"
+          # Generate index for build-specific directory
+          BUILD_DIR="r2-upload/unstable/${{ steps.metadata.outputs.build_prefix }}"
+          BASE_URL="${R2_PUBLIC_URL:-https://meshcore-sar.dz0ny.dev}/unstable/${{ steps.metadata.outputs.build_prefix }}"
+          generate_index "$BUILD_DIR" "$BASE_URL" "false"
+
+          echo "Generated index.html for ${{ steps.metadata.outputs.build_prefix }}"
           ls -lah "$BUILD_DIR/"
 
-      - name: Upload to Cloudflare R2
+          # Generate index for 'latest' directory if this is main branch
+          if [ "${{ steps.metadata.outputs.branch_name }}" == "main" ]; then
+            LATEST_DIR="r2-upload/unstable/latest"
+            LATEST_URL="${R2_PUBLIC_URL:-https://meshcore-sar.dz0ny.dev}/unstable/latest"
+            generate_index "$LATEST_DIR" "$LATEST_URL" "true"
+            echo "Generated index.html for latest"
+            ls -lah "$LATEST_DIR/"
+          fi
+
+      - name: Upload build-specific artifacts to Cloudflare R2
         uses: ryand56/r2-upload-action@latest
         with:
           r2-account-id: ${{ secrets.R2_ACCOUNT_ID }}
@@ -838,6 +1044,17 @@ jobs:
           r2-bucket: ${{ secrets.R2_BUCKET_NAME }}
           source-dir: r2-upload/unstable/${{ steps.metadata.outputs.build_prefix }}
           destination-dir: unstable/${{ steps.metadata.outputs.build_prefix }}
+
+      - name: Upload latest artifacts to Cloudflare R2 (main branch only)
+        if: steps.metadata.outputs.branch_name == 'main'
+        uses: ryand56/r2-upload-action@latest
+        with:
+          r2-account-id: ${{ secrets.R2_ACCOUNT_ID }}
+          r2-access-key-id: ${{ secrets.R2_ACCESS_KEY_ID }}
+          r2-secret-access-key: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          r2-bucket: ${{ secrets.R2_BUCKET_NAME }}
+          source-dir: r2-upload/unstable/latest
+          destination-dir: unstable/latest
 
       - name: Generate download URLs
         run: |
@@ -851,6 +1068,13 @@ jobs:
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "🌐 **[View Download Page]($BASE_URL/)**" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
+
+            # Add 'latest' link for main branch
+            if [ "${{ steps.metadata.outputs.branch_name }}" == "main" ]; then
+              LATEST_URL="${{ secrets.R2_PUBLIC_URL }}/unstable/latest"
+              echo "⭐ **[Latest Build (main branch)]($LATEST_URL/)**" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+            fi
 
             if [ -f "r2-upload/unstable/${{ steps.metadata.outputs.build_prefix }}"/*.apk ]; then
               APK_FILE=$(basename r2-upload/unstable/${{ steps.metadata.outputs.build_prefix }}/*.apk)
@@ -874,6 +1098,7 @@ jobs:
 
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "- 📋 **Manifest**: [manifest.json]($BASE_URL/manifest.json)" >> $GITHUB_STEP_SUMMARY
+            echo "- 📝 **Commits**: [commits.json]($BASE_URL/commits.json)" >> $GITHUB_STEP_SUMMARY
           else
             echo "✅ Artifacts uploaded to R2 bucket (no public URL configured)" >> $GITHUB_STEP_SUMMARY
           fi

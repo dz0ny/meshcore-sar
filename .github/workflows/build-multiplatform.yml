@@ -556,6 +556,7 @@ jobs:
           # For main branch, also prepare the 'latest' directory
           if [ "${{ steps.metadata.outputs.branch_name }}" == "main" ]; then
             mkdir -p r2-upload/unstable/latest
+            rm -f r2-upload/unstable/latest/* 2>/dev/null || true
           fi
 
           # Helper function to find and copy artifact
@@ -672,6 +673,12 @@ jobs:
               else
                 echo "N/A"
               fi
+            }
+
+            # Grab the newest file matching a glob, ignoring older runs hanging around.
+            get_latest_file() {
+              local pattern="$1"
+              ls -1t "$BUILD_DIR"/$pattern 2>/dev/null | head -n 1
             }
 
             # Generate download links HTML
@@ -929,9 +936,10 @@ jobs:
           HTMLEOF
 
           # Add Android APK if exists
-          if [ -f "$BUILD_DIR"/*.apk ]; then
-            APK_FILE=$(basename "$BUILD_DIR"/*.apk)
-            APK_SIZE=$(get_size "$BUILD_DIR/$APK_FILE")
+          APK_PATH=$(get_latest_file "*.apk")
+          if [ -n "$APK_PATH" ]; then
+            APK_FILE=$(basename "$APK_PATH")
+            APK_SIZE=$(get_size "$APK_PATH")
             cat >> "$BUILD_DIR/index.html" <<HTMLEOF
                 <div class="download-card">
                   <div class="download-info">
@@ -948,9 +956,10 @@ jobs:
           fi
 
           # Add Android AAB if exists
-          if [ -f "$BUILD_DIR"/*.aab ]; then
-            AAB_FILE=$(basename "$BUILD_DIR"/*.aab)
-            AAB_SIZE=$(get_size "$BUILD_DIR/$AAB_FILE")
+          AAB_PATH=$(get_latest_file "*.aab")
+          if [ -n "$AAB_PATH" ]; then
+            AAB_FILE=$(basename "$AAB_PATH")
+            AAB_SIZE=$(get_size "$AAB_PATH")
             cat >> "$BUILD_DIR/index.html" <<HTMLEOF
                 <div class="download-card">
                   <div class="download-info">
@@ -967,9 +976,10 @@ jobs:
           fi
 
           # Add macOS DMG if exists
-          if [ -f "$BUILD_DIR"/*.dmg ]; then
-            DMG_FILE=$(basename "$BUILD_DIR"/*.dmg)
-            DMG_SIZE=$(get_size "$BUILD_DIR/$DMG_FILE")
+          DMG_PATH=$(get_latest_file "*.dmg")
+          if [ -n "$DMG_PATH" ]; then
+            DMG_FILE=$(basename "$DMG_PATH")
+            DMG_SIZE=$(get_size "$DMG_PATH")
             cat >> "$BUILD_DIR/index.html" <<HTMLEOF
                 <div class="download-card">
                   <div class="download-info">
@@ -986,9 +996,10 @@ jobs:
           fi
 
           # Add Windows ZIP if exists
-          if [ -f "$BUILD_DIR"/*-windows.zip ]; then
-            WIN_FILE=$(basename "$BUILD_DIR"/*-windows.zip)
-            WIN_SIZE=$(get_size "$BUILD_DIR/$WIN_FILE")
+          WIN_PATH=$(get_latest_file "*-windows.zip")
+          if [ -n "$WIN_PATH" ]; then
+            WIN_FILE=$(basename "$WIN_PATH")
+            WIN_SIZE=$(get_size "$WIN_PATH")
             cat >> "$BUILD_DIR/index.html" <<HTMLEOF
                 <div class="download-card">
                   <div class="download-info">

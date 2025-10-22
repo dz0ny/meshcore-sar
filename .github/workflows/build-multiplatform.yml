@@ -491,7 +491,7 @@ jobs:
       - name: Verify downloaded artifacts
         run: |
           echo "=== Downloaded build artifacts for R2 upload ==="
-          if [ -d artifacts ]; then
+          if [ -d artifacts ] && [ "$(ls -A artifacts 2>/dev/null)" ]; then
             echo "Directory structure:"
             ls -laR artifacts/
             echo ""
@@ -501,8 +501,8 @@ jobs:
             echo "=== File sizes ==="
             find artifacts -type f -exec du -h {} \; 2>/dev/null || echo "No artifacts to measure"
           else
-            echo "⚠️  No artifacts directory - all builds may have failed"
-            exit 1
+            echo "⚠️  No artifacts downloaded - builds may have been skipped or failed"
+            echo "This is expected if no platform builds succeeded"
           fi
 
       - name: Checkout code for git log
@@ -561,6 +561,12 @@ jobs:
             local pattern="$2"
             local dest_name="$3"
             local platform="$4"
+
+            # Check if directory exists first
+            if [ ! -d "$search_dir" ]; then
+              echo "⚠️  Skipping $platform: Directory $search_dir not found (build may have been skipped)"
+              return 1
+            fi
 
             # Find the file matching the pattern
             local src_file=$(find "$search_dir" -type f -name "$pattern" 2>/dev/null | head -1)
@@ -622,13 +628,24 @@ jobs:
 
           echo ""
           echo "=== Preparation Summary ==="
+
+          # Count artifacts (excluding commits.json)
+          ARTIFACT_COUNT=$(find "r2-upload/unstable/${{ steps.metadata.outputs.build_prefix }}" -type f ! -name "commits.json" 2>/dev/null | wc -l)
+
           echo "Files prepared in r2-upload/unstable/${{ steps.metadata.outputs.build_prefix }}:"
-          ls -lh "r2-upload/unstable/${{ steps.metadata.outputs.build_prefix }}/" || echo "  (none)"
+          ls -lh "r2-upload/unstable/${{ steps.metadata.outputs.build_prefix }}/" 2>/dev/null || echo "  (none)"
 
           if [ "${{ steps.metadata.outputs.branch_name }}" == "main" ]; then
             echo ""
             echo "Files prepared in r2-upload/unstable/latest:"
-            ls -lh "r2-upload/unstable/latest/" || echo "  (none)"
+            ls -lh "r2-upload/unstable/latest/" 2>/dev/null || echo "  (none)"
+          fi
+
+          echo ""
+          if [ "$ARTIFACT_COUNT" -eq 0 ]; then
+            echo "⚠️  Warning: No build artifacts were prepared (only metadata will be uploaded)"
+          else
+            echo "✅ Successfully prepared $ARTIFACT_COUNT build artifact(s)"
           fi
 
       - name: Generate index.html

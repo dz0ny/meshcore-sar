@@ -566,60 +566,69 @@ jobs:
             local dest_name="$3"
             local platform="$4"
 
-            # Check if directory exists first; don't fail the whole step if missing.
-            if [ ! -d "$search_dir" ]; then
-              echo "⚠️  Skipping $platform: Directory $search_dir not found (build may have been skipped)"
-              return 0
-            fi
-
             # Find the file matching the pattern
             local src_file=$(find "$search_dir" -type f -name "$pattern" 2>/dev/null | head -1)
 
             if [ -n "$src_file" ] && [ -f "$src_file" ]; then
-              echo "✅ Copying $platform: $src_file"
-              cp "$src_file" "r2-upload/unstable/${{ steps.metadata.outputs.build_prefix }}/$dest_name" || true
+              echo "✅ Copying $platform: $src_file -> $dest_name"
+              cp "$src_file" "r2-upload/unstable/${{ steps.metadata.outputs.build_prefix }}/$dest_name" || {
+                echo "⚠️  Failed to copy $src_file"
+                return 1
+              }
 
               if [ "${{ steps.metadata.outputs.branch_name }}" == "main" ]; then
-                # Copy the same dest filename into the 'latest' folder for simplicity
                 cp "$src_file" "r2-upload/unstable/latest/$dest_name" || true
               fi
+              return 0
             else
               echo "⚠️  Skipping $platform: No file matching '$pattern' found in $search_dir"
+              return 1
             fi
-
-            # Always succeed (so missing optional artifacts don't fail the whole job)
-            return 0
           }
 
-          # Copy Android APK (search for any .apk file)
-          copy_artifact \
-            "artifacts/android-apk" \
-            "*.apk" \
-            "meshcore-sar-${{ steps.metadata.outputs.build_prefix }}-${{ steps.metadata.outputs.timestamp }}.apk" \
-            "Android APK"
+          # Copy Android APK (search for any .apk file in artifacts/android-apk)
+          if [ -d "artifacts/android-apk" ]; then
+            copy_artifact \
+              "artifacts/android-apk" \
+              "*.apk" \
+              "meshcore-sar-${{ steps.metadata.outputs.build_prefix }}-${{ steps.metadata.outputs.timestamp }}.apk" \
+              "Android APK"
+          else
+            echo "⚠️  Skipping Android APK: Directory artifacts/android-apk not found"
+          fi
 
           # Copy Android App Bundle (search for any .aab file)
-          copy_artifact \
-            "artifacts/android-appbundle" \
-            "*.aab" \
-            "meshcore-sar-${{ steps.metadata.outputs.build_prefix }}-${{ steps.metadata.outputs.timestamp }}.aab" \
-            "Android App Bundle"
+          if [ -d "artifacts/android-appbundle" ]; then
+            copy_artifact \
+              "artifacts/android-appbundle" \
+              "*.aab" \
+              "meshcore-sar-${{ steps.metadata.outputs.build_prefix }}-${{ steps.metadata.outputs.timestamp }}.aab" \
+              "Android App Bundle"
+          else
+            echo "⚠️  Skipping Android App Bundle: Directory artifacts/android-appbundle not found"
+          fi
 
           # Copy macOS DMG (search for any .dmg file)
-          copy_artifact \
-            "artifacts/macos-dmg" \
-            "*.dmg" \
-            "meshcore-sar-${{ steps.metadata.outputs.build_prefix }}-${{ steps.metadata.outputs.timestamp }}.dmg" \
-            "macOS DMG"
+          if [ -d "artifacts/macos-dmg" ]; then
+            copy_artifact \
+              "artifacts/macos-dmg" \
+              "*.dmg" \
+              "meshcore-sar-${{ steps.metadata.outputs.build_prefix }}-${{ steps.metadata.outputs.timestamp }}.dmg" \
+              "macOS DMG"
+          else
+            echo "⚠️  Skipping macOS DMG: Directory artifacts/macos-dmg not found"
+          fi
 
           # Copy Windows ZIP (search for any .zip file)
-          copy_artifact \
-            "artifacts/windows-executable" \
-            "*.zip" \
-            "meshcore-sar-${{ steps.metadata.outputs.build_prefix }}-${{ steps.metadata.outputs.timestamp }}-windows.zip" \
-            "Windows ZIP"
-
-          # Note: Each copy_artifact returns 0 even if missing, so partial builds succeed
+          if [ -d "artifacts/windows-executable" ]; then
+            copy_artifact \
+              "artifacts/windows-executable" \
+              "*.zip" \
+              "meshcore-sar-${{ steps.metadata.outputs.build_prefix }}-${{ steps.metadata.outputs.timestamp }}-windows.zip" \
+              "Windows ZIP"
+          else
+            echo "⚠️  Skipping Windows ZIP: Directory artifacts/windows-executable not found"
+          fi
 
           # Copy commits data
           if [ -f commits.json ]; then

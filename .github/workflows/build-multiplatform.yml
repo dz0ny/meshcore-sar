@@ -522,8 +522,312 @@ jobs:
           }
           EOF
 
+      - name: Generate index.html
+        env:
+          R2_PUBLIC_URL: ${{ secrets.R2_PUBLIC_URL }}
+        run: |
+          BUILD_DIR="r2-upload/unstable/${{ steps.metadata.outputs.build_prefix }}"
+          BASE_URL="${R2_PUBLIC_URL:-https://meshcore-sar.dz0ny.dev}/unstable/${{ steps.metadata.outputs.build_prefix }}"
+
+          # Get file sizes
+          get_size() {
+            if [ -f "$1" ]; then
+              ls -lh "$1" | awk '{print $5}'
+            else
+              echo "N/A"
+            fi
+          }
+
+          # Generate download links HTML
+          cat > "$BUILD_DIR/index.html" <<'HTMLEOF'
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>MeshCore SAR - Build ${{ steps.metadata.outputs.build_prefix }}</title>
+            <style>
+              * { margin: 0; padding: 0; box-sizing: border-box; }
+              body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                min-height: 100vh;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 20px;
+              }
+              .container {
+                background: white;
+                border-radius: 16px;
+                box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+                max-width: 800px;
+                width: 100%;
+                padding: 40px;
+              }
+              .header {
+                text-align: center;
+                margin-bottom: 40px;
+                border-bottom: 2px solid #f0f0f0;
+                padding-bottom: 20px;
+              }
+              h1 {
+                color: #333;
+                font-size: 32px;
+                margin-bottom: 10px;
+              }
+              .build-info {
+                background: #f8f9fa;
+                border-radius: 8px;
+                padding: 20px;
+                margin-bottom: 30px;
+              }
+              .build-info h2 {
+                color: #555;
+                font-size: 18px;
+                margin-bottom: 15px;
+              }
+              .info-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                gap: 15px;
+              }
+              .info-item {
+                display: flex;
+                flex-direction: column;
+              }
+              .info-label {
+                color: #888;
+                font-size: 12px;
+                text-transform: uppercase;
+                margin-bottom: 5px;
+              }
+              .info-value {
+                color: #333;
+                font-size: 14px;
+                font-family: 'Monaco', 'Courier New', monospace;
+              }
+              .downloads {
+                margin-top: 30px;
+              }
+              .downloads h2 {
+                color: #333;
+                font-size: 24px;
+                margin-bottom: 20px;
+              }
+              .download-card {
+                background: #fff;
+                border: 2px solid #e0e0e0;
+                border-radius: 12px;
+                padding: 20px;
+                margin-bottom: 15px;
+                transition: all 0.3s ease;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+              }
+              .download-card:hover {
+                border-color: #667eea;
+                box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+                transform: translateY(-2px);
+              }
+              .download-info {
+                flex: 1;
+              }
+              .download-platform {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                margin-bottom: 8px;
+              }
+              .platform-icon {
+                font-size: 28px;
+              }
+              .platform-name {
+                font-size: 18px;
+                font-weight: 600;
+                color: #333;
+              }
+              .file-name {
+                color: #666;
+                font-size: 13px;
+                font-family: 'Monaco', 'Courier New', monospace;
+                margin-bottom: 5px;
+              }
+              .file-size {
+                color: #999;
+                font-size: 12px;
+              }
+              .download-btn {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                border: none;
+                border-radius: 8px;
+                padding: 12px 24px;
+                font-size: 14px;
+                font-weight: 600;
+                cursor: pointer;
+                text-decoration: none;
+                display: inline-block;
+                transition: all 0.3s ease;
+              }
+              .download-btn:hover {
+                transform: scale(1.05);
+                box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+              }
+              .footer {
+                margin-top: 30px;
+                padding-top: 20px;
+                border-top: 2px solid #f0f0f0;
+                text-align: center;
+                color: #888;
+                font-size: 14px;
+              }
+              .footer a {
+                color: #667eea;
+                text-decoration: none;
+              }
+              .footer a:hover {
+                text-decoration: underline;
+              }
+              @media (max-width: 600px) {
+                .container { padding: 20px; }
+                h1 { font-size: 24px; }
+                .download-card { flex-direction: column; align-items: flex-start; }
+                .download-btn { margin-top: 15px; width: 100%; text-align: center; }
+              }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="header">
+                <h1>🗺️ MeshCore SAR</h1>
+                <p style="color: #666; margin-top: 10px;">Unstable Build Downloads</p>
+              </div>
+
+              <div class="build-info">
+                <h2>📋 Build Information</h2>
+                <div class="info-grid">
+                  <div class="info-item">
+                    <span class="info-label">Build ID</span>
+                    <span class="info-value">${{ steps.metadata.outputs.build_prefix }}</span>
+                  </div>
+                  <div class="info-item">
+                    <span class="info-label">Timestamp</span>
+                    <span class="info-value">${{ steps.metadata.outputs.timestamp }}</span>
+                  </div>
+                  <div class="info-item">
+                    <span class="info-label">Commit</span>
+                    <span class="info-value">${{ steps.metadata.outputs.commit_short }}</span>
+                  </div>
+                  <div class="info-item">
+                    <span class="info-label">Workflow Run</span>
+                    <span class="info-value">#${{ github.run_number }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="downloads">
+                <h2>📦 Download Builds</h2>
+          HTMLEOF
+
+          # Add Android APK if exists
+          if [ -f "$BUILD_DIR"/*.apk ]; then
+            APK_FILE=$(basename "$BUILD_DIR"/*.apk)
+            APK_SIZE=$(get_size "$BUILD_DIR/$APK_FILE")
+            cat >> "$BUILD_DIR/index.html" <<HTMLEOF
+                <div class="download-card">
+                  <div class="download-info">
+                    <div class="download-platform">
+                      <span class="platform-icon">🤖</span>
+                      <span class="platform-name">Android APK</span>
+                    </div>
+                    <div class="file-name">$APK_FILE</div>
+                    <div class="file-size">Size: $APK_SIZE</div>
+                  </div>
+                  <a href="$BASE_URL/$APK_FILE" class="download-btn" download>Download</a>
+                </div>
+          HTMLEOF
+          fi
+
+          # Add Android AAB if exists
+          if [ -f "$BUILD_DIR"/*.aab ]; then
+            AAB_FILE=$(basename "$BUILD_DIR"/*.aab)
+            AAB_SIZE=$(get_size "$BUILD_DIR/$AAB_FILE")
+            cat >> "$BUILD_DIR/index.html" <<HTMLEOF
+                <div class="download-card">
+                  <div class="download-info">
+                    <div class="download-platform">
+                      <span class="platform-icon">📦</span>
+                      <span class="platform-name">Android App Bundle</span>
+                    </div>
+                    <div class="file-name">$AAB_FILE</div>
+                    <div class="file-size">Size: $AAB_SIZE</div>
+                  </div>
+                  <a href="$BASE_URL/$AAB_FILE" class="download-btn" download>Download</a>
+                </div>
+          HTMLEOF
+          fi
+
+          # Add macOS DMG if exists
+          if [ -f "$BUILD_DIR"/*.dmg ]; then
+            DMG_FILE=$(basename "$BUILD_DIR"/*.dmg)
+            DMG_SIZE=$(get_size "$BUILD_DIR/$DMG_FILE")
+            cat >> "$BUILD_DIR/index.html" <<HTMLEOF
+                <div class="download-card">
+                  <div class="download-info">
+                    <div class="download-platform">
+                      <span class="platform-icon">🍎</span>
+                      <span class="platform-name">macOS DMG</span>
+                    </div>
+                    <div class="file-name">$DMG_FILE</div>
+                    <div class="file-size">Size: $DMG_SIZE</div>
+                  </div>
+                  <a href="$BASE_URL/$DMG_FILE" class="download-btn" download>Download</a>
+                </div>
+          HTMLEOF
+          fi
+
+          # Add Windows ZIP if exists
+          if [ -f "$BUILD_DIR"/*-windows.zip ]; then
+            WIN_FILE=$(basename "$BUILD_DIR"/*-windows.zip)
+            WIN_SIZE=$(get_size "$BUILD_DIR/$WIN_FILE")
+            cat >> "$BUILD_DIR/index.html" <<HTMLEOF
+                <div class="download-card">
+                  <div class="download-info">
+                    <div class="download-platform">
+                      <span class="platform-icon">🪟</span>
+                      <span class="platform-name">Windows Executable</span>
+                    </div>
+                    <div class="file-name">$WIN_FILE</div>
+                    <div class="file-size">Size: $WIN_SIZE</div>
+                  </div>
+                  <a href="$BASE_URL/$WIN_FILE" class="download-btn" download>Download</a>
+                </div>
+          HTMLEOF
+          fi
+
+          # Close HTML
+          cat >> "$BUILD_DIR/index.html" <<'HTMLEOF'
+              </div>
+
+              <div class="footer">
+                <p>
+                  <a href="manifest.json">📋 View Build Manifest</a> •
+                  <a href="https://github.com/${{ github.repository }}">🔗 GitHub Repository</a>
+                </p>
+                <p style="margin-top: 10px; font-size: 12px;">
+                  Built with ❤️ by GitHub Actions
+                </p>
+              </div>
+            </div>
+          </body>
+          </html>
+          HTMLEOF
+
+          echo "Generated index.html with download links"
           echo "Prepared artifacts:"
-          ls -lah r2-upload/unstable/${{ steps.metadata.outputs.build_prefix }}/
+          ls -lah "$BUILD_DIR/"
 
       - name: Upload to Cloudflare R2
         uses: ryand56/r2-upload-action@latest

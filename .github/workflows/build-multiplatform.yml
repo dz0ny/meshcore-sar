@@ -843,12 +843,14 @@ jobs:
         run: |
           # If R2_PUBLIC_URL is set, generate public download links
           if [ -n "${{ secrets.R2_PUBLIC_URL }}" ]; then
+            BASE_URL="${{ secrets.R2_PUBLIC_URL }}/unstable/${{ steps.metadata.outputs.build_prefix }}"
+
             echo "## 📦 Unstable Build Artifacts" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "Build ID: \`${{ steps.metadata.outputs.build_prefix }}-${{ steps.metadata.outputs.timestamp }}\`" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
-
-            BASE_URL="${{ secrets.R2_PUBLIC_URL }}/unstable/${{ steps.metadata.outputs.build_prefix }}"
+            echo "🌐 **[View Download Page]($BASE_URL/)**" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
 
             if [ -f "r2-upload/unstable/${{ steps.metadata.outputs.build_prefix }}"/*.apk ]; then
               APK_FILE=$(basename r2-upload/unstable/${{ steps.metadata.outputs.build_prefix }}/*.apk)

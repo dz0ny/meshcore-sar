@@ -28,7 +28,7 @@ Configure these secrets in your GitHub repository settings (`Settings` → `Secr
 
 | Secret Name | Description | Example |
 |-------------|-------------|---------|
-| `R2_PUBLIC_URL` | Public URL for R2 bucket (if public access configured) | `https://builds.example.com` |
+| `R2_PUBLIC_URL` | Public URL for R2 bucket (if public access configured) | `https://meshcore-sar.dz0ny.dev` |
 
 ## Step-by-Step Setup
 

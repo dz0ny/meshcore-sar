@@ -7,12 +7,15 @@ import '../providers/messages_provider.dart';
 import '../providers/contacts_provider.dart';
 import '../providers/map_provider.dart';
 import '../providers/connection_provider.dart';
+import '../providers/drawing_provider.dart';
 import '../models/message.dart';
 import '../models/contact.dart';
 import '../models/sar_marker.dart';
+import '../models/map_drawing.dart';
 import '../widgets/messages/sar_update_sheet.dart';
 import '../widgets/messages/recipient_selector_sheet.dart';
 import '../widgets/contacts/direct_message_sheet.dart';
+import '../widgets/drawing_minimap_preview.dart';
 import '../services/message_destination_preferences.dart';
 import '../utils/toast_logger.dart';
 import '../l10n/app_localizations.dart';
@@ -676,6 +679,7 @@ class _MessagesTabState extends State<MessagesTab> {
                           return _MessageBubble(
                             message: message,
                             isHighlighted: isHighlighted,
+                            onNavigateToMap: widget.onNavigateToMap,
                             onTap:
                                 message.isSarMarker &&
                                     message.sarGpsCoordinates != null
@@ -685,6 +689,18 @@ class _MessagesTabState extends State<MessagesTab> {
                                     mapProvider.navigateToLocation(
                                       location: message.sarGpsCoordinates!,
                                       zoom: 15.0,
+                                    );
+                                    widget.onNavigateToMap();
+                                  }
+                                : message.isDrawing && message.drawingId != null
+                                ? () {
+                                    final mapProvider = context
+                                        .read<MapProvider>();
+                                    final drawingProvider = context
+                                        .read<DrawingProvider>();
+                                    mapProvider.navigateToDrawing(
+                                      message.drawingId!,
+                                      drawingProvider,
                                     );
                                     widget.onNavigateToMap();
                                   }
@@ -809,11 +825,13 @@ class _MessageBubble extends StatelessWidget {
   final Message message;
   final VoidCallback? onTap;
   final bool isHighlighted;
+  final VoidCallback? onNavigateToMap;
 
   const _MessageBubble({
     required this.message,
     this.onTap,
     this.isHighlighted = false,
+    this.onNavigateToMap,
   });
 
   /// Helper method to compare two public keys for equality
@@ -957,6 +975,36 @@ class _MessageBubble extends StatelessWidget {
                   _shareLocation(context);
                 },
               ),
+            // Navigate to drawing option (only for drawing messages)
+            if (message.isDrawing && message.drawingId != null)
+              ListTile(
+                leading: const Icon(Icons.map),
+                title: Text(AppLocalizations.of(context)!.navigateToDrawing),
+                onTap: () {
+                  Navigator.pop(context);
+                  _navigateToDrawing(context);
+                },
+              ),
+            // Copy coordinates option (only for drawing messages)
+            if (message.isDrawing && message.drawingId != null)
+              ListTile(
+                leading: const Icon(Icons.copy),
+                title: Text(AppLocalizations.of(context)!.copyCoordinates),
+                onTap: () {
+                  Navigator.pop(context);
+                  _copyDrawingCoordinates(context);
+                },
+              ),
+            // Hide from map option (only for drawing messages)
+            if (message.isDrawing && message.drawingId != null)
+              ListTile(
+                leading: const Icon(Icons.visibility_off),
+                title: Text(AppLocalizations.of(context)!.hideFromMap),
+                onTap: () {
+                  Navigator.pop(context);
+                  _hideDrawingFromMap(context);
+                },
+              ),
             // Delete message option
             ListTile(
               leading: const Icon(Icons.delete, color: Colors.red),
@@ -1013,6 +1061,85 @@ class _MessageBubble extends StatelessWidget {
     );
   }
 
+  void _navigateToDrawing(BuildContext context) {
+    if (message.drawingId == null) {
+      ToastLogger.error(context, 'No drawing ID available');
+      return;
+    }
+
+    final mapProvider = context.read<MapProvider>();
+    final drawingProvider = context.read<DrawingProvider>();
+    mapProvider.navigateToDrawing(message.drawingId!, drawingProvider);
+    onNavigateToMap?.call();
+  }
+
+  void _copyDrawingCoordinates(BuildContext context) {
+    if (message.drawingId == null) {
+      ToastLogger.error(context, 'No drawing ID available');
+      return;
+    }
+
+    final drawingProvider = context.read<DrawingProvider>();
+    final drawing = drawingProvider.drawings
+        .cast<MapDrawing?>()
+        .firstWhere(
+          (d) => d?.id == message.drawingId,
+          orElse: () => null,
+        );
+
+    if (drawing == null) {
+      ToastLogger.error(context, 'Drawing not found');
+      return;
+    }
+
+    // Calculate center coordinates
+    String coordinates;
+    if (drawing is LineDrawing) {
+      // For line drawings, calculate center from all points
+      if (drawing.points.isEmpty) {
+        ToastLogger.error(context, 'No coordinates available');
+        return;
+      }
+      double sumLat = 0;
+      double sumLon = 0;
+      for (final point in drawing.points) {
+        sumLat += point.latitude;
+        sumLon += point.longitude;
+      }
+      final centerLat = sumLat / drawing.points.length;
+      final centerLon = sumLon / drawing.points.length;
+      coordinates = '${centerLat.toStringAsFixed(5)}, ${centerLon.toStringAsFixed(5)}';
+    } else if (drawing is RectangleDrawing) {
+      // For rectangle drawings, calculate center from bounds
+      final centerLat = (drawing.topLeft.latitude + drawing.bottomRight.latitude) / 2;
+      final centerLon = (drawing.topLeft.longitude + drawing.bottomRight.longitude) / 2;
+      coordinates = '${centerLat.toStringAsFixed(5)}, ${centerLon.toStringAsFixed(5)}';
+    } else {
+      ToastLogger.error(context, 'Unknown drawing type');
+      return;
+    }
+
+    Clipboard.setData(ClipboardData(text: coordinates));
+    ToastLogger.success(
+      context,
+      AppLocalizations.of(context)!.coordinatesCopiedToClipboard,
+    );
+  }
+
+  void _hideDrawingFromMap(BuildContext context) {
+    if (message.drawingId == null) {
+      ToastLogger.error(context, 'No drawing ID available');
+      return;
+    }
+
+    final drawingProvider = context.read<DrawingProvider>();
+    drawingProvider.removeDrawing(message.drawingId!);
+    ToastLogger.success(
+      context,
+      AppLocalizations.of(context)!.drawingHidden,
+    );
+  }
+
   void _showDeleteConfirmation(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     showDialog(
@@ -1029,6 +1156,13 @@ class _MessageBubble extends StatelessWidget {
             onPressed: () {
               final messagesProvider = context.read<MessagesProvider>();
               messagesProvider.deleteMessage(message.id);
+
+              // Also delete the drawing if this is a drawing message
+              if (message.isDrawing && message.drawingId != null) {
+                final drawingProvider = context.read<DrawingProvider>();
+                drawingProvider.removeDrawing(message.drawingId!);
+              }
+
               Navigator.pop(context);
             },
             style: TextButton.styleFrom(foregroundColor: Colors.red),
@@ -1210,6 +1344,10 @@ class _MessageBubble extends StatelessWidget {
               ? Theme.of(context).colorScheme.primaryContainer
               : isSarMarker
               ? _getSarMarkerColor(context, isDarkMode)
+              : message.isDrawing
+              ? (isDarkMode
+                  ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.15)
+                  : Theme.of(context).colorScheme.primary.withValues(alpha: 0.08))
               : _getMessageBubbleColor(context, isOwnMessage, isDarkMode),
           borderRadius: BorderRadius.circular(12),
           border: isHighlighted
@@ -1220,6 +1358,11 @@ class _MessageBubble extends StatelessWidget {
               : isSarMarker
               ? Border.all(
                   color: _getSarMarkerBorderColor(context, isDarkMode),
+                  width: 2,
+                )
+              : message.isDrawing
+              ? Border.all(
+                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.4),
                   width: 2,
                 )
               : isOwnMessage
@@ -1245,12 +1388,12 @@ class _MessageBubble extends StatelessWidget {
                     offset: const Offset(0, 2),
                   ),
                 ]
-              : isSarMarker
+              : isSarMarker || message.isDrawing
               ? [
                   BoxShadow(
-                    color: _getSarMarkerBorderColor(
-                      context,
-                      isDarkMode,
+                    color: (isSarMarker
+                        ? _getSarMarkerBorderColor(context, isDarkMode)
+                        : Theme.of(context).colorScheme.primary
                     ).withValues(alpha: 0.3),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
@@ -1299,6 +1442,37 @@ class _MessageBubble extends StatelessWidget {
                         const SizedBox(width: 4),
                         Text(
                           AppLocalizations.of(context)!.sarAlert,
+                          style: Theme.of(context).textTheme.labelSmall
+                              ?.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 0.5,
+                              ),
+                        ),
+                      ],
+                    ),
+                  )
+                else if (message.isDrawing)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.primary,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.draw,
+                          size: 16,
+                          color: Colors.white,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          AppLocalizations.of(context)!.mapDrawing,
                           style: Theme.of(context).textTheme.labelSmall
                               ?.copyWith(
                                 color: Colors.white,
@@ -1409,6 +1583,96 @@ class _MessageBubble extends StatelessWidget {
                 ],
               ),
             ]
+            // Drawing message content
+            else if (message.isDrawing && message.drawingId != null)
+              Consumer<DrawingProvider>(
+                builder: (context, drawingProvider, child) {
+                  // Find the drawing by ID
+                  final drawing = drawingProvider.drawings
+                      .cast<MapDrawing?>()
+                      .firstWhere(
+                        (d) => d?.id == message.drawingId,
+                        orElse: () => null,
+                      );
+
+                  if (drawing == null) {
+                    return Text(
+                      message.text,
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    );
+                  }
+
+                  // Determine drawing type label
+                  final String drawingTypeLabel;
+                  if (drawing is LineDrawing) {
+                    drawingTypeLabel = AppLocalizations.of(context)!.lineDrawing;
+                  } else if (drawing is RectangleDrawing) {
+                    drawingTypeLabel = AppLocalizations.of(context)!.rectangleDrawing;
+                  } else {
+                    drawingTypeLabel = AppLocalizations.of(context)!.drawing;
+                  }
+
+                  // Get color name
+                  final colorName = DrawingColors.colorToName(drawing.color);
+
+                  return Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Minimap preview
+                      DrawingMinimapPreview(drawing: drawing),
+                      const SizedBox(width: 12),
+                      // Drawing info
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              drawingTypeLabel,
+                              style: Theme.of(context).textTheme.titleSmall
+                                  ?.copyWith(fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(height: 4),
+                            Row(
+                              children: [
+                                Container(
+                                  width: 16,
+                                  height: 16,
+                                  decoration: BoxDecoration(
+                                    color: drawing.color,
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: Colors.black26,
+                                      width: 1,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  colorName,
+                                  style: Theme.of(context).textTheme.labelSmall,
+                                ),
+                              ],
+                            ),
+                            if (drawing.senderName != null) ...[
+                              const SizedBox(height: 4),
+                              Text(
+                                'From: ${drawing.senderName}',
+                                style: Theme.of(context).textTheme.labelSmall
+                                    ?.copyWith(fontStyle: FontStyle.italic),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                      Icon(
+                        Icons.chevron_right,
+                        size: 18,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                    ],
+                  );
+                },
+              )
             // Regular message content
             else
               Text(message.text, style: Theme.of(context).textTheme.bodyMedium),

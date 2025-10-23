@@ -6,6 +6,7 @@ import '../models/sar_marker.dart';
 import '../services/message_storage_service.dart';
 import '../services/notification_service.dart';
 import '../utils/sar_message_parser.dart';
+import '../utils/drawing_message_parser.dart';
 import '../l10n/app_localizations.dart';
 import 'helpers/message_retry_manager.dart';
 
@@ -139,7 +140,25 @@ class MessagesProvider with ChangeNotifier {
     String Function(String name)? contactLookup,
   }) {
     // Always enhance message with SAR parser to detect SAR markers
-    final enhancedMessage = SarMessageParser.enhanceMessage(message);
+    var enhancedMessage = SarMessageParser.enhanceMessage(message);
+
+    // Check if it's a drawing message (D:...) and not already marked
+    // Don't overwrite if already set by the sender (preserves correct drawing ID)
+    if (DrawingMessageParser.isDrawingMessage(enhancedMessage.text) &&
+        !enhancedMessage.isDrawing) {
+      // Parse the drawing to get its ID
+      final drawing = DrawingMessageParser.parseDrawingMessage(
+        enhancedMessage.text,
+        senderName: enhancedMessage.senderName,
+        messageId: enhancedMessage.id,
+      );
+
+      // Mark message as drawing and link to drawing ID
+      enhancedMessage = enhancedMessage.copyWith(
+        isDrawing: true,
+        drawingId: drawing?.id,
+      );
+    }
 
     // For channel messages with sender name, try to link with contact
     Message finalMessage = enhancedMessage;
@@ -497,6 +516,23 @@ class MessagesProvider with ChangeNotifier {
     }
   }
 
+  /// Delete a drawing message and its linked drawing
+  void deleteDrawingMessage(String messageId, dynamic drawingProvider) {
+    final message = _messages.firstWhere(
+      (m) => m.id == messageId,
+      orElse: () => throw Exception('Message not found'),
+    );
+
+    // If the message has a linked drawing, remove it
+    if (message.drawingId != null && drawingProvider != null) {
+      // Remove the drawing (DrawingProvider will handle removing this message)
+      drawingProvider.removeDrawing(message.drawingId!);
+    } else {
+      // No linked drawing, just delete the message
+      deleteMessage(messageId);
+    }
+  }
+
   /// Clear all messages
   void clearMessages() {
     _messages.clear();
@@ -585,7 +621,25 @@ class MessagesProvider with ChangeNotifier {
     );
 
     // Always enhance message with SAR parser to detect SAR markers
-    final enhancedMessage = SarMessageParser.enhanceMessage(message);
+    var enhancedMessage = SarMessageParser.enhanceMessage(message);
+
+    // Check if it's a drawing message (D:...) and not already marked
+    // Don't overwrite if already set by the sender (preserves correct drawing ID)
+    if (DrawingMessageParser.isDrawingMessage(enhancedMessage.text) &&
+        !enhancedMessage.isDrawing) {
+      // Parse the drawing to get its ID
+      final drawing = DrawingMessageParser.parseDrawingMessage(
+        enhancedMessage.text,
+        senderName: enhancedMessage.senderName,
+        messageId: enhancedMessage.id,
+      );
+
+      // Mark message as drawing and link to drawing ID
+      enhancedMessage = enhancedMessage.copyWith(
+        isDrawing: true,
+        drawingId: drawing?.id,
+      );
+    }
 
     // Check for duplicates (shouldn't happen for sent messages, but be safe)
     if (_isDuplicate(enhancedMessage)) {

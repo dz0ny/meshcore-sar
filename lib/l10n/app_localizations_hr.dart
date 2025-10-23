@@ -1766,4 +1766,48 @@ class AppLocalizationsHr extends AppLocalizations {
 
   @override
   String get sampleMedicalTeam => 'Medicinski Tim';
+
+  @override
+  String get mapDrawing => 'Crtež karte';
+
+  @override
+  String get navigateToDrawing => 'Navigiraj do crteža';
+
+  @override
+  String get copyCoordinates => 'Kopiraj koordinate';
+
+  @override
+  String get hideFromMap => 'Sakrij s karte';
+
+  @override
+  String get lineDrawing => 'Linijski crtež';
+
+  @override
+  String get rectangleDrawing => 'Pravokutni crtež';
+
+  @override
+  String get coordinatesCopiedToClipboard =>
+      'Koordinate kopirane u međuspremnik';
+
+  @override
+  String get drawingShared => 'Crtež karte';
+
+  @override
+  String get drawingHidden => 'Crtež sakriven s karte';
+
+  @override
+  String alreadyShared(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count već podijeljeno',
+      one: '1 već podijeljeno',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String newDrawingsShared(int count, String plural) {
+    return 'Podijeljeno $count novi$plural crtež$plural';
+  }
 }

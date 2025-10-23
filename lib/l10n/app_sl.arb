@@ -918,5 +918,19 @@
   "sampleEchoSupport": "Podpora",
   "sampleBaseCommand": "Poveljstvo Baze",
   "sampleFieldCoordinator": "Terenski Koordinator",
-  "sampleMedicalTeam": "Medicinska Ekipa"
+  "sampleMedicalTeam": "Medicinska Ekipa",
+
+  "mapDrawing": "Risba zemljevida",
+  "navigateToDrawing": "Navigiraj do risbe",
+  "copyCoordinates": "Kopiraj koordinate",
+  "hideFromMap": "Skrij z zemljevida",
+  "lineDrawing": "Linijska risba",
+  "rectangleDrawing": "Pravokotna risba",
+  "coordinatesCopiedToClipboard": "Koordinate kopirane v odložišče",
+
+  "drawingShared": "Risba zemljevida",
+  "drawingHidden": "Risba skrita z zemljevida",
+  "alreadyShared": "{count, plural, =1{1 že deljeno} other{{count} že deljeno}}",
+  "newDrawingsShared": "Deljeno {count} nov{plural} risb{plural}",
+  "drawingTools": "Orodja za risanje"
 }

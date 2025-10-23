@@ -1782,4 +1782,42 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get sampleMedicalTeam => 'Medizinisches Team';
+
+  @override
+  String get mapDrawing => 'Kartenzeichnung';
+
+  @override
+  String get navigateToDrawing => 'Zur Zeichnung navigieren';
+
+  @override
+  String get copyCoordinates => 'Koordinaten kopieren';
+
+  @override
+  String get hideFromMap => 'Von Karte ausblenden';
+
+  @override
+  String get lineDrawing => 'Linie';
+
+  @override
+  String get rectangleDrawing => 'Rechteck';
+
+  @override
+  String get coordinatesCopiedToClipboard =>
+      'Koordinaten in Zwischenablage kopiert';
+
+  @override
+  String get drawingShared => 'Kartenzeichnung';
+
+  @override
+  String get drawingHidden => 'Zeichnung von Karte ausgeblendet';
+
+  @override
+  String alreadyShared(int count) {
+    return '$count bereits geteilt';
+  }
+
+  @override
+  String newDrawingsShared(int count, String plural) {
+    return '$count neue Zeichnung(en) geteilt';
+  }
 }

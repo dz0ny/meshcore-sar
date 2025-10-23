@@ -80,6 +80,10 @@ class Message {
   final int echoCount; // Number of times message was detected being rebroadcast
   final DateTime? firstEchoAt; // When first echo was detected
 
+  // Drawing message tracking
+  final bool isDrawing; // Whether this message contains a map drawing
+  final String? drawingId; // ID of the associated drawing (for navigation)
+
   Message({
     required this.id,
     required this.messageType,
@@ -108,6 +112,8 @@ class Message {
     this.isRead = false,
     this.echoCount = 0,
     this.firstEchoAt,
+    this.isDrawing = false,
+    this.drawingId,
   });
 
   /// Get SAR marker type by inferring from message content
@@ -298,6 +304,22 @@ class Message {
     return false;
   }
 
+  /// Get drawing metadata from message text (returns null if not a drawing)
+  /// Extracts basic info for display in message bubbles
+  Map<String, dynamic>? get drawingMetadata {
+    if (!isDrawing || !text.startsWith('D:')) return null;
+
+    try {
+      // Return basic metadata (actual parsing happens in DrawingMessageParser)
+      return {
+        'hasDrawing': true,
+        'drawingId': drawingId,
+      };
+    } catch (e) {
+      return null;
+    }
+  }
+
   Message copyWith({
     String? id,
     MessageType? messageType,
@@ -326,6 +348,8 @@ class Message {
     bool? isRead,
     int? echoCount,
     DateTime? firstEchoAt,
+    bool? isDrawing,
+    String? drawingId,
   }) {
     return Message(
       id: id ?? this.id,
@@ -356,6 +380,8 @@ class Message {
       isRead: isRead ?? this.isRead,
       echoCount: echoCount ?? this.echoCount,
       firstEchoAt: firstEchoAt ?? this.firstEchoAt,
+      isDrawing: isDrawing ?? this.isDrawing,
+      drawingId: drawingId ?? this.drawingId,
     );
   }
 

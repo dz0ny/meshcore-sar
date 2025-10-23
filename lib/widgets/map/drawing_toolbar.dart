@@ -6,6 +6,7 @@ import '../../providers/contacts_provider.dart';
 import '../../providers/messages_provider.dart';
 import '../../models/map_drawing.dart';
 import '../../models/contact.dart';
+import '../../models/message.dart';
 import '../../l10n/app_localizations.dart';
 
 /// Toolbar for drawing controls on the map
@@ -376,33 +377,19 @@ class DrawingToolbar extends StatelessWidget {
     );
 
     if (!connectionProvider.deviceInfo.isConnected) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(AppLocalizations.of(context)!.deviceNotConnected),
-          backgroundColor: Colors.red,
-        ),
-      );
       return;
     }
 
     // Get device name for sender identification
     final senderName = connectionProvider.deviceInfo.selfName ?? 'Unknown';
 
-    // Filter drawings (only share local drawings, not received ones)
-    final localDrawings = drawingProvider.drawings
-        .where((d) => !d.isReceived)
-        .toList();
+    // Filter drawings - only share unshared local drawings
+    final unsharedDrawings = drawingProvider.getUnsharedDrawings();
 
-    debugPrint('  Local drawings count: ${localDrawings.length}');
+    debugPrint('  Unshared drawings count: ${unsharedDrawings.length}');
     debugPrint('  Total drawings count: ${drawingProvider.drawings.length}');
 
-    if (localDrawings.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(AppLocalizations.of(context)!.noLocalDrawings),
-          backgroundColor: Colors.orange,
-        ),
-      );
+    if (unsharedDrawings.isEmpty) {
       return;
     }
 
@@ -429,8 +416,8 @@ class DrawingToolbar extends StatelessWidget {
                     Expanded(
                       child: Text(
                         AppLocalizations.of(context)!.shareDrawingsCount(
-                          localDrawings.length,
-                          localDrawings.length > 1 ? 's' : '',
+                          unsharedDrawings.length,
+                          unsharedDrawings.length > 1 ? 's' : '',
                         ),
                         style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.bold,
@@ -451,7 +438,7 @@ class DrawingToolbar extends StatelessWidget {
                   // Share BEFORE popping the navigator
                   await _shareDrawingsToChannel(
                     sheetContext,
-                    localDrawings,
+                    unsharedDrawings,
                     connectionProvider,
                     senderName,
                   );
@@ -476,7 +463,7 @@ class DrawingToolbar extends StatelessWidget {
                       // Share BEFORE popping the navigator
                       await _shareDrawingsToRoom(
                         sheetContext,
-                        localDrawings,
+                        unsharedDrawings,
                         connectionProvider,
                         senderName,
                         room,
@@ -516,9 +503,20 @@ class DrawingToolbar extends StatelessWidget {
       context,
       listen: false,
     );
+    final messagesProvider = Provider.of<MessagesProvider>(
+      context,
+      listen: false,
+    );
     int successCount = 0;
+    int alreadyShared = 0;
 
     for (final drawing in drawings) {
+      // Skip if already shared
+      if (drawing.isShared) {
+        alreadyShared++;
+        continue;
+      }
+
       try {
         debugPrint('  Creating message for drawing ${drawing.id}...');
         // Sender name is no longer included in JSON - will be extracted from packet metadata
@@ -526,13 +524,46 @@ class DrawingToolbar extends StatelessWidget {
         debugPrint(
           '  Message created (${message.length} chars): ${message.substring(0, message.length > 100 ? 100 : message.length)}...',
         );
+
+        // Create message ID and timestamp
+        final messageId = '${DateTime.now().millisecondsSinceEpoch}_channel_drawing_sent';
+        final timestamp = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+
+        // Get current device's public key (first 6 bytes)
+        final devicePublicKey = connectionProvider.deviceInfo.publicKey;
+        final senderPublicKeyPrefix = devicePublicKey?.sublist(0, 6);
+
+        // Create sent message object
+        final sentMessage = Message(
+          id: messageId,
+          messageType: MessageType.channel,
+          senderPublicKeyPrefix: senderPublicKeyPrefix,
+          pathLen: 0,
+          textType: MessageTextType.plain,
+          senderTimestamp: timestamp,
+          text: message,
+          receivedAt: DateTime.now(),
+          deliveryStatus: MessageDeliveryStatus.sending,
+          channelIdx: 0,
+          isDrawing: true,
+          drawingId: drawing.id,
+        );
+
+        // Add to messages list with "sending" status
+        messagesProvider.addSentMessage(sentMessage);
+
         debugPrint('  Sending to channel 0...');
         await connectionProvider.sendChannelMessage(
           channelIdx: 0,
           text: message,
+          messageId: messageId,
         );
         debugPrint('  ✅ Sent successfully');
+
+        // Mark as shared after successful send
+        drawingProvider.markDrawingAsShared(drawing.id);
         successCount++;
+
         // Small delay between messages to avoid overwhelming the device
         await Future.delayed(const Duration(milliseconds: 200));
       } catch (e, stackTrace) {
@@ -541,36 +572,7 @@ class DrawingToolbar extends StatelessWidget {
       }
     }
 
-    debugPrint('  Share complete: $successCount/${drawings.length} sent');
-    debugPrint('  Context mounted after send: ${context.mounted}');
-
-    if (!context.mounted) {
-      debugPrint('❌ Context not mounted, cannot show snackbar');
-      return;
-    }
-
-    // Add informational message to chat
-    final messagesProvider = Provider.of<MessagesProvider>(
-      context,
-      listen: false,
-    );
-    final l10n = AppLocalizations.of(context)!;
-    messagesProvider.logSystemMessage(
-      text:
-          '📤 ${l10n.drawingsSentToPublicChannel(drawings.length, drawings.length > 1 ? 's' : '')}',
-      level: 'info',
-    );
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          l10n.drawingsSharedToPublicChannel(successCount, drawings.length),
-        ),
-        backgroundColor: successCount == drawings.length
-            ? Colors.green
-            : Colors.orange,
-      ),
-    );
+    debugPrint('  Share complete: $successCount/${drawings.length} sent, $alreadyShared already shared');
   }
 
   /// Share drawings to a specific room
@@ -596,9 +598,20 @@ class DrawingToolbar extends StatelessWidget {
       context,
       listen: false,
     );
+    final messagesProvider = Provider.of<MessagesProvider>(
+      context,
+      listen: false,
+    );
     int successCount = 0;
+    int alreadyShared = 0;
 
     for (final drawing in drawings) {
+      // Skip if already shared
+      if (drawing.isShared) {
+        alreadyShared++;
+        continue;
+      }
+
       try {
         debugPrint('  Creating message for drawing ${drawing.id}...');
         // Sender name is no longer included in JSON - will be extracted from packet metadata
@@ -606,13 +619,46 @@ class DrawingToolbar extends StatelessWidget {
         debugPrint(
           '  Message created (${message.length} chars): ${message.substring(0, message.length > 100 ? 100 : message.length)}...',
         );
+
+        // Create message ID and timestamp
+        final messageId = '${DateTime.now().millisecondsSinceEpoch}_contact_drawing_sent';
+        final timestamp = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+
+        // Get current device's public key (first 6 bytes)
+        final devicePublicKey = connectionProvider.deviceInfo.publicKey;
+        final senderPublicKeyPrefix = devicePublicKey?.sublist(0, 6);
+
+        // Create sent message object
+        final sentMessage = Message(
+          id: messageId,
+          messageType: MessageType.contact,
+          senderPublicKeyPrefix: senderPublicKeyPrefix,
+          pathLen: 0,
+          textType: MessageTextType.plain,
+          senderTimestamp: timestamp,
+          text: message,
+          receivedAt: DateTime.now(),
+          deliveryStatus: MessageDeliveryStatus.sending,
+          recipientPublicKey: room.publicKey,
+          isDrawing: true,
+          drawingId: drawing.id,
+        );
+
+        // Add to messages list with "sending" status
+        messagesProvider.addSentMessage(sentMessage);
+
         debugPrint('  Sending to room ${room.advName}...');
         await connectionProvider.sendTextMessage(
           contactPublicKey: room.publicKey,
           text: message,
+          messageId: messageId,
         );
         debugPrint('  ✅ Sent successfully');
+
+        // Mark as shared after successful send
+        drawingProvider.markDrawingAsShared(drawing.id);
         successCount++;
+
         // Small delay between messages to avoid overwhelming the device
         await Future.delayed(const Duration(milliseconds: 200));
       } catch (e, stackTrace) {
@@ -623,44 +669,6 @@ class DrawingToolbar extends StatelessWidget {
       }
     }
 
-    debugPrint('  Share complete: $successCount/${drawings.length} sent');
-    debugPrint('  Context mounted after send: ${context.mounted}');
-
-    if (!context.mounted) {
-      debugPrint('❌ Context not mounted, cannot show snackbar');
-      return;
-    }
-
-    // Add informational message to chat
-    final messagesProvider = Provider.of<MessagesProvider>(
-      context,
-      listen: false,
-    );
-    final l10nRoom = AppLocalizations.of(context)!;
-    messagesProvider.logSystemMessage(
-      text:
-          '📤 ${l10nRoom.sentDrawingsToRoom(
-            drawings.length,
-            drawings.length > 1 ? 's' : '',
-            room.advName,
-          )}',
-      level: 'info',
-    );
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          l10nRoom.sharedDrawingsToRoom(
-            successCount,
-            drawings.length,
-            drawings.length > 1 ? 's' : '',
-            room.advName,
-          ),
-        ),
-        backgroundColor: successCount == drawings.length
-            ? Colors.green
-            : Colors.orange,
-      ),
-    );
+    debugPrint('  Share complete: $successCount/${drawings.length} sent, $alreadyShared already shared');
   }
 }

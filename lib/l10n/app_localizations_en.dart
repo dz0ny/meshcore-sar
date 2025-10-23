@@ -1758,4 +1758,47 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sampleMedicalTeam => 'Medical Team';
+
+  @override
+  String get mapDrawing => 'Map Drawing';
+
+  @override
+  String get navigateToDrawing => 'Navigate to Drawing';
+
+  @override
+  String get copyCoordinates => 'Copy Coordinates';
+
+  @override
+  String get hideFromMap => 'Hide from Map';
+
+  @override
+  String get lineDrawing => 'Line Drawing';
+
+  @override
+  String get rectangleDrawing => 'Rectangle Drawing';
+
+  @override
+  String get coordinatesCopiedToClipboard => 'Coordinates copied to clipboard';
+
+  @override
+  String get drawingShared => 'Map Drawing';
+
+  @override
+  String get drawingHidden => 'Drawing hidden from map';
+
+  @override
+  String alreadyShared(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count already shared',
+      one: '1 already shared',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String newDrawingsShared(int count, String plural) {
+    return 'Shared $count new drawing$plural';
+  }
 }

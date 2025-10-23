@@ -31,9 +31,17 @@ class DrawingProvider with ChangeNotifier {
   Color get selectedColor => _selectedColor;
   bool get showReceivedDrawings => _showReceivedDrawings;
   bool get showSarMarkers => _showSarMarkers;
-  List<MapDrawing> get drawings => _showReceivedDrawings
-      ? List.unmodifiable(_drawings)
-      : List.unmodifiable(_drawings.where((d) => !d.isReceived).toList());
+  List<MapDrawing> get drawings {
+    // Filter out hidden drawings first
+    var visibleDrawings = _drawings.where((d) => !d.isHidden);
+
+    // Then filter by received status if needed
+    if (!_showReceivedDrawings) {
+      visibleDrawings = visibleDrawings.where((d) => !d.isReceived);
+    }
+
+    return List.unmodifiable(visibleDrawings.toList());
+  }
   MapDrawing? get currentDrawing => _currentDrawing;
   List<LatLng> get currentLinePoints => List.unmodifiable(_currentLinePoints);
   LatLng? get rectangleStartPoint => _rectangleStartPoint;
@@ -281,7 +289,155 @@ class DrawingProvider with ChangeNotifier {
       return;
     }
 
-    _drawings.add(drawing);
+    // Mark as received when adding
+    final receivedDrawing = _createReceivedCopy(drawing);
+    _drawings.add(receivedDrawing);
+    _saveDrawings();
+    notifyListeners();
+  }
+
+  /// Create a copy of a drawing marked as received
+  MapDrawing _createReceivedCopy(MapDrawing drawing) {
+    if (drawing is LineDrawing) {
+      return LineDrawing(
+        id: drawing.id,
+        color: drawing.color,
+        createdAt: drawing.createdAt,
+        points: drawing.points,
+        senderName: drawing.senderName,
+        isReceived: true,
+        messageId: drawing.messageId,
+        isShared: drawing.isShared,
+        isSent: drawing.isSent,
+        isHidden: drawing.isHidden,
+      );
+    } else if (drawing is RectangleDrawing) {
+      return RectangleDrawing(
+        id: drawing.id,
+        color: drawing.color,
+        createdAt: drawing.createdAt,
+        topLeft: drawing.topLeft,
+        bottomRight: drawing.bottomRight,
+        senderName: drawing.senderName,
+        isReceived: true,
+        messageId: drawing.messageId,
+        isShared: drawing.isShared,
+        isSent: drawing.isSent,
+        isHidden: drawing.isHidden,
+      );
+    }
+    return drawing;
+  }
+
+  /// Get a drawing by its ID
+  MapDrawing? getDrawingById(String id) {
+    try {
+      return _drawings.firstWhere((d) => d.id == id);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /// Get all unshared drawings (local drawings not yet sent)
+  List<MapDrawing> getUnsharedDrawings() {
+    return _drawings.where((d) => !d.isShared && !d.isReceived).toList();
+  }
+
+  /// Mark a drawing as shared
+  void markDrawingAsShared(String id) {
+    final index = _drawings.indexWhere((d) => d.id == id);
+    if (index != -1) {
+      final drawing = _drawings[index];
+
+      // Create a copy with isShared = true
+      if (drawing is LineDrawing) {
+        _drawings[index] = LineDrawing(
+          id: drawing.id,
+          color: drawing.color,
+          createdAt: drawing.createdAt,
+          points: drawing.points,
+          senderName: drawing.senderName,
+          isReceived: drawing.isReceived,
+          messageId: drawing.messageId,
+          isShared: true,
+          isSent: drawing.isSent,
+          isHidden: drawing.isHidden,
+        );
+      } else if (drawing is RectangleDrawing) {
+        _drawings[index] = RectangleDrawing(
+          id: drawing.id,
+          color: drawing.color,
+          createdAt: drawing.createdAt,
+          topLeft: drawing.topLeft,
+          bottomRight: drawing.bottomRight,
+          senderName: drawing.senderName,
+          isReceived: drawing.isReceived,
+          messageId: drawing.messageId,
+          isShared: true,
+          isSent: drawing.isSent,
+          isHidden: drawing.isHidden,
+        );
+      }
+
+      _saveDrawings();
+      notifyListeners();
+    }
+  }
+
+  /// Toggle visibility of a drawing (doesn't save to storage)
+  void toggleDrawingVisibility(String id) {
+    final index = _drawings.indexWhere((d) => d.id == id);
+    if (index != -1) {
+      final drawing = _drawings[index];
+
+      // Create a copy with toggled isHidden flag
+      if (drawing is LineDrawing) {
+        _drawings[index] = LineDrawing(
+          id: drawing.id,
+          color: drawing.color,
+          createdAt: drawing.createdAt,
+          points: drawing.points,
+          senderName: drawing.senderName,
+          isReceived: drawing.isReceived,
+          messageId: drawing.messageId,
+          isShared: drawing.isShared,
+          isSent: drawing.isSent,
+          isHidden: !drawing.isHidden,
+        );
+      } else if (drawing is RectangleDrawing) {
+        _drawings[index] = RectangleDrawing(
+          id: drawing.id,
+          color: drawing.color,
+          createdAt: drawing.createdAt,
+          topLeft: drawing.topLeft,
+          bottomRight: drawing.bottomRight,
+          senderName: drawing.senderName,
+          isReceived: drawing.isReceived,
+          messageId: drawing.messageId,
+          isShared: drawing.isShared,
+          isSent: drawing.isSent,
+          isHidden: !drawing.isHidden,
+        );
+      }
+
+      // Don't save to storage - visibility toggle is temporary
+      notifyListeners();
+    }
+  }
+
+  /// Remove a drawing and its linked message
+  void removeDrawingAndMessage(String drawingId, dynamic messagesProvider) {
+    final drawing = getDrawingById(drawingId);
+    if (drawing == null) return;
+
+    // Remove the drawing
+    _drawings.removeWhere((d) => d.id == drawingId);
+
+    // If the drawing has a linked message, remove it too
+    if (drawing.messageId != null && messagesProvider != null) {
+      messagesProvider.deleteMessage(drawing.messageId!);
+    }
+
     _saveDrawings();
     notifyListeners();
   }

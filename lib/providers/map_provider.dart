@@ -44,6 +44,56 @@ class MapProvider with ChangeNotifier {
     // Don't notify listeners to avoid rebuilds
   }
 
+  /// Navigate to a drawing by its ID
+  void navigateToDrawing(String drawingId, dynamic drawingProvider) {
+    // Find the drawing in the provider
+    final drawings = drawingProvider.drawings as List;
+    final drawing = drawings.cast<dynamic>().firstWhere(
+      (d) => d.id == drawingId,
+      orElse: () => null,
+    );
+
+    if (drawing == null) {
+      debugPrint('⚠️ [MapProvider] Drawing $drawingId not found');
+      return;
+    }
+
+    // Use MapDrawing's built-in getCenter and getBounds methods
+    final center = drawing.getCenter();
+    final bounds = drawing.getBounds();
+
+    // Calculate appropriate zoom level based on bounds
+    // For larger drawings, use lower zoom to fit the whole drawing
+    // For smaller drawings, use higher zoom for better detail
+    final latDiff = (bounds.north - bounds.south).abs();
+    final lonDiff = (bounds.east - bounds.west).abs();
+    final maxDiff = latDiff > lonDiff ? latDiff : lonDiff;
+
+    // Zoom scale: smaller drawings get higher zoom
+    // 0.001 degrees (~100m) -> zoom 17
+    // 0.005 degrees (~500m) -> zoom 16
+    // 0.01 degrees (~1km) -> zoom 15
+    // 0.05 degrees (~5km) -> zoom 13
+    // 0.1 degrees (~10km) -> zoom 12
+    double zoom = 15.0;
+    if (maxDiff < 0.001) {
+      zoom = 17.0;
+    } else if (maxDiff < 0.005) {
+      zoom = 16.0;
+    } else if (maxDiff < 0.01) {
+      zoom = 15.0;
+    } else if (maxDiff < 0.05) {
+      zoom = 13.0;
+    } else if (maxDiff < 0.1) {
+      zoom = 12.0;
+    } else {
+      zoom = 10.0;
+    }
+
+    debugPrint('🗺️ [MapProvider] Navigating to drawing: ${drawing.type.name}, zoom: $zoom');
+    navigateToLocation(location: center, zoom: zoom, animate: true);
+  }
+
   void updateZoom(double zoom) {
     _targetZoom = zoom;
     notifyListeners();

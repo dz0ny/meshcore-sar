@@ -3188,6 +3188,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Medical Team'**
   String get sampleMedicalTeam;
+
+  /// Label for map drawing messages
+  ///
+  /// In en, this message translates to:
+  /// **'Map Drawing'**
+  String get mapDrawing;
+
+  /// Option to navigate to drawing on map
+  ///
+  /// In en, this message translates to:
+  /// **'Navigate to Drawing'**
+  String get navigateToDrawing;
+
+  /// Option to copy coordinates to clipboard
+  ///
+  /// In en, this message translates to:
+  /// **'Copy Coordinates'**
+  String get copyCoordinates;
+
+  /// Option to hide drawing from map
+  ///
+  /// In en, this message translates to:
+  /// **'Hide from Map'**
+  String get hideFromMap;
+
+  /// Label for line type drawings
+  ///
+  /// In en, this message translates to:
+  /// **'Line Drawing'**
+  String get lineDrawing;
+
+  /// Label for rectangle type drawings
+  ///
+  /// In en, this message translates to:
+  /// **'Rectangle Drawing'**
+  String get rectangleDrawing;
+
+  /// Success message when coordinates are copied
+  ///
+  /// In en, this message translates to:
+  /// **'Coordinates copied to clipboard'**
+  String get coordinatesCopiedToClipboard;
+
+  /// Label for shared drawing notifications
+  ///
+  /// In en, this message translates to:
+  /// **'Map Drawing'**
+  String get drawingShared;
+
+  /// Success message when drawing is hidden
+  ///
+  /// In en, this message translates to:
+  /// **'Drawing hidden from map'**
+  String get drawingHidden;
+
+  /// Message showing how many drawings were already shared
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 already shared} other{{count} already shared}}'**
+  String alreadyShared(int count);
+
+  /// Success message after sharing new drawings
+  ///
+  /// In en, this message translates to:
+  /// **'Shared {count} new drawing{plural}'**
+  String newDrawingsShared(int count, String plural);
 }
 
 class _AppLocalizationsDelegate

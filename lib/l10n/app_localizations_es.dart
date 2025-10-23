@@ -373,7 +373,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get deleteDrawing => 'Eliminar dibujo';
 
   @override
-  String get drawingTools => 'Herramientas de dibujo';
+  String get drawingTools => 'Herramientas de Dibujo';
 
   @override
   String get drawLine => 'Dibujar línea';
@@ -1783,4 +1783,42 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get sampleMedicalTeam => 'Equipo Médico';
+
+  @override
+  String get mapDrawing => 'Dibujo del Mapa';
+
+  @override
+  String get navigateToDrawing => 'Navegar al Dibujo';
+
+  @override
+  String get copyCoordinates => 'Copiar Coordenadas';
+
+  @override
+  String get hideFromMap => 'Ocultar del Mapa';
+
+  @override
+  String get lineDrawing => 'Línea';
+
+  @override
+  String get rectangleDrawing => 'Rectángulo';
+
+  @override
+  String get coordinatesCopiedToClipboard =>
+      'Coordenadas copiadas al portapapeles';
+
+  @override
+  String get drawingShared => 'Dibujo del Mapa';
+
+  @override
+  String get drawingHidden => 'Dibujo ocultado del mapa';
+
+  @override
+  String alreadyShared(int count) {
+    return '$count ya compartido';
+  }
+
+  @override
+  String newDrawingsShared(int count, String plural) {
+    return '$count nuevo(s) dibujo(s) compartido(s)';
+  }
 }

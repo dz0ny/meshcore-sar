@@ -2508,5 +2508,18 @@
   "sampleEchoSupport": "Unterstützung",
   "sampleBaseCommand": "Basis-Kommando",
   "sampleFieldCoordinator": "Feldkoordinator",
-  "sampleMedicalTeam": "Medizinisches Team"
+  "sampleMedicalTeam": "Medizinisches Team",
+
+  "mapDrawing": "Kartenzeichnung",
+  "drawingShared": "Kartenzeichnung",
+  "lineDrawing": "Linie",
+  "rectangleDrawing": "Rechteck",
+  "navigateToDrawing": "Zur Zeichnung navigieren",
+  "hideFromMap": "Von Karte ausblenden",
+  "copyCoordinates": "Koordinaten kopieren",
+  "coordinatesCopiedToClipboard": "Koordinaten in Zwischenablage kopiert",
+  "drawingHidden": "Zeichnung von Karte ausgeblendet",
+  "alreadyShared": "{count} bereits geteilt",
+  "newDrawingsShared": "{count} neue Zeichnung(en) geteilt",
+  "drawingTools": "Zeichenwerkzeuge"
 }

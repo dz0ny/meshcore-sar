@@ -1769,4 +1769,47 @@ class AppLocalizationsSl extends AppLocalizations {
 
   @override
   String get sampleMedicalTeam => 'Medicinska Ekipa';
+
+  @override
+  String get mapDrawing => 'Risba zemljevida';
+
+  @override
+  String get navigateToDrawing => 'Navigiraj do risbe';
+
+  @override
+  String get copyCoordinates => 'Kopiraj koordinate';
+
+  @override
+  String get hideFromMap => 'Skrij z zemljevida';
+
+  @override
+  String get lineDrawing => 'Linijska risba';
+
+  @override
+  String get rectangleDrawing => 'Pravokotna risba';
+
+  @override
+  String get coordinatesCopiedToClipboard => 'Koordinate kopirane v odložišče';
+
+  @override
+  String get drawingShared => 'Risba zemljevida';
+
+  @override
+  String get drawingHidden => 'Risba skrita z zemljevida';
+
+  @override
+  String alreadyShared(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count že deljeno',
+      one: '1 že deljeno',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String newDrawingsShared(int count, String plural) {
+    return 'Deljeno $count nov$plural risb$plural';
+  }
 }

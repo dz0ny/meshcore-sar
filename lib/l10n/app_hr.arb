@@ -918,5 +918,19 @@
   "sampleEchoSupport": "Podrška",
   "sampleBaseCommand": "Zapovjedništvo Baze",
   "sampleFieldCoordinator": "Terenski Koordinator",
-  "sampleMedicalTeam": "Medicinski Tim"
+  "sampleMedicalTeam": "Medicinski Tim",
+
+  "mapDrawing": "Crtež karte",
+  "navigateToDrawing": "Navigiraj do crteža",
+  "copyCoordinates": "Kopiraj koordinate",
+  "hideFromMap": "Sakrij s karte",
+  "lineDrawing": "Linijski crtež",
+  "rectangleDrawing": "Pravokutni crtež",
+  "coordinatesCopiedToClipboard": "Koordinate kopirane u međuspremnik",
+
+  "drawingShared": "Crtež karte",
+  "drawingHidden": "Crtež sakriven s karte",
+  "alreadyShared": "{count, plural, =1{1 već podijeljeno} other{{count} već podijeljeno}}",
+  "newDrawingsShared": "Podijeljeno {count} novi{plural} crtež{plural}",
+  "drawingTools": "Alati za crtanje"
 }

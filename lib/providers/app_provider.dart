@@ -150,10 +150,16 @@ class AppProvider with ChangeNotifier {
           debugPrint('   Drawing linked to message ID: ${message.id}');
           drawingProvider.addReceivedDrawing(drawing);
 
-          // Add the original drawing message to chat (not a modified info message)
+          // Update message to mark as drawing and link to drawing ID
+          final updatedMessage = message.copyWith(
+            isDrawing: true,
+            drawingId: drawing.id,
+          );
+
+          // Add the drawing message to chat with drawing metadata
           // This allows users to click on the drawing message to navigate to it
           messagesProvider.addMessage(
-            message,
+            updatedMessage,
             contactLookup: (name) => '',
           );
         } else {

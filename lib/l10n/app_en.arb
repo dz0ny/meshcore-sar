@@ -2990,5 +2990,73 @@
   "sampleMedicalTeam": "Medical Team",
   "@sampleMedicalTeam": {
     "description": "Sample team name"
+  },
+
+  "mapDrawing": "Map Drawing",
+  "@mapDrawing": {
+    "description": "Label for map drawing messages"
+  },
+
+  "navigateToDrawing": "Navigate to Drawing",
+  "@navigateToDrawing": {
+    "description": "Option to navigate to drawing on map"
+  },
+
+  "copyCoordinates": "Copy Coordinates",
+  "@copyCoordinates": {
+    "description": "Option to copy coordinates to clipboard"
+  },
+
+  "hideFromMap": "Hide from Map",
+  "@hideFromMap": {
+    "description": "Option to hide drawing from map"
+  },
+
+  "lineDrawing": "Line Drawing",
+  "@lineDrawing": {
+    "description": "Label for line type drawings"
+  },
+
+  "rectangleDrawing": "Rectangle Drawing",
+  "@rectangleDrawing": {
+    "description": "Label for rectangle type drawings"
+  },
+
+  "coordinatesCopiedToClipboard": "Coordinates copied to clipboard",
+  "@coordinatesCopiedToClipboard": {
+    "description": "Success message when coordinates are copied"
+  },
+
+  "drawingShared": "Map Drawing",
+  "@drawingShared": {
+    "description": "Label for shared drawing notifications"
+  },
+
+  "drawingHidden": "Drawing hidden from map",
+  "@drawingHidden": {
+    "description": "Success message when drawing is hidden"
+  },
+
+  "alreadyShared": "{count, plural, =1{1 already shared} other{{count} already shared}}",
+  "@alreadyShared": {
+    "description": "Message showing how many drawings were already shared",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+
+  "newDrawingsShared": "Shared {count} new drawing{plural}",
+  "@newDrawingsShared": {
+    "description": "Success message after sharing new drawings",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "plural": {
+        "type": "String"
+      }
+    }
   }
 }

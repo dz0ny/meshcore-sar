@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
 /// Drawing shape type
@@ -72,6 +73,9 @@ abstract class MapDrawing {
   final String? senderName; // Name of sender (null if local drawing)
   final bool isReceived; // True if drawing was received from another node
   final String? messageId; // ID of the source message (for navigation)
+  final bool isShared; // Whether drawing has been broadcast over mesh
+  final bool isSent; // Whether this is a sent drawing (vs received)
+  final bool isHidden; // Temporary visibility toggle (session only, not persisted)
 
   MapDrawing({
     required this.id,
@@ -81,6 +85,9 @@ abstract class MapDrawing {
     this.senderName,
     this.isReceived = false,
     this.messageId,
+    this.isShared = false,
+    this.isSent = false,
+    this.isHidden = false,
   });
 
   /// Convert to JSON for persistence
@@ -145,6 +152,12 @@ abstract class MapDrawing {
       return null;
     }
   }
+
+  /// Get the center point of the drawing
+  LatLng getCenter();
+
+  /// Get the bounds of the drawing
+  LatLngBounds getBounds();
 }
 
 /// Line drawing on map
@@ -159,6 +172,9 @@ class LineDrawing extends MapDrawing {
     super.senderName,
     super.isReceived,
     super.messageId,
+    super.isShared,
+    super.isSent,
+    super.isHidden,
   }) : super(type: DrawingShapeType.line);
 
   @override
@@ -169,6 +185,8 @@ class LineDrawing extends MapDrawing {
       'color': color.toARGB32(),
       'createdAt': createdAt.toIso8601String(),
       'points': points.map((p) => {'lat': p.latitude, 'lon': p.longitude}).toList(),
+      'isShared': isShared,
+      // Note: isHidden is not persisted - it's session-only
     };
   }
 
@@ -176,11 +194,15 @@ class LineDrawing extends MapDrawing {
   Map<String, dynamic> toNetworkJson() {
     // Ultra-compact format: t=type (0=line, 1=rect), c=color index (0-7), p=points
     // Points are encoded as flat array [lat1,lon1,lat2,lon2,...]
+    // Coordinates rounded to 5 decimal places (~1m precision, like SAR markers)
     // Sender is fetched from packet metadata, not included in JSON
     return {
       't': type.index,
       'c': DrawingColors.colorToIndex(color),
-      'p': points.expand((p) => [p.latitude, p.longitude]).toList(),
+      'p': points.expand((p) => [
+        double.parse(p.latitude.toStringAsFixed(5)),
+        double.parse(p.longitude.toStringAsFixed(5)),
+      ]).toList(),
     };
   }
 
@@ -196,6 +218,7 @@ class LineDrawing extends MapDrawing {
       points: points,
       senderName: senderName,
       isReceived: senderName != null, // Mark as received if sender is present
+      isShared: json['isShared'] as bool? ?? false,
     );
   }
 
@@ -219,6 +242,7 @@ class LineDrawing extends MapDrawing {
       senderName: senderName,
       isReceived: true,
       messageId: messageId, // Link to source message
+      isShared: false, // Received drawings are not marked as shared
     );
   }
 
@@ -230,6 +254,41 @@ class LineDrawing extends MapDrawing {
       createdAt: createdAt,
       points: points ?? this.points,
     );
+  }
+
+  @override
+  LatLng getCenter() {
+    if (points.isEmpty) return LatLng(0, 0);
+    if (points.length == 1) return points[0];
+
+    // Calculate center as average of all points
+    double sumLat = 0;
+    double sumLon = 0;
+    for (final point in points) {
+      sumLat += point.latitude;
+      sumLon += point.longitude;
+    }
+    return LatLng(sumLat / points.length, sumLon / points.length);
+  }
+
+  @override
+  LatLngBounds getBounds() {
+    if (points.isEmpty) return LatLngBounds(LatLng(0, 0), LatLng(0, 0));
+    if (points.length == 1) return LatLngBounds(points[0], points[0]);
+
+    double minLat = points[0].latitude;
+    double maxLat = points[0].latitude;
+    double minLon = points[0].longitude;
+    double maxLon = points[0].longitude;
+
+    for (final point in points) {
+      if (point.latitude < minLat) minLat = point.latitude;
+      if (point.latitude > maxLat) maxLat = point.latitude;
+      if (point.longitude < minLon) minLon = point.longitude;
+      if (point.longitude > maxLon) maxLon = point.longitude;
+    }
+
+    return LatLngBounds(LatLng(minLat, minLon), LatLng(maxLat, maxLon));
   }
 }
 
@@ -247,6 +306,9 @@ class RectangleDrawing extends MapDrawing {
     super.senderName,
     super.isReceived,
     super.messageId,
+    super.isShared,
+    super.isSent,
+    super.isHidden,
   }) : super(type: DrawingShapeType.rectangle);
 
   /// Get all corner points for rendering
@@ -267,17 +329,25 @@ class RectangleDrawing extends MapDrawing {
       'createdAt': createdAt.toIso8601String(),
       'topLeft': {'lat': topLeft.latitude, 'lon': topLeft.longitude},
       'bottomRight': {'lat': bottomRight.latitude, 'lon': bottomRight.longitude},
+      'isShared': isShared,
+      // Note: isHidden is not persisted - it's session-only
     };
   }
 
   @override
   Map<String, dynamic> toNetworkJson() {
     // Ultra-compact format: t=type (0=line, 1=rect), c=color index (0-7), b=bounds [lat1,lon1,lat2,lon2]
+    // Coordinates rounded to 5 decimal places (~1m precision, like SAR markers)
     // Sender is fetched from packet metadata, not included in JSON
     return {
       't': type.index,
       'c': DrawingColors.colorToIndex(color),
-      'b': [topLeft.latitude, topLeft.longitude, bottomRight.latitude, bottomRight.longitude],
+      'b': [
+        double.parse(topLeft.latitude.toStringAsFixed(5)),
+        double.parse(topLeft.longitude.toStringAsFixed(5)),
+        double.parse(bottomRight.latitude.toStringAsFixed(5)),
+        double.parse(bottomRight.longitude.toStringAsFixed(5)),
+      ],
     };
   }
 
@@ -294,6 +364,7 @@ class RectangleDrawing extends MapDrawing {
       bottomRight: LatLng(bottomRightJson['lat'] as double, bottomRightJson['lon'] as double),
       senderName: senderName,
       isReceived: senderName != null, // Mark as received if sender is present
+      isShared: json['isShared'] as bool? ?? false,
     );
   }
 
@@ -314,6 +385,7 @@ class RectangleDrawing extends MapDrawing {
       senderName: senderName,
       isReceived: true,
       messageId: messageId, // Link to source message
+      isShared: false, // Received drawings are not marked as shared
     );
   }
 
@@ -329,5 +401,20 @@ class RectangleDrawing extends MapDrawing {
       topLeft: topLeft ?? this.topLeft,
       bottomRight: bottomRight ?? this.bottomRight,
     );
+  }
+
+  @override
+  LatLng getCenter() {
+    // Center is the midpoint between top-left and bottom-right
+    return LatLng(
+      (topLeft.latitude + bottomRight.latitude) / 2,
+      (topLeft.longitude + bottomRight.longitude) / 2,
+    );
+  }
+
+  @override
+  LatLngBounds getBounds() {
+    // Bounds are simply the two corners
+    return LatLngBounds(topLeft, bottomRight);
   }
 }

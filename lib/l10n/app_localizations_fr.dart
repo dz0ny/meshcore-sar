@@ -375,7 +375,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get deleteDrawing => 'Supprimer le dessin';
 
   @override
-  String get drawingTools => 'Outils de dessin';
+  String get drawingTools => 'Outils de Dessin';
 
   @override
   String get drawLine => 'Tracer une ligne';
@@ -1789,4 +1789,42 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get sampleMedicalTeam => 'Équipe Médicale';
+
+  @override
+  String get mapDrawing => 'Dessin de Carte';
+
+  @override
+  String get navigateToDrawing => 'Naviguer vers le Dessin';
+
+  @override
+  String get copyCoordinates => 'Copier les Coordonnées';
+
+  @override
+  String get hideFromMap => 'Masquer de la Carte';
+
+  @override
+  String get lineDrawing => 'Ligne';
+
+  @override
+  String get rectangleDrawing => 'Rectangle';
+
+  @override
+  String get coordinatesCopiedToClipboard =>
+      'Coordonnées copiées dans le presse-papiers';
+
+  @override
+  String get drawingShared => 'Dessin de Carte';
+
+  @override
+  String get drawingHidden => 'Dessin masqué de la carte';
+
+  @override
+  String alreadyShared(int count) {
+    return '$count déjà partagé';
+  }
+
+  @override
+  String newDrawingsShared(int count, String plural) {
+    return '$count nouveau(x) dessin(s) partagé(s)';
+  }
 }

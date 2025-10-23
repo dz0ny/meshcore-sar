@@ -614,6 +614,11 @@
     "description": "Action to delete a map drawing"
   },
 
+  "drawingTools": "Drawing Tools",
+  "@drawingTools": {
+    "description": "Drawing tools section or menu title"
+  },
+
   "drawLine": "Draw Line",
   "@drawLine": {
     "description": "Map drawing mode: line"

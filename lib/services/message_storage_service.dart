@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/message.dart';
-import '../models/sar_marker.dart';
 import 'package:latlong2/latlong.dart';
 
 /// Service for persisting messages to local storage
@@ -111,7 +110,6 @@ class MessageStorageService {
       'senderTimestamp': message.senderTimestamp,
       'text': message.text,
       'isSarMarker': message.isSarMarker,
-      'sarMarkerType': message.sarMarkerType?.name,
       'sarGpsLat': message.sarGpsCoordinates?.latitude,
       'sarGpsLon': message.sarGpsCoordinates?.longitude,
       'receivedAtMillis': message.receivedAt.millisecondsSinceEpoch,
@@ -148,12 +146,6 @@ class MessageStorageService {
         senderTimestamp: json['senderTimestamp'] as int,
         text: json['text'] as String,
         isSarMarker: json['isSarMarker'] as bool? ?? false,
-        sarMarkerType: json['sarMarkerType'] != null
-            ? SarMarkerType.values.firstWhere(
-                (e) => e.name == json['sarMarkerType'],
-                orElse: () => SarMarkerType.unknown,
-              )
-            : null,
         sarGpsCoordinates:
             json['sarGpsLat'] != null && json['sarGpsLon'] != null
             ? LatLng(json['sarGpsLat'] as double, json['sarGpsLon'] as double)

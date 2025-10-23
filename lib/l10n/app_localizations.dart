@@ -749,6 +749,12 @@ abstract class AppLocalizations {
   /// **'Delete Drawing'**
   String get deleteDrawing;
 
+  /// Drawing tools section or menu title
+  ///
+  /// In en, this message translates to:
+  /// **'Drawing Tools'**
+  String get drawingTools;
+
   /// Map drawing mode: line
   ///
   /// In en, this message translates to:

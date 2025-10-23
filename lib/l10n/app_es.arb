@@ -614,6 +614,11 @@
     "description": "Acción para eliminar un dibujo del mapa"
   },
 
+  "drawingTools": "Herramientas de dibujo",
+  "@drawingTools": {
+    "description": "Sección de herramientas de dibujo o título del menú"
+  },
+
   "drawLine": "Dibujar línea",
   "@drawLine": {
     "description": "Modo de dibujo del mapa: línea"

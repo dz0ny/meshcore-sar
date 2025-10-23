@@ -614,6 +614,11 @@
     "description": "Action pour supprimer un dessin de carte"
   },
 
+  "drawingTools": "Outils de dessin",
+  "@drawingTools": {
+    "description": "Section des outils de dessin ou titre du menu"
+  },
+
   "drawLine": "Tracer une ligne",
   "@drawLine": {
     "description": "Mode de dessin de carte : ligne"

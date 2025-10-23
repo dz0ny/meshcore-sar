@@ -49,7 +49,6 @@ class Message {
 
   // SAR marker data (if this is a SAR message)
   final bool isSarMarker;
-  final SarMarkerType? sarMarkerType;
   final LatLng? sarGpsCoordinates;
   final String? sarNotes; // Optional message/notes for SAR marker
   final String? sarCustomEmoji; // Custom emoji for unknown SAR marker types
@@ -91,7 +90,6 @@ class Message {
     required this.senderTimestamp,
     required this.text,
     this.isSarMarker = false,
-    this.sarMarkerType,
     this.sarGpsCoordinates,
     this.sarNotes,
     this.sarCustomEmoji,
@@ -111,6 +109,28 @@ class Message {
     this.echoCount = 0,
     this.firstEchoAt,
   });
+
+  /// Get SAR marker type by inferring from message content
+  /// Returns the type inferred from sarCustomEmoji or by parsing the message text
+  SarMarkerType? get sarMarkerType {
+    if (!isSarMarker) return null;
+
+    // If we have a custom emoji stored, infer type from it
+    if (sarCustomEmoji != null && sarCustomEmoji!.isNotEmpty) {
+      return SarMarkerType.fromEmoji(sarCustomEmoji!);
+    }
+
+    // Otherwise, parse the message text to extract the emoji
+    final trimmed = text.trim();
+    if (!trimmed.startsWith('S:')) return null;
+
+    // Extract emoji from format: S:<emoji>:... or S:<emoji>:<colorIndex>:...
+    final parts = trimmed.split(':');
+    if (parts.length < 3) return null;
+
+    final emoji = parts[1];
+    return SarMarkerType.fromEmoji(emoji);
+  }
 
   /// Get sender public key as hex string
   String? get senderKeyShort {
@@ -288,7 +308,6 @@ class Message {
     int? senderTimestamp,
     String? text,
     bool? isSarMarker,
-    SarMarkerType? sarMarkerType,
     LatLng? sarGpsCoordinates,
     String? sarNotes,
     String? sarCustomEmoji,
@@ -319,7 +338,6 @@ class Message {
       senderTimestamp: senderTimestamp ?? this.senderTimestamp,
       text: text ?? this.text,
       isSarMarker: isSarMarker ?? this.isSarMarker,
-      sarMarkerType: sarMarkerType ?? this.sarMarkerType,
       sarGpsCoordinates: sarGpsCoordinates ?? this.sarGpsCoordinates,
       sarNotes: sarNotes ?? this.sarNotes,
       sarCustomEmoji: sarCustomEmoji ?? this.sarCustomEmoji,

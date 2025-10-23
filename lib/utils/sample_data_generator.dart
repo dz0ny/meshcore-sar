@@ -1,10 +1,10 @@
 import 'dart:typed_data';
 import 'dart:math';
+import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
 import '../models/contact.dart';
 import '../models/contact_telemetry.dart';
 import '../models/message.dart';
-import '../models/sar_marker.dart';
 import '../l10n/app_localizations.dart';
 
 /// Generates sample data for testing/demo purposes
@@ -148,8 +148,8 @@ class SampleDataGenerator {
         text: 'S:🧑:${lat.toStringAsFixed(5)},${lon.toStringAsFixed(5)}',
         receivedAt: timestamp,
         isSarMarker: true,
-        sarMarkerType: SarMarkerType.foundPerson,
         sarGpsCoordinates: LatLng(lat, lon),
+        sarCustomEmoji: '🧑',
         senderName: l10n.sampleTeamMember,
       ));
       messageId++;
@@ -177,8 +177,8 @@ class SampleDataGenerator {
         text: 'S:🔥:${lat.toStringAsFixed(5)},${lon.toStringAsFixed(5)}',
         receivedAt: timestamp,
         isSarMarker: true,
-        sarMarkerType: SarMarkerType.fire,
         sarGpsCoordinates: LatLng(lat, lon),
+        sarCustomEmoji: '🔥',
         senderName: l10n.sampleScout,
       ));
       messageId++;
@@ -206,8 +206,8 @@ class SampleDataGenerator {
         text: 'S:🏕️:${lat.toStringAsFixed(5)},${lon.toStringAsFixed(5)}',
         receivedAt: timestamp,
         isSarMarker: true,
-        sarMarkerType: SarMarkerType.stagingArea,
         sarGpsCoordinates: LatLng(lat, lon),
+        sarCustomEmoji: '🏕️',
         senderName: l10n.sampleBase,
       ));
       messageId++;
@@ -242,14 +242,59 @@ class SampleDataGenerator {
         text: 'S:📦:${lat.toStringAsFixed(5)},${lon.toStringAsFixed(5)}${notes[i % notes.length]}',
         receivedAt: timestamp,
         isSarMarker: true,
-        sarMarkerType: SarMarkerType.object,
         sarGpsCoordinates: LatLng(lat, lon),
+        sarCustomEmoji: '📦',
         senderName: l10n.sampleSearcher,
       ));
       messageId++;
     }
 
     return messages;
+  }
+
+  /// Generate sample map drawings
+  static List<dynamic> generateDrawings({
+    required LatLng centerLocation,
+    required AppLocalizations l10n,
+  }) {
+    final drawings = <dynamic>[];
+    final now = DateTime.now();
+
+    // Generate a line drawing (e.g., search path)
+    final linePoints = <LatLng>[
+      LatLng(centerLocation.latitude + 0.002, centerLocation.longitude - 0.003),
+      LatLng(centerLocation.latitude + 0.004, centerLocation.longitude - 0.002),
+      LatLng(centerLocation.latitude + 0.005, centerLocation.longitude + 0.001),
+      LatLng(centerLocation.latitude + 0.003, centerLocation.longitude + 0.003),
+    ];
+
+    drawings.add({
+      'type': 'line',
+      'id': 'sample_line_${now.millisecondsSinceEpoch}',
+      'color': Colors.blue.toARGB32(),
+      'createdAt': now.subtract(const Duration(minutes: 15)).toIso8601String(),
+      'points': linePoints.map((p) => {'lat': p.latitude, 'lon': p.longitude}).toList(),
+      'sender': l10n.sampleTeamMember,
+    });
+
+    // Generate a rectangle drawing (e.g., search area)
+    drawings.add({
+      'type': 'rectangle',
+      'id': 'sample_rect_${now.millisecondsSinceEpoch + 1}',
+      'color': Colors.red.toARGB32(),
+      'createdAt': now.subtract(const Duration(minutes: 10)).toIso8601String(),
+      'topLeft': {
+        'lat': centerLocation.latitude - 0.003,
+        'lon': centerLocation.longitude - 0.004,
+      },
+      'bottomRight': {
+        'lat': centerLocation.latitude - 0.001,
+        'lon': centerLocation.longitude - 0.001,
+      },
+      'sender': l10n.sampleScout,
+    });
+
+    return drawings;
   }
 
   /// Generate sample channel messages for public channels

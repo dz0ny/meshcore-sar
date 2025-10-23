@@ -117,12 +117,9 @@ class SarMessageParser {
 
     return message.copyWith(
       isSarMarker: true,
-      sarMarkerType: sarInfo.type,
       sarGpsCoordinates: sarInfo.location,
       sarNotes: sarInfo.notes, // Extract and store notes
-      sarCustomEmoji: sarInfo.type == SarMarkerType.unknown
-          ? sarInfo.emoji  // Preserve custom emoji for unknown types
-          : null,
+      sarCustomEmoji: sarInfo.emoji, // Always store emoji for type inference
       sarColorIndex: sarInfo.colorIndex, // Store color index
     );
   }

@@ -614,6 +614,11 @@
     "description": "Aktion zum Löschen einer Kartenzeichnung"
   },
 
+  "drawingTools": "Zeichenwerkzeuge",
+  "@drawingTools": {
+    "description": "Zeichenwerkzeuge Abschnitt oder Menütitel"
+  },
+
   "drawLine": "Linie zeichnen",
   "@drawLine": {
     "description": "Kartenzeichnungsmodus: Linie"

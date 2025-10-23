@@ -213,6 +213,8 @@
 
   "deleteDrawing": "Izbriši crtež",
 
+  "drawingTools": "Alati za crtanje",
+
   "drawLine": "Nacrtaj liniju",
 
   "drawLineDesc": "Nacrtaj slobodnu liniju na karti",

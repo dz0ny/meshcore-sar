@@ -372,6 +372,9 @@ class AppLocalizationsSl extends AppLocalizations {
   String get deleteDrawing => 'Izbriši risbo';
 
   @override
+  String get drawingTools => 'Orodja za risanje';
+
+  @override
   String get drawLine => 'Nariši črto';
 
   @override

@@ -373,6 +373,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get deleteDrawing => 'Eliminar dibujo';
 
   @override
+  String get drawingTools => 'Herramientas de dibujo';
+
+  @override
   String get drawLine => 'Dibujar línea';
 
   @override

@@ -372,6 +372,9 @@ class AppLocalizationsHr extends AppLocalizations {
   String get deleteDrawing => 'Izbriši crtež';
 
   @override
+  String get drawingTools => 'Alati za crtanje';
+
+  @override
   String get drawLine => 'Nacrtaj liniju';
 
   @override

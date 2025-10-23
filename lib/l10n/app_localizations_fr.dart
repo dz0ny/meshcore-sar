@@ -375,6 +375,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get deleteDrawing => 'Supprimer le dessin';
 
   @override
+  String get drawingTools => 'Outils de dessin';
+
+  @override
   String get drawLine => 'Tracer une ligne';
 
   @override

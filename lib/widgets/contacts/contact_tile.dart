@@ -409,18 +409,6 @@ class ContactTile extends StatelessWidget {
           // Determine if we should use flooding (no path) or direct (has path)
           final hasPath = contact.hasPath;
 
-          // Show initial notification reflecting the method being used
-          ToastLogger.info(
-            context,
-            hasPath
-                ? AppLocalizations.of(
-                    context,
-                  )!.pingingDirect(contact.displayName)
-                : AppLocalizations.of(
-                    context,
-                  )!.pingingFlood(contact.displayName),
-          );
-
           // Use smart ping with automatic fallback
           final result = await connectionProvider.smartPing(
             contactPublicKey: contact.publicKey,
@@ -440,17 +428,7 @@ class ContactTile extends StatelessWidget {
 
           // Show final result
           if (context.mounted) {
-            if (result.success) {
-              ToastLogger.success(
-                context,
-                AppLocalizations.of(context)!.pingSuccessful(
-                  contact.displayName,
-                  result.retriedWithFlooding
-                      ? AppLocalizations.of(context)!.viaFloodingFallback
-                      : '',
-                ),
-              );
-            } else {
+            if (!result.success) {
               ToastLogger.error(
                 context,
                 AppLocalizations.of(context)!.pingFailed(contact.displayName),
@@ -494,12 +472,6 @@ class ContactTile extends StatelessWidget {
 
       // Switch to map tab using callback
       onNavigateToMap?.call();
-    } else {
-      // No location available, just show toast
-      ToastLogger.info(
-        context,
-        'Repeater ${contact.displayName} has no location data',
-      );
     }
   }
 
@@ -537,12 +509,6 @@ class ContactTile extends StatelessWidget {
     final contactsProvider = context.read<ContactsProvider>();
 
     try {
-      // Show loading toast
-      ToastLogger.info(
-        context,
-        AppLocalizations.of(context)!.removingContact(contact.displayName),
-      );
-
       // Remove contact from provider (which will also remove from device)
       await contactsProvider.removeContact(
         contact.publicKeyHex,
@@ -552,13 +518,6 @@ class ContactTile extends StatelessWidget {
           }
         },
       );
-
-      if (context.mounted) {
-        ToastLogger.success(
-          context,
-          AppLocalizations.of(context)!.contactRemoved(contact.displayName),
-        );
-      }
     } catch (e) {
       if (context.mounted) {
         ToastLogger.error(
@@ -830,12 +789,6 @@ class ContactTile extends StatelessWidget {
                               contact.publicKey,
                               zeroHop: true,
                             );
-                            ToastLogger.info(
-                              context,
-                              AppLocalizations.of(
-                                context,
-                              )!.requestingTelemetry(contact.displayName),
-                            );
                           },
                           icon: const Icon(Icons.refresh, size: 18),
                           label: Text(AppLocalizations.of(context)!.refresh),
@@ -912,12 +865,6 @@ class ContactTile extends StatelessWidget {
                       child: OutlinedButton.icon(
                         onPressed: () {
                           connectionProvider.resetPath(contact.publicKey);
-                          ToastLogger.info(
-                            context,
-                            AppLocalizations.of(
-                              context,
-                            )!.pathResetInfo(contact.displayName),
-                          );
                         },
                         icon: const Icon(Icons.route),
                         label: Text(AppLocalizations.of(context)!.resetPath),

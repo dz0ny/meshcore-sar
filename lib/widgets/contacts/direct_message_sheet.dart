@@ -73,13 +73,17 @@ class _DirectMessageSheetState extends State<DirectMessageSheet> {
       );
 
       // Format location text
-      final locationText = '📍 Lat: ${position.latitude.toStringAsFixed(5)}, Lon: ${position.longitude.toStringAsFixed(5)}';
+      final locationText =
+          '📍 Lat: ${position.latitude.toStringAsFixed(5)}, Lon: ${position.longitude.toStringAsFixed(5)}';
 
       // Check if adding location would exceed limit
       final currentText = _textController.text;
       if (currentText.length + locationText.length > _maxCharacters) {
         if (!mounted) return;
-        ToastLogger.error(context, 'Adding location would exceed 160 character limit');
+        ToastLogger.error(
+          context,
+          'Adding location would exceed 160 character limit',
+        );
         return;
       }
 
@@ -94,13 +98,14 @@ class _DirectMessageSheetState extends State<DirectMessageSheet> {
       _textController.text = newText;
 
       // Move cursor to end of inserted text
-      final newCursorPosition = (selection.start >= 0 ? selection.start : currentText.length) + locationText.length;
+      final newCursorPosition =
+          (selection.start >= 0 ? selection.start : currentText.length) +
+          locationText.length;
       _textController.selection = TextSelection.fromPosition(
         TextPosition(offset: newCursorPosition),
       );
 
       if (!mounted) return;
-      ToastLogger.success(context, 'Location inserted');
     } catch (e) {
       if (!mounted) return;
       ToastLogger.error(context, 'Failed to get location: $e');
@@ -116,7 +121,10 @@ class _DirectMessageSheetState extends State<DirectMessageSheet> {
 
     if (!connectionProvider.deviceInfo.isConnected) {
       if (!mounted) return;
-      ToastLogger.error(context, AppLocalizations.of(context)!.notConnectedToDevice);
+      ToastLogger.error(
+        context,
+        AppLocalizations.of(context)!.notConnectedToDevice,
+      );
       return;
     }
 
@@ -140,7 +148,8 @@ class _DirectMessageSheetState extends State<DirectMessageSheet> {
         text: text,
         receivedAt: DateTime.now(),
         deliveryStatus: MessageDeliveryStatus.sending,
-        recipientPublicKey: widget.contact.publicKey, // Store recipient for retry
+        recipientPublicKey:
+            widget.contact.publicKey, // Store recipient for retry
       );
 
       // Add to messages list with "sending" status
@@ -174,11 +183,12 @@ class _DirectMessageSheetState extends State<DirectMessageSheet> {
 
       if (!mounted) return;
       Navigator.pop(context); // Close the dialog
-
-      ToastLogger.success(context, AppLocalizations.of(context)!.directMessageSentTo(widget.contact.displayName));
     } catch (e) {
       if (!mounted) return;
-      ToastLogger.error(context, AppLocalizations.of(context)!.failedToSend(e.toString()));
+      ToastLogger.error(
+        context,
+        AppLocalizations.of(context)!.failedToSend(e.toString()),
+      );
     }
   }
 
@@ -203,7 +213,9 @@ class _DirectMessageSheetState extends State<DirectMessageSheet> {
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: colorScheme.surfaceContainerHighest,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(20),
+              ),
             ),
             child: Row(
               children: [
@@ -265,12 +277,15 @@ class _DirectMessageSheetState extends State<DirectMessageSheet> {
                             ),
                             initialZoom: 13.0,
                             interactionOptions: const InteractionOptions(
-                              flags: InteractiveFlag.pinchZoom | InteractiveFlag.drag,
+                              flags:
+                                  InteractiveFlag.pinchZoom |
+                                  InteractiveFlag.drag,
                             ),
                           ),
                           children: [
                             TileLayer(
-                              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                              urlTemplate:
+                                  'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                               userAgentPackageName: 'com.meshcore.sar',
                             ),
                             MarkerLayer(
@@ -301,7 +316,11 @@ class _DirectMessageSheetState extends State<DirectMessageSheet> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.gps_fixed, size: 14, color: colorScheme.onSurfaceVariant),
+                          Icon(
+                            Icons.gps_fixed,
+                            size: 14,
+                            color: colorScheme.onSurfaceVariant,
+                          ),
                           const SizedBox(width: 4),
                           Text(
                             '${contactLocation.latitude.toStringAsFixed(5)}, ${contactLocation.longitude.toStringAsFixed(5)}',
@@ -355,7 +374,10 @@ class _DirectMessageSheetState extends State<DirectMessageSheet> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: colorScheme.primary, width: 2),
+                      borderSide: BorderSide(
+                        color: colorScheme.primary,
+                        width: 2,
+                      ),
                     ),
                     contentPadding: const EdgeInsets.all(16),
                     counterText: '', // Hide default counter
@@ -365,7 +387,10 @@ class _DirectMessageSheetState extends State<DirectMessageSheet> {
                 ),
                 // Always-visible character counter
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 4,
+                    vertical: 4,
+                  ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
@@ -376,9 +401,11 @@ class _DirectMessageSheetState extends State<DirectMessageSheet> {
                           color: _characterCount > 155
                               ? Colors.red
                               : (_characterCount > 140
-                                  ? Colors.orange
-                                  : colorScheme.onSurfaceVariant),
-                          fontWeight: _characterCount > 140 ? FontWeight.bold : FontWeight.normal,
+                                    ? Colors.orange
+                                    : colorScheme.onSurfaceVariant),
+                          fontWeight: _characterCount > 140
+                              ? FontWeight.bold
+                              : FontWeight.normal,
                         ),
                       ),
                     ],
@@ -393,7 +420,10 @@ class _DirectMessageSheetState extends State<DirectMessageSheet> {
                       icon: const Icon(Icons.my_location, size: 18),
                       label: Text(AppLocalizations.of(context)!.myLocation),
                       style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
                         side: BorderSide(color: colorScheme.outline),
                       ),
                     ),
@@ -404,12 +434,15 @@ class _DirectMessageSheetState extends State<DirectMessageSheet> {
                             ? null
                             : _sendDirectMessage,
                         icon: const Icon(Icons.send),
-                        label: Text(AppLocalizations.of(context)!.sendDirectMessage),
+                        label: Text(
+                          AppLocalizations.of(context)!.sendDirectMessage,
+                        ),
                         style: ElevatedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           backgroundColor: colorScheme.primary,
                           foregroundColor: colorScheme.onPrimary,
-                          disabledBackgroundColor: colorScheme.surfaceContainerHighest,
+                          disabledBackgroundColor:
+                              colorScheme.surfaceContainerHighest,
                           disabledForegroundColor: colorScheme.onSurfaceVariant,
                         ),
                       ),

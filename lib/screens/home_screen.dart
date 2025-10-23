@@ -195,16 +195,6 @@ class _HomeScreenState extends State<HomeScreen>
 
       // Send flood advertisement
       await connectionProvider.sendSelfAdvert(floodMode: true);
-
-      if (context.mounted) {
-        ToastLogger.success(
-          context,
-          AppLocalizations.of(context)!.advertisedAtLocation(
-            position.latitude.toStringAsFixed(6),
-            position.longitude.toStringAsFixed(6),
-          ),
-        );
-      }
     } catch (e) {
       debugPrint('❌ Failed to advertise device: $e');
       if (context.mounted) {

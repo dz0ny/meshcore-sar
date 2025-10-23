@@ -220,7 +220,6 @@ class _MessagesTabState extends State<MessagesTab> {
 
     // Show confirmation toast
     if (!mounted) return;
-    ToastLogger.success(context, 'Messages will be sent to: $recipientName');
   }
 
   /// Get icon for current destination type
@@ -389,16 +388,24 @@ class _MessagesTabState extends State<MessagesTab> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => SarUpdateSheet(
-        onSend: (emoji, name, position, roomPublicKey, sendToChannel, colorIndex) async {
-          await _sendSarMessage(
-            emoji,
-            name,
-            position,
-            roomPublicKey,
-            sendToChannel,
-            colorIndex,
-          );
-        },
+        onSend:
+            (
+              emoji,
+              name,
+              position,
+              roomPublicKey,
+              sendToChannel,
+              colorIndex,
+            ) async {
+              await _sendSarMessage(
+                emoji,
+                name,
+                position,
+                roomPublicKey,
+                sendToChannel,
+                colorIndex,
+              );
+            },
       ),
     );
   }
@@ -468,7 +475,6 @@ class _MessagesTabState extends State<MessagesTab> {
         );
 
         if (!mounted) return;
-        ToastLogger.success(context, 'SAR marker broadcast to public channel');
       } else {
         // Create message ID
         final messageId = '${DateTime.now().millisecondsSinceEpoch}_sent';
@@ -540,13 +546,7 @@ class _MessagesTabState extends State<MessagesTab> {
       debugPrint(
         '🔄 [MessagesTab] Manual refresh triggered - syncing messages',
       );
-      final messageCount = await connectionProvider.syncAllMessages();
       if (!mounted) return;
-      if (messageCount > 0) {
-        ToastLogger.success(context, 'Synced $messageCount message(s)');
-      } else {
-        ToastLogger.info(context, 'No new messages');
-      }
     } catch (e) {
       debugPrint('❌ [MessagesTab] Sync error: $e');
       if (!mounted) return;
@@ -566,7 +566,8 @@ class _MessagesTabState extends State<MessagesTab> {
     }
 
     // If a contact or room is selected, filter by recipient
-    if ((_destinationType == MessageDestinationPreferences.destinationTypeContact ||
+    if ((_destinationType ==
+                MessageDestinationPreferences.destinationTypeContact ||
             _destinationType ==
                 MessageDestinationPreferences.destinationTypeRoom) &&
         _selectedRecipient != null) {
@@ -882,8 +883,6 @@ class _MessageBubble extends StatelessWidget {
         if (!sentSuccessfully) {
           messagesProvider.markMessageFailed(retryMessageId);
           ToastLogger.error(context, 'Failed to resend message');
-        } else {
-          ToastLogger.info(context, 'Retrying message...');
         }
       } else if (failedMessage.messageType == MessageType.channel) {
         // Channel message retry
@@ -894,8 +893,6 @@ class _MessageBubble extends StatelessWidget {
         );
 
         if (!context.mounted) return;
-
-        ToastLogger.info(context, 'Retrying message...');
       }
     } catch (e) {
       if (!context.mounted) return;
@@ -1033,7 +1030,6 @@ class _MessageBubble extends StatelessWidget {
               final messagesProvider = context.read<MessagesProvider>();
               messagesProvider.deleteMessage(message.id);
               Navigator.pop(context);
-              ToastLogger.info(context, l10n.messageDeleted);
             },
             style: TextButton.styleFrom(foregroundColor: Colors.red),
             child: Text(l10n.delete),
@@ -1080,13 +1076,8 @@ class _MessageBubble extends StatelessWidget {
 
     // Share the location
     SharePlus.instance.share(
-      ShareParams(
-        text: shareText,
-        subject: l10n.sarLocationShare,
-      ),
+      ShareParams(text: shareText, subject: l10n.sarLocationShare),
     );
-
-    ToastLogger.success(context, l10n.locationShared);
   }
 
   @override

@@ -33,7 +33,9 @@
       "Bash(git --no-pager log -1 --stat)",
       "Bash(awk:*)",
       "Bash(flutter test:*)",
-      "Bash(git log:*)"
+      "Bash(git log:*)",
+      "WebFetch(domain:meshcore-sar.dz0ny.dev)",
+      "Bash(flutter pub get:*)"
     ],
     "deny": [],
     "ask": []

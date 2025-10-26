@@ -4,6 +4,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../providers/contacts_provider.dart';
 import '../providers/messages_provider.dart';
 import '../providers/app_provider.dart';
@@ -1099,6 +1100,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         ),
         actions: [
+          TextButton.icon(
+            onPressed: () async {
+              final url = Uri.parse('https://dz0ny.dev/posts/meshcore-sar/');
+              if (await canLaunchUrl(url)) {
+                await launchUrl(url, mode: LaunchMode.externalApplication);
+              }
+            },
+            icon: const Icon(Icons.open_in_new),
+            label: Text(AppLocalizations.of(context)!.moreInfo),
+          ),
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: Text(AppLocalizations.of(context)!.close),

@@ -392,6 +392,16 @@
     "description": "Lista de tecnologías utilizadas"
   },
 
+  "moreInfo": "Más información",
+  "@moreInfo": {
+    "description": "Etiqueta del botón Más información"
+  },
+
+  "learnMoreAbout": "Más información sobre MeshCore SAR",
+  "@learnMoreAbout": {
+    "description": "Descripción del enlace Más información"
+  },
+
   "developer": "Desarrollador",
   "@developer": {
     "description": "Encabezado de la sección de desarrollador"

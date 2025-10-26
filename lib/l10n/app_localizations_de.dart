@@ -244,6 +244,12 @@ class AppLocalizationsDe extends AppLocalizations {
       '• Flutter für plattformübergreifende Entwicklung\n• BLE (Bluetooth Low Energy) für Mesh-Netzwerk\n• OpenStreetMap für Kartendarstellung\n• Provider für Zustandsverwaltung\n• SharedPreferences für lokale Speicherung';
 
   @override
+  String get moreInfo => 'Mehr Info';
+
+  @override
+  String get learnMoreAbout => 'Erfahren Sie mehr über MeshCore SAR';
+
+  @override
   String get developer => 'Entwickler';
 
   @override

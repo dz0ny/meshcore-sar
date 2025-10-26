@@ -243,6 +243,12 @@ class AppLocalizationsHr extends AppLocalizations {
       '• Flutter za višeplatformski razvoj\n• BLE (Bluetooth Low Energy) za mesh mrežu\n• OpenStreetMap za kartografiju\n• Provider za upravljanje stanjem\n• SharedPreferences za lokalno pohranu';
 
   @override
+  String get moreInfo => 'Više informacija';
+
+  @override
+  String get learnMoreAbout => 'Saznajte više o MeshCore SAR';
+
+  @override
   String get developer => 'Programer';
 
   @override

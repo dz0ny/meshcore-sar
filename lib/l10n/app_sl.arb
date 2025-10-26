@@ -143,6 +143,10 @@
 
   "technologiesList": "• Flutter za večplatformni razvoj\n• BLE (Bluetooth Low Energy) za mesh omrežje\n• OpenStreetMap za kartografijo\n• Provider za upravljanje stanja\n• SharedPreferences za lokalno shranjevanje",
 
+  "moreInfo": "Več informacij",
+
+  "learnMoreAbout": "Več o MeshCore SAR",
+
   "developer": "Razvijalec",
 
   "packageName": "Ime paketa",

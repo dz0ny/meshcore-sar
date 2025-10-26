@@ -534,6 +534,18 @@ abstract class AppLocalizations {
   /// **'• Flutter for cross-platform development\n• BLE (Bluetooth Low Energy) for mesh networking\n• OpenStreetMap for mapping\n• Provider for state management\n• SharedPreferences for local storage'**
   String get technologiesList;
 
+  /// More info button label
+  ///
+  /// In en, this message translates to:
+  /// **'More Info'**
+  String get moreInfo;
+
+  /// Learn more link description
+  ///
+  /// In en, this message translates to:
+  /// **'Learn more about MeshCore SAR'**
+  String get learnMoreAbout;
+
   /// Developer section header
   ///
   /// In en, this message translates to:

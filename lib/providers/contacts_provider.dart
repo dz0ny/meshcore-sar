@@ -304,10 +304,19 @@ class ContactsProvider with ChangeNotifier {
       debugPrint('  ✅ Parsed new telemetry');
       debugPrint('  New telemetry timestamp: ${telemetry.timestamp}');
 
-      // Update contact with new telemetry
-      final updatedContact = contact.copyWith(telemetry: telemetry);
+      // Update contact with new telemetry AND last seen time
+      // lastAdvert is Unix timestamp in seconds
+      final currentTimestamp =
+          (DateTime.now().millisecondsSinceEpoch / 1000).round();
+      debugPrint('  Old lastAdvert: ${contact.lastAdvert}');
+      debugPrint('  New lastAdvert: $currentTimestamp');
+
+      final updatedContact = contact.copyWith(
+        telemetry: telemetry,
+        lastAdvert: currentTimestamp, // Update last seen time
+      );
       _contacts[contact.publicKeyHex] = updatedContact;
-      debugPrint('  ✅ Updated contact in map');
+      debugPrint('  ✅ Updated contact in map (with new lastAdvert)');
 
       _persistContacts();
       debugPrint('  ✅ Persisted contacts to storage');

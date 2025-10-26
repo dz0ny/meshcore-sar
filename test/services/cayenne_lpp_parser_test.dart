@@ -148,16 +148,16 @@ void main() {
 
       // Verify 3-byte signed encoding
       // Lat: -33.8688 * 10000 = -338688
-      // In 24-bit two's complement: -338688 + 0x1000000 = 16438608 = 0xFAD4E0
+      // In 24-bit two's complement: -338688 + 0x1000000 = 16438528 = 0xFAD500
       final latEncoded =
           (encoded[2] << 16) | (encoded[3] << 8) | encoded[4];
       // Lon: -151.2093 * 10000 = -1512093
-      // In 24-bit two's complement: -1512093 + 0x1000000 = 15265123 = 0xE8E963
+      // In 24-bit two's complement: -1512093 + 0x1000000 = 15265123 = 0xE8ED63
       final lonEncoded =
           (encoded[5] << 16) | (encoded[6] << 8) | encoded[7];
 
-      expect(latEncoded, equals(0xFAD4E0)); // Verify two's complement
-      expect(lonEncoded, equals(0xE8E963));
+      expect(latEncoded, equals(0xFAD500)); // Verify two's complement
+      expect(lonEncoded, equals(0xE8ED63));
 
       // Verify decoding
       final decoded = CayenneLppParser.parse(encoded);

@@ -1206,7 +1206,7 @@ class _MapTabState extends State<MapTab> with AutomaticKeepAliveClientMixin {
                         }
                       },
                       onLongPress: (tapPosition, point) {
-                        // Handle measurement mode - set measurement points
+                        // Handle measurement mode - set measurement points only, no SAR marker
                         if (drawingProvider.drawingMode == DrawingMode.measure) {
                           if (drawingProvider.measurementPoint1 == null) {
                             // Set first measurement point
@@ -1219,16 +1219,15 @@ class _MapTabState extends State<MapTab> with AutomaticKeepAliveClientMixin {
                             drawingProvider.clearMeasurement();
                             drawingProvider.setMeasurementPoint1(point);
                           }
-                          // Continue to also drop SAR marker pin
+                          // Don't drop SAR marker pin in measurement mode
+                          return;
                         }
 
-                        // Skip if in other drawing modes (but not measure mode)
-                        if (drawingProvider.isDrawing && drawingProvider.drawingMode != DrawingMode.measure) return;
+                        // Skip if in other drawing modes
+                        if (drawingProvider.isDrawing) return;
 
-                        // Drop a pin at long press location
-                        // In measurement mode, this allows creating SAR markers at measurement points
-                        // The pin moves to the latest long press location
-                        if (_droppedPinLocation == null || drawingProvider.drawingMode == DrawingMode.measure) {
+                        // Drop a pin at long press location for SAR marker creation
+                        if (_droppedPinLocation == null) {
                           setState(() {
                             _droppedPinLocation = point;
                           });
@@ -1870,9 +1869,44 @@ class _MapTabState extends State<MapTab> with AutomaticKeepAliveClientMixin {
                         return const DrawingToolbar();
                       },
                     ),
+                    // In simple mode: show ruler FAB directly
+                    Consumer<AppProvider>(
+                      builder: (context, appProvider, _) {
+                        if (!appProvider.isSimpleMode) {
+                          return const SizedBox.shrink();
+                        }
+                        // Show ruler button
+                        return Column(
+                          children: [
+                            FloatingActionButton.small(
+                              heroTag: 'ruler_tool',
+                              backgroundColor: drawingProvider.drawingMode == DrawingMode.measure
+                                  ? Theme.of(context).colorScheme.primary
+                                  : null,
+                              onPressed: () {
+                                if (drawingProvider.drawingMode == DrawingMode.measure) {
+                                  // Exit measurement mode
+                                  drawingProvider.exitDrawingMode();
+                                } else {
+                                  // Enter measurement mode
+                                  drawingProvider.setDrawingMode(DrawingMode.measure);
+                                }
+                              },
+                              child: Icon(
+                                Icons.straighten,
+                                color: drawingProvider.drawingMode == DrawingMode.measure
+                                    ? Colors.white
+                                    : null,
+                              ),
+                            ),
+                            if (!drawingProvider.isDrawing)
+                              const SizedBox(height: 8),
+                          ],
+                        );
+                      },
+                    ),
                     // Hide other buttons when in drawing mode
                     if (!drawingProvider.isDrawing) ...[
-                      const SizedBox(height: 8),
                       FloatingActionButton.small(
                       heroTag: 'center_map',
                       onPressed: !_isMapReady ? null : () async {
@@ -1883,6 +1917,9 @@ class _MapTabState extends State<MapTab> with AutomaticKeepAliveClientMixin {
                           return;
                         }
 
+                        // Get current zoom to retain it
+                        final currentZoom = _mapController.camera.zoom;
+
                         // Force update GPS location and jump to it
                         final position = await _locationService.getCurrentPosition();
                         if (position != null && mounted) {
@@ -1891,7 +1928,7 @@ class _MapTabState extends State<MapTab> with AutomaticKeepAliveClientMixin {
                           });
                           _mapController.move(
                             LatLng(position.latitude, position.longitude),
-                            16,
+                            currentZoom,
                           );
                         } else {
                           // Fallback to cached position or default center
@@ -1902,10 +1939,10 @@ class _MapTabState extends State<MapTab> with AutomaticKeepAliveClientMixin {
                                 currentPosition.latitude,
                                 currentPosition.longitude,
                               ),
-                              16,
+                              currentZoom,
                             );
                           } else {
-                            _mapController.move(center, _defaultZoom);
+                            _mapController.move(center, currentZoom);
                           }
                         }
                       },

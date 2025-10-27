@@ -986,6 +986,12 @@ class AppLocalizationsHr extends AppLocalizations {
   String get mapFollowsDirection => 'Karta slijedi vaš smjer pri kretanju';
 
   @override
+  String get resetMapRotation => 'Resetiraj rotaciju';
+
+  @override
+  String get resetMapRotationTooltip => 'Vrati kartu na sjever';
+
+  @override
   String get showMapDebugInfo => 'Prikaži debug informacije karte';
 
   @override

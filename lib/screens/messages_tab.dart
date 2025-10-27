@@ -8,6 +8,7 @@ import '../providers/contacts_provider.dart';
 import '../providers/map_provider.dart';
 import '../providers/connection_provider.dart';
 import '../providers/drawing_provider.dart';
+import '../providers/app_provider.dart';
 import '../models/message.dart';
 import '../models/contact.dart';
 import '../models/sar_marker.dart';
@@ -564,20 +565,25 @@ class _MessagesTabState extends State<MessagesTab> {
     // Get all recent messages
     final allMessages = messagesProvider.getRecentMessages(count: 100);
 
+    // Get simple mode setting from AppProvider
+    final appProvider = context.read<AppProvider>();
+    final isSimpleMode = appProvider.isSimpleMode;
+
+    List<Message> filteredMessages;
+
     // If public channel is selected, show ALL messages
     if (_destinationType ==
             MessageDestinationPreferences.destinationTypeChannel &&
         _selectedRecipient == null) {
-      return allMessages;
+      filteredMessages = allMessages;
     }
-
     // If a contact or room is selected, filter by recipient
-    if ((_destinationType ==
+    else if ((_destinationType ==
                 MessageDestinationPreferences.destinationTypeContact ||
             _destinationType ==
                 MessageDestinationPreferences.destinationTypeRoom) &&
         _selectedRecipient != null) {
-      return allMessages.where((message) {
+      filteredMessages = allMessages.where((message) {
         // Include messages sent TO this recipient
         if (message.recipientPublicKey != null &&
             message.recipientPublicKey!.length >= 6 &&
@@ -603,10 +609,19 @@ class _MessagesTabState extends State<MessagesTab> {
 
         return false;
       }).toList();
+    } else {
+      // Default: show all messages (fallback case)
+      filteredMessages = allMessages;
     }
 
-    // Default: show all messages (fallback case)
-    return allMessages;
+    // In simple mode, filter out system messages (toast logs)
+    if (isSimpleMode) {
+      filteredMessages = filteredMessages
+          .where((message) => !message.isSystemMessage)
+          .toList();
+    }
+
+    return filteredMessages;
   }
 
   @override

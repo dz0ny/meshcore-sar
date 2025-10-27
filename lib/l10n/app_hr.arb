@@ -567,6 +567,10 @@
 
   "mapFollowsDirection": "Karta slijedi vaš smjer pri kretanju",
 
+  "resetMapRotation": "Resetiraj rotaciju",
+
+  "resetMapRotationTooltip": "Vrati kartu na sjever",
+
   "showMapDebugInfo": "Prikaži debug informacije karte",
 
   "displayZoomLevelBounds": "Prikaži razinu zumiranja i granice",

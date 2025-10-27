@@ -993,6 +993,12 @@ class AppLocalizationsIt extends AppLocalizations {
       'La mappa segue la tua direzione quando ti muovi';
 
   @override
+  String get resetMapRotation => 'Ripristina Rotazione';
+
+  @override
+  String get resetMapRotationTooltip => 'Ripristina mappa verso nord';
+
+  @override
   String get showMapDebugInfo => 'Mostra Info Debug Mappa';
 
   @override

@@ -567,6 +567,10 @@
 
   "mapFollowsDirection": "Zemljevid sledi vaši smeri pri gibanju",
 
+  "resetMapRotation": "Ponastavi rotacijo",
+
+  "resetMapRotationTooltip": "Ponastavi zemljevid na sever",
+
   "showMapDebugInfo": "Prikaži debug informacije zemljevida",
 
   "displayZoomLevelBounds": "Prikaži nivo povečave in meje",

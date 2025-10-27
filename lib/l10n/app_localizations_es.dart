@@ -994,6 +994,12 @@ class AppLocalizationsEs extends AppLocalizations {
       'El mapa sigue tu dirección cuando te mueves';
 
   @override
+  String get resetMapRotation => 'Restablecer rotación';
+
+  @override
+  String get resetMapRotationTooltip => 'Restablecer mapa al norte';
+
+  @override
   String get showMapDebugInfo => 'Mostrar información de depuración del mapa';
 
   @override

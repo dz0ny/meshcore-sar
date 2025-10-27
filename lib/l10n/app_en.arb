@@ -1683,6 +1683,16 @@
     "description": "Description for rotate map toggle"
   },
 
+  "resetMapRotation": "Reset Rotation",
+  "@resetMapRotation": {
+    "description": "Button to reset map rotation to north"
+  },
+
+  "resetMapRotationTooltip": "Reset map to north",
+  "@resetMapRotationTooltip": {
+    "description": "Tooltip for reset rotation button"
+  },
+
   "showMapDebugInfo": "Show Map Debug Info",
   "@showMapDebugInfo": {
     "description": "Toggle for showing map debug information"

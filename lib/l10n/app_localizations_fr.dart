@@ -996,6 +996,12 @@ class AppLocalizationsFr extends AppLocalizations {
       'La carte suit votre direction lorsque vous vous déplacez';
 
   @override
+  String get resetMapRotation => 'Réinitialiser la rotation';
+
+  @override
+  String get resetMapRotationTooltip => 'Réinitialiser la carte vers le nord';
+
+  @override
   String get showMapDebugInfo => 'Afficher les infos de débogage de la carte';
 
   @override

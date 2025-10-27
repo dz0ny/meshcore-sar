@@ -988,6 +988,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get mapFollowsDirection => 'Map follows your direction when moving';
 
   @override
+  String get resetMapRotation => 'Reset Rotation';
+
+  @override
+  String get resetMapRotationTooltip => 'Reset map to north';
+
+  @override
   String get showMapDebugInfo => 'Show Map Debug Info';
 
   @override

@@ -986,6 +986,12 @@ class AppLocalizationsSl extends AppLocalizations {
   String get mapFollowsDirection => 'Zemljevid sledi vaši smeri pri gibanju';
 
   @override
+  String get resetMapRotation => 'Ponastavi rotacijo';
+
+  @override
+  String get resetMapRotationTooltip => 'Ponastavi zemljevid na sever';
+
+  @override
   String get showMapDebugInfo => 'Prikaži debug informacije zemljevida';
 
   @override

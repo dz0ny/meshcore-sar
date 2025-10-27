@@ -1683,6 +1683,16 @@
     "description": "Descripción del alternar de rotar mapa"
   },
 
+  "resetMapRotation": "Restablecer rotación",
+  "@resetMapRotation": {
+    "description": "Botón para restablecer la rotación del mapa al norte"
+  },
+
+  "resetMapRotationTooltip": "Restablecer mapa al norte",
+  "@resetMapRotationTooltip": {
+    "description": "Tooltip para botón de restablecer rotación"
+  },
+
   "showMapDebugInfo": "Mostrar información de depuración del mapa",
   "@showMapDebugInfo": {
     "description": "Alternar para mostrar información de depuración del mapa"

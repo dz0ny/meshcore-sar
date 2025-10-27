@@ -1683,6 +1683,16 @@
     "description": "Beschreibung für Karte-drehen-Umschalter"
   },
 
+  "resetMapRotation": "Drehung zurücksetzen",
+  "@resetMapRotation": {
+    "description": "Schaltfläche zum Zurücksetzen der Kartendrehung nach Norden"
+  },
+
+  "resetMapRotationTooltip": "Karte nach Norden zurücksetzen",
+  "@resetMapRotationTooltip": {
+    "description": "Tooltip für Drehung-zurücksetzen-Schaltfläche"
+  },
+
   "showMapDebugInfo": "Karten-Debug-Info anzeigen",
   "@showMapDebugInfo": {
     "description": "Umschalter zum Anzeigen von Karten-Debug-Informationen"

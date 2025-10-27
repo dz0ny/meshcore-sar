@@ -752,6 +752,14 @@ MapOptions(
 
 #### Troubleshooting
 
+**RangeError: Invalid value: Not in inclusive range 0..15: 16**:
+- **Cause**: Map zoom level exceeds the number of resolutions defined in Slovenian CRS
+- **Fix**: Zoom level is automatically clamped when switching to WMS layers
+- **Implementation**:
+  - Layer switching clamps zoom to `layer.maxZoom` if current zoom exceeds it
+  - Layer loading from settings clamps `_savedMapZoom` to layer's maximum
+  - Prevents crash when switching from high-zoom layer (19+) to WMS layer (15 max)
+
 **400 Bad Request Errors**:
 - **Cause**: Tile grid misalignment (wrong origin, bounds, or resolutions)
 - **Fix**: Verify values match WMTS GetCapabilities exactly

@@ -1810,6 +1810,18 @@ abstract class AppLocalizations {
   /// **'Map follows your direction when moving'**
   String get mapFollowsDirection;
 
+  /// Button to reset map rotation to north
+  ///
+  /// In en, this message translates to:
+  /// **'Reset Rotation'**
+  String get resetMapRotation;
+
+  /// Tooltip for reset rotation button
+  ///
+  /// In en, this message translates to:
+  /// **'Reset map to north'**
+  String get resetMapRotationTooltip;
+
   /// Toggle for showing map debug information
   ///
   /// In en, this message translates to:

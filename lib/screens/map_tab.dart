@@ -291,6 +291,9 @@ class _MapTabState extends State<MapTab> with AutomaticKeepAliveClientMixin {
               orElse: () => MapLayer.openStreetMap,
             );
             _currentLayer = mbtilesLayer;
+          } else if (layerType == MapLayerType.wmsBase) {
+            // Use Slovenian aerial layer if that's what was saved
+            _currentLayer = _slovenianAerialLayer;
           } else {
             // Use default layer
             _currentLayer = MapLayer.allLayers.firstWhere(
@@ -298,6 +301,12 @@ class _MapTabState extends State<MapTab> with AutomaticKeepAliveClientMixin {
               orElse: () => MapLayer.openStreetMap,
             );
           }
+        }
+
+        // Clamp saved zoom if it exceeds the current layer's maximum
+        // For WMS layers, use a middle zoom (11) instead of max zoom to avoid extreme close-up
+        if (_savedMapZoom != null && _savedMapZoom! > _currentLayer.maxZoom) {
+          _savedMapZoom = _currentLayer.isWms ? 11.0 : _currentLayer.maxZoom;
         }
       });
     }
@@ -436,6 +445,18 @@ class _MapTabState extends State<MapTab> with AutomaticKeepAliveClientMixin {
     }
   }
 
+  // Reset map rotation to north (0 degrees)
+  void _resetMapRotation() {
+    if (!_isMapReady) return;
+    try {
+      final camera = _mapController.camera;
+      _mapController.moveAndRotate(camera.center, camera.zoom, 0);
+    } catch (e) {
+      // Silently fail if map controller not ready
+      debugPrint('Failed to reset map rotation: $e');
+    }
+  }
+
   LatLng _calculateCenter(List<Contact> contacts, List<SarMarker> sarMarkers) {
     return _markerService.calculateCenter(
       contacts: contacts,
@@ -540,6 +561,13 @@ class _MapTabState extends State<MapTab> with AutomaticKeepAliveClientMixin {
                         onTap: () async {
                           setState(() {
                             _currentLayer = layer;
+                            // Clamp zoom level if current zoom exceeds new layer's max
+                            if (_isMapReady && _mapController.camera.zoom > layer.maxZoom) {
+                              _mapController.move(
+                                _mapController.camera.center,
+                                layer.maxZoom,
+                              );
+                            }
                           });
                           _saveSettings();
                           Navigator.pop(context);
@@ -557,6 +585,14 @@ class _MapTabState extends State<MapTab> with AutomaticKeepAliveClientMixin {
                       onTap: () async {
                         setState(() {
                           _currentLayer = _slovenianAerialLayer;
+                          // Clamp zoom level if current zoom exceeds new layer's max
+                          // For WMS layers, use a middle zoom (11) instead of max zoom to avoid extreme close-up
+                          if (_isMapReady && _mapController.camera.zoom > _slovenianAerialLayer.maxZoom) {
+                            _mapController.move(
+                              _mapController.camera.center,
+                              11.0, // Middle zoom for WMS
+                            );
+                          }
                         });
                         _saveSettings();
                         Navigator.pop(context);
@@ -592,6 +628,13 @@ class _MapTabState extends State<MapTab> with AutomaticKeepAliveClientMixin {
 
                             setState(() {
                               _currentLayer = layer;
+                              // Clamp zoom level if current zoom exceeds new layer's max
+                              if (_isMapReady && _mapController.camera.zoom > layer.maxZoom) {
+                                _mapController.move(
+                                  _mapController.camera.center,
+                                  layer.maxZoom,
+                                );
+                              }
                             });
                             _saveSettings();
 
@@ -601,9 +644,10 @@ class _MapTabState extends State<MapTab> with AutomaticKeepAliveClientMixin {
                           },
                         )),
                   ],
-                  // WMS Overlays section (only for Slovenian/Croatian regions)
-                  if (AppLocalizations.of(context)!.localeName == 'sl' ||
-                      AppLocalizations.of(context)!.localeName == 'hr') ...[
+                  // WMS Overlays section (only for Slovenian/Croatian regions and when WMS base layer is selected)
+                  if ((AppLocalizations.of(context)!.localeName == 'sl' ||
+                      AppLocalizations.of(context)!.localeName == 'hr') &&
+                      _currentLayer.isWms) ...[
                     const Divider(),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -1155,6 +1199,10 @@ class _MapTabState extends State<MapTab> with AutomaticKeepAliveClientMixin {
                         // Save map position when user stops panning/zooming
                         if (event is MapEventMoveEnd || event is MapEventScrollWheelZoom) {
                           _saveMapPosition();
+                        }
+                        // Trigger rebuild on rotation change to show/hide reset button
+                        if (event is MapEventRotateEnd || event is MapEventRotateStart) {
+                          setState(() {});
                         }
                       },
                       onLongPress: (tapPosition, point) {
@@ -1828,6 +1876,13 @@ class _MapTabState extends State<MapTab> with AutomaticKeepAliveClientMixin {
                       FloatingActionButton.small(
                       heroTag: 'center_map',
                       onPressed: !_isMapReady ? null : () async {
+                        // First tap: reset rotation if not 0
+                        // Second tap (or if rotation is 0): jump to current location
+                        if (_getMapRotation() != 0) {
+                          _resetMapRotation();
+                          return;
+                        }
+
                         // Force update GPS location and jump to it
                         final position = await _locationService.getCurrentPosition();
                         if (position != null && mounted) {

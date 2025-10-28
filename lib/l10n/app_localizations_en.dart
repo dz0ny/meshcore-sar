@@ -2021,4 +2021,113 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get createChannel => 'Create Channel';
+
+  @override
+  String get wizardBack => 'Back';
+
+  @override
+  String get wizardSkip => 'Skip';
+
+  @override
+  String get wizardNext => 'Next';
+
+  @override
+  String get wizardGetStarted => 'Get Started';
+
+  @override
+  String get wizardWelcomeTitle => 'Welcome to MeshCore SAR';
+
+  @override
+  String get wizardWelcomeDescription =>
+      'A powerful off-grid communication tool for search and rescue operations. Connect with your team using mesh radio technology when traditional networks are unavailable.';
+
+  @override
+  String get wizardConnectingTitle => 'Connecting to Your Radio';
+
+  @override
+  String get wizardConnectingDescription =>
+      'Connect your smartphone to a MeshCore radio device via Bluetooth to start communicating off-grid.';
+
+  @override
+  String get wizardConnectingFeature1 => 'Scan for nearby MeshCore devices';
+
+  @override
+  String get wizardConnectingFeature2 => 'Pair with your radio via Bluetooth';
+
+  @override
+  String get wizardConnectingFeature3 =>
+      'Works completely offline - no internet required';
+
+  @override
+  String get wizardSimpleModeTitle => 'Simple Mode';
+
+  @override
+  String get wizardSimpleModeDescription =>
+      'New to mesh networking? Enable Simple Mode for a streamlined interface with essential features only.';
+
+  @override
+  String get wizardSimpleModeFeature1 =>
+      'Beginner-friendly interface with core functions';
+
+  @override
+  String get wizardSimpleModeFeature2 =>
+      'Switch to Advanced Mode anytime in Settings';
+
+  @override
+  String get wizardChannelTitle => 'Channels';
+
+  @override
+  String get wizardChannelDescription =>
+      'Broadcast messages to everyone on a channel, perfect for team-wide announcements and coordination.';
+
+  @override
+  String get wizardChannelFeature1 =>
+      'Public Channel for general team communication';
+
+  @override
+  String get wizardChannelFeature2 =>
+      'Create custom channels for specific groups';
+
+  @override
+  String get wizardChannelFeature3 =>
+      'Messages are automatically relayed by the mesh';
+
+  @override
+  String get wizardContactsTitle => 'Contacts';
+
+  @override
+  String get wizardContactsDescription =>
+      'Your team members appear automatically as they join the mesh network. Send them direct messages or view their location.';
+
+  @override
+  String get wizardContactsFeature1 => 'Contacts discovered automatically';
+
+  @override
+  String get wizardContactsFeature2 => 'Send private direct messages';
+
+  @override
+  String get wizardContactsFeature3 => 'View battery level and last seen time';
+
+  @override
+  String get wizardMapTitle => 'Map & Location';
+
+  @override
+  String get wizardMapDescription =>
+      'Track your team in real-time and mark important locations for search and rescue operations.';
+
+  @override
+  String get wizardMapFeature1 =>
+      'SAR markers for found persons, fires, and staging areas';
+
+  @override
+  String get wizardMapFeature2 => 'Real-time GPS tracking of team members';
+
+  @override
+  String get wizardMapFeature3 => 'Download offline maps for remote areas';
+
+  @override
+  String get wizardMapFeature4 => 'Draw shapes and share tactical information';
+
+  @override
+  String get viewWelcomeTutorial => 'View Welcome Tutorial';
 }

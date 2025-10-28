@@ -2047,4 +2047,118 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get createChannel => 'Crear Canal';
+
+  @override
+  String get wizardBack => 'Atrás';
+
+  @override
+  String get wizardSkip => 'Omitir';
+
+  @override
+  String get wizardNext => 'Siguiente';
+
+  @override
+  String get wizardGetStarted => 'Comenzar';
+
+  @override
+  String get wizardWelcomeTitle => 'Bienvenido a MeshCore SAR';
+
+  @override
+  String get wizardWelcomeDescription =>
+      'Una poderosa herramienta de comunicación sin conexión para operaciones de búsqueda y rescate. Conéctese con su equipo usando tecnología de radio en malla cuando las redes tradicionales no estén disponibles.';
+
+  @override
+  String get wizardConnectingTitle => 'Conectando a su Radio';
+
+  @override
+  String get wizardConnectingDescription =>
+      'Conecte su smartphone a un dispositivo de radio MeshCore vía Bluetooth para comenzar a comunicarse sin conexión.';
+
+  @override
+  String get wizardConnectingFeature1 =>
+      'Buscar dispositivos MeshCore cercanos';
+
+  @override
+  String get wizardConnectingFeature2 => 'Emparejar con su radio vía Bluetooth';
+
+  @override
+  String get wizardConnectingFeature3 =>
+      'Funciona completamente sin conexión - no se requiere internet';
+
+  @override
+  String get wizardSimpleModeTitle => 'Modo Simple';
+
+  @override
+  String get wizardSimpleModeDescription =>
+      '¿Nuevo en redes en malla? Habilite el modo simple para una interfaz optimizada con solo funciones esenciales.';
+
+  @override
+  String get wizardSimpleModeFeature1 =>
+      'Interfaz amigable para principiantes con funciones principales';
+
+  @override
+  String get wizardSimpleModeFeature2 =>
+      'Cambie al modo avanzado en cualquier momento en Configuración';
+
+  @override
+  String get wizardChannelTitle => 'Canales';
+
+  @override
+  String get wizardChannelDescription =>
+      'Transmita mensajes a todos en un canal, perfecto para anuncios y coordinación de todo el equipo.';
+
+  @override
+  String get wizardChannelFeature1 =>
+      'Canal público para comunicación general del equipo';
+
+  @override
+  String get wizardChannelFeature2 =>
+      'Cree canales personalizados para grupos específicos';
+
+  @override
+  String get wizardChannelFeature3 =>
+      'Los mensajes se retransmiten automáticamente por la malla';
+
+  @override
+  String get wizardContactsTitle => 'Contactos';
+
+  @override
+  String get wizardContactsDescription =>
+      'Los miembros de su equipo aparecen automáticamente cuando se unen a la red en malla. Envíeles mensajes directos o vea su ubicación.';
+
+  @override
+  String get wizardContactsFeature1 => 'Contactos descubiertos automáticamente';
+
+  @override
+  String get wizardContactsFeature2 => 'Enviar mensajes directos privados';
+
+  @override
+  String get wizardContactsFeature3 =>
+      'Ver nivel de batería y hora de última vista';
+
+  @override
+  String get wizardMapTitle => 'Mapa & Ubicación';
+
+  @override
+  String get wizardMapDescription =>
+      'Rastree a su equipo en tiempo real y marque ubicaciones importantes para operaciones de búsqueda y rescate.';
+
+  @override
+  String get wizardMapFeature1 =>
+      'Marcadores SAR para personas encontradas, incendios y áreas de preparación';
+
+  @override
+  String get wizardMapFeature2 =>
+      'Rastreo GPS en tiempo real de miembros del equipo';
+
+  @override
+  String get wizardMapFeature3 =>
+      'Descargar mapas sin conexión para áreas remotas';
+
+  @override
+  String get wizardMapFeature4 =>
+      'Dibujar formas y compartir información táctica';
+
+  @override
+  String get viewWelcomeTutorial => 'Ver tutorial de bienvenida';
 }

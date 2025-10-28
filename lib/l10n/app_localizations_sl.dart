@@ -2029,4 +2029,118 @@ class AppLocalizationsSl extends AppLocalizations {
 
   @override
   String get createChannel => 'Ustvari kanal';
+
+  @override
+  String get wizardBack => 'Nazaj';
+
+  @override
+  String get wizardSkip => 'Preskoči';
+
+  @override
+  String get wizardNext => 'Naprej';
+
+  @override
+  String get wizardGetStarted => 'Začni';
+
+  @override
+  String get wizardWelcomeTitle => 'Dobrodošli v MeshCore SAR';
+
+  @override
+  String get wizardWelcomeDescription =>
+      'Močno orodje za komunikacijo brez omrežja za reševalne operacije. Povežite se s svojo ekipo z uporabo mrežne radijske tehnologije, ko tradicionalna omrežja niso na voljo.';
+
+  @override
+  String get wizardConnectingTitle => 'Povezava z Radijem';
+
+  @override
+  String get wizardConnectingDescription =>
+      'Povežite svoj pametni telefon z napravo MeshCore radio preko Bluetootha za začetek komunikacije brez omrežja.';
+
+  @override
+  String get wizardConnectingFeature1 => 'Iskanje bližnjih naprav MeshCore';
+
+  @override
+  String get wizardConnectingFeature2 =>
+      'Združite s svojim radijem preko Bluetootha';
+
+  @override
+  String get wizardConnectingFeature3 =>
+      'Deluje popolnoma brez povezave - internet ni potreben';
+
+  @override
+  String get wizardSimpleModeTitle => 'Preprost Način';
+
+  @override
+  String get wizardSimpleModeDescription =>
+      'Novi v mrežnem omrežju? Omogočite preprost način za poenostavljen vmesnik z le bistvenimi funkcijami.';
+
+  @override
+  String get wizardSimpleModeFeature1 =>
+      'Vmesnik prijazen za začetnike z osnovnimi funkcijami';
+
+  @override
+  String get wizardSimpleModeFeature2 =>
+      'Kadarkoli preklopite na napredni način v nastavitvah';
+
+  @override
+  String get wizardChannelTitle => 'Kanali';
+
+  @override
+  String get wizardChannelDescription =>
+      'Oddajajte sporočila vsem na kanalu, popolno za objave in usklajevanje cele ekipe.';
+
+  @override
+  String get wizardChannelFeature1 =>
+      'Javni kanal za splošno komunikacijo ekipe';
+
+  @override
+  String get wizardChannelFeature2 =>
+      'Ustvarite kanale po meri za določene skupine';
+
+  @override
+  String get wizardChannelFeature3 =>
+      'Sporočila so samodejno posredovana preko mreže';
+
+  @override
+  String get wizardContactsTitle => 'Stiki';
+
+  @override
+  String get wizardContactsDescription =>
+      'Vaši člani ekipe se samodejno prikažejo, ko se pridružijo mrežnemu omrežju. Pošljite jim neposredna sporočila ali si oglejte njihovo lokacijo.';
+
+  @override
+  String get wizardContactsFeature1 => 'Stiki se odkrijejo samodejno';
+
+  @override
+  String get wizardContactsFeature2 =>
+      'Pošiljajte zasebna neposredna sporočila';
+
+  @override
+  String get wizardContactsFeature3 =>
+      'Oglejte si raven baterije in čas zadnjega ogleda';
+
+  @override
+  String get wizardMapTitle => 'Zemljevid & Lokacija';
+
+  @override
+  String get wizardMapDescription =>
+      'Sledite svoji ekipi v realnem času in označite pomembne lokacije za reševalne operacije.';
+
+  @override
+  String get wizardMapFeature1 =>
+      'SAR označevalci za najdene osebe, požare in območja postavitve';
+
+  @override
+  String get wizardMapFeature2 => 'Sledenje GPS članov ekipe v realnem času';
+
+  @override
+  String get wizardMapFeature3 =>
+      'Prenesite zemljevide brez povezave za oddaljene kraje';
+
+  @override
+  String get wizardMapFeature4 =>
+      'Narišite oblike in delite taktične informacije';
+
+  @override
+  String get viewWelcomeTutorial => 'Ogled vadnice dobrodošlice';
 }

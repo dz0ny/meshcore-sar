@@ -15,8 +15,10 @@ import 'services/tile_cache_service.dart';
 import 'services/notification_service.dart';
 import 'services/locale_preferences.dart';
 import 'services/update_checker_service.dart';
+import 'services/wizard_preferences.dart';
 import 'widgets/update_dialog.dart';
 import 'screens/home_screen.dart';
+import 'screens/welcome_wizard_screen.dart';
 import 'theme/app_theme.dart';
 import 'l10n/app_localizations.dart';
 
@@ -36,6 +38,7 @@ class _MeshCoreSarAppState extends State<MeshCoreSarApp> {
   Locale? _locale;
   bool _isInitialized = false;
   bool _shouldShowPermissionDialog = false;
+  bool _wizardCompleted = true; // Will be updated in _initializeApp()
 
   @override
   void initState() {
@@ -46,6 +49,10 @@ class _MeshCoreSarAppState extends State<MeshCoreSarApp> {
   Future<void> _initializeApp() async {
     await _loadThemePreference();
     await _loadLocalePreference();
+
+    // Check if welcome wizard has been completed
+    final wizardCompleted = await WizardPreferences.isWizardCompleted();
+
     // Initialize notification service
     await NotificationService().initialize();
 
@@ -57,6 +64,7 @@ class _MeshCoreSarAppState extends State<MeshCoreSarApp> {
     _checkForUpdates();
 
     setState(() {
+      _wizardCompleted = wizardCompleted;
       _isInitialized = true;
     });
   }
@@ -99,6 +107,12 @@ class _MeshCoreSarAppState extends State<MeshCoreSarApp> {
   void _handleLocaleChanged(Locale? locale) {
     setState(() {
       _locale = locale;
+    });
+  }
+
+  void _handleWizardCompleted() {
+    setState(() {
+      _wizardCompleted = true;
     });
   }
 
@@ -224,13 +238,17 @@ class _MeshCoreSarAppState extends State<MeshCoreSarApp> {
             GlobalCupertinoLocalizations.delegate,
           ],
           supportedLocales: LocalePreferences.supportedLocales,
-          home: HomeScreen(
-            onThemeChanged: _handleThemeChanged,
-            onLocaleChanged: _handleLocaleChanged,
-            currentTheme: _themeMode,
-            currentLocale: _locale,
-            shouldShowPermissionDialog: _shouldShowPermissionDialog,
-          ),
+          home: _wizardCompleted
+              ? HomeScreen(
+                  onThemeChanged: _handleThemeChanged,
+                  onLocaleChanged: _handleLocaleChanged,
+                  currentTheme: _themeMode,
+                  currentLocale: _locale,
+                  shouldShowPermissionDialog: _shouldShowPermissionDialog,
+                )
+              : WelcomeWizardScreen(
+                  onCompleted: _handleWizardCompleted,
+                ),
         );
       },
     );

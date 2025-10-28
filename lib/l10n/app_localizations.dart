@@ -3650,6 +3650,198 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Create Channel'**
   String get createChannel;
+
+  /// Wizard back button text
+  ///
+  /// In en, this message translates to:
+  /// **'Back'**
+  String get wizardBack;
+
+  /// Wizard skip button text
+  ///
+  /// In en, this message translates to:
+  /// **'Skip'**
+  String get wizardSkip;
+
+  /// Wizard next button text
+  ///
+  /// In en, this message translates to:
+  /// **'Next'**
+  String get wizardNext;
+
+  /// Wizard final button text to complete onboarding
+  ///
+  /// In en, this message translates to:
+  /// **'Get Started'**
+  String get wizardGetStarted;
+
+  /// Welcome wizard first page title
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome to MeshCore SAR'**
+  String get wizardWelcomeTitle;
+
+  /// Welcome wizard first page description
+  ///
+  /// In en, this message translates to:
+  /// **'A powerful off-grid communication tool for search and rescue operations. Connect with your team using mesh radio technology when traditional networks are unavailable.'**
+  String get wizardWelcomeDescription;
+
+  /// Wizard connecting page title
+  ///
+  /// In en, this message translates to:
+  /// **'Connecting to Your Radio'**
+  String get wizardConnectingTitle;
+
+  /// Wizard connecting page description
+  ///
+  /// In en, this message translates to:
+  /// **'Connect your smartphone to a MeshCore radio device via Bluetooth to start communicating off-grid.'**
+  String get wizardConnectingDescription;
+
+  /// Wizard connecting feature 1
+  ///
+  /// In en, this message translates to:
+  /// **'Scan for nearby MeshCore devices'**
+  String get wizardConnectingFeature1;
+
+  /// Wizard connecting feature 2
+  ///
+  /// In en, this message translates to:
+  /// **'Pair with your radio via Bluetooth'**
+  String get wizardConnectingFeature2;
+
+  /// Wizard connecting feature 3
+  ///
+  /// In en, this message translates to:
+  /// **'Works completely offline - no internet required'**
+  String get wizardConnectingFeature3;
+
+  /// Wizard simple mode page title
+  ///
+  /// In en, this message translates to:
+  /// **'Simple Mode'**
+  String get wizardSimpleModeTitle;
+
+  /// Wizard simple mode page description
+  ///
+  /// In en, this message translates to:
+  /// **'New to mesh networking? Enable Simple Mode for a streamlined interface with essential features only.'**
+  String get wizardSimpleModeDescription;
+
+  /// Wizard simple mode feature 1
+  ///
+  /// In en, this message translates to:
+  /// **'Beginner-friendly interface with core functions'**
+  String get wizardSimpleModeFeature1;
+
+  /// Wizard simple mode feature 2
+  ///
+  /// In en, this message translates to:
+  /// **'Switch to Advanced Mode anytime in Settings'**
+  String get wizardSimpleModeFeature2;
+
+  /// Wizard channel page title
+  ///
+  /// In en, this message translates to:
+  /// **'Channels'**
+  String get wizardChannelTitle;
+
+  /// Wizard channel page description
+  ///
+  /// In en, this message translates to:
+  /// **'Broadcast messages to everyone on a channel, perfect for team-wide announcements and coordination.'**
+  String get wizardChannelDescription;
+
+  /// Wizard channel feature 1
+  ///
+  /// In en, this message translates to:
+  /// **'Public Channel for general team communication'**
+  String get wizardChannelFeature1;
+
+  /// Wizard channel feature 2
+  ///
+  /// In en, this message translates to:
+  /// **'Create custom channels for specific groups'**
+  String get wizardChannelFeature2;
+
+  /// Wizard channel feature 3
+  ///
+  /// In en, this message translates to:
+  /// **'Messages are automatically relayed by the mesh'**
+  String get wizardChannelFeature3;
+
+  /// Wizard contacts page title
+  ///
+  /// In en, this message translates to:
+  /// **'Contacts'**
+  String get wizardContactsTitle;
+
+  /// Wizard contacts page description
+  ///
+  /// In en, this message translates to:
+  /// **'Your team members appear automatically as they join the mesh network. Send them direct messages or view their location.'**
+  String get wizardContactsDescription;
+
+  /// Wizard contacts feature 1
+  ///
+  /// In en, this message translates to:
+  /// **'Contacts discovered automatically'**
+  String get wizardContactsFeature1;
+
+  /// Wizard contacts feature 2
+  ///
+  /// In en, this message translates to:
+  /// **'Send private direct messages'**
+  String get wizardContactsFeature2;
+
+  /// Wizard contacts feature 3
+  ///
+  /// In en, this message translates to:
+  /// **'View battery level and last seen time'**
+  String get wizardContactsFeature3;
+
+  /// Wizard map page title
+  ///
+  /// In en, this message translates to:
+  /// **'Map & Location'**
+  String get wizardMapTitle;
+
+  /// Wizard map page description
+  ///
+  /// In en, this message translates to:
+  /// **'Track your team in real-time and mark important locations for search and rescue operations.'**
+  String get wizardMapDescription;
+
+  /// Wizard map feature 1
+  ///
+  /// In en, this message translates to:
+  /// **'SAR markers for found persons, fires, and staging areas'**
+  String get wizardMapFeature1;
+
+  /// Wizard map feature 2
+  ///
+  /// In en, this message translates to:
+  /// **'Real-time GPS tracking of team members'**
+  String get wizardMapFeature2;
+
+  /// Wizard map feature 3
+  ///
+  /// In en, this message translates to:
+  /// **'Download offline maps for remote areas'**
+  String get wizardMapFeature3;
+
+  /// Wizard map feature 4
+  ///
+  /// In en, this message translates to:
+  /// **'Draw shapes and share tactical information'**
+  String get wizardMapFeature4;
+
+  /// Settings option to re-show welcome wizard
+  ///
+  /// In en, this message translates to:
+  /// **'View Welcome Tutorial'**
+  String get viewWelcomeTutorial;
 }
 
 class _AppLocalizationsDelegate

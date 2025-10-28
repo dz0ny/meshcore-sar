@@ -583,8 +583,15 @@ jobs:
         id: commits
         run: |
           # Get last 10 commit messages with hash and date
-          git log -10 --pretty=format:'{"hash":"%h","date":"%ci","message":"%s","author":"%an"}' | \
-            jq -s '.' > commits.json
+          # Use jq to properly escape all strings
+          git log -10 --pretty=format:'%h|%ci|%s|%an' | while IFS='|' read -r hash date message author; do
+            jq -n \
+              --arg hash "$hash" \
+              --arg date "$date" \
+              --arg message "$message" \
+              --arg author "$author" \
+              '{hash: $hash, date: $date, message: $message, author: $author}'
+          done | jq -s '.' > commits.json
 
           # Also create a simple text version for easier parsing
           git log -10 --pretty=format:'%h|%ci|%s|%an' > commits.txt
@@ -1099,6 +1106,13 @@ jobs:
               // Embedded commits data (no fetch needed)
               const commitsData = ${COMMITS_DATA};
 
+              // HTML escape function to prevent XSS
+              function escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+              }
+
               // Display commits
               (function() {
                 const list = document.getElementById('commits-list');
@@ -1120,11 +1134,11 @@ jobs:
                   return \`
                     <div class="commit-item">
                       <div class="commit-header">
-                        <span class="commit-hash">\${commit.hash}</span>
-                        <span class="commit-date">\${dateStr}</span>
+                        <span class="commit-hash">\${escapeHtml(commit.hash)}</span>
+                        <span class="commit-date">\${escapeHtml(dateStr)}</span>
                       </div>
-                      <div class="commit-message">\${commit.message}</div>
-                      <div class="commit-author">by \${commit.author}</div>
+                      <div class="commit-message">\${escapeHtml(commit.message)}</div>
+                      <div class="commit-author">by \${escapeHtml(commit.author)}</div>
                     </div>
                   \`;
                 }).join('');

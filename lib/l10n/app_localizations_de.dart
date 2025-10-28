@@ -2042,4 +2042,119 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get createChannel => 'Kanal erstellen';
+
+  @override
+  String get wizardBack => 'Zurück';
+
+  @override
+  String get wizardSkip => 'Überspringen';
+
+  @override
+  String get wizardNext => 'Weiter';
+
+  @override
+  String get wizardGetStarted => 'Loslegen';
+
+  @override
+  String get wizardWelcomeTitle => 'Willkommen bei MeshCore SAR';
+
+  @override
+  String get wizardWelcomeDescription =>
+      'Ein leistungsstarkes Offline-Kommunikationstool für Such- und Rettungseinsätze. Verbinden Sie sich mit Ihrem Team über Mesh-Funktechnologie, wenn herkömmliche Netzwerke nicht verfügbar sind.';
+
+  @override
+  String get wizardConnectingTitle => 'Verbindung zum Radio';
+
+  @override
+  String get wizardConnectingDescription =>
+      'Verbinden Sie Ihr Smartphone über Bluetooth mit einem MeshCore-Funkgerät, um offline zu kommunizieren.';
+
+  @override
+  String get wizardConnectingFeature1 =>
+      'Nach MeshCore-Geräten in der Nähe suchen';
+
+  @override
+  String get wizardConnectingFeature2 =>
+      'Mit Ihrem Funkgerät über Bluetooth koppeln';
+
+  @override
+  String get wizardConnectingFeature3 =>
+      'Funktioniert vollständig offline - kein Internet erforderlich';
+
+  @override
+  String get wizardSimpleModeTitle => 'Einfacher Modus';
+
+  @override
+  String get wizardSimpleModeDescription =>
+      'Neu im Mesh-Netzwerk? Aktivieren Sie den einfachen Modus für eine optimierte Benutzeroberfläche mit nur wesentlichen Funktionen.';
+
+  @override
+  String get wizardSimpleModeFeature1 =>
+      'Anfängerfreundliche Benutzeroberfläche mit Kernfunktionen';
+
+  @override
+  String get wizardSimpleModeFeature2 =>
+      'Jederzeit in den erweiterten Modus in den Einstellungen wechseln';
+
+  @override
+  String get wizardChannelTitle => 'Kanäle';
+
+  @override
+  String get wizardChannelDescription =>
+      'Senden Sie Nachrichten an alle auf einem Kanal, perfekt für teamweite Ankündigungen und Koordination.';
+
+  @override
+  String get wizardChannelFeature1 =>
+      'Öffentlicher Kanal für allgemeine Teamkommunikation';
+
+  @override
+  String get wizardChannelFeature2 =>
+      'Erstellen Sie benutzerdefinierte Kanäle für bestimmte Gruppen';
+
+  @override
+  String get wizardChannelFeature3 =>
+      'Nachrichten werden automatisch über das Mesh weitergeleitet';
+
+  @override
+  String get wizardContactsTitle => 'Kontakte';
+
+  @override
+  String get wizardContactsDescription =>
+      'Ihre Teammitglieder erscheinen automatisch, wenn sie dem Mesh-Netzwerk beitreten. Senden Sie ihnen direkte Nachrichten oder sehen Sie ihren Standort.';
+
+  @override
+  String get wizardContactsFeature1 => 'Kontakte werden automatisch erkannt';
+
+  @override
+  String get wizardContactsFeature2 => 'Private Direktnachrichten senden';
+
+  @override
+  String get wizardContactsFeature3 =>
+      'Batteriestand und letzte Aktivität anzeigen';
+
+  @override
+  String get wizardMapTitle => 'Karte & Standort';
+
+  @override
+  String get wizardMapDescription =>
+      'Verfolgen Sie Ihr Team in Echtzeit und markieren Sie wichtige Standorte für Such- und Rettungseinsätze.';
+
+  @override
+  String get wizardMapFeature1 =>
+      'SAR-Markierungen für gefundene Personen, Feuer und Sammelstellen';
+
+  @override
+  String get wizardMapFeature2 =>
+      'GPS-Verfolgung von Teammitgliedern in Echtzeit';
+
+  @override
+  String get wizardMapFeature3 =>
+      'Offline-Karten für entlegene Gebiete herunterladen';
+
+  @override
+  String get wizardMapFeature4 =>
+      'Formen zeichnen und taktische Informationen teilen';
+
+  @override
+  String get viewWelcomeTutorial => 'Willkommens-Tutorial ansehen';
 }

@@ -3426,5 +3426,165 @@
   "createChannel": "Create Channel",
   "@createChannel": {
     "description": "Button text for creating a channel"
+  },
+
+  "wizardBack": "Back",
+  "@wizardBack": {
+    "description": "Wizard back button text"
+  },
+
+  "wizardSkip": "Skip",
+  "@wizardSkip": {
+    "description": "Wizard skip button text"
+  },
+
+  "wizardNext": "Next",
+  "@wizardNext": {
+    "description": "Wizard next button text"
+  },
+
+  "wizardGetStarted": "Get Started",
+  "@wizardGetStarted": {
+    "description": "Wizard final button text to complete onboarding"
+  },
+
+  "wizardWelcomeTitle": "Welcome to MeshCore SAR",
+  "@wizardWelcomeTitle": {
+    "description": "Welcome wizard first page title"
+  },
+
+  "wizardWelcomeDescription": "A powerful off-grid communication tool for search and rescue operations. Connect with your team using mesh radio technology when traditional networks are unavailable.",
+  "@wizardWelcomeDescription": {
+    "description": "Welcome wizard first page description"
+  },
+
+  "wizardConnectingTitle": "Connecting to Your Radio",
+  "@wizardConnectingTitle": {
+    "description": "Wizard connecting page title"
+  },
+
+  "wizardConnectingDescription": "Connect your smartphone to a MeshCore radio device via Bluetooth to start communicating off-grid.",
+  "@wizardConnectingDescription": {
+    "description": "Wizard connecting page description"
+  },
+
+  "wizardConnectingFeature1": "Scan for nearby MeshCore devices",
+  "@wizardConnectingFeature1": {
+    "description": "Wizard connecting feature 1"
+  },
+
+  "wizardConnectingFeature2": "Pair with your radio via Bluetooth",
+  "@wizardConnectingFeature2": {
+    "description": "Wizard connecting feature 2"
+  },
+
+  "wizardConnectingFeature3": "Works completely offline - no internet required",
+  "@wizardConnectingFeature3": {
+    "description": "Wizard connecting feature 3"
+  },
+
+  "wizardSimpleModeTitle": "Simple Mode",
+  "@wizardSimpleModeTitle": {
+    "description": "Wizard simple mode page title"
+  },
+
+  "wizardSimpleModeDescription": "New to mesh networking? Enable Simple Mode for a streamlined interface with essential features only.",
+  "@wizardSimpleModeDescription": {
+    "description": "Wizard simple mode page description"
+  },
+
+  "wizardSimpleModeFeature1": "Beginner-friendly interface with core functions",
+  "@wizardSimpleModeFeature1": {
+    "description": "Wizard simple mode feature 1"
+  },
+
+  "wizardSimpleModeFeature2": "Switch to Advanced Mode anytime in Settings",
+  "@wizardSimpleModeFeature2": {
+    "description": "Wizard simple mode feature 2"
+  },
+
+  "wizardChannelTitle": "Channels",
+  "@wizardChannelTitle": {
+    "description": "Wizard channel page title"
+  },
+
+  "wizardChannelDescription": "Broadcast messages to everyone on a channel, perfect for team-wide announcements and coordination.",
+  "@wizardChannelDescription": {
+    "description": "Wizard channel page description"
+  },
+
+  "wizardChannelFeature1": "Public Channel for general team communication",
+  "@wizardChannelFeature1": {
+    "description": "Wizard channel feature 1"
+  },
+
+  "wizardChannelFeature2": "Create custom channels for specific groups",
+  "@wizardChannelFeature2": {
+    "description": "Wizard channel feature 2"
+  },
+
+  "wizardChannelFeature3": "Messages are automatically relayed by the mesh",
+  "@wizardChannelFeature3": {
+    "description": "Wizard channel feature 3"
+  },
+
+  "wizardContactsTitle": "Contacts",
+  "@wizardContactsTitle": {
+    "description": "Wizard contacts page title"
+  },
+
+  "wizardContactsDescription": "Your team members appear automatically as they join the mesh network. Send them direct messages or view their location.",
+  "@wizardContactsDescription": {
+    "description": "Wizard contacts page description"
+  },
+
+  "wizardContactsFeature1": "Contacts discovered automatically",
+  "@wizardContactsFeature1": {
+    "description": "Wizard contacts feature 1"
+  },
+
+  "wizardContactsFeature2": "Send private direct messages",
+  "@wizardContactsFeature2": {
+    "description": "Wizard contacts feature 2"
+  },
+
+  "wizardContactsFeature3": "View battery level and last seen time",
+  "@wizardContactsFeature3": {
+    "description": "Wizard contacts feature 3"
+  },
+
+  "wizardMapTitle": "Map & Location",
+  "@wizardMapTitle": {
+    "description": "Wizard map page title"
+  },
+
+  "wizardMapDescription": "Track your team in real-time and mark important locations for search and rescue operations.",
+  "@wizardMapDescription": {
+    "description": "Wizard map page description"
+  },
+
+  "wizardMapFeature1": "SAR markers for found persons, fires, and staging areas",
+  "@wizardMapFeature1": {
+    "description": "Wizard map feature 1"
+  },
+
+  "wizardMapFeature2": "Real-time GPS tracking of team members",
+  "@wizardMapFeature2": {
+    "description": "Wizard map feature 2"
+  },
+
+  "wizardMapFeature3": "Download offline maps for remote areas",
+  "@wizardMapFeature3": {
+    "description": "Wizard map feature 3"
+  },
+
+  "wizardMapFeature4": "Draw shapes and share tactical information",
+  "@wizardMapFeature4": {
+    "description": "Wizard map feature 4"
+  },
+
+  "viewWelcomeTutorial": "View Welcome Tutorial",
+  "@viewWelcomeTutorial": {
+    "description": "Settings option to re-show welcome wizard"
   }
 }

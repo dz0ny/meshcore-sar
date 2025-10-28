@@ -14,6 +14,7 @@ import '../utils/sample_data_generator.dart';
 import '../theme/app_theme.dart';
 import '../l10n/app_localizations.dart';
 import 'sar_template_management_screen.dart';
+import 'welcome_wizard_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   final Function(AppThemeMode) onThemeChanged;
@@ -472,6 +473,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 context,
                 MaterialPageRoute(
                   builder: (context) => const SarTemplateManagementScreen(),
+                ),
+              );
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.school),
+            title: Text(AppLocalizations.of(context)!.viewWelcomeTutorial),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () async {
+              // Show wizard without resetting state - just as a modal
+              await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => WelcomeWizardScreen(
+                    onCompleted: () {
+                      // Just pop back to settings when done
+                      Navigator.of(context).pop();
+                    },
+                  ),
                 ),
               );
             },

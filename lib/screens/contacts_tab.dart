@@ -127,27 +127,6 @@ class _ContactsTabState extends State<ContactsTab> {
     );
   }
 
-  /// Build the FAB for adding channels
-  Widget? _buildAddChannelFAB(BuildContext context) {
-    final appProvider = context.watch<AppProvider>();
-    final connectionProvider = context.watch<ConnectionProvider>();
-    final l10n = AppLocalizations.of(context)!;
-
-    // Only show when:
-    // - NOT in simple mode
-    // - Device is connected
-    if (appProvider.isSimpleMode ||
-        !connectionProvider.deviceInfo.isConnected) {
-      return null;
-    }
-
-    return FloatingActionButton.extended(
-      onPressed: () => _showAddChannelDialog(context),
-      icon: const Icon(Icons.add_circle_outline),
-      label: Text(l10n.addChannel),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -256,28 +235,48 @@ class _ContactsTabState extends State<ContactsTab> {
                 ],
 
                 // Channels (hidden in simple mode)
-                if (!isSimpleMode && channels.isNotEmpty) ...[
+                if (!isSimpleMode) ...[
                   _SectionHeader(
                     title: l10n.channels,
                     count: channels.length,
                     icon: Icons.broadcast_on_personal,
                   ),
-                  ...channels.map(
-                    (contact) => ContactTile(
-                      contact: contact,
-                      currentPosition: _currentPosition,
-                      calculateDistance: _calculateDistanceInMeters,
-                      formatDistance: _formatDistance,
-                      onNavigateToMap: widget.onNavigateToMap,
+                  if (channels.isNotEmpty) ...[
+                    ...channels.map(
+                      (contact) => ContactTile(
+                        contact: contact,
+                        currentPosition: _currentPosition,
+                        calculateDistance: _calculateDistanceInMeters,
+                        formatDistance: _formatDistance,
+                        onNavigateToMap: widget.onNavigateToMap,
+                      ),
                     ),
-                  ),
+                  ],
+                  // Add Channel Button (only show when connected)
+                  if (context.watch<ConnectionProvider>().deviceInfo.isConnected)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      child: OutlinedButton.icon(
+                        onPressed: () => _showAddChannelDialog(context),
+                        icon: const Icon(Icons.add_circle_outline),
+                        label: Text(l10n.addChannel),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 12,
+                          ),
+                        ),
+                      ),
+                    ),
                 ],
               ],
             ),
           );
         },
       ),
-      floatingActionButton: _buildAddChannelFAB(context),
     );
   }
 }

@@ -131,7 +131,7 @@ jobs:
     name: Build iOS IPA
     runs-on: macos-latest
     needs: [update-version]
-    if: always() && (needs.update-version.result == 'success' || needs.update-version.result == 'skipped')
+    if: false  # Disabled - skip IPA builds
 
     steps:
       - name: Checkout code
@@ -315,7 +315,7 @@ jobs:
     name: Build macOS DMG
     runs-on: macos-latest
     needs: [update-version]
-    if: always() && (needs.update-version.result == 'success' || needs.update-version.result == 'skipped')
+    if: false  # Disabled - skip DMG builds
 
     steps:
       - name: Checkout code

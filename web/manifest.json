@@ -1,6 +1,6 @@
 {
-    "name": "meshcore_sar_app",
-    "short_name": "meshcore_sar_app",
+    "name": "MeshCore SAR",
+    "short_name": "MeshCore SAR",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#ddd",

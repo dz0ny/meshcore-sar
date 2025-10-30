@@ -101,6 +101,7 @@ class NotificationService {
         debugPrint(
           '📱 [NotificationService] iOS permissions granted: $_permissionGranted',
         );
+        return; // Exit early if on iOS
       }
 
       // Android 13+ permissions
@@ -114,7 +115,15 @@ class NotificationService {
         debugPrint(
           '🤖 [NotificationService] Android permissions granted: $_permissionGranted',
         );
+        return; // Exit early if on Android
       }
+
+      // If neither platform plugin is available, assume permissions are granted
+      // This handles older Android versions that don't require runtime permissions
+      _permissionGranted = true;
+      debugPrint(
+        '✅ [NotificationService] No platform plugin found, assuming permissions granted',
+      );
     } catch (e) {
       debugPrint('⚠️ [NotificationService] Error requesting permissions: $e');
     }

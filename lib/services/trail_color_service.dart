@@ -4,193 +4,183 @@ import '../models/contact.dart';
 /// Service for assigning consistent colors to contact trails
 /// Uses emoji-based semantic mapping with deterministic hash fallback
 class TrailColorService {
-  // 64-color palette optimized for visibility on maps
+  // 64-color pastel palette optimized for visibility on all map types
   // Organized by hue families for better distribution
+  // Avoids red/orange/yellow spectrum to prevent confusion with fire markers
   // Avoids pure blue (#2196F3) which is reserved for user trail
   static final List<Color> _colorPalette = [
-    // Reds (8)
-    const Color(0xFFE53935),
-    const Color(0xFFD32F2F),
-    const Color(0xFFC62828),
-    const Color(0xFFB71C1C),
-    const Color(0xFFFF5252),
-    const Color(0xFFFF1744),
-    const Color(0xFFD50000),
-    const Color(0xFFC51162),
+    // Pinks & Light Corals (8)
+    const Color(0xFFFFB6C1), // Light Pink
+    const Color(0xFFFF7F7F), // Coral
+    const Color(0xFFFFC0CB), // Pink
+    const Color(0xFFFFB3BA), // Pastel Pink
+    const Color(0xFFFF9AA2), // Light Coral
+    const Color(0xFFFFDAE9), // Pale Pink
+    const Color(0xFFFAA0B8), // Pastel Rose
+    const Color(0xFFFF8FA3), // Salmon Pink
 
-    // Pinks (4)
-    const Color(0xFFEC407A),
-    const Color(0xFFE91E63),
-    const Color(0xFFC2185B),
-    const Color(0xFFAD1457),
+    // Purples & Plums (8)
+    const Color(0xFFE6E6FA), // Lavender
+    const Color(0xFFDDA0DD), // Plum
+    const Color(0xFFD8BFD8), // Thistle
+    const Color(0xFFDDA5E9), // Pastel Purple
+    const Color(0xFFE0BBE4), // Mauve
+    const Color(0xFFC5A3E0), // Light Purple
+    const Color(0xFFB19CD9), // Medium Lavender
+    const Color(0xFFAF9FCD), // Wisteria
 
-    // Purples (8)
-    const Color(0xFF9C27B0),
-    const Color(0xFF8E24AA),
-    const Color(0xFF7B1FA2),
-    const Color(0xFF6A1B9A),
-    const Color(0xFFAB47BC),
-    const Color(0xFF9C27B0),
-    const Color(0xFF8E24AA),
-    const Color(0xFF7B1FA2),
+    // Blues & Sky (12)
+    const Color(0xFF87CEEB), // Sky Blue
+    const Color(0xFFB0E0E6), // Powder Blue
+    const Color(0xFFADD8E6), // Light Blue
+    const Color(0xFF87CEFA), // Light Sky Blue
+    const Color(0xFFB0C4DE), // Light Steel Blue
+    const Color(0xFF9BB8D3), // Pastel Blue
+    const Color(0xFF89CFF0), // Baby Blue
+    const Color(0xFFA2C8EC), // Columbia Blue
+    const Color(0xFF7FB3D5), // Pale Blue
+    const Color(0xFF6A9FB5), // Air Force Blue
+    const Color(0xFF8DB4D2), // Soft Blue
+    const Color(0xFF7BA5C9), // Light Denim
 
-    // Deep Purples (4)
-    const Color(0xFF673AB7),
-    const Color(0xFF5E35B1),
-    const Color(0xFF512DA8),
-    const Color(0xFF4527A0),
+    // Cyans & Teals (8)
+    const Color(0xFF5F9EA0), // Cadet Blue
+    const Color(0xFF7FFFD4), // Aquamarine
+    const Color(0xFF98D8C8), // Mint
+    const Color(0xFF82E0D5), // Pale Cyan
+    const Color(0xFF8FD8D8), // Light Teal
+    const Color(0xFF81C0BB), // Cadet Teal
+    const Color(0xFF72B0A8), // Medium Teal
+    const Color(0xFF6FA09E), // Soft Teal
 
-    // Indigos (4)
-    const Color(0xFF3F51B5),
-    const Color(0xFF3949AB),
-    const Color(0xFF303F9F),
-    const Color(0xFF283593),
+    // Greens & Mints (8)
+    const Color(0xFF90EE90), // Light Green
+    const Color(0xFF98D8B4), // Celadon
+    const Color(0xFFA8E4A0), // Granny Smith
+    const Color(0xFFB2E8B2), // Tea Green
+    const Color(0xFF9FD8AF), // Eton Blue
+    const Color(0xFF8FC49F), // Pastel Green
+    const Color(0xFF7EB693), // Cambridge Blue
+    const Color(0xFF73A685), // Russian Green
 
-    // Blues (4) - Dark blues only, avoid user trail blue
-    const Color(0xFF1E88E5),
-    const Color(0xFF1976D2),
-    const Color(0xFF1565C0),
-    const Color(0xFF0D47A1),
+    // Beiges & Tans (12)
+    const Color(0xFFD2B48C), // Tan
+    const Color(0xFFDEB887), // Burlywood
+    const Color(0xFFE0D8B0), // Beige
+    const Color(0xFFFFDAB9), // Peach
+    const Color(0xFFFFE4B5), // Moccasin
+    const Color(0xFFFFF8DC), // Cornsilk
+    const Color(0xFFE8D5C4), // Champagne
+    const Color(0xFFD4C5B9), // Dust
+    const Color(0xFFC9B8A9), // Khaki
+    const Color(0xFFBCAA99), // Cashmere
+    const Color(0xFFB09B87), // Taupe
+    const Color(0xFFA58F7A), // Mocha
 
-    // Cyans (4)
-    const Color(0xFF00ACC1),
-    const Color(0xFF0097A7),
-    const Color(0xFF00838F),
-    const Color(0xFF006064),
-
-    // Teals (4)
-    const Color(0xFF00897B),
-    const Color(0xFF00796B),
-    const Color(0xFF00695C),
-    const Color(0xFF004D40),
-
-    // Greens (8)
-    const Color(0xFF43A047),
-    const Color(0xFF388E3C),
-    const Color(0xFF2E7D32),
-    const Color(0xFF1B5E20),
-    const Color(0xFF66BB6A),
-    const Color(0xFF4CAF50),
-    const Color(0xFF388E3C),
-    const Color(0xFF2E7D32),
-
-    // Limes (4)
-    const Color(0xFF9E9D24),
-    const Color(0xFF827717),
-    const Color(0xFFC0CA33),
-    const Color(0xFFAFB42B),
-
-    // Ambers (4)
-    const Color(0xFFFFA726),
-    const Color(0xFFFF9800),
-    const Color(0xFFFB8C00),
-    const Color(0xFFF57C00),
-
-    // Oranges (4)
-    const Color(0xFFFF7043),
-    const Color(0xFFFF5722),
-    const Color(0xFFF4511E),
-    const Color(0xFFE64A19),
-
-    // Browns (4)
-    const Color(0xFF6D4C41),
-    const Color(0xFF5D4037),
-    const Color(0xFF4E342E),
-    const Color(0xFF3E2723),
+    // Grays & Silvers (8)
+    const Color(0xFFD3D3D3), // Light Gray
+    const Color(0xFFC0C0C0), // Silver
+    const Color(0xFFBCBCBC), // Bright Gray
+    const Color(0xFFB2B2B2), // Medium Gray
+    const Color(0xFFA9A9A9), // Dark Gray
+    const Color(0xFF9E9E9E), // Gray
+    const Color(0xFF8E8E8E), // Taupe Gray
+    const Color(0xFF7E7E7E), // Granite
   ];
 
   // Emoji to color mapping for SAR roles
-  // Uses semantic colors that match emergency service conventions
+  // Uses pastel semantic colors for high visibility on maps
+  // Avoids red/orange/yellow to prevent confusion with fire markers
   static final Map<String, Color> _emojiColorMap = {
     // Emergency Services - Firefighters
-    '🚒': Color(0xFFD32F2F), // Fire engine → Red
-    '🧑‍🚒': Color(0xFFD32F2F), // Firefighter → Red
-    '👨‍🚒': Color(0xFFD32F2F), // Firefighter → Red
-    '👩‍🚒': Color(0xFFD32F2F), // Firefighter → Red
-    '🔥': Color(0xFFFF5722), // Fire → Orange-Red
+    '🚒': Color(0xFFFF7F7F), // Fire engine → Coral
+    '🧑‍🚒': Color(0xFFFF7F7F), // Firefighter → Coral
+    '👨‍🚒': Color(0xFFFF7F7F), // Firefighter → Coral
+    '👩‍🚒': Color(0xFFFF7F7F), // Firefighter → Coral
+    '🔥': Color(0xFFFFB6C1), // Fire → Light Pink
 
     // Emergency Services - Medical
-    '🚑': Color(0xFF43A047), // Ambulance → Green (medical cross)
-    '👨‍⚕️': Color(0xFF43A047), // Health worker → Green
-    '👩‍⚕️': Color(0xFF43A047), // Health worker → Green
-    '🧑‍⚕️': Color(0xFF43A047), // Health worker → Green
-    '⚕️': Color(0xFF43A047), // Medical symbol → Green
+    '🚑': Color(0xFF7FFFD4), // Ambulance → Mint (medical cross)
+    '👨‍⚕️': Color(0xFF7FFFD4), // Health worker → Mint
+    '👩‍⚕️': Color(0xFF7FFFD4), // Health worker → Mint
+    '🧑‍⚕️': Color(0xFF7FFFD4), // Health worker → Mint
+    '⚕️': Color(0xFF7FFFD4), // Medical symbol → Mint
 
     // Emergency Services - Police
-    '👮': Color(0xFF1976D2), // Police → Blue
-    '👮‍♂️': Color(0xFF1976D2), // Police → Blue
-    '👮‍♀️': Color(0xFF1976D2), // Police → Blue
-    '🚔': Color(0xFF1976D2), // Police car → Blue
+    '👮': Color(0xFF87CEEB), // Police → Light Blue
+    '👮‍♂️': Color(0xFF87CEEB), // Police → Light Blue
+    '👮‍♀️': Color(0xFF87CEEB), // Police → Light Blue
+    '🚔': Color(0xFF87CEEB), // Police car → Light Blue
 
     // Emergency Services - Aviation
-    '🧑‍✈️': Color(0xFF1565C0), // Pilot → Dark Blue
-    '👨‍✈️': Color(0xFF1565C0), // Pilot → Dark Blue
-    '👩‍✈️': Color(0xFF1565C0), // Pilot → Dark Blue
-    '🚁': Color(0xFF8E24AA), // Helicopter → Purple
+    '🧑‍✈️': Color(0xFFB0E0E6), // Pilot → Sky Blue
+    '👨‍✈️': Color(0xFFB0E0E6), // Pilot → Sky Blue
+    '👩‍✈️': Color(0xFFB0E0E6), // Pilot → Sky Blue
+    '🚁': Color(0xFFE6E6FA), // Helicopter → Lavender
 
     // SAR Roles - Mountain/Alpine
-    '🏔️': Color(0xFF6D4C41), // Mountain → Brown
-    '⛰️': Color(0xFF6D4C41), // Mountain → Brown
-    '🧗': Color(0xFF6D4C41), // Climber → Brown
-    '🧗‍♂️': Color(0xFF6D4C41), // Climber → Brown
-    '🧗‍♀️': Color(0xFF6D4C41), // Climber → Brown
-    '🥾': Color(0xFF5D4037), // Hiking boot → Dark Brown
+    '🏔️': Color(0xFFD2B48C), // Mountain → Tan
+    '⛰️': Color(0xFFD2B48C), // Mountain → Tan
+    '🧗': Color(0xFFD2B48C), // Climber → Tan
+    '🧗‍♂️': Color(0xFFD2B48C), // Climber → Tan
+    '🧗‍♀️': Color(0xFFD2B48C), // Climber → Tan
+    '🥾': Color(0xFFDEB887), // Hiking boot → Burlywood
 
     // SAR Roles - K9 Unit
-    '🐕': Color(0xFFFFA726), // Dog → Orange
-    '🐶': Color(0xFFFFA726), // Dog → Orange
-    '🦮': Color(0xFFFFA726), // Service dog → Orange
+    '🐕': Color(0xFFFFDAB9), // Dog → Peach
+    '🐶': Color(0xFFFFDAB9), // Dog → Peach
+    '🦮': Color(0xFFFFDAB9), // Service dog → Peach
 
     // SAR Roles - Water Rescue
-    '🚤': Color(0xFF00ACC1), // Speedboat → Cyan
-    '⛵': Color(0xFF00ACC1), // Sailboat → Cyan
-    '🏊': Color(0xFF00897B), // Swimmer → Teal
-    '🏊‍♂️': Color(0xFF00897B), // Swimmer → Teal
-    '🏊‍♀️': Color(0xFF00897B), // Swimmer → Teal
+    '🚤': Color(0xFF87CEEB), // Speedboat → Sky Blue
+    '⛵': Color(0xFF87CEEB), // Sailboat → Sky Blue
+    '🏊': Color(0xFF5F9EA0), // Swimmer → Cadet Blue
+    '🏊‍♂️': Color(0xFF5F9EA0), // Swimmer → Cadet Blue
+    '🏊‍♀️': Color(0xFF5F9EA0), // Swimmer → Cadet Blue
 
     // Team Roles - Leadership
-    '🎯': Color(0xFFE64A19), // Target → Deep Orange (team leader)
-    '⭐': Color(0xFFFDD835), // Star → Yellow (coordinator)
-    '👑': Color(0xFFFDD835), // Crown → Yellow (leader)
+    '🎯': Color(0xFFFFB6C1), // Target → Light Pink (team leader)
+    '⭐': Color(0xFFFFE4B5), // Star → Moccasin (coordinator)
+    '👑': Color(0xFFFFE4B5), // Crown → Moccasin (leader)
 
     // Team Roles - Communication
-    '📡': Color(0xFF00897B), // Satellite → Teal (radio/comms)
-    '📻': Color(0xFF00897B), // Radio → Teal
-    '📞': Color(0xFF00897B), // Phone → Teal
+    '📡': Color(0xFF5F9EA0), // Satellite → Cadet Blue (radio/comms)
+    '📻': Color(0xFF5F9EA0), // Radio → Cadet Blue
+    '📞': Color(0xFF5F9EA0), // Phone → Cadet Blue
 
     // Team Roles - Navigation
-    '🗺️': Color(0xFF00ACC1), // Map → Cyan (navigator)
-    '🧭': Color(0xFF00ACC1), // Compass → Cyan
-    '📍': Color(0xFFE53935), // Pin → Red (location marker)
+    '🗺️': Color(0xFF87CEEB), // Map → Sky Blue (navigator)
+    '🧭': Color(0xFF87CEEB), // Compass → Sky Blue
+    '📍': Color(0xFFFF7F7F), // Pin → Coral (location marker)
 
     // Team Roles - Documentation
-    '📷': Color(0xFFAB47BC), // Camera → Light Purple
-    '📹': Color(0xFFAB47BC), // Video camera → Light Purple
-    '📝': Color(0xFF9E9D24), // Note → Lime (scribe)
+    '📷': Color(0xFFDDA0DD), // Camera → Plum
+    '📹': Color(0xFFDDA0DD), // Video camera → Plum
+    '📝': Color(0xFFE0E0A0), // Note → Khaki (scribe)
 
     // Equipment
-    '🔦': Color(0xFFFB8C00), // Flashlight → Amber
-    '⚡': Color(0xFFFDD835), // Lightning → Yellow (power/energy)
-    '🔋': Color(0xFF43A047), // Battery → Green
-    '🎒': Color(0xFF5D4037), // Backpack → Brown
+    '🔦': Color(0xFFFFE4B5), // Flashlight → Moccasin
+    '⚡': Color(0xFFFFE4B5), // Lightning → Moccasin (power/energy)
+    '🔋': Color(0xFF7FFFD4), // Battery → Mint
+    '🎒': Color(0xFFDEB887), // Backpack → Burlywood
 
     // Generic Person Icons
-    '👤': Color(0xFF9E9E9E), // Silhouette → Gray
-    '🧑': Color(0xFF9E9E9E), // Person → Gray
-    '👨': Color(0xFF9E9E9E), // Man → Gray
-    '👩': Color(0xFF9E9E9E), // Woman → Gray
-    '👥': Color(0xFF757575), // People → Dark Gray
+    '👤': Color(0xFFD3D3D3), // Silhouette → Light Gray
+    '🧑': Color(0xFFD3D3D3), // Person → Light Gray
+    '👨': Color(0xFFD3D3D3), // Man → Light Gray
+    '👩': Color(0xFFD3D3D3), // Woman → Light Gray
+    '👥': Color(0xFFC0C0C0), // People → Silver
   };
 
   /// Get trail color for a contact
   /// Priority: Emoji mapping > Name hash > Default
+  /// Returns fully opaque color - alpha transparency applied by caller
   static Color getTrailColor(Contact contact) {
     // 1. Try emoji-based color mapping
     if (contact.roleEmoji != null) {
       final emojiColor = _emojiColorMap[contact.roleEmoji];
       if (emojiColor != null) {
-        // Return with slight transparency for better map visibility
-        return emojiColor.withValues(alpha: 0.75);
+        return emojiColor;
       }
     }
 
@@ -203,7 +193,7 @@ class TrailColorService {
     final hash = _hashString(name);
     final colorIndex = hash % _colorPalette.length; // 0-63
 
-    return _colorPalette[colorIndex].withValues(alpha: 0.75);
+    return _colorPalette[colorIndex];
   }
 
   /// Simple string hash function (DJB2 algorithm)

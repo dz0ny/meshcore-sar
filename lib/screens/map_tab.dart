@@ -1852,10 +1852,10 @@ class _MapTabState extends State<MapTab> with AutomaticKeepAliveClientMixin {
                                     points: contact.advertHistory
                                         .map((advert) => advert.location)
                                         .toList(),
-                                    color: color,
-                                    strokeWidth: 2.5, // Thinner than user trail
-                                    borderColor: Colors.white.withValues(alpha: 0.3),
-                                    borderStrokeWidth: 1.0,
+                                    color: color.withValues(alpha: 0.95), // More opaque for better visibility
+                                    strokeWidth: 4.5, // Thicker for better visibility on all map backgrounds
+                                    borderColor: Colors.white.withValues(alpha: 0.6), // Stronger border contrast
+                                    borderStrokeWidth: 2.0, // Wider border
                                     // DASHED pattern to distinguish from solid user trail
                                     pattern: StrokePattern.dashed(segments: [8, 4]),
                                   );

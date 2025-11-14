@@ -1,0 +1,491 @@
+import 'package:flutter/foundation.dart';
+import 'package:latlong2/latlong.dart';
+import 'sar_marker.dart';
+
+/// Message recipient tracking for grouped messages
+class MessageRecipient {
+  final Uint8List publicKey; // Full public key
+  final String displayName; // Contact display name
+  final MessageDeliveryStatus deliveryStatus;
+  final int? expectedAckTag;
+  final int? roundTripTimeMs;
+  final DateTime? deliveredAt;
+  final DateTime sentAt;
+
+  const MessageRecipient({
+    required this.publicKey,
+    required this.displayName,
+    required this.deliveryStatus,
+    this.expectedAckTag,
+    this.roundTripTimeMs,
+    this.deliveredAt,
+    required this.sentAt,
+  });
+
+  MessageRecipient copyWith({
+    Uint8List? publicKey,
+    String? displayName,
+    MessageDeliveryStatus? deliveryStatus,
+    int? expectedAckTag,
+    int? roundTripTimeMs,
+    DateTime? deliveredAt,
+    DateTime? sentAt,
+  }) {
+    return MessageRecipient(
+      publicKey: publicKey ?? this.publicKey,
+      displayName: displayName ?? this.displayName,
+      deliveryStatus: deliveryStatus ?? this.deliveryStatus,
+      expectedAckTag: expectedAckTag ?? this.expectedAckTag,
+      roundTripTimeMs: roundTripTimeMs ?? this.roundTripTimeMs,
+      deliveredAt: deliveredAt ?? this.deliveredAt,
+      sentAt: sentAt ?? this.sentAt,
+    );
+  }
+
+  String get publicKeyShort {
+    return publicKey
+        .sublist(0, publicKey.length < 6 ? publicKey.length : 6)
+        .map((b) => b.toRadixString(16).padLeft(2, '0'))
+        .join('');
+  }
+}
+
+/// Message text types from MeshCore protocol
+enum MessageTextType {
+  plain(0),
+  cliData(1),
+  signedPlain(2);
+
+  const MessageTextType(this.value);
+  final int value;
+
+  static MessageTextType fromValue(int value) {
+    return MessageTextType.values.firstWhere(
+      (e) => e.value == value,
+      orElse: () => MessageTextType.plain,
+    );
+  }
+}
+
+/// Message type (contact, channel, or system)
+enum MessageType {
+  contact,
+  channel,
+  system, // System messages (log entries, status updates)
+}
+
+/// Message delivery status
+enum MessageDeliveryStatus {
+  sending, // Message is being sent
+  sent, // Message queued with expected ACK
+  delivered, // Delivery confirmed (ACK received)
+  failed, // Delivery failed
+  received, // Message received from another contact
+}
+
+/// MeshCore message model
+class Message {
+  final String id;
+  final MessageType messageType;
+  final Uint8List? senderPublicKeyPrefix; // 6 bytes for contact messages
+  final int? channelIdx; // For channel messages
+  final int pathLen;
+  final MessageTextType textType;
+  final int senderTimestamp; // Unix timestamp
+  final String text;
+
+  // SAR marker data (if this is a SAR message)
+  final bool isSarMarker;
+  final LatLng? sarGpsCoordinates;
+  final String? sarNotes; // Optional message/notes for SAR marker
+  final String? sarCustomEmoji; // Custom emoji for unknown SAR marker types
+  final int? sarColorIndex; // Color index (0-7) from standard palette
+
+  // Display metadata
+  final DateTime receivedAt;
+  final String? senderName;
+
+  // Delivery tracking (for sent messages)
+  final MessageDeliveryStatus deliveryStatus;
+  final int? expectedAckTag; // Expected ACK/TAG from SENT response
+  final int? suggestedTimeoutMs; // Suggested timeout from SENT response
+  final int? roundTripTimeMs; // RTT from SEND_CONFIRMED
+  final DateTime? deliveredAt; // When delivery was confirmed
+  final Uint8List?
+  recipientPublicKey; // Full 32-byte public key of recipient (for retry)
+
+  // Retry tracking (for automatic retry with progressive timeouts)
+  final int retryAttempt; // Current retry attempt (0-3), 0 = first send
+  final DateTime? lastRetryAt; // When last retry was sent
+  final bool
+  usedFloodFallback; // Whether message fell back to flood mode after retries
+
+  // Read status tracking
+  final bool isRead; // Whether message has been read by user
+
+  // Echo detection for public channel messages
+  final int echoCount; // Number of times message was detected being rebroadcast
+  final DateTime? firstEchoAt; // When first echo was detected
+
+  // Drawing message tracking
+  final bool isDrawing; // Whether this message contains a map drawing
+  final String? drawingId; // ID of the associated drawing (for navigation)
+
+  // Message grouping for bulk sends (same message to multiple recipients)
+  final String? groupId; // Shared ID for messages in the same bulk send
+  final List<MessageRecipient>?
+  recipients; // List of recipients (for group leader message)
+
+  Message({
+    required this.id,
+    required this.messageType,
+    this.senderPublicKeyPrefix,
+    this.channelIdx,
+    required this.pathLen,
+    required this.textType,
+    required this.senderTimestamp,
+    required this.text,
+    this.isSarMarker = false,
+    this.sarGpsCoordinates,
+    this.sarNotes,
+    this.sarCustomEmoji,
+    this.sarColorIndex,
+    required this.receivedAt,
+    this.senderName,
+    this.deliveryStatus = MessageDeliveryStatus.received,
+    this.expectedAckTag,
+    this.suggestedTimeoutMs,
+    this.roundTripTimeMs,
+    this.deliveredAt,
+    this.recipientPublicKey,
+    this.retryAttempt = 0,
+    this.lastRetryAt,
+    this.usedFloodFallback = false,
+    this.isRead = false,
+    this.echoCount = 0,
+    this.firstEchoAt,
+    this.isDrawing = false,
+    this.drawingId,
+    this.groupId,
+    this.recipients,
+  });
+
+  /// Get SAR marker type by inferring from message content
+  /// Returns the type inferred from sarCustomEmoji or by parsing the message text
+  SarMarkerType? get sarMarkerType {
+    if (!isSarMarker) return null;
+
+    // If we have a custom emoji stored, infer type from it
+    if (sarCustomEmoji != null && sarCustomEmoji!.isNotEmpty) {
+      return SarMarkerType.fromEmoji(sarCustomEmoji!);
+    }
+
+    // Otherwise, parse the message text to extract the emoji
+    final trimmed = text.trim();
+    if (!trimmed.startsWith('S:')) return null;
+
+    // Extract emoji from format: S:<emoji>:... or S:<emoji>:<colorIndex>:...
+    final parts = trimmed.split(':');
+    if (parts.length < 3) return null;
+
+    final emoji = parts[1];
+    return SarMarkerType.fromEmoji(emoji);
+  }
+
+  /// Get sender public key as hex string
+  String? get senderKeyShort {
+    if (senderPublicKeyPrefix == null) return null;
+    return senderPublicKeyPrefix!
+        .map((b) => b.toRadixString(16).padLeft(2, '0'))
+        .join('');
+  }
+
+  /// Get sender timestamp as DateTime
+  DateTime get sentAt {
+    return DateTime.fromMillisecondsSinceEpoch(senderTimestamp * 1000);
+  }
+
+  /// Check if message is from a channel
+  bool get isChannelMessage => messageType == MessageType.channel;
+
+  /// Check if message is from a contact
+  bool get isContactMessage => messageType == MessageType.contact;
+
+  /// Check if message is a system message
+  bool get isSystemMessage => messageType == MessageType.system;
+
+  /// Get friendly time since message was sent
+  String get timeAgo {
+    final diff = DateTime.now().difference(sentAt);
+    if (diff.inMinutes < 1) return 'Just now';
+    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
+    if (diff.inHours < 24) return '${diff.inHours}h ago';
+    return '${diff.inDays}d ago';
+  }
+
+  /// Get display name for sender (basic fallback without contact info)
+  String get displaySender {
+    if (senderName != null && senderName!.isNotEmpty) {
+      return senderName!;
+    }
+    if (senderKeyShort != null) {
+      return senderKeyShort!.substring(0, 8);
+    }
+    if (isChannelMessage && channelIdx != null) {
+      return 'Channel $channelIdx';
+    }
+    return 'Unknown';
+  }
+
+  /// Get rich display name for sender using contact information
+  /// Returns emoji + display name if available, otherwise falls back to displaySender
+  String getRichDisplayName(dynamic contact) {
+    if (contact == null) return displaySender;
+
+    // If contact has roleEmoji, use it with displayName
+    final roleEmoji = contact.roleEmoji;
+    if (roleEmoji != null && roleEmoji.isNotEmpty) {
+      return '$roleEmoji ${contact.displayName}';
+    }
+
+    // Otherwise just use advName or displayName
+    return contact.displayName ?? contact.advName ?? displaySender;
+  }
+
+  /// Convert to SAR marker if applicable
+  SarMarker? toSarMarker() {
+    if (!isSarMarker || sarMarkerType == null || sarGpsCoordinates == null) {
+      return null;
+    }
+
+    // Debug: Check what's in sarNotes
+    debugPrint('📍 [Message.toSarMarker] Converting to marker:');
+    debugPrint('   message.text: "$text"');
+    debugPrint('   message.sarNotes: "$sarNotes"');
+    debugPrint('   message.sarMarkerType: $sarMarkerType');
+    debugPrint('   message.sarCustomEmoji: "$sarCustomEmoji"');
+
+    return SarMarker(
+      id: id,
+      type: sarMarkerType!,
+      location: sarGpsCoordinates!,
+      timestamp: sentAt,
+      senderPublicKey: senderPublicKeyPrefix,
+      senderName: senderName,
+      notes: sarNotes, // Use dedicated notes field instead of full text
+      customEmoji: sarCustomEmoji, // Preserve custom emoji for unknown types
+      colorIndex: sarColorIndex, // Pass through color index
+    );
+  }
+
+  /// Get echo status text for channel messages
+  String get echoStatusText {
+    if (!isChannelMessage) return '';
+
+    if (echoCount == 0) {
+      return 'Broadcast (no echoes)';
+    } else if (echoCount == 1) {
+      return 'Rebroadcast by 1 node';
+    } else {
+      return 'Rebroadcast by $echoCount nodes';
+    }
+  }
+
+  /// Get friendly delivery status description
+  String get deliveryStatusText {
+    // For channel messages, show echo status instead
+    if (isChannelMessage && isSentMessage) {
+      return echoStatusText;
+    }
+
+    switch (deliveryStatus) {
+      case MessageDeliveryStatus.sending:
+        if (retryAttempt > 0) {
+          return 'Retrying ($retryAttempt/3)...';
+        }
+        return 'Sending...';
+
+      case MessageDeliveryStatus.sent:
+        if (retryAttempt > 0) {
+          return 'Sent (retry $retryAttempt)';
+        }
+        return 'Sent';
+
+      case MessageDeliveryStatus.delivered:
+        final rttText = roundTripTimeMs != null ? '${roundTripTimeMs}ms' : '';
+        if (retryAttempt > 0 && rttText.isNotEmpty) {
+          return 'Delivered ($rttText) [retry $retryAttempt]';
+        } else if (retryAttempt > 0) {
+          return 'Delivered [retry $retryAttempt]';
+        } else if (rttText.isNotEmpty) {
+          return 'Delivered ($rttText)';
+        }
+        return 'Delivered';
+
+      case MessageDeliveryStatus.failed:
+        if (usedFloodFallback) {
+          return 'Failed (tried flood)';
+        }
+        if (retryAttempt > 0) {
+          final retryWord = retryAttempt == 1 ? 'retry' : 'retries';
+          return 'Failed (after $retryAttempt $retryWord)';
+        }
+        return 'Failed';
+
+      case MessageDeliveryStatus.received:
+        return '';
+    }
+  }
+
+  /// Check if this is a sent message (not received)
+  bool get isSentMessage => deliveryStatus != MessageDeliveryStatus.received;
+
+  /// Check if this message is from self (own message)
+  /// [selfPublicKey] - the device's own public key (first 6 bytes)
+  bool isFromSelf(Uint8List? selfPublicKey) {
+    if (selfPublicKey == null || selfPublicKey.length < 6) return false;
+
+    // Compare sender public key prefix with self public key prefix
+    if (senderPublicKeyPrefix != null && senderPublicKeyPrefix!.length >= 6) {
+      return senderPublicKeyPrefix![0] == selfPublicKey[0] &&
+          senderPublicKeyPrefix![1] == selfPublicKey[1] &&
+          senderPublicKeyPrefix![2] == selfPublicKey[2] &&
+          senderPublicKeyPrefix![3] == selfPublicKey[3] &&
+          senderPublicKeyPrefix![4] == selfPublicKey[4] &&
+          senderPublicKeyPrefix![5] == selfPublicKey[5];
+    }
+
+    return false;
+  }
+
+  /// Get drawing metadata from message text (returns null if not a drawing)
+  /// Extracts basic info for display in message bubbles
+  Map<String, dynamic>? get drawingMetadata {
+    if (!isDrawing || !text.startsWith('D:')) return null;
+
+    try {
+      // Return basic metadata (actual parsing happens in DrawingMessageParser)
+      return {'hasDrawing': true, 'drawingId': drawingId};
+    } catch (e) {
+      return null;
+    }
+  }
+
+  Message copyWith({
+    String? id,
+    MessageType? messageType,
+    Uint8List? senderPublicKeyPrefix,
+    int? channelIdx,
+    int? pathLen,
+    MessageTextType? textType,
+    int? senderTimestamp,
+    String? text,
+    bool? isSarMarker,
+    LatLng? sarGpsCoordinates,
+    String? sarNotes,
+    String? sarCustomEmoji,
+    int? sarColorIndex,
+    DateTime? receivedAt,
+    String? senderName,
+    MessageDeliveryStatus? deliveryStatus,
+    int? expectedAckTag,
+    int? suggestedTimeoutMs,
+    int? roundTripTimeMs,
+    DateTime? deliveredAt,
+    Uint8List? recipientPublicKey,
+    int? retryAttempt,
+    DateTime? lastRetryAt,
+    bool? usedFloodFallback,
+    bool? isRead,
+    int? echoCount,
+    DateTime? firstEchoAt,
+    bool? isDrawing,
+    String? drawingId,
+    String? groupId,
+    List<MessageRecipient>? recipients,
+  }) {
+    return Message(
+      id: id ?? this.id,
+      messageType: messageType ?? this.messageType,
+      senderPublicKeyPrefix:
+          senderPublicKeyPrefix ?? this.senderPublicKeyPrefix,
+      channelIdx: channelIdx ?? this.channelIdx,
+      pathLen: pathLen ?? this.pathLen,
+      textType: textType ?? this.textType,
+      senderTimestamp: senderTimestamp ?? this.senderTimestamp,
+      text: text ?? this.text,
+      isSarMarker: isSarMarker ?? this.isSarMarker,
+      sarGpsCoordinates: sarGpsCoordinates ?? this.sarGpsCoordinates,
+      sarNotes: sarNotes ?? this.sarNotes,
+      sarCustomEmoji: sarCustomEmoji ?? this.sarCustomEmoji,
+      sarColorIndex: sarColorIndex ?? this.sarColorIndex,
+      receivedAt: receivedAt ?? this.receivedAt,
+      senderName: senderName ?? this.senderName,
+      deliveryStatus: deliveryStatus ?? this.deliveryStatus,
+      expectedAckTag: expectedAckTag ?? this.expectedAckTag,
+      suggestedTimeoutMs: suggestedTimeoutMs ?? this.suggestedTimeoutMs,
+      roundTripTimeMs: roundTripTimeMs ?? this.roundTripTimeMs,
+      deliveredAt: deliveredAt ?? this.deliveredAt,
+      recipientPublicKey: recipientPublicKey ?? this.recipientPublicKey,
+      retryAttempt: retryAttempt ?? this.retryAttempt,
+      lastRetryAt: lastRetryAt ?? this.lastRetryAt,
+      usedFloodFallback: usedFloodFallback ?? this.usedFloodFallback,
+      isRead: isRead ?? this.isRead,
+      echoCount: echoCount ?? this.echoCount,
+      firstEchoAt: firstEchoAt ?? this.firstEchoAt,
+      isDrawing: isDrawing ?? this.isDrawing,
+      drawingId: drawingId ?? this.drawingId,
+      groupId: groupId ?? this.groupId,
+      recipients: recipients ?? this.recipients,
+    );
+  }
+
+  /// Check if this is a grouped message (sent to multiple recipients)
+  bool get isGroupedMessage =>
+      groupId != null && recipients != null && recipients!.isNotEmpty;
+
+  /// Get count of recipients who have received/delivered the message
+  int get deliveredRecipientsCount {
+    if (recipients == null) return 0;
+    return recipients!
+        .where((r) => r.deliveryStatus == MessageDeliveryStatus.delivered)
+        .length;
+  }
+
+  /// Get count of recipients who are pending (sending/sent)
+  int get pendingRecipientsCount {
+    if (recipients == null) return 0;
+    return recipients!
+        .where(
+          (r) =>
+              r.deliveryStatus == MessageDeliveryStatus.sending ||
+              r.deliveryStatus == MessageDeliveryStatus.sent,
+        )
+        .length;
+  }
+
+  /// Get count of recipients who failed to receive
+  int get failedRecipientsCount {
+    if (recipients == null) return 0;
+    return recipients!
+        .where((r) => r.deliveryStatus == MessageDeliveryStatus.failed)
+        .length;
+  }
+
+  @override
+  String toString() {
+    if (isSarMarker) {
+      return 'Message(SAR: ${sarMarkerType?.displayName}, from: $displaySender)';
+    }
+    return 'Message(from: $displaySender, text: ${text.length > 30 ? '${text.substring(0, 30)}...' : text})';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is Message && id == other.id;
+  }
+
+  @override
+  int get hashCode => id.hashCode;
+}

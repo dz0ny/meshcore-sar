@@ -1,0 +1,346 @@
+import 'package:flutter/material.dart';
+import '../../models/contact.dart';
+import '../../l10n/app_localizations.dart';
+
+/// Bottom sheet for selecting message recipient (channel, contact, or room)
+class RecipientSelectorSheet extends StatefulWidget {
+  final List<Contact> contacts;
+  final List<Contact> rooms;
+  final String? currentDestinationType;
+  final String? currentRecipientPublicKey;
+  final Function(String type, Contact? recipient) onSelect;
+
+  const RecipientSelectorSheet({
+    super.key,
+    required this.contacts,
+    required this.rooms,
+    this.currentDestinationType,
+    this.currentRecipientPublicKey,
+    required this.onSelect,
+  });
+
+  @override
+  State<RecipientSelectorSheet> createState() => _RecipientSelectorSheetState();
+}
+
+class _RecipientSelectorSheetState extends State<RecipientSelectorSheet> {
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  List<Contact> _filterContacts(List<Contact> contacts) {
+    if (_searchQuery.isEmpty) return contacts;
+    final query = _searchQuery.toLowerCase();
+    return contacts.where((contact) {
+      final name =
+          contact.displayName.toLowerCase() ?? contact.advName.toLowerCase();
+      return name.contains(query);
+    }).toList();
+  }
+
+  bool _isSelected(String type, Contact? contact) {
+    if (widget.currentDestinationType != type) return false;
+    if (type == 'channel') return true;
+    if (contact == null) return false;
+    return contact.publicKeyHex == widget.currentRecipientPublicKey;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final filteredContacts = _filterContacts(widget.contacts);
+    final filteredRooms = _filterContacts(widget.rooms);
+
+    return Container(
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.8,
+      ),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Header
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              border: Border(
+                bottom: BorderSide(
+                  color: Theme.of(context).dividerColor,
+                  width: 1,
+                ),
+              ),
+            ),
+            child: Row(
+              children: [
+                Text(
+                  l10n.selectRecipient,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                ),
+                const Spacer(),
+                IconButton(
+                  icon: const Icon(Icons.close),
+                  onPressed: () => Navigator.pop(context),
+                  tooltip: l10n.close,
+                ),
+              ],
+            ),
+          ),
+
+          // Search field
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                hintText: l10n.searchRecipients,
+                prefixIcon: const Icon(Icons.search),
+                suffixIcon: _searchQuery.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear),
+                        onPressed: () {
+                          _searchController.clear();
+                          setState(() {
+                            _searchQuery = '';
+                          });
+                        },
+                      )
+                    : null,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+              ),
+              onChanged: (value) {
+                setState(() {
+                  _searchQuery = value;
+                });
+              },
+            ),
+          ),
+
+          // Recipients list
+          Flexible(
+            child: ListView(
+              shrinkWrap: true,
+              children: [
+                // Public Channel option
+                _buildRecipientTile(
+                  context: context,
+                  icon: Icons.public,
+                  title: l10n.publicChannel,
+                  subtitle: l10n.broadcastToAllNearby,
+                  isSelected: _isSelected('channel', null),
+                  onTap: () {
+                    widget.onSelect('channel', null);
+                    Navigator.pop(context);
+                  },
+                ),
+
+                const Divider(),
+
+                // Contacts section
+                if (widget.contacts.isNotEmpty) ...[
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    child: Text(
+                      l10n.contacts,
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        color: Theme.of(context).colorScheme.primary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  if (filteredContacts.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Text(
+                        l10n.noContactsFound,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Theme.of(context).disabledColor,
+                          fontStyle: FontStyle.italic,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    )
+                  else
+                    ...filteredContacts.map((contact) {
+                      return _buildRecipientTile(
+                        context: context,
+                        icon: Icons.person,
+                        title: contact.displayName ?? contact.advName,
+                        subtitle: contact.publicKeyShort,
+                        emoji: contact.roleEmoji,
+                        isSelected: _isSelected('contact', contact),
+                        onTap: () {
+                          widget.onSelect('contact', contact);
+                          Navigator.pop(context);
+                        },
+                      );
+                    }),
+                ],
+
+                const Divider(),
+
+                // Rooms section
+                if (widget.rooms.isNotEmpty) ...[
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    child: Text(
+                      l10n.rooms,
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        color: Theme.of(context).colorScheme.primary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  if (filteredRooms.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Text(
+                        l10n.noRoomsFound,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Theme.of(context).disabledColor,
+                          fontStyle: FontStyle.italic,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    )
+                  else
+                    ...filteredRooms.map((room) {
+                      return _buildRecipientTile(
+                        context: context,
+                        icon: Icons.meeting_room,
+                        title: room.displayName ?? room.advName,
+                        subtitle: room.publicKeyShort,
+                        emoji: room.roleEmoji,
+                        isSelected: _isSelected('room', room),
+                        onTap: () {
+                          widget.onSelect('room', room);
+                          Navigator.pop(context);
+                        },
+                      );
+                    }),
+                ],
+
+                // Empty state
+                if (widget.contacts.isEmpty && widget.rooms.isEmpty) ...[
+                  Padding(
+                    padding: const EdgeInsets.all(32),
+                    child: Column(
+                      children: [
+                        Icon(
+                          Icons.people_outline,
+                          size: 64,
+                          color: Theme.of(context).disabledColor,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          l10n.noContactsOrRoomsAvailable,
+                          style: Theme.of(context).textTheme.bodyLarge
+                              ?.copyWith(
+                                color: Theme.of(context).disabledColor,
+                              ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          l10n.messagesWillBeSentToPublicChannel,
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: Theme.of(context).disabledColor,
+                              ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+
+                const SizedBox(height: 16),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRecipientTile({
+    required BuildContext context,
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    String? emoji,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return ListTile(
+      leading: Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          color: isSelected
+              ? Theme.of(context).colorScheme.primaryContainer
+              : Theme.of(context).colorScheme.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Icon(
+          icon,
+          color: isSelected
+              ? Theme.of(context).colorScheme.primary
+              : Theme.of(context).colorScheme.onSurfaceVariant,
+        ),
+      ),
+      title: Row(
+        children: [
+          if (emoji != null && emoji.isNotEmpty) ...[
+            Text(emoji, style: const TextStyle(fontSize: 16)),
+            const SizedBox(width: 8),
+          ],
+          Expanded(
+            child: Text(
+              title,
+              style: TextStyle(
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              ),
+            ),
+          ),
+        ],
+      ),
+      subtitle: Text(
+        subtitle,
+        style: const TextStyle(fontSize: 12, fontFamily: 'monospace').copyWith(
+          color: Theme.of(
+            context,
+          ).textTheme.bodySmall?.color?.withValues(alpha: 0.6),
+        ),
+      ),
+      trailing: isSelected
+          ? Icon(
+              Icons.check_circle,
+              color: Theme.of(context).colorScheme.primary,
+            )
+          : null,
+      onTap: onTap,
+    );
+  }
+}

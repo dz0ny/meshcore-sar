@@ -1,0 +1,1330 @@
+name: Build Multi-Platform
+
+# This workflow builds the MeshCore SAR app for multiple platforms and uploads artifacts
+# to Cloudflare R2 for distribution.
+#
+# Required GitHub Secrets for R2 Upload (see .github/R2_SETUP.md):
+#   - R2_ACCOUNT_ID: Cloudflare account ID
+#   - R2_ACCESS_KEY_ID: R2 API token access key
+#   - R2_SECRET_ACCESS_KEY: R2 API token secret
+#   - R2_BUCKET_NAME: Name of the R2 bucket
+#   - R2_PUBLIC_URL: (Optional) Public URL for download links
+#
+# Required GitHub Secrets for iOS TestFlight Beta Deployment:
+#   - IOS_P12_BASE64: Base64-encoded .p12 certificate
+#   - IOS_P12_PASSWORD: Password for the .p12 certificate
+#   - IOS_PROVISION_PROFILE_BASE64: Base64-encoded provisioning profile
+#   - FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD: App-specific password from Apple
+#   - FASTLANE_USER: Apple ID email (e.g., hey@dz0ny.dev)
+#   - FASTLANE_SESSION: (Optional) Fastlane session token for 2FA
+
+on:
+  push:
+    branches: [main, develop]
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  FLUTTER_VERSION: '3.35.6'
+
+jobs:
+  # Update version from tag
+  update-version:
+    name: Update Version from Tag
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    outputs:
+      version: ${{ steps.get_version.outputs.version }}
+      build_number: ${{ steps.get_version.outputs.build_number }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Get version from tag
+        id: get_version
+        run: |
+          # Extract version from tag (e.g., v1.2.3 -> 1.2.3)
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+          # Generate build number from timestamp
+          BUILD_NUMBER=$(date +%s)
+          echo "build_number=$BUILD_NUMBER" >> $GITHUB_OUTPUT
+
+          echo "Version: $VERSION"
+          echo "Build Number: $BUILD_NUMBER"
+
+      - name: Update pubspec.yaml
+        run: |
+          VERSION="${{ steps.get_version.outputs.version }}"
+          BUILD_NUMBER="${{ steps.get_version.outputs.build_number }}"
+
+          # Update version in pubspec.yaml
+          sed -i.bak "s/^version: .*/version: $VERSION+$BUILD_NUMBER/" pubspec.yaml
+
+          echo "Updated pubspec.yaml:"
+          grep "^version:" pubspec.yaml
+
+      - name: Upload updated pubspec
+        uses: actions/upload-artifact@v4
+        with:
+          name: versioned-pubspec
+          path: pubspec.yaml
+          retention-days: 1
+
+  # Android APK Build
+  build-android:
+    name: Build Android APK
+    runs-on: ubuntu-latest
+    needs: [update-version]
+    if: always() && (needs.update-version.result == 'success' || needs.update-version.result == 'skipped')
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download versioned pubspec
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: actions/download-artifact@v4
+        with:
+          name: versioned-pubspec
+          path: .
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'gradle'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: 'stable'
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Generate localizations
+        run: flutter gen-l10n
+
+      - name: Build APK
+        env:
+          COMMIT_HASH: ${{ github.sha }}
+        run: flutter build apk --release
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 30
+
+  # iOS IPA Build
+  build-ios:
+    name: Build iOS IPA
+    runs-on: macos-latest
+    needs: [update-version]
+    if: false  # Disabled - skip IPA builds
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download versioned pubspec
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: actions/download-artifact@v4
+        with:
+          name: versioned-pubspec
+          path: .
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: 'stable'
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Generate localizations
+        run: flutter gen-l10n
+
+      - name: Install CocoaPods dependencies
+        run: |
+          cd ios
+          pod install
+          cd ..
+
+      - name: Build iOS (No Codesign)
+        run: flutter build ios --release --no-codesign
+
+      # For signed builds, uncomment and configure secrets:
+      # - name: Import Code Signing Certificates
+      #   uses: apple-actions/import-codesign-certs@v2
+      #   with:
+      #     p12-file-base64: ${{ secrets.IOS_P12_BASE64 }}
+      #     p12-password: ${{ secrets.IOS_P12_PASSWORD }}
+
+      # - name: Import Provisioning Profile
+      #   run: |
+      #     mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+      #     echo "${{ secrets.IOS_PROVISION_PROFILE_BASE64 }}" | base64 --decode > ~/Library/MobileDevice/Provisioning\ Profiles/profile.mobileprovision
+
+      # - name: Build IPA (Signed)
+      #   run: flutter build ipa --release --export-options-plist=ios/ExportOptions.plist
+
+      - name: Upload iOS Build
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-build
+          path: build/ios/iphoneos/Runner.app
+          retention-days: 30
+
+      # Uncomment when signing is configured:
+      # - name: Upload IPA
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: ios-ipa
+      #     path: build/ios/ipa/*.ipa
+      #     retention-days: 30
+
+  # iOS Beta Build (Fastlane TestFlight)
+  ios-beta-testflight:
+    name: Deploy iOS Beta to TestFlight
+    runs-on: macos-latest
+    needs: [update-version]
+    # Only run on main/develop branches or tags, and only if secrets are configured
+    if: |
+      (github.ref == 'refs/heads/main' ||
+       github.ref == 'refs/heads/develop' ||
+       startsWith(github.ref, 'refs/tags/v')) &&
+      (needs.update-version.result == 'success' || needs.update-version.result == 'skipped')
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download versioned pubspec
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: actions/download-artifact@v4
+        with:
+          name: versioned-pubspec
+          path: .
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: 'stable'
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Generate localizations
+        run: flutter gen-l10n
+
+      - name: Install CocoaPods dependencies
+        run: |
+          cd ios
+          pod install
+          cd ..
+
+      - name: Setup Ruby for Fastlane
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+          bundler-cache: false
+
+      - name: Install Fastlane
+        run: |
+          cd ios
+          gem install bundler
+          bundle config set --local path 'vendor/bundle'
+          bundle install
+          cd ..
+
+      - name: Import Code Signing Certificate
+        env:
+          P12_BASE64: ${{ secrets.IOS_P12_BASE64 }}
+          P12_PASSWORD: ${{ secrets.IOS_P12_PASSWORD }}
+        run: |
+          # Create temporary keychain
+          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+          KEYCHAIN_PASSWORD=$(openssl rand -base64 32)
+
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+          # Import certificate
+          echo "$P12_BASE64" | base64 --decode > $RUNNER_TEMP/certificate.p12
+          security import $RUNNER_TEMP/certificate.p12 \
+            -k "$KEYCHAIN_PATH" \
+            -P "$P12_PASSWORD" \
+            -T /usr/bin/codesign
+
+          security list-keychain -d user -s "$KEYCHAIN_PATH"
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+      - name: Import Provisioning Profile
+        env:
+          PROVISION_PROFILE_BASE64: ${{ secrets.IOS_PROVISION_PROFILE_BASE64 }}
+        run: |
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          echo "$PROVISION_PROFILE_BASE64" | base64 --decode > ~/Library/MobileDevice/Provisioning\ Profiles/profile.mobileprovision
+
+      - name: Build and Upload to TestFlight
+        env:
+          FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD: ${{ secrets.FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD }}
+          FASTLANE_USER: ${{ secrets.FASTLANE_USER }}
+          FASTLANE_SESSION: ${{ secrets.FASTLANE_SESSION }}
+        run: |
+          cd ios
+          bundle exec fastlane beta
+          cd ..
+
+      - name: Cleanup Keychain
+        if: always()
+        run: |
+          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+          if [ -f "$KEYCHAIN_PATH" ]; then
+            security delete-keychain "$KEYCHAIN_PATH"
+          fi
+
+      - name: Upload Build Artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-beta-logs
+          path: |
+            ios/fastlane/report.xml
+            ~/Library/Logs/gym/
+          retention-days: 7
+
+  # macOS DMG Build
+  build-macos:
+    name: Build macOS DMG
+    runs-on: macos-latest
+    needs: [update-version]
+    if: false  # Disabled - skip DMG builds
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download versioned pubspec
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: actions/download-artifact@v4
+        with:
+          name: versioned-pubspec
+          path: .
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: 'stable'
+          cache: true
+
+      - name: Enable macOS desktop
+        run: flutter config --enable-macos-desktop
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Generate localizations
+        run: flutter gen-l10n
+
+      - name: Build macOS app
+        run: flutter build macos --release
+
+      - name: Create DMG
+        run: |
+          # Install create-dmg if not available
+          brew install create-dmg || true
+
+          # Create DMG from the built app
+          create-dmg \
+            --volname "MeshCore SAR" \
+            --volicon "macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_512.png" \
+            --window-pos 200 120 \
+            --window-size 800 400 \
+            --icon-size 100 \
+            --icon "MeshCore SAR.app" 200 190 \
+            --hide-extension "MeshCore SAR.app" \
+            --app-drop-link 600 185 \
+            "MeshCore-SAR.dmg" \
+            "build/macos/Build/Products/Release/meshcore_sar_app.app" || \
+          # Fallback: simple DMG creation
+          hdiutil create -volname "MeshCore SAR" \
+            -srcfolder build/macos/Build/Products/Release/meshcore_sar_app.app \
+            -ov -format UDZO MeshCore-SAR.dmg
+
+      - name: Upload macOS DMG
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-dmg
+          path: MeshCore-SAR.dmg
+          retention-days: 30
+
+      - name: Upload macOS App
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-app
+          path: build/macos/Build/Products/Release/meshcore_sar_app.app
+          retention-days: 30
+
+  # Windows Executable Build
+  build-windows:
+    name: Build Windows Executable
+    runs-on: windows-latest
+    needs: [update-version]
+    if: always() && (needs.update-version.result == 'success' || needs.update-version.result == 'skipped')
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download versioned pubspec
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: actions/download-artifact@v4
+        with:
+          name: versioned-pubspec
+          path: .
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: 'stable'
+          cache: true
+
+      - name: Enable Windows desktop
+        run: flutter config --enable-windows-desktop
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Generate localizations
+        run: flutter gen-l10n
+
+      - name: Build Windows app
+        run: flutter build windows --release
+
+      - name: Create installer (Optional - using Inno Setup)
+        shell: pwsh
+        run: |
+          # Download and install Inno Setup if needed
+          # This is optional - you can skip installer creation
+          Write-Host "Windows executable built successfully"
+          Write-Host "To create installer, configure Inno Setup script"
+
+      - name: Archive Windows Build
+        shell: pwsh
+        run: |
+          Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath MeshCore-SAR-Windows.zip
+
+      - name: Upload Windows Executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-executable
+          path: MeshCore-SAR-Windows.zip
+          retention-days: 30
+
+  # Linux Build
+  build-linux:
+    name: Build Linux AppImage
+    runs-on: ubuntu-latest
+    needs: [update-version]
+    if: always() && (needs.update-version.result == 'success' || needs.update-version.result == 'skipped')
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download versioned pubspec
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: actions/download-artifact@v4
+        with:
+          name: versioned-pubspec
+          path: .
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: 'stable'
+          cache: true
+
+      - name: Install Linux dependencies
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev libstdc++-12-dev
+
+      - name: Enable Linux desktop
+        run: flutter config --enable-linux-desktop
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Generate localizations
+        run: flutter gen-l10n
+
+      - name: Build Linux app
+        run: flutter build linux --release
+
+      - name: Archive Linux Build
+        run: |
+          cd build/linux/x64/release/bundle
+          tar -czf ../../../../../MeshCore-SAR-Linux.tar.gz *
+          cd ../../../../../
+
+      - name: Upload Linux Build
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-executable
+          path: MeshCore-SAR-Linux.tar.gz
+          retention-days: 30
+
+  # Upload to Cloudflare R2 (Unstable Bucket)
+  upload-to-r2:
+    name: Upload to Cloudflare R2
+    needs: [build-android, build-ios, build-macos, build-windows, build-linux]
+    runs-on: ubuntu-latest
+    if: always() && (needs.build-android.result == 'success' || needs.build-ios.result == 'success' || needs.build-macos.result == 'success' || needs.build-windows.result == 'success' || needs.build-linux.result == 'success')
+
+    steps:
+      - name: Checkout code for git log
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 10  # Fetch last 10 commits
+
+      - name: Download Android APK
+        if: needs.build-android.result == 'success'
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: android-apk
+          path: artifacts/android-apk
+
+      - name: Download macOS DMG
+        if: needs.build-macos.result == 'success'
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: macos-dmg
+          path: artifacts/macos-dmg
+
+      - name: Download Windows Executable
+        if: needs.build-windows.result == 'success'
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: windows-executable
+          path: artifacts/windows-executable
+
+      - name: Download Linux Executable
+        if: needs.build-linux.result == 'success'
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: linux-executable
+          path: artifacts/linux-executable
+
+      - name: Verify downloaded artifacts
+        run: |
+          echo "=== Downloaded build artifacts for R2 upload ==="
+          if [ -d artifacts ] && [ "$(ls -A artifacts 2>/dev/null)" ]; then
+            echo "Directory structure:"
+            ls -laR artifacts/
+            echo ""
+            echo "All files:"
+            find artifacts -type f -ls 2>/dev/null || echo "No files found"
+            echo ""
+            echo "=== File sizes ==="
+            find artifacts -type f -exec du -h {} \; 2>/dev/null || echo "No artifacts to measure"
+          else
+            echo "⚠️  No artifacts downloaded - builds may have been skipped or failed"
+            echo "This is expected if no platform builds succeeded"
+          fi
+
+      - name: Generate build metadata
+        id: metadata
+        run: |
+          # Generate timestamp and commit info
+          TIMESTAMP=$(date -u +"%Y%m%d-%H%M%S")
+          COMMIT_SHORT=${GITHUB_SHA::7}
+          BRANCH_NAME=${GITHUB_REF#refs/heads/}
+
+          # For tags, use tag name; otherwise use branch-commit
+          if [[ $GITHUB_REF == refs/tags/* ]]; then
+            VERSION=${GITHUB_REF#refs/tags/}
+            BUILD_PREFIX="${VERSION}"
+          else
+            BUILD_PREFIX="${BRANCH_NAME}-${COMMIT_SHORT}"
+          fi
+
+          echo "timestamp=$TIMESTAMP" >> $GITHUB_OUTPUT
+          echo "commit_short=$COMMIT_SHORT" >> $GITHUB_OUTPUT
+          echo "build_prefix=$BUILD_PREFIX" >> $GITHUB_OUTPUT
+          echo "branch_name=$BRANCH_NAME" >> $GITHUB_OUTPUT
+          echo "Build prefix: $BUILD_PREFIX"
+
+      - name: Extract last 10 commits
+        id: commits
+        run: |
+          # Get last 10 commit messages with hash and date
+          # Use jq to properly escape all strings
+          git log -10 --pretty=format:'%h|%ci|%s|%an' | while IFS='|' read -r hash date message author; do
+            jq -n \
+              --arg hash "$hash" \
+              --arg date "$date" \
+              --arg message "$message" \
+              --arg author "$author" \
+              '{hash: $hash, date: $date, message: $message, author: $author}'
+          done | jq -s '.' > commits.json
+
+          # Also create a simple text version for easier parsing
+          git log -10 --pretty=format:'%h|%ci|%s|%an' > commits.txt
+
+          cat commits.json
+          echo "Commits extracted to commits.json"
+
+      - name: Prepare artifacts for upload
+        run: |
+          # Don't exit on error - we want to copy whatever artifacts exist
+          set +e
+
+          # Create directories for R2
+          mkdir -p r2-upload/unstable/${{ steps.metadata.outputs.build_prefix }}
+
+          # For main branch, also prepare the 'latest' directory
+          if [ "${{ steps.metadata.outputs.branch_name }}" == "main" ]; then
+            mkdir -p r2-upload/unstable/latest
+            rm -f r2-upload/unstable/latest/* 2>/dev/null || true
+          fi
+
+          # Helper function to find and copy artifact
+          copy_artifact() {
+            local search_dir="$1"
+            local pattern="$2"
+            local dest_name="$3"
+            local platform="$4"
+
+            # Find the file matching the pattern
+            local src_file=$(find "$search_dir" -type f -name "$pattern" 2>/dev/null | head -1)
+
+            if [ -n "$src_file" ] && [ -f "$src_file" ]; then
+              echo "✅ Copying $platform: $src_file -> $dest_name"
+              cp "$src_file" "r2-upload/unstable/${{ steps.metadata.outputs.build_prefix }}/$dest_name" || {
+                echo "⚠️  Failed to copy $src_file"
+                return 1
+              }
+
+              if [ "${{ steps.metadata.outputs.branch_name }}" == "main" ]; then
+                cp "$src_file" "r2-upload/unstable/latest/$dest_name" || true
+              fi
+              return 0
+            else
+              echo "⚠️  Skipping $platform: No file matching '$pattern' found in $search_dir"
+              return 1
+            fi
+          }
+
+          # Copy Android APK (search for any .apk file in artifacts/android-apk)
+          if [ -d "artifacts/android-apk" ]; then
+            copy_artifact \
+              "artifacts/android-apk" \
+              "*.apk" \
+              "meshcore-sar-${{ steps.metadata.outputs.build_prefix }}-${{ steps.metadata.outputs.timestamp }}.apk" \
+              "Android APK"
+          else
+            echo "⚠️  Skipping Android APK: Directory artifacts/android-apk not found"
+          fi
+
+          # Copy macOS DMG (search for any .dmg file)
+          if [ -d "artifacts/macos-dmg" ]; then
+            copy_artifact \
+              "artifacts/macos-dmg" \
+              "*.dmg" \
+              "meshcore-sar-${{ steps.metadata.outputs.build_prefix }}-${{ steps.metadata.outputs.timestamp }}.dmg" \
+              "macOS DMG"
+          else
+            echo "⚠️  Skipping macOS DMG: Directory artifacts/macos-dmg not found"
+          fi
+
+          # Copy Windows ZIP (search for any .zip file)
+          if [ -d "artifacts/windows-executable" ]; then
+            copy_artifact \
+              "artifacts/windows-executable" \
+              "*.zip" \
+              "meshcore-sar-${{ steps.metadata.outputs.build_prefix }}-${{ steps.metadata.outputs.timestamp }}-windows.zip" \
+              "Windows ZIP"
+          else
+            echo "⚠️  Skipping Windows ZIP: Directory artifacts/windows-executable not found"
+          fi
+
+          # Copy Linux TAR.GZ (search for any .tar.gz file)
+          if [ -d "artifacts/linux-executable" ]; then
+            copy_artifact \
+              "artifacts/linux-executable" \
+              "*.tar.gz" \
+              "meshcore-sar-${{ steps.metadata.outputs.build_prefix }}-${{ steps.metadata.outputs.timestamp }}-linux.tar.gz" \
+              "Linux TAR.GZ"
+          else
+            echo "⚠️  Skipping Linux TAR.GZ: Directory artifacts/linux-executable not found"
+          fi
+
+          # Copy commits data
+          if [ -f commits.json ]; then
+            echo "✅ Copying commits.json"
+            cp commits.json "r2-upload/unstable/${{ steps.metadata.outputs.build_prefix }}/"
+            if [ "${{ steps.metadata.outputs.branch_name }}" == "main" ]; then
+              cp commits.json "r2-upload/unstable/latest/"
+            fi
+          else
+            echo "⚠️  commits.json not found"
+          fi
+
+          echo ""
+          echo "=== Preparation Summary ==="
+
+          # Count artifacts (excluding commits.json)
+          ARTIFACT_COUNT=$(find "r2-upload/unstable/${{ steps.metadata.outputs.build_prefix }}" -type f ! -name "commits.json" 2>/dev/null | wc -l)
+
+          echo "Files prepared in r2-upload/unstable/${{ steps.metadata.outputs.build_prefix }}:"
+          ls -lh "r2-upload/unstable/${{ steps.metadata.outputs.build_prefix }}/" 2>/dev/null || echo "  (none)"
+
+          if [ "${{ steps.metadata.outputs.branch_name }}" == "main" ]; then
+            echo ""
+            echo "Files prepared in r2-upload/unstable/latest:"
+            ls -lh "r2-upload/unstable/latest/" 2>/dev/null || echo "  (none)"
+          fi
+
+          echo ""
+          if [ "$ARTIFACT_COUNT" -eq 0 ]; then
+            echo "⚠️  Warning: No build artifacts were prepared (only metadata will be uploaded)"
+          else
+            echo "✅ Successfully prepared $ARTIFACT_COUNT build artifact(s)"
+          fi
+
+      - name: Generate index.html
+        env:
+          R2_PUBLIC_URL: ${{ secrets.R2_PUBLIC_URL }}
+        run: |
+          # Don't exit on error - generate index for whatever artifacts exist
+          set +e
+
+          generate_index() {
+            local BUILD_DIR="$1"
+            local BASE_URL="$2"
+            local IS_LATEST="$3"
+
+            # Get file sizes
+            get_size() {
+              if [ -f "$1" ]; then
+                ls -lh "$1" | awk '{print $5}'
+              else
+                echo "N/A"
+              fi
+            }
+
+            # Grab the newest file matching a glob, ignoring older runs hanging around.
+            get_latest_file() {
+              local pattern="$1"
+              ls -1t "$BUILD_DIR"/$pattern 2>/dev/null | head -n 1
+            }
+
+            # Generate download links HTML
+            cat > "$BUILD_DIR/index.html" <<'HTMLEOF'
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>MeshCore SAR - Build ${{ steps.metadata.outputs.build_prefix }}</title>
+            <style>
+              * { margin: 0; padding: 0; box-sizing: border-box; }
+              body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                min-height: 100vh;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 20px;
+              }
+              .container {
+                background: white;
+                border-radius: 16px;
+                box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+                max-width: 800px;
+                width: 100%;
+                padding: 40px;
+              }
+              .header {
+                text-align: center;
+                margin-bottom: 40px;
+                border-bottom: 2px solid #f0f0f0;
+                padding-bottom: 20px;
+              }
+              h1 {
+                color: #333;
+                font-size: 32px;
+                margin-bottom: 10px;
+              }
+              .build-info {
+                background: #f8f9fa;
+                border-radius: 8px;
+                padding: 20px;
+                margin-bottom: 30px;
+              }
+              .build-info h2 {
+                color: #555;
+                font-size: 18px;
+                margin-bottom: 15px;
+              }
+              .info-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                gap: 15px;
+              }
+              .info-item {
+                display: flex;
+                flex-direction: column;
+              }
+              .info-label {
+                color: #888;
+                font-size: 12px;
+                text-transform: uppercase;
+                margin-bottom: 5px;
+              }
+              .info-value {
+                color: #333;
+                font-size: 14px;
+                font-family: 'Monaco', 'Courier New', monospace;
+              }
+              .downloads {
+                margin-top: 30px;
+              }
+              .downloads h2 {
+                color: #333;
+                font-size: 24px;
+                margin-bottom: 20px;
+              }
+              .download-card {
+                background: #fff;
+                border: 2px solid #e0e0e0;
+                border-radius: 12px;
+                padding: 20px;
+                margin-bottom: 15px;
+                transition: all 0.3s ease;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+              }
+              .download-card:hover {
+                border-color: #667eea;
+                box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+                transform: translateY(-2px);
+              }
+              .download-info {
+                flex: 1;
+              }
+              .download-platform {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                margin-bottom: 8px;
+              }
+              .platform-icon {
+                font-size: 28px;
+              }
+              .platform-name {
+                font-size: 18px;
+                font-weight: 600;
+                color: #333;
+              }
+              .file-name {
+                color: #666;
+                font-size: 13px;
+                font-family: 'Monaco', 'Courier New', monospace;
+                margin-bottom: 5px;
+              }
+              .file-size {
+                color: #999;
+                font-size: 12px;
+              }
+              .download-btn {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                border: none;
+                border-radius: 8px;
+                padding: 12px 24px;
+                font-size: 14px;
+                font-weight: 600;
+                cursor: pointer;
+                text-decoration: none;
+                display: inline-block;
+                transition: all 0.3s ease;
+              }
+              .download-btn:hover {
+                transform: scale(1.05);
+                box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+              }
+              .footer {
+                margin-top: 30px;
+                padding-top: 20px;
+                border-top: 2px solid #f0f0f0;
+                text-align: center;
+                color: #888;
+                font-size: 14px;
+              }
+              .footer a {
+                color: #667eea;
+                text-decoration: none;
+              }
+              .footer a:hover {
+                text-decoration: underline;
+              }
+              .commits-section {
+                margin-top: 30px;
+                padding-top: 20px;
+                border-top: 2px solid #f0f0f0;
+              }
+              .commits-section h2 {
+                color: #333;
+                font-size: 24px;
+                margin-bottom: 20px;
+              }
+              #commits-list {
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+              }
+              .commit-item {
+                background: #f8f9fa;
+                border-left: 4px solid #667eea;
+                border-radius: 6px;
+                padding: 15px;
+                transition: all 0.2s ease;
+              }
+              .commit-item:hover {
+                background: #e9ecef;
+                border-left-color: #764ba2;
+                transform: translateX(2px);
+              }
+              .commit-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 8px;
+                flex-wrap: wrap;
+                gap: 10px;
+              }
+              .commit-hash {
+                font-family: 'Monaco', 'Courier New', monospace;
+                background: #667eea;
+                color: white;
+                padding: 4px 10px;
+                border-radius: 4px;
+                font-size: 13px;
+                font-weight: 600;
+              }
+              .commit-date {
+                color: #888;
+                font-size: 12px;
+              }
+              .commit-message {
+                color: #333;
+                font-size: 15px;
+                line-height: 1.5;
+                margin-bottom: 6px;
+                font-weight: 500;
+              }
+              .commit-author {
+                color: #666;
+                font-size: 13px;
+                font-style: italic;
+              }
+              @media (max-width: 600px) {
+                .container { padding: 20px; }
+                h1 { font-size: 24px; }
+                .download-card { flex-direction: column; align-items: flex-start; }
+                .download-btn { margin-top: 15px; width: 100%; text-align: center; }
+                .commit-header { flex-direction: column; align-items: flex-start; }
+              }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="header">
+                <h1>🗺️ MeshCore SAR</h1>
+                <p style="color: #666; margin-top: 10px;">Unstable Build Downloads</p>
+              </div>
+
+              <div class="build-info">
+                <h2>📋 Build Information</h2>
+                <div class="info-grid">
+                  <div class="info-item">
+                    <span class="info-label">Build ID</span>
+                    <span class="info-value">${{ steps.metadata.outputs.build_prefix }}</span>
+                  </div>
+                  <div class="info-item">
+                    <span class="info-label">Timestamp</span>
+                    <span class="info-value">${{ steps.metadata.outputs.timestamp }}</span>
+                  </div>
+                  <div class="info-item">
+                    <span class="info-label">Commit</span>
+                    <span class="info-value">${{ steps.metadata.outputs.commit_short }}</span>
+                  </div>
+                  <div class="info-item">
+                    <span class="info-label">Workflow Run</span>
+                    <span class="info-value">#${{ github.run_number }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="downloads">
+                <h2>📦 Download Builds</h2>
+          HTMLEOF
+
+          # Add Android APK if exists
+          APK_PATH=$(get_latest_file "*.apk")
+          if [ -n "$APK_PATH" ]; then
+            APK_FILE=$(basename "$APK_PATH")
+            APK_SIZE=$(get_size "$APK_PATH")
+            cat >> "$BUILD_DIR/index.html" <<HTMLEOF
+                <div class="download-card">
+                  <div class="download-info">
+                    <div class="download-platform">
+                      <span class="platform-icon">🤖</span>
+                      <span class="platform-name">Android APK</span>
+                    </div>
+                    <div class="file-name">$APK_FILE</div>
+                    <div class="file-size">Size: $APK_SIZE</div>
+                  </div>
+                  <a href="$BASE_URL/$APK_FILE" class="download-btn" download>Download</a>
+                </div>
+          HTMLEOF
+          fi
+
+          # Add macOS DMG if exists
+          DMG_PATH=$(get_latest_file "*.dmg")
+          if [ -n "$DMG_PATH" ]; then
+            DMG_FILE=$(basename "$DMG_PATH")
+            DMG_SIZE=$(get_size "$DMG_PATH")
+            cat >> "$BUILD_DIR/index.html" <<HTMLEOF
+                <div class="download-card">
+                  <div class="download-info">
+                    <div class="download-platform">
+                      <span class="platform-icon">🍎</span>
+                      <span class="platform-name">macOS DMG</span>
+                    </div>
+                    <div class="file-name">$DMG_FILE</div>
+                    <div class="file-size">Size: $DMG_SIZE</div>
+                  </div>
+                  <a href="$BASE_URL/$DMG_FILE" class="download-btn" download>Download</a>
+                </div>
+          HTMLEOF
+          fi
+
+          # Add Windows ZIP if exists
+          WIN_PATH=$(get_latest_file "*-windows.zip")
+          if [ -n "$WIN_PATH" ]; then
+            WIN_FILE=$(basename "$WIN_PATH")
+            WIN_SIZE=$(get_size "$WIN_PATH")
+            cat >> "$BUILD_DIR/index.html" <<HTMLEOF
+                <div class="download-card">
+                  <div class="download-info">
+                    <div class="download-platform">
+                      <span class="platform-icon">🪟</span>
+                      <span class="platform-name">Windows Executable</span>
+                    </div>
+                    <div class="file-name">$WIN_FILE</div>
+                    <div class="file-size">Size: $WIN_SIZE</div>
+                  </div>
+                  <a href="$BASE_URL/$WIN_FILE" class="download-btn" download>Download</a>
+                </div>
+          HTMLEOF
+          fi
+
+          # Add Linux TAR.GZ if exists
+          LINUX_PATH=$(get_latest_file "*-linux.tar.gz")
+          if [ -n "$LINUX_PATH" ]; then
+            LINUX_FILE=$(basename "$LINUX_PATH")
+            LINUX_SIZE=$(get_size "$LINUX_PATH")
+            cat >> "$BUILD_DIR/index.html" <<HTMLEOF
+                <div class="download-card">
+                  <div class="download-info">
+                    <div class="download-platform">
+                      <span class="platform-icon">🐧</span>
+                      <span class="platform-name">Linux (x64)</span>
+                    </div>
+                    <div class="file-name">$LINUX_FILE</div>
+                    <div class="file-size">Size: $LINUX_SIZE</div>
+                  </div>
+                  <a href="$BASE_URL/$LINUX_FILE" class="download-btn" download>Download</a>
+                </div>
+          HTMLEOF
+          fi
+
+          # Add commit history section
+          if [ -f "$BUILD_DIR/commits.json" ]; then
+            # Read commits JSON and embed it directly in the HTML
+            COMMITS_DATA=$(cat "$BUILD_DIR/commits.json")
+            cat >> "$BUILD_DIR/index.html" <<HTMLEOF
+              </div>
+
+              <div class="commits-section">
+                <h2>📝 Last 10 Commits</h2>
+                <div id="commits-list">Loading commits...</div>
+              </div>
+
+              <div class="footer">
+                <p>
+                  <a href="manifest.json">📋 View Build Manifest</a> •
+                  <a href="commits.json">🔗 Commits JSON</a> •
+                  <a href="https://github.com/${{ github.repository }}">📦 GitHub Repository</a>
+                </p>
+                <p style="margin-top: 10px; font-size: 12px;">
+                  Built with ❤️ by GitHub Actions
+                </p>
+              </div>
+            </div>
+
+            <script>
+              // Embedded commits data (no fetch needed)
+              const commitsData = ${COMMITS_DATA};
+
+              // HTML escape function to prevent XSS
+              function escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+              }
+
+              // Display commits
+              (function() {
+                const list = document.getElementById('commits-list');
+                if (!commitsData || commitsData.length === 0) {
+                  list.innerHTML = '<p style="color: #888;">No commit data available</p>';
+                  return;
+                }
+
+                list.innerHTML = commitsData.map(commit => {
+                  const date = new Date(commit.date);
+                  const dateStr = date.toLocaleString('en-US', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  });
+
+                  return \`
+                    <div class="commit-item">
+                      <div class="commit-header">
+                        <span class="commit-hash">\${escapeHtml(commit.hash)}</span>
+                        <span class="commit-date">\${escapeHtml(dateStr)}</span>
+                      </div>
+                      <div class="commit-message">\${escapeHtml(commit.message)}</div>
+                      <div class="commit-author">by \${escapeHtml(commit.author)}</div>
+                    </div>
+                  \`;
+                }).join('');
+              })();
+            </script>
+          </body>
+          </html>
+          HTMLEOF
+          else
+            # No commits file, close HTML normally
+            cat >> "$BUILD_DIR/index.html" <<'HTMLEOF'
+              </div>
+
+              <div class="footer">
+                <p>
+                  <a href="manifest.json">📋 View Build Manifest</a> •
+                  <a href="https://github.com/${{ github.repository }}">🔗 GitHub Repository</a>
+                </p>
+                <p style="margin-top: 10px; font-size: 12px;">
+                  Built with ❤️ by GitHub Actions
+                </p>
+              </div>
+            </div>
+          </body>
+          </html>
+          HTMLEOF
+          fi
+          }
+
+          # Generate index for build-specific directory
+          BUILD_DIR="r2-upload/unstable/${{ steps.metadata.outputs.build_prefix }}"
+          BASE_URL="${R2_PUBLIC_URL:-https://meshcore-sar.dz0ny.dev}/unstable/${{ steps.metadata.outputs.build_prefix }}"
+          generate_index "$BUILD_DIR" "$BASE_URL" "false"
+
+          echo "Generated index.html for ${{ steps.metadata.outputs.build_prefix }}"
+          ls -lah "$BUILD_DIR/"
+
+          # Generate index for 'latest' directory if this is main branch
+          if [ "${{ steps.metadata.outputs.branch_name }}" == "main" ]; then
+            LATEST_DIR="r2-upload/unstable/latest"
+            LATEST_URL="${R2_PUBLIC_URL:-https://meshcore-sar.dz0ny.dev}/unstable/latest"
+            generate_index "$LATEST_DIR" "$LATEST_URL" "true"
+            echo "Generated index.html for latest"
+            ls -lah "$LATEST_DIR/"
+          fi
+
+      - name: Create build manifests
+        run: |
+          # Don't exit on error - create manifests for whatever artifacts exist
+          set +e
+
+          # Create manifest for build-specific directory (after index.html is generated)
+          cat > "r2-upload/unstable/${{ steps.metadata.outputs.build_prefix }}/manifest.json" <<EOF
+          {
+            "build_id": "${{ steps.metadata.outputs.build_prefix }}-${{ steps.metadata.outputs.timestamp }}",
+            "commit": "${{ github.sha }}",
+            "commit_short": "${{ steps.metadata.outputs.commit_short }}",
+            "branch": "${{ steps.metadata.outputs.branch_name }}",
+            "tag": "${GITHUB_REF#refs/tags/}",
+            "timestamp": "${{ steps.metadata.outputs.timestamp }}",
+            "workflow_run": "${{ github.run_number }}",
+            "artifacts": $(ls -1 r2-upload/unstable/${{ steps.metadata.outputs.build_prefix }}/ | grep -v manifest.json | grep -v commits.json | jq -R . | jq -s .)
+          }
+          EOF
+
+          echo "Generated manifest for build ${{ steps.metadata.outputs.build_prefix }}"
+          cat "r2-upload/unstable/${{ steps.metadata.outputs.build_prefix }}/manifest.json"
+
+          # Create manifest for 'latest' if main branch
+          if [ "${{ steps.metadata.outputs.branch_name }}" == "main" ]; then
+            cat > "r2-upload/unstable/latest/manifest.json" <<EOF
+          {
+            "build_id": "${{ steps.metadata.outputs.build_prefix }}-${{ steps.metadata.outputs.timestamp }}",
+            "commit": "${{ github.sha }}",
+            "commit_short": "${{ steps.metadata.outputs.commit_short }}",
+            "branch": "${{ steps.metadata.outputs.branch_name }}",
+            "tag": "${GITHUB_REF#refs/tags/}",
+            "timestamp": "${{ steps.metadata.outputs.timestamp }}",
+            "workflow_run": "${{ github.run_number }}",
+            "artifacts": $(ls -1 r2-upload/unstable/latest/ | grep -v manifest.json | grep -v commits.json | jq -R . | jq -s .)
+          }
+          EOF
+            echo "Generated manifest for latest"
+            cat "r2-upload/unstable/latest/manifest.json"
+          fi
+
+          # Final debug output
+          echo "=== Final files ready for upload ==="
+          echo "Build-specific directory:"
+          ls -lah "r2-upload/unstable/${{ steps.metadata.outputs.build_prefix }}/"
+          if [ "${{ steps.metadata.outputs.branch_name }}" == "main" ]; then
+            echo "Latest directory:"
+            ls -lah "r2-upload/unstable/latest/"
+          fi
+
+      - name: Upload build-specific artifacts to Cloudflare R2
+        if: hashFiles('r2-upload/unstable/${{ steps.metadata.outputs.build_prefix }}/*') != ''
+        uses: ryand56/r2-upload-action@latest
+        with:
+          r2-account-id: ${{ secrets.R2_ACCOUNT_ID }}
+          r2-access-key-id: ${{ secrets.R2_ACCESS_KEY_ID }}
+          r2-secret-access-key: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          r2-bucket: ${{ secrets.R2_BUCKET_NAME }}
+          source-dir: r2-upload/unstable/${{ steps.metadata.outputs.build_prefix }}
+          destination-dir: unstable/${{ steps.metadata.outputs.build_prefix }}
+
+      - name: Upload latest artifacts to Cloudflare R2 (main branch only)
+        if: steps.metadata.outputs.branch_name == 'main' && hashFiles('r2-upload/unstable/latest/*') != ''
+        uses: ryand56/r2-upload-action@latest
+        with:
+          r2-account-id: ${{ secrets.R2_ACCOUNT_ID }}
+          r2-access-key-id: ${{ secrets.R2_ACCESS_KEY_ID }}
+          r2-secret-access-key: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          r2-bucket: ${{ secrets.R2_BUCKET_NAME }}
+          source-dir: r2-upload/unstable/latest
+          destination-dir: unstable/latest
+
+      - name: Generate download URLs
+        run: |
+          # If R2_PUBLIC_URL is set, generate public download links
+          if [ -n "${{ secrets.R2_PUBLIC_URL }}" ]; then
+            BASE_URL="${{ secrets.R2_PUBLIC_URL }}/unstable/${{ steps.metadata.outputs.build_prefix }}"
+
+            echo "## 📦 Unstable Build Artifacts" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Build ID: \`${{ steps.metadata.outputs.build_prefix }}-${{ steps.metadata.outputs.timestamp }}\`" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "🌐 **[View Download Page]($BASE_URL/)**" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+
+            # Add 'latest' link for main branch
+            if [ "${{ steps.metadata.outputs.branch_name }}" == "main" ]; then
+              LATEST_URL="${{ secrets.R2_PUBLIC_URL }}/unstable/latest"
+              echo "⭐ **[Latest Build (main branch)]($LATEST_URL/)**" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+            fi
+
+            if [ -f "r2-upload/unstable/${{ steps.metadata.outputs.build_prefix }}"/*.apk ]; then
+              APK_FILE=$(basename r2-upload/unstable/${{ steps.metadata.outputs.build_prefix }}/*.apk)
+              echo "- 🤖 **Android APK**: [$APK_FILE]($BASE_URL/$APK_FILE)" >> $GITHUB_STEP_SUMMARY
+            fi
+
+            if [ -f "r2-upload/unstable/${{ steps.metadata.outputs.build_prefix }}"/*.dmg ]; then
+              DMG_FILE=$(basename r2-upload/unstable/${{ steps.metadata.outputs.build_prefix }}/*.dmg)
+              echo "- 🍎 **macOS DMG**: [$DMG_FILE]($BASE_URL/$DMG_FILE)" >> $GITHUB_STEP_SUMMARY
+            fi
+
+            if [ -f "r2-upload/unstable/${{ steps.metadata.outputs.build_prefix }}"/*-windows.zip ]; then
+              WIN_FILE=$(basename r2-upload/unstable/${{ steps.metadata.outputs.build_prefix }}/*-windows.zip)
+              echo "- 🪟 **Windows ZIP**: [$WIN_FILE]($BASE_URL/$WIN_FILE)" >> $GITHUB_STEP_SUMMARY
+            fi
+
+            if [ -f "r2-upload/unstable/${{ steps.metadata.outputs.build_prefix }}"/*-linux.tar.gz ]; then
+              LINUX_FILE=$(basename r2-upload/unstable/${{ steps.metadata.outputs.build_prefix }}/*-linux.tar.gz)
+              echo "- 🐧 **Linux TAR.GZ**: [$LINUX_FILE]($BASE_URL/$LINUX_FILE)" >> $GITHUB_STEP_SUMMARY
+            fi
+
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "- 📋 **Manifest**: [manifest.json]($BASE_URL/manifest.json)" >> $GITHUB_STEP_SUMMARY
+            echo "- 📝 **Commits**: [commits.json]($BASE_URL/commits.json)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ Artifacts uploaded to R2 bucket (no public URL configured)" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  # Create Release on Tag
+  create-release:
+    name: Create Release
+    needs: [build-android, build-ios, build-macos, build-windows, build-linux]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            artifacts/android-apk/*.apk
+            artifacts/macos-dmg/*.dmg
+            artifacts/windows-executable/*.zip
+            artifacts/linux-executable/*.tar.gz
+          draft: true
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

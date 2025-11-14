@@ -2089,6 +2089,22 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get deleteChannel => 'Delete Channel';
+
+  @override
+  String deleteChannelConfirmation(String channelName) {
+    return 'Are you sure you want to delete channel \"$channelName\"? This action cannot be undone.';
+  }
+
+  @override
+  String get channelDeletedSuccessfully => 'Channel deleted successfully';
+
+  @override
+  String channelDeletionFailed(String error) {
+    return 'Failed to delete channel: $error';
+  }
+
+  @override
   String get allChannelSlotsInUse =>
       'All channel slots are in use (maximum 39 custom channels)';
 

@@ -2099,6 +2099,22 @@ class AppLocalizationsHr extends AppLocalizations {
   }
 
   @override
+  String get deleteChannel => 'Izbriši kanal';
+
+  @override
+  String deleteChannelConfirmation(String channelName) {
+    return 'Jeste li sigurni da želite izbrisati kanal \"$channelName\"? Ova radnja se ne može poništiti.';
+  }
+
+  @override
+  String get channelDeletedSuccessfully => 'Kanal uspješno izbrisan';
+
+  @override
+  String channelDeletionFailed(String error) {
+    return 'Neuspješno brisanje kanala: $error';
+  }
+
+  @override
   String get allChannelSlotsInUse =>
       'Svi slotovi kanala su zauzeti (maksimalno 39 prilagođenih kanala)';
 

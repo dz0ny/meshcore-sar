@@ -6,6 +6,7 @@ import '../../l10n/app_localizations.dart';
 class RecipientSelectorSheet extends StatefulWidget {
   final List<Contact> contacts;
   final List<Contact> rooms;
+  final List<Contact> channels;
   final String? currentDestinationType;
   final String? currentRecipientPublicKey;
   final Function(String type, Contact? recipient) onSelect;
@@ -14,6 +15,7 @@ class RecipientSelectorSheet extends StatefulWidget {
     super.key,
     required this.contacts,
     required this.rooms,
+    required this.channels,
     this.currentDestinationType,
     this.currentRecipientPublicKey,
     required this.onSelect,
@@ -45,7 +47,6 @@ class _RecipientSelectorSheetState extends State<RecipientSelectorSheet> {
 
   bool _isSelected(String type, Contact? contact) {
     if (widget.currentDestinationType != type) return false;
-    if (type == 'channel') return true;
     if (contact == null) return false;
     return contact.publicKeyHex == widget.currentRecipientPublicKey;
   }
@@ -55,6 +56,7 @@ class _RecipientSelectorSheetState extends State<RecipientSelectorSheet> {
     final l10n = AppLocalizations.of(context)!;
     final filteredContacts = _filterContacts(widget.contacts);
     final filteredRooms = _filterContacts(widget.rooms);
+    final filteredChannels = _filterContacts(widget.channels);
 
     return Container(
       constraints: BoxConstraints(
@@ -136,18 +138,50 @@ class _RecipientSelectorSheetState extends State<RecipientSelectorSheet> {
             child: ListView(
               shrinkWrap: true,
               children: [
-                // Public Channel option
-                _buildRecipientTile(
-                  context: context,
-                  icon: Icons.public,
-                  title: l10n.publicChannel,
-                  subtitle: l10n.broadcastToAllNearby,
-                  isSelected: _isSelected('channel', null),
-                  onTap: () {
-                    widget.onSelect('channel', null);
-                    Navigator.pop(context);
-                  },
-                ),
+                // Channels section
+                if (widget.channels.isNotEmpty) ...[
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    child: Text(
+                      l10n.channels,
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        color: Theme.of(context).colorScheme.primary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  if (filteredChannels.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Text(
+                        l10n.noChannelsFound,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Theme.of(context).disabledColor,
+                          fontStyle: FontStyle.italic,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    )
+                  else
+                    ...filteredChannels.map((channel) {
+                      return _buildRecipientTile(
+                        context: context,
+                        icon: Icons.public,
+                        title: channel.getLocalizedDisplayName(context),
+                        subtitle: channel.isPublicChannel
+                            ? l10n.broadcastToAllNearby
+                            : '${l10n.channel} ${channel.publicKey[1]}', // Show slot number
+                        isSelected: _isSelected('channel', channel),
+                        onTap: () {
+                          widget.onSelect('channel', channel);
+                          Navigator.pop(context);
+                        },
+                      );
+                    }),
+                ],
 
                 const Divider(),
 
@@ -242,7 +276,7 @@ class _RecipientSelectorSheetState extends State<RecipientSelectorSheet> {
                 ],
 
                 // Empty state
-                if (widget.contacts.isEmpty && widget.rooms.isEmpty) ...[
+                if (widget.contacts.isEmpty && widget.rooms.isEmpty && widget.channels.isEmpty) ...[
                   Padding(
                     padding: const EdgeInsets.all(32),
                     child: Column(
@@ -254,17 +288,8 @@ class _RecipientSelectorSheetState extends State<RecipientSelectorSheet> {
                         ),
                         const SizedBox(height: 16),
                         Text(
-                          l10n.noContactsOrRoomsAvailable,
+                          l10n.noRecipientsAvailable,
                           style: Theme.of(context).textTheme.bodyLarge
-                              ?.copyWith(
-                                color: Theme.of(context).disabledColor,
-                              ),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          l10n.messagesWillBeSentToPublicChannel,
-                          style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(
                                 color: Theme.of(context).disabledColor,
                               ),

@@ -183,6 +183,9 @@ class _MessagesTabState extends State<MessagesTab> {
     final rooms = contactsProvider.contacts
         .where((c) => c.type == ContactType.room)
         .toList();
+    final channels = contactsProvider.contacts
+        .where((c) => c.type == ContactType.channel)
+        .toList();
 
     showModalBottomSheet(
       context: context,
@@ -191,6 +194,7 @@ class _MessagesTabState extends State<MessagesTab> {
       builder: (context) => RecipientSelectorSheet(
         contacts: contacts,
         rooms: rooms,
+        channels: channels,
         currentDestinationType: _destinationType,
         currentRecipientPublicKey: _selectedRecipient?.publicKeyHex,
         onSelect: _onRecipientSelected,
@@ -200,12 +204,6 @@ class _MessagesTabState extends State<MessagesTab> {
 
   /// Handle recipient selection
   Future<void> _onRecipientSelected(String type, Contact? recipient) async {
-    // Get display name before async gap
-    final recipientName =
-        type == MessageDestinationPreferences.destinationTypeChannel
-        ? AppLocalizations.of(context)!.publicChannel
-        : (recipient?.displayName ?? recipient?.advName ?? 'Unknown');
-
     setState(() {
       _destinationType = type;
       _selectedRecipient = recipient;
@@ -238,8 +236,9 @@ class _MessagesTabState extends State<MessagesTab> {
   String _getDestinationTooltip() {
     final l10n = AppLocalizations.of(context)!;
     if (_destinationType ==
-        MessageDestinationPreferences.destinationTypeChannel) {
-      return '${l10n.publicChannel} (tap to change)';
+        MessageDestinationPreferences.destinationTypeChannel && _selectedRecipient != null) {
+      final channelName = _selectedRecipient!.getLocalizedDisplayName(context);
+      return '$channelName (tap to change)';
     } else if (_selectedRecipient != null) {
       final recipientName =
           _selectedRecipient!.displayName ?? _selectedRecipient!.advName;
@@ -266,8 +265,9 @@ class _MessagesTabState extends State<MessagesTab> {
       // Check destination type and send accordingly
       if (_destinationType ==
           MessageDestinationPreferences.destinationTypeChannel) {
-        // Send to public channel
-        await _sendToChannel(text, connectionProvider, messagesProvider);
+        // Send to selected channel (or public channel if none selected)
+        final channelIdx = _selectedRecipient?.publicKey[1] ?? 0; // Extract channel index from pseudo public key
+        await _sendToChannel(text, connectionProvider, messagesProvider, channelIdx);
       } else if (_selectedRecipient != null) {
         // Send to contact or room
         await _sendToRecipient(
@@ -279,9 +279,9 @@ class _MessagesTabState extends State<MessagesTab> {
       } else {
         // Fallback to public channel if no recipient selected
         debugPrint(
-          '⚠️ [MessagesTab] No recipient selected, falling back to channel',
+          '⚠️ [MessagesTab] No recipient selected, falling back to public channel',
         );
-        await _sendToChannel(text, connectionProvider, messagesProvider);
+        await _sendToChannel(text, connectionProvider, messagesProvider, 0);
       }
 
       _textController.clear();
@@ -294,11 +294,12 @@ class _MessagesTabState extends State<MessagesTab> {
     }
   }
 
-  /// Send message to public channel
+  /// Send message to channel
   Future<void> _sendToChannel(
     String text,
     ConnectionProvider connectionProvider,
     MessagesProvider messagesProvider,
+    int channelIdx,
   ) async {
     // Create message ID
     final messageId = '${DateTime.now().millisecondsSinceEpoch}_channel_sent';
@@ -319,15 +320,15 @@ class _MessagesTabState extends State<MessagesTab> {
       text: text,
       receivedAt: DateTime.now(),
       deliveryStatus: MessageDeliveryStatus.sending,
-      channelIdx: 0,
+      channelIdx: channelIdx,
     );
 
     // Add to messages list with "sending" status
     messagesProvider.addSentMessage(sentMessage);
 
-    // Send to public channel (channel 0)
+    // Send to selected channel
     await connectionProvider.sendChannelMessage(
-      channelIdx: 0,
+      channelIdx: channelIdx,
       text: text,
       messageId: messageId,
     );

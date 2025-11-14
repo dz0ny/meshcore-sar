@@ -3777,6 +3777,30 @@ abstract class AppLocalizations {
   /// **'Failed to create channel: {error}'**
   String channelCreationFailed(String error);
 
+  /// Delete channel button/menu item
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Channel'**
+  String get deleteChannel;
+
+  /// Confirmation dialog when deleting a channel
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete channel \"{channelName}\"? This action cannot be undone.'**
+  String deleteChannelConfirmation(String channelName);
+
+  /// Success message after deleting channel
+  ///
+  /// In en, this message translates to:
+  /// **'Channel deleted successfully'**
+  String get channelDeletedSuccessfully;
+
+  /// Error message when channel deletion fails
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to delete channel: {error}'**
+  String channelDeletionFailed(String error);
+
   /// Error when no channel slots available
   ///
   /// In en, this message translates to:

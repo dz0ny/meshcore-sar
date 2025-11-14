@@ -2780,6 +2780,10 @@
   "invalidAsciiCharacters": "Seuls les caractères ASCII sont autorisés",
   "channelCreatedSuccessfully": "Canal créé avec succès",
   "channelCreationFailed": "Échec de la création du canal : {error}",
+  "deleteChannel": "Supprimer le Canal",
+  "deleteChannelConfirmation": "Êtes-vous sûr de vouloir supprimer le canal \"{channelName}\" ? Cette action ne peut pas être annulée.",
+  "channelDeletedSuccessfully": "Canal supprimé avec succès",
+  "channelDeletionFailed": "Échec de la suppression du canal : {error}",
   "allChannelSlotsInUse": "Tous les emplacements de canaux sont utilisés (maximum 39 canaux personnalisés)",
   "createChannel": "Créer un Canal",
 

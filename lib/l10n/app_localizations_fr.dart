@@ -2120,6 +2120,22 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
+  String get deleteChannel => 'Supprimer le Canal';
+
+  @override
+  String deleteChannelConfirmation(String channelName) {
+    return 'Êtes-vous sûr de vouloir supprimer le canal \"$channelName\" ? Cette action ne peut pas être annulée.';
+  }
+
+  @override
+  String get channelDeletedSuccessfully => 'Canal supprimé avec succès';
+
+  @override
+  String channelDeletionFailed(String error) {
+    return 'Échec de la suppression du canal : $error';
+  }
+
+  @override
   String get allChannelSlotsInUse =>
       'Tous les emplacements de canaux sont utilisés (maximum 39 canaux personnalisés)';
 

@@ -1,7 +1,7 @@
 /// MeshCore BLE and Protocol Constants
 class MeshCoreConstants {
-  // Supported protocol version
-  static const int supportedCompanionProtocolVersion = 1;
+  // Supported protocol version (firmware uses this to decide V1 vs V3 message frames)
+  static const int supportedCompanionProtocolVersion = 3;
 
   // BLE Service and Characteristic UUIDs
   static const String bleServiceUuid =
@@ -39,6 +39,8 @@ class MeshCoreConstants {
   static const int cmdSendRawData = 25;
   static const int cmdSendLogin = 26;
   static const int cmdSendStatusReq = 27;
+  static const int cmdHasConnection = 28;
+  static const int cmdLogout = 29;
   static const int cmdGetContactByKey = 30;
   static const int cmdGetChannel = 31;
   static const int cmdSetChannel = 32;
@@ -46,9 +48,23 @@ class MeshCoreConstants {
   static const int cmdSignData = 34;
   static const int cmdSignFinish = 35;
   static const int cmdSendTracePath = 36;
+  static const int cmdSetDevicePin = 37;
   static const int cmdSetOtherParams = 38;
   static const int cmdSendTelemetryReq = 39;
+  static const int cmdGetCustomVars = 40;
+  static const int cmdSetCustomVar = 41;
+  static const int cmdGetAdvertPath = 42;
+  static const int cmdGetTuningParams = 43;
   static const int cmdSendBinaryReq = 50;
+  static const int cmdFactoryReset = 51;
+  static const int cmdSendPathDiscoveryReq = 52;
+  static const int cmdSetFloodScope = 54; // v8+
+  static const int cmdSendControlData = 55; // v8+
+  static const int cmdGetStats = 56; // v8+
+  static const int cmdSendAnonReq = 57;
+  static const int cmdSetAutoaddConfig = 58;
+  static const int cmdGetAutoaddConfig = 59;
+  static const int cmdGetAllowedRepeatFreq = 60;
 
   // Response Codes (Device -> App)
   static const int respOk = 0;
@@ -58,8 +74,8 @@ class MeshCoreConstants {
   static const int respEndOfContacts = 4;
   static const int respSelfInfo = 5;
   static const int respSent = 6;
-  static const int respContactMsgRecv = 7;
-  static const int respChannelMsgRecv = 8;
+  static const int respContactMsgRecv = 7;   // firmware ver < 3
+  static const int respChannelMsgRecv = 8;   // firmware ver < 3
   static const int respCurrTime = 9;
   static const int respNoMoreMessages = 10;
   static const int respExportContact = 11;
@@ -67,12 +83,17 @@ class MeshCoreConstants {
   static const int respDeviceInfo = 13;
   static const int respPrivateKey = 14;
   static const int respDisabled = 15;
+  static const int respContactMsgRecvV3 = 16; // firmware ver >= 3 (adds SNR header)
+  static const int respChannelMsgRecvV3 = 17; // firmware ver >= 3 (adds SNR header)
   static const int respChannelInfo = 18;
   static const int respSignStart = 19;
   static const int respSignature = 20;
   static const int respCustomVars = 21;
   static const int respAdvertPath = 22;
-  static const int respTuningParams = 21; // Same as respCustomVars per protocol
+  static const int respTuningParams = 23;
+  static const int respStats = 24; // v8+
+  static const int respAutoaddConfig = 25;
+  static const int respAllowedRepeatFreq = 26;
 
   // Push Codes (Device -> App, unsolicited)
   static const int pushAdvert = 0x80;
@@ -88,6 +109,15 @@ class MeshCoreConstants {
   static const int pushNewAdvert = 0x8A;
   static const int pushTelemetryResponse = 0x8B;
   static const int pushBinaryResponse = 0x8C;
+  static const int pushPathDiscoveryResponse = 0x8D;
+  static const int pushControlData = 0x8E; // v8+
+  static const int pushContactDeleted = 0x8F; // contact overwritten when contacts full
+  static const int pushContactsFull = 0x90;   // contacts storage is full
+
+  // Stats sub-types for cmdGetStats
+  static const int statsTypeCore = 0;
+  static const int statsTypeRadio = 1;
+  static const int statsTypePackets = 2;
 
   // Error Codes
   static const int errUnsupportedCmd = 1;

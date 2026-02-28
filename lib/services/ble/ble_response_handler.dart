@@ -98,6 +98,8 @@ class BleResponseHandler {
   OnChannelInfoCallback? onChannelInfoReceived;
   OnMessageEchoDetectedCallback? onMessageEchoDetected;
   VoidCallback? onRxActivity;
+  void Function(Uint8List publicKey)? onContactDeleted;
+  VoidCallback? onContactsFull;
 
   // Track the last command that was sent, so we can retry if it fails with ERR_CODE_NOT_FOUND
   Uint8List? _lastContactPublicKey;
@@ -183,6 +185,14 @@ class BleResponseHandler {
           debugPrint('  → Handling ChannelMessage');
           _handleChannelMessage(reader);
           break;
+        case MeshCoreConstants.respContactMsgRecvV3:
+          debugPrint('  → Handling ContactMessage V3');
+          _handleContactMessageV3(reader);
+          break;
+        case MeshCoreConstants.respChannelMsgRecvV3:
+          debugPrint('  → Handling ChannelMessage V3');
+          _handleChannelMessageV3(reader);
+          break;
         case MeshCoreConstants.pushTelemetryResponse:
           debugPrint('  → Handling TelemetryResponse');
           _handleTelemetryResponse(reader);
@@ -250,6 +260,20 @@ class BleResponseHandler {
         case MeshCoreConstants.respNoMoreMessages:
           debugPrint('  → Response: No More Messages');
           onNoMoreMessages?.call();
+          break;
+        case MeshCoreConstants.pushPathDiscoveryResponse:
+          debugPrint('  → Path discovery response (not yet handled)');
+          break;
+        case MeshCoreConstants.pushControlData:
+          debugPrint('  → Control data push (not yet handled)');
+          break;
+        case MeshCoreConstants.pushContactDeleted:
+          debugPrint('  → Handling ContactDeleted push');
+          _handleContactDeleted(reader);
+          break;
+        case MeshCoreConstants.pushContactsFull:
+          debugPrint('  → Contacts storage full');
+          onContactsFull?.call();
           break;
         case MeshCoreConstants.respOk:
           debugPrint('  → Response: OK');
@@ -346,6 +370,43 @@ class BleResponseHandler {
     } catch (e) {
       debugPrint('  ❌ [ChannelMessage] Parsing error: $e');
       onError?.call('Channel message parsing error: $e');
+    }
+  }
+
+  /// Handle ContactMessage V3 response (firmware ver >= 3, has SNR header)
+  void _handleContactMessageV3(BufferReader reader) {
+    try {
+      final message = FrameParser.parseContactMessageV3(reader);
+      debugPrint('  ✅ [ContactMessage V3] Parsed successfully');
+      onMessageReceived?.call(message);
+    } catch (e) {
+      debugPrint('  ❌ [ContactMessage V3] Parsing error: $e');
+      onError?.call('Contact message V3 parsing error: $e');
+    }
+  }
+
+  /// Handle ChannelMessage V3 response (firmware ver >= 3, has SNR header)
+  void _handleChannelMessageV3(BufferReader reader) {
+    try {
+      final message = FrameParser.parseChannelMessageV3(reader);
+      debugPrint('  ✅ [ChannelMessage V3] Parsed successfully');
+      onMessageReceived?.call(message);
+    } catch (e) {
+      debugPrint('  ❌ [ChannelMessage V3] Parsing error: $e');
+      onError?.call('Channel message V3 parsing error: $e');
+    }
+  }
+
+  /// Handle ContactDeleted push (0x8F) — contact overwritten due to contacts full
+  void _handleContactDeleted(BufferReader reader) {
+    try {
+      if (reader.remainingBytesCount >= 32) {
+        final publicKey = reader.readBytes(32);
+        debugPrint('  ✅ [ContactDeleted] Contact removed by firmware');
+        onContactDeleted?.call(Uint8List.fromList(publicKey));
+      }
+    } catch (e) {
+      debugPrint('  ❌ [ContactDeleted] Parsing error: $e');
     }
   }
 

@@ -20,6 +20,7 @@ class ContactsTab extends StatefulWidget {
 
 class _ContactsTabState extends State<ContactsTab> {
   Position? _currentPosition;
+  final Set<String> _resolvingAdvertKeys = <String>{};
 
   @override
   void initState() {
@@ -59,6 +60,25 @@ class _ContactsTabState extends State<ContactsTab> {
     await _getCurrentLocation();
   }
 
+  Future<void> _handleResolveAdvert(PendingAdvert advert) async {
+    final keyHex = advert.publicKeyHex;
+    if (_resolvingAdvertKeys.contains(keyHex)) return;
+
+    setState(() {
+      _resolvingAdvertKeys.add(keyHex);
+    });
+
+    try {
+      await context.read<ConnectionProvider>().getContact(advert.publicKey);
+    } finally {
+      if (mounted) {
+        setState(() {
+          _resolvingAdvertKeys.remove(keyHex);
+        });
+      }
+    }
+  }
+
   /// Calculate distance between two points in meters
   double _calculateDistanceInMeters(
     double lat1,
@@ -88,6 +108,15 @@ class _ContactsTabState extends State<ContactsTab> {
     } else {
       return '${(meters / 1000).toStringAsFixed(1)}km';
     }
+  }
+
+  String _formatRelativeTime(BuildContext context, DateTime when) {
+    final l10n = AppLocalizations.of(context)!;
+    final diff = DateTime.now().difference(when);
+    if (diff.inMinutes < 1) return l10n.justNow;
+    if (diff.inMinutes < 60) return l10n.minutesAgo(diff.inMinutes);
+    if (diff.inHours < 24) return l10n.hoursAgo(diff.inHours);
+    return l10n.daysAgo(diff.inDays);
   }
 
   /// Show the add channel dialog
@@ -140,11 +169,14 @@ class _ContactsTabState extends State<ContactsTab> {
           final repeaters = contactsProvider.repeaters;
           final rooms = contactsProvider.rooms;
           final channels = contactsProvider.channels;
+          final pendingAdverts = contactsProvider.pendingAdverts;
 
           // Check if there are any displayable contacts (excluding channels)
-          final hasDisplayableContacts = chatContacts.isNotEmpty ||
+          final hasDisplayableContacts =
+              chatContacts.isNotEmpty ||
               repeaters.isNotEmpty ||
-              rooms.isNotEmpty;
+              rooms.isNotEmpty ||
+              pendingAdverts.isNotEmpty;
 
           if (!hasDisplayableContacts) {
             return Center(
@@ -177,6 +209,27 @@ class _ContactsTabState extends State<ContactsTab> {
             child: ListView(
               padding: const EdgeInsets.all(8),
               children: [
+                // Pending adverts (public key only; quick resolve)
+                if (pendingAdverts.isNotEmpty) ...[
+                  _SectionHeader(
+                    title: l10n.pending,
+                    count: pendingAdverts.length,
+                    icon: Icons.person_add_alt_1,
+                  ),
+                  ...pendingAdverts.map(
+                    (advert) => _PendingAdvertTile(
+                      advert: advert,
+                      subtitle:
+                          '${l10n.publicKey}: ${advert.publicKeyHex}\n${l10n.lastSeen}: ${_formatRelativeTime(context, advert.receivedAt)}',
+                      isResolving: _resolvingAdvertKeys.contains(
+                        advert.publicKeyHex,
+                      ),
+                      onResolve: () => _handleResolveAdvert(advert),
+                    ),
+                  ),
+                  const Divider(height: 32),
+                ],
+
                 // Team Members (Chat contacts)
                 if (chatContacts.isNotEmpty) ...[
                   _SectionHeader(
@@ -275,6 +328,46 @@ class _ContactsTabState extends State<ContactsTab> {
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+class _PendingAdvertTile extends StatelessWidget {
+  final PendingAdvert advert;
+  final String subtitle;
+  final bool isResolving;
+  final VoidCallback onResolve;
+
+  const _PendingAdvertTile({
+    required this.advert,
+    required this.subtitle,
+    required this.isResolving,
+    required this.onResolve,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: ListTile(
+        leading: const CircleAvatar(child: Icon(Icons.campaign_outlined)),
+        title: Text(
+          advert.shortDisplayKey,
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        subtitle: Text(subtitle),
+        trailing: isResolving
+            ? const SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            : IconButton(
+                icon: const Icon(Icons.person_add_alt_1),
+                tooltip: 'Quick add',
+                onPressed: onResolve,
+              ),
       ),
     );
   }

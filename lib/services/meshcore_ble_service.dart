@@ -91,6 +91,8 @@ class MeshCoreBleService {
   OnErrorCallback? onError;
   OnContactNotFoundCallback? onContactNotFound;
   OnChannelInfoCallback? onChannelInfoReceived;
+  void Function(Uint8List publicKey)? onContactDeleted;
+  VoidCallback? onContactsFull;
 
   // Activity callbacks (for blinking indicators)
   VoidCallback? onRxActivity;
@@ -212,6 +214,12 @@ class MeshCoreBleService {
     };
     _responseHandler.onChannelInfoReceived = (int channelIdx, String channelName, Uint8List secret, int? flags) {
       onChannelInfoReceived?.call(channelIdx, channelName, secret, flags);
+    };
+    _responseHandler.onContactDeleted = (publicKey) {
+      onContactDeleted?.call(publicKey);
+    };
+    _responseHandler.onContactsFull = () {
+      onContactsFull?.call();
     };
     _responseHandler.onRxActivity = () {
       onRxActivity?.call();

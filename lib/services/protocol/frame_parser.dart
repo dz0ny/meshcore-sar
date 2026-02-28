@@ -59,6 +59,23 @@ class FrameParser {
     return {};
   }
 
+  /// Parse ContactMessage V3 response (firmware ver >= 3)
+  /// V3 prepends 3 bytes: [snr_scaled(int8)][reserved][reserved]
+  /// snr_dB = snr_scaled / 4.0
+  static Message parseContactMessageV3(BufferReader reader) {
+    reader.readInt8(); // snr scaled by 4 (ignored for now)
+    reader.readBytes(2); // reserved
+    return parseContactMessage(reader);
+  }
+
+  /// Parse ChannelMessage V3 response (firmware ver >= 3)
+  /// V3 prepends 3 bytes: [snr_scaled(int8)][reserved][reserved]
+  static Message parseChannelMessageV3(BufferReader reader) {
+    reader.readInt8(); // snr scaled by 4 (ignored for now)
+    reader.readBytes(2); // reserved
+    return parseChannelMessage(reader);
+  }
+
   /// Parse ContactMessage response
   static Message parseContactMessage(BufferReader reader) {
     final pubKeyPrefix = reader.readBytes(6);

@@ -868,11 +868,29 @@ class _MessageBubbleState extends State<MessageBubble> {
                   ),
                 ],
                 // Time for regular messages (not shown for SAR/drawing as it's already above)
-                if (!isSarMarker && !message.isDrawing)
+                if (!isSarMarker && !message.isDrawing) ...[
+                  // Hop count indicator for received messages
+                  if (!isOwnMessage && message.pathLen < 255) ...[
+                    const SizedBox(width: 4),
+                    Icon(
+                      Icons.alt_route,
+                      size: 11,
+                      color: Theme.of(context).textTheme.labelSmall?.color?.withValues(alpha: 0.6),
+                    ),
+                    const SizedBox(width: 2),
+                    Text(
+                      message.pathLen == 0 ? 'direct' : '${message.pathLen}hop',
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: Theme.of(context).textTheme.labelSmall?.color?.withValues(alpha: 0.6),
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                  ],
                   Text(
                     message.getLocalizedTimeAgo(context),
                     style: Theme.of(context).textTheme.labelSmall,
                   ),
+                ],
               ],
             ),
             const SizedBox(height: 8),

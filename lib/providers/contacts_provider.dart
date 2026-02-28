@@ -4,9 +4,32 @@ import '../services/cayenne_lpp_parser.dart';
 import '../services/contact_storage_service.dart';
 import '../utils/key_comparison.dart';
 
+class PendingAdvert {
+  final Uint8List publicKey;
+  final DateTime receivedAt;
+
+  const PendingAdvert({required this.publicKey, required this.receivedAt});
+
+  String get publicKeyHex =>
+      publicKey.map((b) => b.toRadixString(16).padLeft(2, '0')).join('');
+
+  String get shortDisplayKey {
+    final prefix = publicKey.length >= 6 ? publicKey.sublist(0, 6) : publicKey;
+    return prefix.map((b) => b.toRadixString(16).padLeft(2, '0')).join(':');
+  }
+
+  PendingAdvert copyWith({Uint8List? publicKey, DateTime? receivedAt}) {
+    return PendingAdvert(
+      publicKey: publicKey ?? this.publicKey,
+      receivedAt: receivedAt ?? this.receivedAt,
+    );
+  }
+}
+
 /// Contacts Provider - manages contact list and telemetry
 class ContactsProvider with ChangeNotifier {
   final Map<String, Contact> _contacts = {};
+  final Map<String, PendingAdvert> _pendingAdverts = {};
   final ContactStorageService _storageService = ContactStorageService();
   bool _isInitialized = false;
 
@@ -156,6 +179,9 @@ class ContactsProvider with ChangeNotifier {
   }
 
   List<Contact> get contacts => _contacts.values.toList();
+  List<PendingAdvert> get pendingAdverts =>
+      _pendingAdverts.values.toList()
+        ..sort((a, b) => b.receivedAt.compareTo(a.receivedAt));
 
   List<Contact> get chatContacts =>
       contacts.where((c) => c.isChat).toList()..sort(_sortByLastSeen);
@@ -195,11 +221,12 @@ class ContactsProvider with ChangeNotifier {
   /// Add or update a contact
   /// Excludes contacts that match the device's own public key
   void addOrUpdateContact(Contact contact, {Uint8List? devicePublicKey}) {
-    debugPrint('📝 [ContactsProvider] addOrUpdateContact called: ${contact.advName} (type: ${contact.type.displayName}, key: ${contact.publicKeyHex.substring(0, 8)}...)');
-    
+    debugPrint(
+      '📝 [ContactsProvider] addOrUpdateContact called: ${contact.advName} (type: ${contact.type.displayName}, key: ${contact.publicKeyHex.substring(0, 8)}...)',
+    );
+
     // Don't add contacts that match our device's public key
-    if (devicePublicKey != null &&
-        contact.publicKey.matches(devicePublicKey)) {
+    if (devicePublicKey != null && contact.publicKey.matches(devicePublicKey)) {
       debugPrint(
         'ℹ️ [ContactsProvider] Ignoring contact with device\'s own public key: ${contact.advName}',
       );
@@ -208,7 +235,9 @@ class ContactsProvider with ChangeNotifier {
 
     // Check if this is a new contact
     final isNewContact = !_contacts.containsKey(contact.publicKeyHex);
-    debugPrint('   isNew: $isNewContact, total contacts before: ${_contacts.length}');
+    debugPrint(
+      '   isNew: $isNewContact, total contacts before: ${_contacts.length}',
+    );
 
     Contact updatedContact;
     if (isNewContact) {
@@ -246,7 +275,10 @@ class ContactsProvider with ChangeNotifier {
     }
 
     _contacts[contact.publicKeyHex] = updatedContact;
-    debugPrint('   ✅ Contact added/updated. Total contacts: ${_contacts.length}, channels: ${channels.length}');
+    _pendingAdverts.remove(contact.publicKeyHex);
+    debugPrint(
+      '   ✅ Contact added/updated. Total contacts: ${_contacts.length}, channels: ${channels.length}',
+    );
     _persistContacts();
     notifyListeners();
     debugPrint('   🔔 notifyListeners() called');
@@ -267,6 +299,7 @@ class ContactsProvider with ChangeNotifier {
         continue;
       }
       _contacts[contact.publicKeyHex] = contact;
+      _pendingAdverts.remove(contact.publicKeyHex);
     }
     if (excluded > 0) {
       debugPrint(
@@ -303,8 +336,8 @@ class ContactsProvider with ChangeNotifier {
 
       // Update contact with new telemetry AND last seen time
       // lastAdvert is Unix timestamp in seconds
-      final currentTimestamp =
-          (DateTime.now().millisecondsSinceEpoch / 1000).round();
+      final currentTimestamp = (DateTime.now().millisecondsSinceEpoch / 1000)
+          .round();
       debugPrint('  Old lastAdvert: ${contact.lastAdvert}');
       debugPrint('  New lastAdvert: $currentTimestamp');
 
@@ -349,6 +382,34 @@ class ContactsProvider with ChangeNotifier {
         .map((b) => b.toRadixString(16).padLeft(2, '0'))
         .join('');
     return _contacts[keyHex];
+  }
+
+  /// Add or refresh a pending advert entry from PUSH_CODE_ADVERT (0x80).
+  /// Excludes self key and existing contacts.
+  void addPendingAdvert(Uint8List publicKey, {Uint8List? devicePublicKey}) {
+    if (devicePublicKey != null && publicKey.matches(devicePublicKey)) {
+      return;
+    }
+
+    final keyHex = publicKey
+        .map((b) => b.toRadixString(16).padLeft(2, '0'))
+        .join('');
+    if (_contacts.containsKey(keyHex)) {
+      _pendingAdverts.remove(keyHex);
+      return;
+    }
+
+    final existing = _pendingAdverts[keyHex];
+    final now = DateTime.now();
+    if (existing != null) {
+      _pendingAdverts[keyHex] = existing.copyWith(receivedAt: now);
+    } else {
+      _pendingAdverts[keyHex] = PendingAdvert(
+        publicKey: Uint8List.fromList(publicKey),
+        receivedAt: now,
+      );
+    }
+    notifyListeners();
   }
 
   /// Find contact by name
@@ -404,6 +465,7 @@ class ContactsProvider with ChangeNotifier {
   /// Clear all contacts
   void clearContacts() {
     _contacts.clear();
+    _pendingAdverts.clear();
     _persistContacts();
     notifyListeners();
   }
@@ -425,6 +487,7 @@ class ContactsProvider with ChangeNotifier {
 
     // Then remove from local storage
     _contacts.remove(publicKeyHex);
+    _pendingAdverts.remove(publicKeyHex);
     _persistContacts();
     notifyListeners();
   }

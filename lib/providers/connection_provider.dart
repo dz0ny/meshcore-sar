@@ -157,6 +157,8 @@ class ConnectionProvider with ChangeNotifier {
   Function(int channelIdx, String channelName, Uint8List secret, int? flags)? onChannelInfoReceived;
   Function(Uint8List publicKeyPrefix, int tag, Uint8List responseData)?
   onBinaryResponse;
+  Function(Uint8List publicKey)? onContactDeleted;
+  VoidCallback? onContactsFull;
   Function(Uint8List publicKey)? onAdvertReceived;
   Function(Uint8List publicKey)? onPathUpdated;
   Function(Uint8List publicKeyPrefix, int permissions, bool isAdmin, int tag)?
@@ -317,6 +319,16 @@ class ConnectionProvider with ChangeNotifier {
 
     _bleService.onChannelInfoReceived = (int channelIdx, String channelName, Uint8List secret, int? flags) {
       onChannelInfoReceived?.call(channelIdx, channelName, secret, flags);
+    };
+
+    _bleService.onContactDeleted = (publicKey) {
+      debugPrint('⚠️ [Provider] Contact deleted by firmware (contacts full overwrite)');
+      onContactDeleted?.call(publicKey);
+    };
+
+    _bleService.onContactsFull = () {
+      debugPrint('⚠️ [Provider] Contacts storage is full');
+      onContactsFull?.call();
     };
 
     _bleService.onMessageReceived = (message) {

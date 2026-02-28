@@ -59,6 +59,10 @@ class MeshCoreOpcodeNames {
         return 'SEND_LOGIN';
       case MeshCoreConstants.cmdSendStatusReq:
         return 'SEND_STATUS_REQ';
+      case MeshCoreConstants.cmdHasConnection:
+        return 'HAS_CONNECTION';
+      case MeshCoreConstants.cmdLogout:
+        return 'LOGOUT';
       case MeshCoreConstants.cmdGetContactByKey:
         return 'GET_CONTACT_BY_KEY';
       case MeshCoreConstants.cmdGetChannel:
@@ -73,12 +77,40 @@ class MeshCoreOpcodeNames {
         return 'SIGN_FINISH';
       case MeshCoreConstants.cmdSendTracePath:
         return 'SEND_TRACE_PATH';
+      case MeshCoreConstants.cmdSetDevicePin:
+        return 'SET_DEVICE_PIN';
       case MeshCoreConstants.cmdSetOtherParams:
         return 'SET_OTHER_PARAMS';
       case MeshCoreConstants.cmdSendTelemetryReq:
         return 'SEND_TELEMETRY_REQ';
+      case MeshCoreConstants.cmdGetCustomVars:
+        return 'GET_CUSTOM_VARS';
+      case MeshCoreConstants.cmdSetCustomVar:
+        return 'SET_CUSTOM_VAR';
+      case MeshCoreConstants.cmdGetAdvertPath:
+        return 'GET_ADVERT_PATH';
+      case MeshCoreConstants.cmdGetTuningParams:
+        return 'GET_TUNING_PARAMS';
       case MeshCoreConstants.cmdSendBinaryReq:
         return 'SEND_BINARY_REQ';
+      case MeshCoreConstants.cmdFactoryReset:
+        return 'FACTORY_RESET';
+      case MeshCoreConstants.cmdSendPathDiscoveryReq:
+        return 'SEND_PATH_DISCOVERY_REQ';
+      case MeshCoreConstants.cmdSetFloodScope:
+        return 'SET_FLOOD_SCOPE';
+      case MeshCoreConstants.cmdSendControlData:
+        return 'SEND_CONTROL_DATA';
+      case MeshCoreConstants.cmdGetStats:
+        return 'GET_STATS';
+      case MeshCoreConstants.cmdSendAnonReq:
+        return 'SEND_ANON_REQ';
+      case MeshCoreConstants.cmdSetAutoaddConfig:
+        return 'SET_AUTOADD_CONFIG';
+      case MeshCoreConstants.cmdGetAutoaddConfig:
+        return 'GET_AUTOADD_CONFIG';
+      case MeshCoreConstants.cmdGetAllowedRepeatFreq:
+        return 'GET_ALLOWED_REPEAT_FREQ';
       default:
         return 'CMD_UNKNOWN';
     }
@@ -119,12 +151,28 @@ class MeshCoreOpcodeNames {
         return 'PRIVATE_KEY';
       case MeshCoreConstants.respDisabled:
         return 'DISABLED';
+      case MeshCoreConstants.respContactMsgRecvV3:
+        return 'CONTACT_MSG_RECV_V3';
+      case MeshCoreConstants.respChannelMsgRecvV3:
+        return 'CHANNEL_MSG_RECV_V3';
       case MeshCoreConstants.respChannelInfo:
         return 'CHANNEL_INFO';
       case MeshCoreConstants.respSignStart:
         return 'SIGN_START';
       case MeshCoreConstants.respSignature:
         return 'SIGNATURE';
+      case MeshCoreConstants.respCustomVars:
+        return 'CUSTOM_VARS';
+      case MeshCoreConstants.respAdvertPath:
+        return 'ADVERT_PATH';
+      case MeshCoreConstants.respTuningParams:
+        return 'TUNING_PARAMS';
+      case MeshCoreConstants.respStats:
+        return 'STATS';
+      case MeshCoreConstants.respAutoaddConfig:
+        return 'AUTOADD_CONFIG';
+      case MeshCoreConstants.respAllowedRepeatFreq:
+        return 'ALLOWED_REPEAT_FREQ';
       default:
         return 'RESP_UNKNOWN';
     }
@@ -159,6 +207,14 @@ class MeshCoreOpcodeNames {
         return 'TELEMETRY_RESPONSE';
       case MeshCoreConstants.pushBinaryResponse:
         return 'BINARY_RESPONSE';
+      case MeshCoreConstants.pushPathDiscoveryResponse:
+        return 'PATH_DISCOVERY_RESPONSE';
+      case MeshCoreConstants.pushControlData:
+        return 'CONTROL_DATA';
+      case MeshCoreConstants.pushContactDeleted:
+        return 'CONTACT_DELETED';
+      case MeshCoreConstants.pushContactsFull:
+        return 'CONTACTS_FULL';
       default:
         return 'PUSH_UNKNOWN';
     }

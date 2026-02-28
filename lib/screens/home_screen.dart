@@ -53,6 +53,8 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   void initState() {
     super.initState();
+    // Initialize synchronously so first build always has a valid controller.
+    _initTabController();
     _loadMapEnabledAndInitTabs();
     _loadRxTxPreference();
 
@@ -67,12 +69,9 @@ class _HomeScreenState extends State<HomeScreen>
   Future<void> _loadMapEnabledAndInitTabs() async {
     final prefs = await SharedPreferences.getInstance();
     final mapEnabled = prefs.getBool('map_enabled') ?? true;
-    if (mapEnabled != _isMapEnabled) {
-      _isMapEnabled = mapEnabled;
-    }
-    _initTabController();
-    if (mounted) {
-      setState(() {});
+    if (!mounted) return;
+    if (_isMapEnabled != mapEnabled) {
+      _updateTabController(mapEnabled);
     }
   }
 
@@ -286,7 +285,8 @@ class _HomeScreenState extends State<HomeScreen>
     }
 
     // Determine if we should hide the UI (only in fullscreen on map tab)
-    final shouldHideUI = _isMapEnabled && _isMapFullscreen && _currentIndex == 2;
+    final shouldHideUI =
+        _isMapEnabled && _isMapFullscreen && _currentIndex == 2;
 
     return Scaffold(
       appBar: shouldHideUI
@@ -296,7 +296,9 @@ class _HomeScreenState extends State<HomeScreen>
               actions: [
                 Consumer<ConnectionProvider>(
                   builder: (context, provider, child) {
-                    final isConnected = provider.deviceInfo.isConnected || provider.isSseClientConnected;
+                    final isConnected =
+                        provider.deviceInfo.isConnected ||
+                        provider.isSseClientConnected;
                     if (isConnected) {
                       return IconButton(
                         onPressed: () async {
@@ -540,11 +542,14 @@ class _HomeScreenState extends State<HomeScreen>
                               color: isSseConnected
                                   ? Colors.green
                                   : (deviceInfo.signalRssi != null
-                                      ? BatteryDisplayHelper.getSignalColor(deviceInfo.signalRssi!)
-                                      : Colors.grey),
+                                        ? BatteryDisplayHelper.getSignalColor(
+                                            deviceInfo.signalRssi!,
+                                          )
+                                        : Colors.grey),
                               size: 13,
                             ),
-                            if (isBleConnected && deviceInfo.signalRssi != null) ...[
+                            if (isBleConnected &&
+                                deviceInfo.signalRssi != null) ...[
                               const SizedBox(width: 3),
                               Text(
                                 '${deviceInfo.signalRssi}',
@@ -569,7 +574,9 @@ class _HomeScreenState extends State<HomeScreen>
                             if (deviceInfo.batteryPercent != null) ...[
                               const SizedBox(width: 8),
                               Icon(
-                                BatteryDisplayHelper.getBatteryIcon(deviceInfo.batteryPercent!),
+                                BatteryDisplayHelper.getBatteryIcon(
+                                  deviceInfo.batteryPercent!,
+                                ),
                                 color: BatteryDisplayHelper.getBatteryColor(
                                   deviceInfo.batteryPercent!,
                                 ),

@@ -134,7 +134,7 @@ packages:
     description:
       path: "."
       ref: HEAD
-      resolved-ref: "0d3009f2626cd64232b7e19741f9ac45b0f01385"
+      resolved-ref: "062e5ce332353750ec43cc336f958a964a0d5000"
       url: "https://github.com/dz0ny/codec2_flutter.git"
     source: git
     version: "0.1.0"

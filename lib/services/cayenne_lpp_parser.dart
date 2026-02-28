@@ -1,8 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:latlong2/latlong.dart';
-import '../models/contact_telemetry.dart';
-import 'buffer_reader.dart';
-import 'meshcore_constants.dart';
+import 'package:meshcore_client/meshcore_client.dart';
 
 /// Cayenne LPP (Low Power Payload) data parser
 /// Used for decoding telemetry sensor data from MeshCore devices

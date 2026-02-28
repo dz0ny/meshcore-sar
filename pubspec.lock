@@ -589,6 +589,13 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.4.2"
+  meshcore_client:
+    dependency: "direct main"
+    description:
+      path: "../meshcore_client"
+      relative: true
+    source: path
+    version: "0.1.0"
   meta:
     dependency: transitive
     description:

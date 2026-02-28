@@ -1,9 +1,8 @@
 import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:meshcore_sar_app/models/contact_telemetry.dart';
 import 'package:meshcore_sar_app/services/cayenne_lpp_parser.dart';
-import 'package:meshcore_sar_app/services/meshcore_constants.dart';
+import 'package:meshcore_client/meshcore_client.dart';
 
 void main() {
   group('CayenneLppParser - GPS Codec Tests', () {

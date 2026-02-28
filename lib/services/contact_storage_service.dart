@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/contact.dart';
-import '../models/contact_telemetry.dart';
 import '../utils/key_comparison.dart';
 import 'package:latlong2/latlong.dart';
 

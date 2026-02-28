@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:flutter/widgets.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'meshcore_ble_service.dart';
+import 'package:meshcore_client/meshcore_client.dart';
 
 /// Background location tracking service for SAR operations
 /// Tracks user location and sends periodic updates via MeshCore BLE

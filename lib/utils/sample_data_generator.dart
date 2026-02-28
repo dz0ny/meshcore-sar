@@ -3,7 +3,6 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
 import '../models/contact.dart';
-import '../models/contact_telemetry.dart';
 import '../models/message.dart';
 import '../l10n/app_localizations.dart';
 

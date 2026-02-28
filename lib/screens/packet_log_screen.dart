@@ -3,8 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
-import '../models/ble_packet_log.dart';
-import '../services/meshcore_ble_service.dart';
+import 'package:meshcore_client/meshcore_client.dart';
 import '../l10n/app_localizations.dart';
 
 class PacketLogScreen extends StatefulWidget {

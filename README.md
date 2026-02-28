@@ -33,6 +33,25 @@ flutter build apk --release        # Android
 flutter build ios --release        # iOS
 ```
 
+## GitHub Actions artifacts
+
+Every push runs the `Build And Upload Release Assets` workflow and uploads build artifacts for:
+
+- Android (`.apk`)
+- Linux (`.tar.gz`)
+- macOS (`.dmg`)
+- Windows (`.zip`)
+
+How to download them:
+
+1. Open the repository on GitHub.
+2. Go to **Actions**.
+3. Open a workflow run named `Build And Upload Release Assets`.
+4. In the run summary, scroll to **Artifacts**.
+5. Download the artifact you need (`release-android`, `release-linux`, `release-macos`, `release-windows`).
+
+For published releases, the same files are also attached to the GitHub Release page.
+
 ### iOS signing
 
 ```bash

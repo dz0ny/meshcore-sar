@@ -226,6 +226,8 @@ jobs:
           RAW_TAG="${{ github.event.release.tag_name || github.ref_name }}"
           TAG="${RAW_TAG//\//-}"
           APP_PATH="build/ios/iphoneos/Runner.app"
+          IPA_NAME="${APP_NAME}-${TAG}-ios-unsigned.ipa"
+          RUNNER_ZIP_NAME="${APP_NAME}-${TAG}-ios-runner-app.zip"
           if [ ! -d "$APP_PATH" ]; then
             echo "Runner.app not found at $APP_PATH"
             exit 1
@@ -235,19 +237,23 @@ jobs:
           cp -R "$APP_PATH" ios_payload/Payload/
           (
             cd ios_payload
-            zip -qry "../${APP_NAME}-${TAG}-ios-unsigned.ipa" Payload
+            zip -qry "../${IPA_NAME}" Payload
           )
           rm -rf ios_payload
 
-          zip -qry "${APP_NAME}-${TAG}-ios-runner-app.zip" "$APP_PATH"
+          zip -qry "${RUNNER_ZIP_NAME}" "$APP_PATH"
+
+          echo "IOS_IPA=${IPA_NAME}" >> "$GITHUB_ENV"
+          echo "IOS_RUNNER_ZIP=${RUNNER_ZIP_NAME}" >> "$GITHUB_ENV"
+          ls -lah "${IPA_NAME}" "${RUNNER_ZIP_NAME}"
 
       - name: Upload iOS artifact
         uses: actions/upload-artifact@v4
         with:
           name: release-ios
           path: |
-            "${{ env.APP_NAME }}-*-ios-unsigned.ipa"
-            "${{ env.APP_NAME }}-*-ios-runner-app.zip"
+            ${{ env.IOS_IPA }}
+            ${{ env.IOS_RUNNER_ZIP }}
           if-no-files-found: error
 
   upload-release-assets:

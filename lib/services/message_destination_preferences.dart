@@ -26,7 +26,7 @@ class MessageDestinationPreferences {
 
     return {
       'type': type,
-      if (publicKey != null) 'publicKey': publicKey,
+      'publicKey': ?publicKey,
     };
   }
 

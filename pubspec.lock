@@ -143,7 +143,7 @@ packages:
       path: "."
       ref: main
       resolved-ref: dcdf1fda3e7ae2b48d74dcbf3c0b3577106db79d
-      url: "/Users/dz0ny/meshcore-sar/packages/codec2_flutter"
+      url: "https://github.com/dz0ny/codec2_flutter.git"
     source: git
     version: "0.1.0"
   collection:

@@ -49,7 +49,7 @@ dependencies:
   # Codec2 ultra-low-bitrate speech codec (FFI plugin)
   codec2_flutter:
     git:
-      url: /Users/dz0ny/meshcore-sar/packages/codec2_flutter
+      url: https://github.com/dz0ny/codec2_flutter.git
       ref: main
   ffi: ^2.1.0
 

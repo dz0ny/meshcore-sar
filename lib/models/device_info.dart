@@ -86,6 +86,10 @@ class DeviceInfo {
   final String? manufacturerModel;
   final String? semanticVersion;
 
+  // Repeat mode (firmware v9+)
+  final bool? clientRepeat;
+  final List<({int lower, int upper})>? allowedRepeatFreqRanges;
+
   DeviceInfo({
     this.deviceId,
     this.deviceName,
@@ -119,6 +123,8 @@ class DeviceInfo {
     this.firmwareBuildDate,
     this.manufacturerModel,
     this.semanticVersion,
+    this.clientRepeat,
+    this.allowedRepeatFreqRanges,
   });
 
   /// Check if device is connected
@@ -238,6 +244,8 @@ class DeviceInfo {
     String? firmwareBuildDate,
     String? manufacturerModel,
     String? semanticVersion,
+    bool? clientRepeat,
+    List<({int lower, int upper})>? allowedRepeatFreqRanges,
   }) {
     return DeviceInfo(
       deviceId: deviceId ?? this.deviceId,
@@ -272,6 +280,8 @@ class DeviceInfo {
       firmwareBuildDate: firmwareBuildDate ?? this.firmwareBuildDate,
       manufacturerModel: manufacturerModel ?? this.manufacturerModel,
       semanticVersion: semanticVersion ?? this.semanticVersion,
+      clientRepeat: clientRepeat ?? this.clientRepeat,
+      allowedRepeatFreqRanges: allowedRepeatFreqRanges ?? this.allowedRepeatFreqRanges,
     );
   }
 

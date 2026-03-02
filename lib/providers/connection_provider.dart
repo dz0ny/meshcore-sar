@@ -535,6 +535,7 @@ class ConnectionProvider with ChangeNotifier {
         firmwareBuildDate: deviceInfo['firmwareBuildDate'] as String?,
         manufacturerModel: deviceInfo['manufacturerModel'] as String?,
         semanticVersion: deviceInfo['semanticVersion'] as String?,
+        clientRepeat: deviceInfo['clientRepeat'] as bool?,
       );
       notifyListeners();
       debugPrint('✅ [Provider] Device info updated with DeviceInfo');
@@ -622,6 +623,12 @@ class ConnectionProvider with ChangeNotifier {
         _rxActivity = false;
         notifyListeners();
       });
+    };
+
+    _bleService.onAllowedRepeatFreqReceived = (ranges) {
+      debugPrint('📥 [Provider] Received AllowedRepeatFreq: $ranges');
+      _deviceInfo = _deviceInfo.copyWith(allowedRepeatFreqRanges: ranges);
+      notifyListeners();
     };
 
     _bleService.onTxActivity = () {
@@ -1652,6 +1659,7 @@ class ConnectionProvider with ChangeNotifier {
     required int bandwidth,
     required int spreadingFactor,
     required int codingRate,
+    bool? repeat,
   }) async {
     if (!_bleService.isConnected) {
       _error = 'Not connected to device';
@@ -1665,10 +1673,21 @@ class ConnectionProvider with ChangeNotifier {
         bandwidth: bandwidth,
         spreadingFactor: spreadingFactor,
         codingRate: codingRate,
+        repeat: repeat,
       );
     } catch (e) {
       _error = 'Failed to set radio params: $e';
       notifyListeners();
+    }
+  }
+
+  /// Request the list of allowed repeat frequency ranges from the device (firmware v9+)
+  Future<void> getAllowedRepeatFreq() async {
+    if (!_bleService.isConnected) return;
+    try {
+      await _bleService.getAllowedRepeatFreq();
+    } catch (e) {
+      debugPrint('Failed to get allowed repeat freq: $e');
     }
   }
 
@@ -1725,6 +1744,8 @@ class ConnectionProvider with ChangeNotifier {
     try {
       // The device query command triggers a SelfInfo response
       await _bleService.refreshDeviceInfo();
+      // Also request allowed repeat frequencies (firmware v9+, no-op on older firmware)
+      await _bleService.getAllowedRepeatFreq();
     } catch (e) {
       _error = 'Failed to refresh device info: $e';
       notifyListeners();

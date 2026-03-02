@@ -21,6 +21,7 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
   late TextEditingController _txPowerController;
 
   bool _telemetryEnabled = false;
+  bool _repeatEnabled = false;
   String _selectedBandwidth = '62.5 kHz';
   int _selectedSpreadingFactor = 8;
   int _selectedCodingRate = 8;
@@ -85,6 +86,17 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
     _telemetryEnabled =
         (deviceInfo.advLat != null && deviceInfo.advLat! != 0) ||
         (deviceInfo.advLon != null && deviceInfo.advLon! != 0);
+
+    // Initialize repeat mode from device info (firmware v9+)
+    _repeatEnabled = deviceInfo.clientRepeat ?? false;
+
+    // Fetch allowed repeat frequencies on open if device supports repeat mode
+    if (deviceInfo.clientRepeat != null &&
+        deviceInfo.allowedRepeatFreqRanges == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        context.read<ConnectionProvider>().getAllowedRepeatFreq();
+      });
+    }
   }
 
   @override
@@ -263,6 +275,7 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
         bandwidth: _bandwidthToValue(_selectedBandwidth),
         spreadingFactor: _selectedSpreadingFactor,
         codingRate: _selectedCodingRate,
+        repeat: deviceInfo.clientRepeat != null ? _repeatEnabled : null,
       );
 
       // Save TX power
@@ -702,6 +715,29 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
                     ),
                     keyboardType: TextInputType.number,
                   ),
+
+                  // Repeat Mode (firmware v9+)
+                  if (deviceInfo.clientRepeat != null) ...[
+                    const SizedBox(height: 8),
+                    SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: const Text('Client Repeat Mode'),
+                      subtitle: deviceInfo.allowedRepeatFreqRanges != null &&
+                              deviceInfo.allowedRepeatFreqRanges!.isNotEmpty
+                          ? Text(
+                              'Allowed: ${deviceInfo.allowedRepeatFreqRanges!.map((r) => r.lower == r.upper ? '${(r.lower / 1000).toStringAsFixed(3)} MHz' : '${(r.lower / 1000).toStringAsFixed(3)}–${(r.upper / 1000).toStringAsFixed(3)} MHz').join(', ')}',
+                            )
+                          : const Text(
+                              'Repeat packets on behalf of nearby nodes',
+                            ),
+                      value: _repeatEnabled,
+                      onChanged: (value) {
+                        setState(() {
+                          _repeatEnabled = value;
+                        });
+                      },
+                    ),
+                  ],
                 ],
               ),
             ),

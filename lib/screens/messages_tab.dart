@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'dart:math' as math;
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
@@ -67,7 +68,7 @@ class _MessagesTabState extends State<MessagesTab> {
   static const double _silenceRmsThreshold = 500.0;
   static const double _silencePeakThreshold = 1400.0;
   static const int _maxInteriorSilentChunks = 2;
-  bool get _voiceSupported => Platform.isIOS || Platform.isAndroid;
+  bool get _voiceSupported => !kIsWeb && (Platform.isIOS || Platform.isAndroid);
   StreamSubscription<Int16List>? _voiceStreamSub;
   String? _currentVoiceSessionId;
   final List<Int16List> _recordedChunks = [];

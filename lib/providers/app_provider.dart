@@ -50,6 +50,8 @@ class AppProvider with ChangeNotifier {
   bool get isVoiceCompressorEnabled => _isVoiceCompressorEnabled;
   bool _isVoiceLimiterEnabled = true;
   bool get isVoiceLimiterEnabled => _isVoiceLimiterEnabled;
+  bool _autoAddDiscoveredContacts = false;
+  bool get autoAddDiscoveredContacts => _autoAddDiscoveredContacts;
 
   static const Duration _packetRetryDelay = Duration(milliseconds: 1200);
   static const int _maxPacketRetryAttempts = 4;
@@ -79,6 +81,7 @@ class AppProvider with ChangeNotifier {
     _loadVoiceBandPassFilterEnabled();
     _loadVoiceCompressorEnabled();
     _loadVoiceLimiterEnabled();
+    _loadAutoAddDiscoveredContacts();
     _startPacketCapturePersistence();
     _syncDrawingsOnStartup(); // Sync drawings immediately after providers load
     _isInitialized = true;
@@ -96,7 +99,9 @@ class AppProvider with ChangeNotifier {
     final prefix = log.rawData.length <= 12
         ? log.rawData
         : log.rawData.sublist(0, 12);
-    final prefixHex = prefix.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
+    final prefixHex = prefix
+        .map((b) => b.toRadixString(16).padLeft(2, '0'))
+        .join();
     return '${log.timestamp.microsecondsSinceEpoch}|'
         '${log.direction.name}|${log.responseCode ?? -1}|'
         '${log.rawData.length}|$prefixHex';
@@ -297,6 +302,30 @@ class AppProvider with ChangeNotifier {
       notifyListeners();
     } catch (e) {
       debugPrint('Error saving voice limiter setting: $e');
+    }
+  }
+
+  /// Load auto-add discovered contacts setting from shared preferences.
+  Future<void> _loadAutoAddDiscoveredContacts() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      _autoAddDiscoveredContacts =
+          prefs.getBool('auto_add_discovered_contacts') ?? false;
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error loading auto-add discovered contacts setting: $e');
+    }
+  }
+
+  /// Toggle auto-add discovered contacts on/off.
+  Future<void> toggleAutoAddDiscoveredContacts(bool enabled) async {
+    try {
+      _autoAddDiscoveredContacts = enabled;
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('auto_add_discovered_contacts', enabled);
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error saving auto-add discovered contacts setting: $e');
     }
   }
 
@@ -794,13 +823,22 @@ class AppProvider with ChangeNotifier {
           }
         });
       } else {
-        contactsProvider.addPendingAdvert(
-          publicKey,
-          devicePublicKey: connectionProvider.deviceInfo.publicKey,
-        );
-        debugPrint(
-          '   Unknown contact - added to pending adverts list and waiting for details',
-        );
+        if (_autoAddDiscoveredContacts) {
+          debugPrint('   Unknown contact - auto-add enabled, fetching details');
+          Future.delayed(const Duration(milliseconds: 100), () {
+            if (connectionProvider.deviceInfo.isConnected) {
+              connectionProvider.getContact(publicKey);
+            }
+          });
+        } else {
+          contactsProvider.addPendingAdvert(
+            publicKey,
+            devicePublicKey: connectionProvider.deviceInfo.publicKey,
+          );
+          debugPrint(
+            '   Unknown contact - added to pending adverts list and waiting for details',
+          );
+        }
       }
     };
 
@@ -1150,7 +1188,6 @@ class AppProvider with ChangeNotifier {
       unawaited(_requestMissingVoicePackets(sessionId));
     });
   }
-
 
   /// Insert or update a voice placeholder message for binary raw-data packets.
   ///

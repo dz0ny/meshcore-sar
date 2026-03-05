@@ -663,6 +663,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           Consumer<AppProvider>(
             builder: (context, appProvider, child) => SwitchListTile(
+              secondary: const Icon(Icons.person_add_alt_1),
+              title: const Text('Auto-add discovered contacts'),
+              subtitle: const Text(
+                'Automatically fetch and add new contacts when they are discovered',
+              ),
+              value: appProvider.autoAddDiscoveredContacts,
+              onChanged: (value) async {
+                await appProvider.toggleAutoAddDiscoveredContacts(value);
+              },
+            ),
+          ),
+          Consumer<AppProvider>(
+            builder: (context, appProvider, child) => SwitchListTile(
               secondary: const Icon(Icons.map_outlined),
               title: Text(AppLocalizations.of(context)!.disableMap),
               subtitle: Text(

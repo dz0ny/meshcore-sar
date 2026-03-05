@@ -436,6 +436,7 @@ class _MessagesTabState extends State<MessagesTab> {
     if (_isSendingImage) return;
     final shouldContinue = await _confirmPublicChannelMediaSend('image');
     if (!shouldContinue) return;
+    if (!mounted) return;
     final connectionProvider = context.read<ConnectionProvider>();
     if (!connectionProvider.deviceInfo.isConnected) {
       ToastLogger.error(context, 'Not connected to device');
@@ -537,7 +538,9 @@ class _MessagesTabState extends State<MessagesTab> {
       final isChannel =
           _destinationType ==
           MessageDestinationPreferences.destinationTypeChannel;
-      final channelIdx = isChannel ? (_selectedRecipient?.publicKey[1] ?? 0) : null;
+      final channelIdx = isChannel
+          ? (_selectedRecipient?.publicKey[1] ?? 0)
+          : null;
       final recipient = _selectedRecipient;
       final placeholder = Message(
         id: msgId,
@@ -600,7 +603,7 @@ class _MessagesTabState extends State<MessagesTab> {
           requester: recipient,
         );
         debugPrint(
-          '📷 [Image] Pushed ${ served ? fragments.length : 0} '
+          '📷 [Image] Pushed ${served ? fragments.length : 0} '
           'fragments to ${recipient.advName}',
         );
       }
@@ -731,6 +734,17 @@ class _MessagesTabState extends State<MessagesTab> {
     }
 
     if (chunks.isEmpty || sessionId == null || mode == null || !mounted) {
+      if (mounted) {
+        setState(() {
+          _isSendingVoice = false;
+          _currentVoiceSessionId = null;
+        });
+      }
+      return;
+    }
+
+    final shouldContinue = await _confirmPublicChannelMediaSend('voice');
+    if (!shouldContinue) {
       if (mounted) {
         setState(() {
           _isSendingVoice = false;
@@ -938,6 +952,43 @@ class _MessagesTabState extends State<MessagesTab> {
 
     final rms = math.sqrt(sumSquares / chunk.length);
     return rms < _silenceRmsThreshold && peak < _silencePeakThreshold;
+  }
+
+  bool _isPublicChannelSelected() {
+    if (_destinationType !=
+        MessageDestinationPreferences.destinationTypeChannel) {
+      return false;
+    }
+    final channelIdx = _selectedRecipient?.publicKey[1] ?? 0;
+    return channelIdx == 0;
+  }
+
+  Future<bool> _confirmPublicChannelMediaSend(String mediaType) async {
+    if (!_isPublicChannelSelected() || !mounted) return true;
+
+    final decision = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Send to Public Channel?'),
+        content: Text(
+          'You are about to send $mediaType to the Public Channel. '
+          'This is not advised because everyone on the mesh may receive it. '
+          'Choose a private or tagged channel unless this is what you want.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Send anyway'),
+          ),
+        ],
+      ),
+    );
+
+    return decision ?? false;
   }
 
   // ── SAR dialog ─────────────────────────────────────────────────────────────

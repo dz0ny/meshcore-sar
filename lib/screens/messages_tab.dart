@@ -1282,13 +1282,20 @@ class _MessagesTabState extends State<MessagesTab> {
 
     List<Message> filteredMessages;
 
-    // If public channel is selected, show ALL messages
+    // If channel destination is selected, filter by selected channel.
     if (_destinationType ==
-            MessageDestinationPreferences.destinationTypeChannel &&
-        _selectedRecipient == null) {
-      filteredMessages = allMessages;
+        MessageDestinationPreferences.destinationTypeChannel) {
+      final selectedChannelIdx = _selectedRecipient?.publicKey[1] ?? 0;
+      if (selectedChannelIdx == 0) {
+        // Public channel view keeps showing all messages (current app behavior).
+        filteredMessages = allMessages;
+      } else {
+        filteredMessages = allMessages
+            .where((message) => message.channelIdx == selectedChannelIdx)
+            .toList();
+      }
     }
-    // If a contact or room is selected, filter by recipient
+    // If a contact or room is selected, filter by recipient/sender prefixes.
     else if ((_destinationType ==
                 MessageDestinationPreferences.destinationTypeContact ||
             _destinationType ==

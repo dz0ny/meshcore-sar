@@ -207,9 +207,11 @@ class _VoiceMessageBubbleState extends State<VoiceMessageBubble> {
     int pathLen = 0,
   }) async {
     if (_isRequesting) return;
+    final connectionProvider = context.read<ConnectionProvider>();
     var sender = _resolveSenderContact();
-    if (sender == null) {
-      final connectionProvider = context.read<ConnectionProvider>();
+    if (sender == null ||
+        sender.outPathLen < 0 ||
+        sender.outPathLen > _maxFetchHops) {
       await connectionProvider.getContacts();
       if (!mounted) return;
       sender = _resolveSenderContact();
@@ -246,7 +248,6 @@ class _VoiceMessageBubbleState extends State<VoiceMessageBubble> {
       _errorText = null;
     });
 
-    final connectionProvider = context.read<ConnectionProvider>();
     final deviceKey = connectionProvider.deviceInfo.publicKey;
     if (deviceKey == null || deviceKey.length < 6) {
       await _showBlockingAlert(
@@ -310,6 +311,7 @@ class _VoiceMessageBubbleState extends State<VoiceMessageBubble> {
 
   void _setUnavailable() {
     if (!mounted) return;
+    _showToast(AppLocalizations.of(context)!.voiceUnavailable);
     setState(() {
       _isRequesting = false;
       _autoPlayWhenReady = false;
@@ -319,6 +321,20 @@ class _VoiceMessageBubbleState extends State<VoiceMessageBubble> {
 
   Contact? _resolveSenderContact() {
     final contactsProvider = context.read<ContactsProvider>();
+
+    // For sent direct messages, fetch must target the recipient peer first.
+    final recipientKey = widget.message.recipientPublicKey;
+    if (widget.isSentByMe && recipientKey != null && recipientKey.isNotEmpty) {
+      final byKey = contactsProvider.findContactByKey(recipientKey);
+      if (byKey != null) return byKey;
+      if (recipientKey.length >= 6) {
+        final byPrefix = contactsProvider.findContactByPrefix(
+          Uint8List.fromList(recipientKey.sublist(0, 6)),
+        );
+        if (byPrefix != null) return byPrefix;
+      }
+    }
+
     final senderPrefix = widget.message.senderPublicKeyPrefix;
     if (senderPrefix != null && senderPrefix.length >= 6) {
       final contact = contactsProvider.findContactByPrefix(
@@ -333,19 +349,6 @@ class _VoiceMessageBubbleState extends State<VoiceMessageBubble> {
         envelope.senderKey6,
       );
       if (contact != null) return contact;
-    }
-
-    // For sent direct messages, fetch must target the recipient peer.
-    final recipientKey = widget.message.recipientPublicKey;
-    if (widget.isSentByMe && recipientKey != null && recipientKey.isNotEmpty) {
-      final byKey = contactsProvider.findContactByKey(recipientKey);
-      if (byKey != null) return byKey;
-      if (recipientKey.length >= 6) {
-        final byPrefix = contactsProvider.findContactByPrefix(
-          Uint8List.fromList(recipientKey.sublist(0, 6)),
-        );
-        if (byPrefix != null) return byPrefix;
-      }
     }
 
     final senderName = widget.message.senderName?.trim();
@@ -369,6 +372,7 @@ class _VoiceMessageBubbleState extends State<VoiceMessageBubble> {
 
   Future<void> _showBlockingAlert(String title, String message) async {
     if (!mounted) return;
+    _showToast('$title: $message');
     await showDialog<void>(
       context: context,
       builder: (dialogContext) => AlertDialog(

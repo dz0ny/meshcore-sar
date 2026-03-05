@@ -212,9 +212,11 @@ class _ImageMessageBubbleState extends State<ImageMessageBubble> {
     int pathLen = 0,
   }) async {
     if (_isRequesting) return;
+    final conn = context.read<ConnectionProvider>();
     var sender = _resolveSender(envelope);
-    if (sender == null) {
-      final conn = context.read<ConnectionProvider>();
+    if (sender == null ||
+        sender.outPathLen < 0 ||
+        sender.outPathLen > _maxFetchHops) {
       await conn.getContacts();
       if (!mounted) return;
       sender = _resolveSender(envelope);
@@ -247,7 +249,6 @@ class _ImageMessageBubbleState extends State<ImageMessageBubble> {
     }
 
     setState(() => _errorText = null);
-    final conn = context.read<ConnectionProvider>();
     final imageProvider = context.read<ip.ImageProvider>();
     final deviceKey = conn.deviceInfo.publicKey;
     if (deviceKey == null || deviceKey.length < 6) {
@@ -295,6 +296,7 @@ class _ImageMessageBubbleState extends State<ImageMessageBubble> {
       );
     } catch (_) {
       if (mounted) {
+        _showToast('Image fetch failed to send request');
         setState(() {
           _isRequesting = false;
           _errorText = 'Image unavailable right now';
@@ -323,7 +325,11 @@ class _ImageMessageBubbleState extends State<ImageMessageBubble> {
         if (mounted &&
             _isRequesting &&
             !imageProvider.isComplete(envelope.sessionId)) {
-          setState(() => _isRequesting = false);
+          _showToast('Image fetch timed out');
+          setState(() {
+            _isRequesting = false;
+            _errorText = 'Image fetch timed out';
+          });
         }
       },
     );
@@ -331,19 +337,8 @@ class _ImageMessageBubbleState extends State<ImageMessageBubble> {
 
   Contact? _resolveSender(ImageEnvelope envelope) {
     final contactsProvider = context.read<ContactsProvider>();
-    final senderPrefix = widget.message.senderPublicKeyPrefix;
-    if (senderPrefix != null && senderPrefix.length >= 6) {
-      final c = contactsProvider.findContactByPrefix(
-        Uint8List.fromList(senderPrefix.sublist(0, 6)),
-      );
-      if (c != null) return c;
-    }
-    final contact = contactsProvider.findContactByPrefixHex(
-      envelope.senderKey6,
-    );
-    if (contact != null) return contact;
 
-    // For sent direct messages, fetch must target the recipient peer.
+    // For sent direct messages, fetch must target the recipient peer first.
     final recipientKey = widget.message.recipientPublicKey;
     if (widget.isSentByMe && recipientKey != null && recipientKey.isNotEmpty) {
       final byKey = contactsProvider.findContactByKey(recipientKey);
@@ -355,6 +350,18 @@ class _ImageMessageBubbleState extends State<ImageMessageBubble> {
         if (byPrefix != null) return byPrefix;
       }
     }
+
+    final senderPrefix = widget.message.senderPublicKeyPrefix;
+    if (senderPrefix != null && senderPrefix.length >= 6) {
+      final c = contactsProvider.findContactByPrefix(
+        Uint8List.fromList(senderPrefix.sublist(0, 6)),
+      );
+      if (c != null) return c;
+    }
+    final contact = contactsProvider.findContactByPrefixHex(
+      envelope.senderKey6,
+    );
+    if (contact != null) return contact;
 
     final senderName = widget.message.senderName?.trim();
     if (senderName != null && senderName.isNotEmpty) {
@@ -377,6 +384,7 @@ class _ImageMessageBubbleState extends State<ImageMessageBubble> {
 
   Future<void> _showBlockingAlert(String title, String message) async {
     if (!mounted) return;
+    _showToast('$title: $message');
     await showDialog<void>(
       context: context,
       builder: (dialogContext) => AlertDialog(

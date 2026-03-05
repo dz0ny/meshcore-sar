@@ -25,6 +25,14 @@ class CayenneLppParser {
 
     int fieldCount = 0;
     while (reader.hasRemaining) {
+      if (fieldCount > 0 && _isZeroPaddedTail(data, reader.remainingBytesCount)) {
+        debugPrint(
+          '    Detected zero-padded telemetry tail, stopping parse at position '
+          '${data.length - reader.remainingBytesCount}',
+        );
+        break;
+      }
+
       try {
         fieldCount++;
         debugPrint(
@@ -248,6 +256,14 @@ class CayenneLppParser {
     if (voltage <= 3.0) return 0.0;
     if (voltage >= 4.2) return 100.0;
     return ((voltage - 3.0) / 1.2) * 100.0;
+  }
+
+  static bool _isZeroPaddedTail(Uint8List data, int remainingBytes) {
+    final start = data.length - remainingBytes;
+    for (int i = start; i < data.length; i++) {
+      if (data[i] != 0) return false;
+    }
+    return remainingBytes > 0;
   }
 
   /// Create Cayenne LPP data for GPS location

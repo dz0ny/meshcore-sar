@@ -410,6 +410,24 @@ void main() {
       expect(decoded.batteryMilliVolts, closeTo(3850, 1));
     });
 
+    test('stops parsing at zero-padded telemetry tail', () {
+      final payload = Uint8List.fromList([
+        0x01, 0x74, 0x01, 0x5F, // voltage 3.51V
+        0x01, 0x88, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00,
+      ]);
+
+      final decoded = CayenneLppParser.parse(payload);
+
+      expect(decoded.batteryMilliVolts, closeTo(3510, 1));
+      expect(decoded.batteryPercentage, closeTo(42.5, 0.1));
+      expect(decoded.gpsLocation, isNotNull);
+      expect(decoded.gpsLocation!.latitude, 0.0);
+      expect(decoded.gpsLocation!.longitude, 0.0);
+      expect(decoded.extraSensorData?['digital_input_0'], isNull);
+    });
+
     test('empty data returns empty telemetry', () {
       final empty = Uint8List(0);
       final decoded = CayenneLppParser.parse(empty);

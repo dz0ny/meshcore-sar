@@ -46,8 +46,8 @@ class PingTracker {
   /// Mark a ping as successful (response received)
   /// Should be called when telemetry response arrives
   void markPingSuccessful(Uint8List publicKey) {
-    final String keyHex = _publicKeyToHex(publicKey);
-    final request = _pendingPings.remove(keyHex);
+    final requestKey = _findMatchingPendingPingKey(publicKey);
+    final request = requestKey != null ? _pendingPings.remove(requestKey) : null;
 
     if (request != null) {
       request.cancel();
@@ -80,6 +80,23 @@ class PingTracker {
   /// Convert public key to hex string for map key
   String _publicKeyToHex(Uint8List publicKey) {
     return publicKey.map((b) => b.toRadixString(16).padLeft(2, '0')).join('');
+  }
+
+  String? _findMatchingPendingPingKey(Uint8List responseKey) {
+    final responseHex = _publicKeyToHex(responseKey);
+
+    if (_pendingPings.containsKey(responseHex)) {
+      return responseHex;
+    }
+
+    for (final entry in _pendingPings.entries) {
+      final pendingHex = entry.key;
+      if (pendingHex.startsWith(responseHex) || responseHex.startsWith(pendingHex)) {
+        return pendingHex;
+      }
+    }
+
+    return null;
   }
 }
 

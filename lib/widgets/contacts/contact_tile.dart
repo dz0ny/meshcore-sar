@@ -881,12 +881,23 @@ class ContactTile extends StatelessWidget {
                           TextButton.icon(
                             onPressed: isPingInProgress
                                 ? null
-                                : () {
+                                : () async {
                                     final connectionProvider = context
                                         .read<ConnectionProvider>();
-                                    connectionProvider.requestTelemetry(
-                                      contact.publicKey,
-                                      zeroHop: true,
+                                    final result = await connectionProvider.smartPing(
+                                      contactPublicKey: contact.publicKey,
+                                      hasPath: contact.routeHasPath,
+                                    );
+
+                                    if (!context.mounted || result.success) {
+                                      return;
+                                    }
+
+                                    ToastLogger.error(
+                                      context,
+                                      AppLocalizations.of(
+                                        context,
+                                      )!.pingFailed(contact.displayName),
                                     );
                                   },
                             icon: isPingInProgress

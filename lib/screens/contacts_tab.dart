@@ -119,6 +119,43 @@ class _ContactsTabState extends State<ContactsTab> {
     return l10n.daysAgo(diff.inDays);
   }
 
+  List<Contact> _sortContactsByDistance(List<Contact> contacts) {
+    final sorted = List<Contact>.from(contacts);
+
+    sorted.sort((a, b) {
+      final distanceA = _distanceFromCurrentPosition(a);
+      final distanceB = _distanceFromCurrentPosition(b);
+
+      if (distanceA != null && distanceB != null) {
+        final distanceCompare = distanceA.compareTo(distanceB);
+        if (distanceCompare != 0) return distanceCompare;
+      } else if (distanceA != null) {
+        return -1;
+      } else if (distanceB != null) {
+        return 1;
+      }
+
+      return b.lastSeenTime.compareTo(a.lastSeenTime);
+    });
+
+    return sorted;
+  }
+
+  double? _distanceFromCurrentPosition(Contact contact) {
+    final currentPosition = _currentPosition;
+    final contactLocation = contact.displayLocation;
+    if (currentPosition == null || contactLocation == null) {
+      return null;
+    }
+
+    return _calculateDistanceInMeters(
+      currentPosition.latitude,
+      currentPosition.longitude,
+      contactLocation.latitude,
+      contactLocation.longitude,
+    );
+  }
+
   /// Show the add channel dialog
   Future<void> _showAddChannelDialog(BuildContext context) async {
     final l10n = AppLocalizations.of(context)!;
@@ -165,10 +202,12 @@ class _ContactsTabState extends State<ContactsTab> {
     return Scaffold(
       body: Consumer<ContactsProvider>(
         builder: (context, contactsProvider, child) {
-          final chatContacts = contactsProvider.chatContacts;
-          final repeaters = contactsProvider.repeaters;
-          final rooms = contactsProvider.rooms;
-          final channels = contactsProvider.channels;
+          final chatContacts = _sortContactsByDistance(
+            contactsProvider.chatContacts,
+          );
+          final repeaters = _sortContactsByDistance(contactsProvider.repeaters);
+          final rooms = _sortContactsByDistance(contactsProvider.rooms);
+          final channels = _sortContactsByDistance(contactsProvider.channels);
           final pendingAdverts = contactsProvider.pendingAdverts;
 
           // Check if there are any displayable contacts (excluding channels)

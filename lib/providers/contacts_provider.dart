@@ -423,9 +423,16 @@ class ContactsProvider with ChangeNotifier {
       debugPrint('  Old lastAdvert: ${contact.lastAdvert}');
       debugPrint('  New lastAdvert: $currentTimestamp');
 
+      final persistedGps = _getValidGpsOrNull(telemetry.gpsLocation);
       final updatedContact = contact.copyWith(
         telemetry: telemetry,
         lastAdvert: currentTimestamp, // Update last seen time
+        advLat: persistedGps != null
+            ? _coordinateToAdvertMicrodegrees(persistedGps.latitude)
+            : contact.advLat,
+        advLon: persistedGps != null
+            ? _coordinateToAdvertMicrodegrees(persistedGps.longitude)
+            : contact.advLon,
       );
       _contacts[contact.publicKeyHex] = updatedContact;
       debugPrint('  ✅ Updated contact in map (with new lastAdvert)');
@@ -474,6 +481,10 @@ class ContactsProvider with ChangeNotifier {
     }
 
     return incomingGps == null;
+  }
+
+  int _coordinateToAdvertMicrodegrees(double coordinate) {
+    return (coordinate * 1e6).round();
   }
 
   /// Find contact by public key prefix (6 bytes)

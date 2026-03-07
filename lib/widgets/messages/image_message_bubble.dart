@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_avif/flutter_avif.dart';
 import 'package:provider/provider.dart';
 import '../../models/message.dart';
+import '../../providers/app_provider.dart';
 import '../../providers/connection_provider.dart';
 import '../../providers/contacts_provider.dart';
 import '../../providers/image_provider.dart' as ip;
@@ -254,11 +255,17 @@ class _ImageMessageBubbleState extends State<ImageMessageBubble> {
     int pathLen = 0,
   }) async {
     if (_isRequesting) return;
+    setState(() {
+      _isRequesting = true;
+      _errorText = null;
+    });
+
     final conn = context.read<ConnectionProvider>();
     final imageProvider = context.read<ip.ImageProvider>();
     imageProvider.resumeIncomingSession(envelope.sessionId);
     final contactsProvider = context.read<ContactsProvider>();
-    final resolution = await TransmissionTargetResolver.resolveFetchTarget(
+    final appProvider = context.read<AppProvider>();
+    var resolution = await TransmissionTargetResolver.resolveFetchTarget(
       contactsProvider: contactsProvider,
       refreshContacts: conn.getContacts,
       isSentByMe: widget.isSentByMe,
@@ -271,6 +278,7 @@ class _ImageMessageBubbleState extends State<ImageMessageBubble> {
     if (!mounted) return;
 
     if (resolution.failure == TransmissionTargetFailure.unknownContact) {
+      _clearRequestState();
       await _showBlockingAlert(
         'Cannot fetch image',
         'Sender contact is unknown. Sync contacts first.',
@@ -278,6 +286,7 @@ class _ImageMessageBubbleState extends State<ImageMessageBubble> {
       return;
     }
     if (resolution.failure == TransmissionTargetFailure.unknownRoute) {
+      _clearRequestState();
       await _showBlockingAlert(
         'Cannot fetch image',
         'Sender route is unknown. Sync contacts/path first.',
@@ -285,14 +294,76 @@ class _ImageMessageBubbleState extends State<ImageMessageBubble> {
       return;
     }
     if (resolution.failure == TransmissionTargetFailure.tooFar) {
+      _clearRequestState();
       await _showBlockingAlert(
         'Cannot fetch image',
         'Message is too far (${resolution.hops} hops, max ${resolution.maxHops}).',
       );
       return;
     }
+    if (resolution.failure == TransmissionTargetFailure.unreachable) {
+      _clearRequestState();
+      await _showBlockingAlert(
+        'Cannot fetch image',
+        'Sender route did not respond to a path check. Sync contacts/path and try again.',
+      );
+      return;
+    }
 
-    final sender = resolution.target!;
+    var sender = resolution.target!;
+    var routeVerified = await appProvider.verifyRawTransportRoute(sender);
+    if (!mounted) return;
+    if (!routeVerified) {
+      await conn.getContacts();
+      if (!mounted) return;
+      resolution = await TransmissionTargetResolver.resolveFetchTarget(
+        contactsProvider: contactsProvider,
+        refreshContacts: conn.getContacts,
+        isSentByMe: widget.isSentByMe,
+        recipientPublicKey: widget.message.recipientPublicKey,
+        senderPublicKeyPrefix: widget.message.senderPublicKeyPrefix,
+        senderKey6FromEnvelope: envelope.senderKey6,
+        senderName: widget.message.senderName,
+        maxFetchHops: _maxFetchHops,
+      );
+      if (!mounted) return;
+      if (resolution.failure == TransmissionTargetFailure.unknownContact) {
+        _clearRequestState();
+        await _showBlockingAlert(
+          'Cannot fetch image',
+          'Sender contact is unknown. Sync contacts first.',
+        );
+        return;
+      }
+      if (resolution.failure == TransmissionTargetFailure.unknownRoute) {
+        _clearRequestState();
+        await _showBlockingAlert(
+          'Cannot fetch image',
+          'Sender route is unknown. Sync contacts/path first.',
+        );
+        return;
+      }
+      if (resolution.failure == TransmissionTargetFailure.tooFar) {
+        _clearRequestState();
+        await _showBlockingAlert(
+          'Cannot fetch image',
+          'Message is too far (${resolution.hops} hops, max ${resolution.maxHops}).',
+        );
+        return;
+      }
+      sender = resolution.target!;
+      routeVerified = await appProvider.verifyRawTransportRoute(sender);
+      if (!mounted) return;
+      if (!routeVerified) {
+        _clearRequestState();
+        await _showBlockingAlert(
+          'Cannot fetch image',
+          'Sender route did not respond on the raw transport path.',
+        );
+        return;
+      }
+    }
+
     if (sender.outPathLen >= 2) {
       _showToast(
         'Image fetch over ${sender.outPathLen} hops may take a while.',
@@ -302,6 +373,7 @@ class _ImageMessageBubbleState extends State<ImageMessageBubble> {
     setState(() => _errorText = null);
     final deviceKey = conn.deviceInfo.publicKey;
     if (deviceKey == null || deviceKey.length < 6) {
+      _clearRequestState();
       await _showBlockingAlert(
         'Cannot fetch image',
         'Device key is unavailable.',
@@ -331,11 +403,6 @@ class _ImageMessageBubbleState extends State<ImageMessageBubble> {
             requesterKey6: requesterKey6,
             timestampSec: DateTime.now().millisecondsSinceEpoch ~/ 1000,
           );
-
-    setState(() {
-      _isRequesting = true;
-      _errorText = null;
-    });
 
     final payload = request.encodeBinary();
     try {
@@ -402,6 +469,13 @@ class _ImageMessageBubbleState extends State<ImageMessageBubble> {
     setState(() {
       _isRequesting = false;
       _errorText = 'Image receive canceled';
+    });
+  }
+
+  void _clearRequestState() {
+    if (!mounted) return;
+    setState(() {
+      _isRequesting = false;
     });
   }
 

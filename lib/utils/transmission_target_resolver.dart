@@ -3,7 +3,7 @@ import 'dart:typed_data';
 import '../models/contact.dart';
 import '../providers/contacts_provider.dart';
 
-enum TransmissionTargetFailure { unknownContact, unknownRoute, tooFar }
+enum TransmissionTargetFailure { unknownContact, unknownRoute, tooFar, unreachable }
 
 class TransmissionTargetResolution {
   final Contact? target;

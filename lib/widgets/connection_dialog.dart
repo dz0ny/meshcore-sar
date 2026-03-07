@@ -21,10 +21,19 @@ class _ConnectionDialogState extends State<ConnectionDialog>
   final List<DiscoveredServer> _discoveredServers = [];
   int _scannedCount = 0;
   int _totalToScan = 0;
-  String? _connectingToServerKey; // Track which server is being connected to (ip:port)
+  int _lastTabIndex = 0;
+  String?
+  _connectingToServerKey; // Track which server is being connected to (ip:port)
 
   // Named listener method for proper cleanup
   void _onTabChanged() {
+    if (_tabController.index == _lastTabIndex) return;
+    _lastTabIndex = _tabController.index;
+
+    if (_tabController.index == 0) {
+      _refreshBleDevices();
+    }
+
     if (_tabController.index == 1) {
       // Switched to network tab
       if (_networkScanner.hasCachedResults && _discoveredServers.isEmpty) {
@@ -47,13 +56,16 @@ class _ConnectionDialogState extends State<ConnectionDialog>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    _connectionProvider = Provider.of<ConnectionProvider>(context, listen: false);
+    _connectionProvider = Provider.of<ConnectionProvider>(
+      context,
+      listen: false,
+    );
 
     // Defer scan startup until after the first frame so Provider listeners
     // are not notified while this dialog is still being built.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      _connectionProvider.startScan();
+      _refreshBleDevices();
     });
 
     // Set up network scanner callbacks
@@ -99,6 +111,12 @@ class _ConnectionDialogState extends State<ConnectionDialog>
     });
     _networkScanner.clearCache(); // Clear cache before starting new scan
     _networkScanner.scan();
+  }
+
+  Future<void> _refreshBleDevices() async {
+    await _connectionProvider.stopScan();
+    if (!mounted) return;
+    await _connectionProvider.startScan();
   }
 
   Color _getSignalColor(int rssi) {
@@ -218,10 +236,7 @@ class _ConnectionDialogState extends State<ConnectionDialog>
                   Icons.refresh,
                   color: Theme.of(context).colorScheme.onPrimaryContainer,
                 ),
-                onPressed: () {
-                  connectionProvider.stopScan();
-                  connectionProvider.startScan();
-                },
+                onPressed: _refreshBleDevices,
               ),
             ],
           ),
@@ -255,10 +270,7 @@ class _ConnectionDialogState extends State<ConnectionDialog>
                       ),
                       const SizedBox(height: 8),
                       TextButton.icon(
-                        onPressed: () {
-                          connectionProvider.stopScan();
-                          connectionProvider.startScan();
-                        },
+                        onPressed: _refreshBleDevices,
                         icon: const Icon(Icons.refresh),
                         label: Text(AppLocalizations.of(context)!.scanAgain),
                       ),

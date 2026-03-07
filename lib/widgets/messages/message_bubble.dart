@@ -23,15 +23,16 @@ import '../../utils/key_comparison.dart';
 import '../../utils/voice_message_parser.dart';
 import '../../utils/image_message_parser.dart';
 import '../../utils/tictactoe_message_parser.dart';
-import '../../utils/avatar_label_helper.dart';
 import '../../utils/location_formats.dart';
 import '../../l10n/app_localizations.dart';
 import '../../utils/message_extensions.dart';
-import '../common/contact_avatar.dart';
 import 'voice_message_bubble.dart';
 import 'image_message_bubble.dart';
 import 'tictactoe_message_bubble.dart';
 import 'message_trace_sheet.dart';
+import 'message_bubble_header.dart';
+import 'message_bubble_signal.dart';
+import 'system_message_bubble.dart';
 
 /// Reusable message bubble widget that displays messages with various types:
 /// - Regular text messages (channel or direct)
@@ -64,104 +65,6 @@ class MessageBubble extends StatefulWidget {
 class _MessageBubbleState extends State<MessageBubble> {
   bool _isExpanded = false;
   bool _showReceivedStats = false;
-
-  Widget _buildHeaderAvatar(
-    BuildContext context, {
-    required bool isOwnMessage,
-    required bool isChannelMessage,
-    required dynamic senderContact,
-    required String displayName,
-  }) {
-    if (isOwnMessage) {
-      return CircleAvatar(
-        radius: 10.5,
-        backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-        child: Icon(
-          Icons.account_circle,
-          size: 16,
-          color: Theme.of(context).colorScheme.primary,
-        ),
-      );
-    }
-
-    if (senderContact is Contact) {
-      return ContactAvatar(
-        contact: senderContact,
-        radius: 10.5,
-        displayName: displayName,
-      );
-    }
-
-    final background = isChannelMessage
-        ? Colors.teal.withValues(alpha: 0.16)
-        : Theme.of(context).colorScheme.surfaceContainerHighest;
-    final foreground = isChannelMessage
-        ? Colors.teal.shade800
-        : Theme.of(context).colorScheme.onSurfaceVariant;
-
-    return CircleAvatar(
-      radius: 10.5,
-      backgroundColor: background,
-      child: Text(
-        AvatarLabelHelper.buildLabel(displayName),
-        style: TextStyle(
-          fontSize: 10,
-          fontWeight: FontWeight.w700,
-          color: foreground,
-          letterSpacing: -0.2,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildBubbleMetaFooter(
-    BuildContext context, {
-    required Message message,
-    required bool isSarMarker,
-  }) {
-    final metaColor = Theme.of(
-      context,
-    ).textTheme.labelSmall?.color?.withValues(alpha: 0.68);
-
-    final items = <Widget>[];
-
-    if (!isSarMarker && message.pathLen < 255) {
-      items.addAll([
-        Icon(Icons.alt_route, size: 11, color: metaColor),
-        const SizedBox(width: 3),
-        Text(
-          message.pathLen == 0 ? 'direct' : '${message.pathLen}hop',
-          style: Theme.of(
-            context,
-          ).textTheme.labelSmall?.copyWith(color: metaColor),
-        ),
-        Text(
-          ' • ',
-          style: Theme.of(
-            context,
-          ).textTheme.labelSmall?.copyWith(color: metaColor),
-        ),
-      ]);
-    }
-
-    items.add(
-      Text(
-        message.getLocalizedTimeAgo(context),
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-          color: metaColor,
-          fontWeight: FontWeight.w500,
-        ),
-      ),
-    );
-
-    return Padding(
-      padding: const EdgeInsets.only(left: 6, right: 6, top: 1, bottom: 18),
-      child: Align(
-        alignment: Alignment.centerRight,
-        child: Row(mainAxisSize: MainAxisSize.min, children: items),
-      ),
-    );
-  }
 
   @override
   void didUpdateWidget(MessageBubble oldWidget) {
@@ -508,6 +411,9 @@ class _MessageBubbleState extends State<MessageBubble> {
     final senderLocationSnapshot = messagesProvider.getMessageContactLocation(
       widget.message.id,
     );
+    final receptionDetails = messagesProvider.getMessageReceptionDetails(
+      widget.message.id,
+    );
 
     final envelope = VoiceEnvelope.tryParseText(widget.message.text);
     final legacyVoicePacket = VoicePacket.tryParseText(widget.message.text);
@@ -572,16 +478,19 @@ class _MessageBubbleState extends State<MessageBubble> {
       widget.message,
     );
     final packetPathBytes = _extractPathBytesFromLog(matchedRxLog);
-    final packetPathHex = packetPathBytes
+    final packetPathHex = (receptionDetails?.pathBytes ?? packetPathBytes)
         ?.map((b) => b.toRadixString(16).padLeft(2, '0'))
         .join(':');
     final snrDb =
+        receptionDetails?.snrDb ??
         matchedRxLog?.logRxDataInfo?.snrDb ??
         (widget.message.lastEchoSnrRaw != null
             ? (widget.message.lastEchoSnrRaw!.toSigned(8) / 4.0)
             : null);
     final rssiDbm =
-        matchedRxLog?.logRxDataInfo?.rssiDbm ?? widget.message.lastEchoRssiDbm;
+        receptionDetails?.rssiDbm ??
+        matchedRxLog?.logRxDataInfo?.rssiDbm ??
+        widget.message.lastEchoRssiDbm;
     final retryCause = _retryCauseLabel(widget.message);
     final retryResult = _retryResultLabel(widget.message);
     final retryMode = _retryModeLabel(widget.message);
@@ -604,6 +513,9 @@ class _MessageBubbleState extends State<MessageBubble> {
       'Matched RX RSSI: ${rssiDbm ?? '-'}',
       'Matched RX SNR: ${snrDb?.toStringAsFixed(2) ?? '-'}',
       'Matched path bytes: ${packetPathHex ?? '-'}',
+      'Sender to receipt ms: ${receptionDetails?.senderToReceiptMs ?? '-'}',
+      'Estimated transmit ms: ${receptionDetails?.estimatedTransmitMs ?? '-'}',
+      'Post-transmit delay ms: ${receptionDetails?.postTransmitDelayMs ?? '-'}',
       'Expected ACK tag: ${widget.message.expectedAckTag ?? '-'}',
       'Suggested timeout ms: ${widget.message.suggestedTimeoutMs ?? '-'}',
       'Round-trip ms: ${widget.message.roundTripTimeMs ?? '-'}',
@@ -767,7 +679,7 @@ class _MessageBubbleState extends State<MessageBubble> {
                           _techBadge(
                             context,
                             icon: Icons.route,
-                            label: _hopDisplayLabel(widget.message),
+                            label: hopDisplayLabel(widget.message),
                           ),
                           _techBadge(
                             context,
@@ -854,6 +766,30 @@ class _MessageBubbleState extends State<MessageBubble> {
                                 label: l10n.expectedAckTag,
                                 value: widget.message.expectedAckTag!
                                     .toString(),
+                              ),
+                            if (receptionDetails?.senderToReceiptMs != null)
+                              _detailRow(
+                                context,
+                                label: 'Sender to receipt',
+                                value: _formatDurationMs(
+                                  receptionDetails!.senderToReceiptMs!,
+                                ),
+                              ),
+                            if (receptionDetails?.estimatedTransmitMs != null)
+                              _detailRow(
+                                context,
+                                label: 'Estimated tx',
+                                value: _formatDurationMs(
+                                  receptionDetails!.estimatedTransmitMs!,
+                                ),
+                              ),
+                            if (receptionDetails?.postTransmitDelayMs != null)
+                              _detailRow(
+                                context,
+                                label: 'Post-tx delay',
+                                value: _formatDurationMs(
+                                  receptionDetails!.postTransmitDelayMs!,
+                                ),
                               ),
                             if (widget.message.suggestedTimeoutMs != null)
                               _detailRow(
@@ -1263,6 +1199,18 @@ class _MessageBubbleState extends State<MessageBubble> {
         '${fraction}Z';
   }
 
+  String _formatDurationMs(int durationMs) {
+    if (durationMs >= 60000) {
+      final minutes = durationMs ~/ 60000;
+      final seconds = (durationMs % 60000) ~/ 1000;
+      return '${minutes}m ${seconds}s';
+    }
+    if (durationMs >= 1000) {
+      return '${(durationMs / 1000).toStringAsFixed(durationMs >= 10000 ? 0 : 1)} s';
+    }
+    return '$durationMs ms';
+  }
+
   BlePacketLog? _findBestMatchingRxLog(
     List<BlePacketLog> logs,
     Message message,
@@ -1591,225 +1539,12 @@ class _MessageBubbleState extends State<MessageBubble> {
     }
   }
 
-  IconData _getDeliveryStatusIcon(MessageDeliveryStatus status) {
-    switch (status) {
-      case MessageDeliveryStatus.sending:
-        return Icons.schedule;
-      case MessageDeliveryStatus.sent:
-        return Icons.check;
-      case MessageDeliveryStatus.delivered:
-        return Icons.done_all;
-      case MessageDeliveryStatus.failed:
-        return Icons.error_outline;
-      case MessageDeliveryStatus.received:
-        return Icons.inbox;
-    }
-  }
-
-  Color _getDeliveryStatusColor(MessageDeliveryStatus status) {
-    switch (status) {
-      case MessageDeliveryStatus.sending:
-        return Colors.orange;
-      case MessageDeliveryStatus.sent:
-        return Colors.blue;
-      case MessageDeliveryStatus.delivered:
-        return Colors.green;
-      case MessageDeliveryStatus.failed:
-        return Colors.red;
-      case MessageDeliveryStatus.received:
-        return Colors.grey;
-    }
-  }
-
-  Widget _buildChannelEchoStatus(BuildContext context, Message message) {
-    final hasEcho = message.echoCount > 0;
-
-    if (!hasEcho) {
-      return const SizedBox.shrink();
-    }
-
-    final statusColor = _getDeliveryStatusColor(message.deliveryStatus);
-    final rssi = message.lastEchoRssiDbm;
-    final snr = message.lastEchoSnrRaw != null
-        ? message.lastEchoSnrRaw!.toSigned(8) / 4.0
-        : null;
-    final quality = _linkQualityLabel(rssi, snr);
-    final qualityColor = _linkQualityColor(quality);
-
-    return Wrap(
-      spacing: 4,
-      crossAxisAlignment: WrapCrossAlignment.center,
-      children: [
-        _techChip(
-          context,
-          icon: Icons.hub_outlined,
-          label: 'x${message.echoCount}',
-          color: statusColor,
-        ),
-        if (message.expectedAckTag != null)
-          _techChip(
-            context,
-            icon: Icons.tag,
-            label:
-                'ACK ${message.expectedAckTag!.toRadixString(16).toUpperCase()}',
-            color: Colors.indigo,
-          ),
-        _techChip(
-          context,
-          icon: Icons.bolt,
-          label: quality,
-          color: qualityColor,
-        ),
-        if (message.lastEchoRssiDbm != null)
-          _signalCapsule(
-            context,
-            icon: Icons.network_cell,
-            label: message.lastEchoRssiDbm!.toString(),
-            filled: _rssiScore(message.lastEchoRssiDbm!),
-            color: Colors.blueGrey,
-          ),
-        if (message.lastEchoSnrRaw != null)
-          _signalCapsule(
-            context,
-            icon: Icons.graphic_eq,
-            label: (message.lastEchoSnrRaw!.toSigned(8) / 4.0).toStringAsFixed(
-              1,
-            ),
-            filled: _snrScore(message.lastEchoSnrRaw!.toSigned(8) / 4.0),
-            color: Colors.teal,
-          ),
-      ],
-    );
-  }
-
-  bool _shouldShowSentChannelStats(Message message) {
-    if (!message.isSentMessage || !message.isChannelMessage) {
-      return false;
-    }
-
-    final hasSignalData =
-        message.echoCount > 0 ||
-        message.lastEchoRssiDbm != null ||
-        message.lastEchoSnrRaw != null ||
-        message.expectedAckTag != null;
-    return _showReceivedStats && hasSignalData;
-  }
-
-  Widget _buildReceivedSignalStatus(
-    BuildContext context,
-    Message message, {
-    required int? rssiDbm,
-    required double? snrDb,
-  }) {
-    final hopLabel = _hopDisplayLabel(message);
-
-    return Wrap(
-      spacing: 4,
-      runSpacing: 4,
-      crossAxisAlignment: WrapCrossAlignment.center,
-      children: [
-        _techChip(
-          context,
-          icon: Icons.alt_route,
-          label: hopLabel,
-          color: Colors.indigo,
-        ),
-        if (rssiDbm != null || snrDb != null) ...[
-          _techChip(
-            context,
-            icon: Icons.bolt,
-            label: _linkQualityLabel(rssiDbm, snrDb),
-            color: _linkQualityColor(_linkQualityLabel(rssiDbm, snrDb)),
-          ),
-          if (rssiDbm != null)
-            _signalCapsule(
-              context,
-              icon: Icons.network_cell,
-              label: '$rssiDbm',
-              filled: _rssiScore(rssiDbm),
-              color: Colors.blueGrey,
-            ),
-          if (snrDb != null)
-            _signalCapsule(
-              context,
-              icon: Icons.graphic_eq,
-              label: snrDb.toStringAsFixed(1),
-              filled: _snrScore(snrDb),
-              color: Colors.teal,
-            ),
-        ],
-      ],
-    );
-  }
-
-  String _hopDisplayLabel(Message message) {
-    if (message.pathLen == 0) return 'Direct';
-    if (message.pathLen >= 255 && message.isContactMessage) return 'Direct';
-    if (message.pathLen >= 255) return 'Unknown';
-    return '${message.pathLen} hop${message.pathLen == 1 ? '' : 's'}';
-  }
-
-  Widget _buildChannelHeaderPill(
-    BuildContext context, {
-    required String label,
-    IconData icon = Icons.campaign_outlined,
-  }) {
-    final labelColor = Theme.of(
-      context,
-    ).textTheme.labelSmall?.color?.withValues(alpha: 0.82);
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: Theme.of(
-          context,
-        ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.65),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            icon,
-            size: 11,
-            color: Theme.of(
-              context,
-            ).textTheme.labelSmall?.color?.withValues(alpha: 0.7),
-          ),
-          const SizedBox(width: 5),
-          Flexible(
-            child: Text(
-              label,
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color: labelColor,
-                fontWeight: FontWeight.w600,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDirectHeaderCounterpart(
-    BuildContext context, {
-    required String label,
-  }) {
-    return _buildChannelHeaderPill(
-      context,
-      label: label,
-      icon: Icons.alternate_email,
-    );
-  }
-
   String _hopDebugLabel(Message message) {
     if (message.pathLen >= 255 && message.isContactMessage) {
       return 'Direct (raw: ${message.pathLen})';
     }
     if (message.pathLen >= 255) return 'Unknown (raw: ${message.pathLen})';
-    return _hopDisplayLabel(message);
+    return hopDisplayLabel(message);
   }
 
   String? _retryCauseLabel(Message message) {
@@ -1891,110 +1626,6 @@ class _MessageBubbleState extends State<MessageBubble> {
     return null;
   }
 
-  Widget _techChip(
-    BuildContext context, {
-    required IconData icon,
-    required String label,
-    required Color color,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 10, color: color),
-          const SizedBox(width: 2),
-          Text(
-            label,
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: color,
-              fontWeight: FontWeight.w600,
-              fontSize: 10,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _signalCapsule(
-    BuildContext context, {
-    required IconData icon,
-    required String label,
-    required int filled,
-    required Color color,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 10, color: color),
-          const SizedBox(width: 2),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: List.generate(5, (i) {
-              final active = i < filled;
-              return Container(
-                width: 3,
-                height: (4 + i).toDouble(),
-                margin: const EdgeInsets.symmetric(horizontal: 0.5),
-                decoration: BoxDecoration(
-                  color: active ? color : color.withValues(alpha: 0.18),
-                  borderRadius: BorderRadius.circular(1),
-                ),
-              );
-            }),
-          ),
-          const SizedBox(width: 2),
-          Text(
-            label,
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: color,
-              fontWeight: FontWeight.w600,
-              fontSize: 10,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  int _rssiScore(int rssiDbm) => ((rssiDbm + 120) / 10).round().clamp(0, 5);
-
-  int _snrScore(double snrDb) => ((snrDb + 5.0) / 5.0).round().clamp(0, 5);
-
-  String _linkQualityLabel(int? rssiDbm, double? snrDb) {
-    var score = 0;
-    if (rssiDbm != null) score += _rssiScore(rssiDbm);
-    if (snrDb != null) score += _snrScore(snrDb);
-    if (score >= 8) return 'Excellent';
-    if (score >= 6) return 'Good';
-    if (score >= 4) return 'Fair';
-    return 'Weak';
-  }
-
-  Color _linkQualityColor(String quality) {
-    switch (quality) {
-      case 'Excellent':
-        return Colors.green;
-      case 'Good':
-        return Colors.lightGreen;
-      case 'Fair':
-        return Colors.orange;
-      default:
-        return Colors.redAccent;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     // Display system messages with minimal styling
@@ -2015,9 +1646,13 @@ class _MessageBubbleState extends State<MessageBubble> {
 
     // Determine if this is own message
     final connectionProvider = context.read<ConnectionProvider>();
+    final messagesProvider = context.read<MessagesProvider>();
     final selfPublicKey = connectionProvider.deviceInfo.publicKey;
     final isOwnMessage =
         message.isSentMessage || message.isFromSelf(selfPublicKey);
+    final receptionDetails = !isOwnMessage
+        ? messagesProvider.getMessageReceptionDetails(message.id)
+        : null;
     final matchedRxLog = !isOwnMessage
         ? _findBestMatchingRxLog(
             connectionProvider.bleService.packetLogs,
@@ -2025,12 +1660,15 @@ class _MessageBubbleState extends State<MessageBubble> {
           )
         : null;
     final snrDb =
+        receptionDetails?.snrDb ??
         matchedRxLog?.logRxDataInfo?.snrDb ??
         (message.lastEchoSnrRaw != null
             ? (message.lastEchoSnrRaw!.toSigned(8) / 4.0)
             : null);
     final rssiDbm =
-        matchedRxLog?.logRxDataInfo?.rssiDbm ?? message.lastEchoRssiDbm;
+        receptionDetails?.rssiDbm ??
+        matchedRxLog?.logRxDataInfo?.rssiDbm ??
+        message.lastEchoRssiDbm;
 
     // Look up contact information for rich display name
     final contactsProvider = context.read<ContactsProvider>();
@@ -2297,7 +1935,7 @@ class _MessageBubbleState extends State<MessageBubble> {
                         shape: BoxShape.circle,
                       ),
                     ),
-                  _buildHeaderAvatar(
+                  buildMessageHeaderAvatar(
                     context,
                     isOwnMessage: isOwnMessage,
                     isChannelMessage: message.isChannelMessage,
@@ -2330,7 +1968,7 @@ class _MessageBubbleState extends State<MessageBubble> {
                           if (message.isChannelMessage)
                             Align(
                               alignment: Alignment.centerRight,
-                              child: _buildChannelHeaderPill(
+                              child: buildChannelHeaderPill(
                                 context,
                                 label: isOwnMessage
                                     ? recipientDisplayName!
@@ -2340,7 +1978,7 @@ class _MessageBubbleState extends State<MessageBubble> {
                           else
                             Align(
                               alignment: Alignment.centerRight,
-                              child: _buildDirectHeaderCounterpart(
+                              child: buildDirectHeaderCounterpart(
                                 context,
                                 label: directCounterpartLabel!,
                               ),
@@ -2636,9 +2274,10 @@ class _MessageBubbleState extends State<MessageBubble> {
                   !message.isSentMessage &&
                   _showReceivedStats) ...[
                 const SizedBox(height: 6),
-                _buildReceivedSignalStatus(
+                buildReceivedSignalStatus(
                   context,
                   message,
+                  receptionDetails: receptionDetails,
                   rssiDbm: rssiDbm,
                   snrDb: snrDb,
                 ),
@@ -2830,9 +2469,9 @@ class _MessageBubbleState extends State<MessageBubble> {
                     mainAxisSize: MainAxisSize.max,
                     children: [
                       Icon(
-                        _getDeliveryStatusIcon(message.deliveryStatus),
+                        getDeliveryStatusIcon(message.deliveryStatus),
                         size: 12,
-                        color: _getDeliveryStatusColor(message.deliveryStatus),
+                        color: getDeliveryStatusColor(message.deliveryStatus),
                       ),
                       const SizedBox(width: 3),
                       Expanded(
@@ -2844,7 +2483,7 @@ class _MessageBubbleState extends State<MessageBubble> {
                             overflow: TextOverflow.ellipsis,
                             style: Theme.of(context).textTheme.labelSmall
                                 ?.copyWith(
-                                  color: _getDeliveryStatusColor(
+                                  color: getDeliveryStatusColor(
                                     message.deliveryStatus,
                                   ),
                                   fontStyle: FontStyle.italic,
@@ -2895,9 +2534,12 @@ class _MessageBubbleState extends State<MessageBubble> {
                       ],
                     ],
                   ),
-                if (_shouldShowSentChannelStats(message)) ...[
+                if (shouldShowSentChannelStats(
+                  message,
+                  showReceivedStats: _showReceivedStats,
+                )) ...[
                   const SizedBox(height: 6),
-                  _buildChannelEchoStatus(context, message),
+                  buildChannelEchoStatus(context, message),
                 ],
               ],
             ],
@@ -2912,7 +2554,7 @@ class _MessageBubbleState extends State<MessageBubble> {
           : CrossAxisAlignment.start,
       children: [
         bubble,
-        _buildBubbleMetaFooter(
+        buildBubbleMetaFooter(
           context,
           message: message,
           isSarMarker: isSarMarker,
@@ -2929,88 +2571,6 @@ class _MessageBubbleState extends State<MessageBubble> {
           ? MainAxisAlignment.end
           : MainAxisAlignment.start,
       children: [Flexible(child: bubbleWithMeta)],
-    );
-  }
-}
-
-/// System message bubble - compact log-style display
-class SystemMessageBubble extends StatelessWidget {
-  final Message message;
-
-  const SystemMessageBubble({super.key, required this.message});
-
-  Color _getLevelColor(String? level) {
-    switch (level?.toLowerCase()) {
-      case 'success':
-        return Colors.green;
-      case 'warning':
-        return Colors.orange;
-      case 'error':
-        return Colors.red;
-      case 'info':
-      default:
-        return Colors.blue.shade300;
-    }
-  }
-
-  IconData _getLevelIcon(String? level) {
-    switch (level?.toLowerCase()) {
-      case 'success':
-        return Icons.check_circle_outline;
-      case 'warning':
-        return Icons.warning_amber_outlined;
-      case 'error':
-        return Icons.error_outline;
-      case 'info':
-      default:
-        return Icons.info_outline;
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    final level = message.senderName ?? 'info';
-    final levelColor = _getLevelColor(level);
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 2),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: isDarkMode
-            ? levelColor.withValues(alpha: 0.1)
-            : levelColor.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Row(
-        children: [
-          Icon(_getLevelIcon(level), size: 14, color: levelColor),
-          const SizedBox(width: 6),
-          Text(
-            message.getLocalizedTimeAgo(context),
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: Theme.of(
-                context,
-              ).textTheme.bodySmall?.color?.withValues(alpha: 0.6),
-              fontSize: 10,
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              message.text,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                fontSize: 11,
-                color: Theme.of(
-                  context,
-                ).textTheme.bodySmall?.color?.withValues(alpha: 0.8),
-              ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

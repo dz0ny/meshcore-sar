@@ -146,10 +146,14 @@ class ConnectionProvider with ChangeNotifier {
   final MessageDeliveryTracker _messageDeliveryTracker =
       MessageDeliveryTracker();
   final PingTracker _pingTracker = PingTracker();
+  final Map<String, Future<PingResult>> _pendingSmartPings = {};
 
   // Expose room login states
   Map<String, RoomLoginState> get roomLoginStates =>
       _roomLoginManager.roomLoginStates;
+
+  bool isPingInProgress(Uint8List publicKey) =>
+      _pendingSmartPings.containsKey(_publicKeyToHex(publicKey));
 
   // Callbacks for other providers
   Function(Contact)? onContactReceived;
@@ -1317,6 +1321,34 @@ class ConnectionProvider with ChangeNotifier {
     required bool hasPath,
     Function()? onRetryWithFlooding,
   }) async {
+    final pingKey = _publicKeyToHex(contactPublicKey);
+    final pendingPing = _pendingSmartPings[pingKey];
+    if (pendingPing != null) {
+      debugPrint('ℹ️ [Provider] Joining in-flight ping for $pingKey');
+      return pendingPing;
+    }
+
+    final future = _runSmartPing(
+      contactPublicKey: contactPublicKey,
+      hasPath: hasPath,
+      onRetryWithFlooding: onRetryWithFlooding,
+    );
+    _pendingSmartPings[pingKey] = future;
+    notifyListeners();
+
+    try {
+      return await future;
+    } finally {
+      _pendingSmartPings.remove(pingKey);
+      notifyListeners();
+    }
+  }
+
+  Future<PingResult> _runSmartPing({
+    required Uint8List contactPublicKey,
+    required bool hasPath,
+    Function()? onRetryWithFlooding,
+  }) async {
     if (!_activeService.isConnected) {
       _error = 'Not connected to device';
       notifyListeners();
@@ -1334,7 +1366,10 @@ class ConnectionProvider with ChangeNotifier {
       );
 
       // Send the ping
-      await _activeService.requestTelemetry(contactPublicKey, zeroHop: true);
+      await _activeService.requestTelemetry(
+        contactPublicKey,
+        zeroHop: firstAttemptDirect,
+      );
 
       // Wait for response or timeout
       final bool gotResponse = await pingFuture;
@@ -1361,8 +1396,8 @@ class ConnectionProvider with ChangeNotifier {
           wasDirectAttempt: false,
         );
 
-        // Retry with flooding (zeroHop=true acts as broadcast to neighbors)
-        await _activeService.requestTelemetry(contactPublicKey, zeroHop: true);
+        // Retry with flooding.
+        await _activeService.requestTelemetry(contactPublicKey, zeroHop: false);
 
         // Wait for response or timeout
         final bool gotRetryResponse = await retryFuture;
@@ -1382,6 +1417,10 @@ class ConnectionProvider with ChangeNotifier {
       notifyListeners();
       return PingResult(success: false, usedFlooding: false, timedOut: true);
     }
+  }
+
+  String _publicKeyToHex(Uint8List publicKey) {
+    return publicKey.map((b) => b.toRadixString(16).padLeft(2, '0')).join('');
   }
 
   /// Send binary request to contact (modern replacement for requestTelemetry)

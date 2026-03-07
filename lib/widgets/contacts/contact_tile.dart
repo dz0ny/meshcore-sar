@@ -70,6 +70,9 @@ class ContactTile extends StatelessWidget {
 
     // Get room login state if this is a room
     final connectionProvider = context.watch<ConnectionProvider>();
+    final isPingInProgress = connectionProvider.isPingInProgress(
+      contact.publicKey,
+    );
     final roomLoginState = contact.type == ContactType.room
         ? connectionProvider.getRoomLoginState(contact.publicKeyPrefix)
         : null;
@@ -185,6 +188,17 @@ class ContactTile extends StatelessWidget {
                       ),
                     ),
                   ],
+                ),
+              ),
+            ],
+            if (isPingInProgress) ...[
+              const SizedBox(width: 6),
+              SizedBox(
+                width: 14,
+                height: 14,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Theme.of(context).colorScheme.primary,
                 ),
               ),
             ],
@@ -458,39 +472,43 @@ class ContactTile extends StatelessWidget {
             _showContactDetails(context, contact);
           }
         },
-        onLongPress: () async {
-          final connectionProvider = context.read<ConnectionProvider>();
+        onLongPress: isPingInProgress
+            ? null
+            : () async {
+                final connectionProvider = context.read<ConnectionProvider>();
 
-          // Determine if we should use flooding (no path) or direct (has path)
-          final hasPath = contact.hasPath;
+                // Determine if we should use flooding (no path) or direct (has path)
+                final hasPath = contact.hasPath;
 
-          // Use smart ping with automatic fallback
-          final result = await connectionProvider.smartPing(
-            contactPublicKey: contact.publicKey,
-            hasPath: hasPath,
-            onRetryWithFlooding: () {
-              // Called when retrying with flooding after direct timeout
-              if (context.mounted) {
-                ToastLogger.warning(
-                  context,
-                  AppLocalizations.of(
-                    context,
-                  )!.directPingTimeout(contact.displayName),
+                // Use smart ping with automatic fallback
+                final result = await connectionProvider.smartPing(
+                  contactPublicKey: contact.publicKey,
+                  hasPath: hasPath,
+                  onRetryWithFlooding: () {
+                    // Called when retrying with flooding after direct timeout
+                    if (context.mounted) {
+                      ToastLogger.warning(
+                        context,
+                        AppLocalizations.of(
+                          context,
+                        )!.directPingTimeout(contact.displayName),
+                      );
+                    }
+                  },
                 );
-              }
-            },
-          );
 
-          // Show final result
-          if (context.mounted) {
-            if (!result.success) {
-              ToastLogger.error(
-                context,
-                AppLocalizations.of(context)!.pingFailed(contact.displayName),
-              );
-            }
-          }
-        },
+                // Show final result
+                if (context.mounted) {
+                  if (!result.success) {
+                    ToastLogger.error(
+                      context,
+                      AppLocalizations.of(
+                        context,
+                      )!.pingFailed(contact.displayName),
+                    );
+                  }
+                }
+              },
       ),
     );
   }
@@ -603,8 +621,12 @@ class ContactTile extends StatelessWidget {
         minChildSize: 0.4,
         maxChildSize: 0.9,
         expand: false,
-        builder: (context, scrollController) => Column(
-          children: [
+        builder: (context, scrollController) {
+          final isPingInProgress = context
+              .watch<ConnectionProvider>()
+              .isPingInProgress(contact.publicKey);
+          return Column(
+            children: [
             // Handle bar
             Container(
               margin: const EdgeInsets.only(top: 8, bottom: 16),
@@ -847,15 +869,25 @@ class ContactTile extends StatelessWidget {
                           ),
                         ),
                         TextButton.icon(
-                          onPressed: () {
-                            final connectionProvider = context
-                                .read<ConnectionProvider>();
-                            connectionProvider.requestTelemetry(
-                              contact.publicKey,
-                              zeroHop: true,
-                            );
-                          },
-                          icon: const Icon(Icons.refresh, size: 18),
+                          onPressed: isPingInProgress
+                              ? null
+                              : () {
+                                  final connectionProvider = context
+                                      .read<ConnectionProvider>();
+                                  connectionProvider.requestTelemetry(
+                                    contact.publicKey,
+                                    zeroHop: true,
+                                  );
+                                },
+                          icon: isPingInProgress
+                              ? const SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Icon(Icons.refresh, size: 18),
                           label: Text(AppLocalizations.of(context)!.refresh),
                           style: TextButton.styleFrom(
                             padding: const EdgeInsets.symmetric(
@@ -991,8 +1023,9 @@ class ContactTile extends StatelessWidget {
                 ],
               ),
             ),
-          ],
-        ),
+            ],
+          );
+        },
       ),
     );
   }

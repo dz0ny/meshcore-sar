@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/message.dart';
 import '../models/message_contact_location.dart';
+import '../models/message_reception_details.dart';
 import 'package:latlong2/latlong.dart';
 
 /// Service for persisting messages to local storage
@@ -10,12 +11,15 @@ class MessageStorageService {
   static const String _messagesKey = 'stored_messages';
   static const String _messageContactLocationsKey =
       'stored_message_contact_locations';
+  static const String _messageReceptionDetailsKey =
+      'stored_message_reception_details';
   static const int _maxStoredMessages = 1000; // Store up to 1000 messages
 
   /// Save messages to persistent storage
   Future<void> saveMessages(
     List<Message> messages, {
     Map<String, MessageContactLocation> messageContactLocations = const {},
+    Map<String, MessageReceptionDetails> messageReceptionDetails = const {},
   }) async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -34,14 +38,24 @@ class MessageStorageService {
           .map((entry) => entry['id'] as String)
           .toSet();
       final locationJson = <String, dynamic>{};
+      final receptionJson = <String, dynamic>{};
       for (final entry in messageContactLocations.entries) {
         if (retainedMessageIds.contains(entry.key)) {
           locationJson[entry.key] = entry.value.toJson();
         }
       }
+      for (final entry in messageReceptionDetails.entries) {
+        if (retainedMessageIds.contains(entry.key)) {
+          receptionJson[entry.key] = entry.value.toJson();
+        }
+      }
       await prefs.setString(
         _messageContactLocationsKey,
         jsonEncode(locationJson),
+      );
+      await prefs.setString(
+        _messageReceptionDetailsKey,
+        jsonEncode(receptionJson),
       );
 
       debugPrint(
@@ -52,8 +66,8 @@ class MessageStorageService {
     }
   }
 
-  Future<Map<String, MessageContactLocation>> loadMessageContactLocations()
-  async {
+  Future<Map<String, MessageContactLocation>>
+  loadMessageContactLocations() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final jsonString = prefs.getString(_messageContactLocationsKey);
@@ -78,6 +92,36 @@ class MessageStorageService {
       return result;
     } catch (e) {
       debugPrint('❌ [MessageStorage] Error loading contact locations: $e');
+      return const {};
+    }
+  }
+
+  Future<Map<String, MessageReceptionDetails>>
+  loadMessageReceptionDetails() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final jsonString = prefs.getString(_messageReceptionDetailsKey);
+      if (jsonString == null || jsonString.isEmpty) {
+        return const {};
+      }
+
+      final decoded = jsonDecode(jsonString);
+      if (decoded is! Map<String, dynamic>) {
+        return const {};
+      }
+
+      final result = <String, MessageReceptionDetails>{};
+      for (final entry in decoded.entries) {
+        final value = entry.value;
+        if (value is! Map<String, dynamic>) continue;
+        final snapshot = MessageReceptionDetails.fromJson(value);
+        if (snapshot != null) {
+          result[entry.key] = snapshot;
+        }
+      }
+      return result;
+    } catch (e) {
+      debugPrint('❌ [MessageStorage] Error loading reception details: $e');
       return const {};
     }
   }
@@ -116,6 +160,7 @@ class MessageStorageService {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(_messagesKey);
       await prefs.remove(_messageContactLocationsKey);
+      await prefs.remove(_messageReceptionDetailsKey);
       debugPrint('✅ [MessageStorage] Cleared all stored messages');
     } catch (e) {
       debugPrint('❌ [MessageStorage] Error clearing messages: $e');

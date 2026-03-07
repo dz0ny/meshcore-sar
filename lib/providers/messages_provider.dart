@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import '../models/message.dart';
 import '../models/contact.dart';
 import '../models/message_contact_location.dart';
+import '../models/message_reception_details.dart';
 import '../models/sar_marker.dart';
 import '../models/map_drawing.dart';
 import '../services/message_storage_service.dart';
@@ -22,6 +23,7 @@ class MessagesProvider with ChangeNotifier {
   bool _isInitialized = false;
   AppLocalizations? _localizations;
   final Map<String, MessageContactLocation> _messageContactLocations = {};
+  final Map<String, MessageReceptionDetails> _messageReceptionDetails = {};
 
   // Track pending sent messages by expected ACK/TAG
   final Map<int, Message> _pendingSentMessages = {};
@@ -74,10 +76,7 @@ class MessagesProvider with ChangeNotifier {
   })?
   sendMessageCallback;
 
-  Future<void> Function({
-    required Contact contact,
-    required int failureStreak,
-  })?
+  Future<void> Function({required Contact contact, required int failureStreak})?
   onDirectPathFailedCallback;
 
   List<Message> get messages => List.unmodifiable(_messages);
@@ -115,6 +114,9 @@ class MessagesProvider with ChangeNotifier {
   MessageContactLocation? getMessageContactLocation(String messageId) =>
       _messageContactLocations[messageId];
 
+  MessageReceptionDetails? getMessageReceptionDetails(String messageId) =>
+      _messageReceptionDetails[messageId];
+
   /// Set localizations for notifications
   void setLocalizations(AppLocalizations localizations) {
     _localizations = localizations;
@@ -145,9 +147,14 @@ class MessagesProvider with ChangeNotifier {
       final storedMessages = await _storageService.loadMessages();
       final storedContactLocations = await _storageService
           .loadMessageContactLocations();
+      final storedReceptionDetails = await _storageService
+          .loadMessageReceptionDetails();
       _messageContactLocations
         ..clear()
         ..addAll(storedContactLocations);
+      _messageReceptionDetails
+        ..clear()
+        ..addAll(storedReceptionDetails);
 
       // Add stored messages with enhancement to ensure SAR detection
       for (final message in storedMessages) {
@@ -311,6 +318,7 @@ class MessagesProvider with ChangeNotifier {
     Message message, {
     String Function(String name)? contactLookup,
     MessageContactLocation? contactLocationSnapshot,
+    MessageReceptionDetails? receptionDetailsSnapshot,
   }) {
     // Always enhance message with SAR parser to detect SAR markers
     var enhancedMessage = SarMessageParser.enhanceMessage(message);
@@ -397,12 +405,31 @@ class MessagesProvider with ChangeNotifier {
       debugPrint(
         '   Text: ${finalMessage.text.substring(0, finalMessage.text.length > 50 ? 50 : finalMessage.text.length)}...',
       );
+      final existingIndex = _messages.indexWhere(
+        (existing) =>
+            existing.messageType == finalMessage.messageType &&
+            existing.senderTimestamp == finalMessage.senderTimestamp &&
+            existing.text == finalMessage.text,
+      );
+      if (existingIndex != -1) {
+        final existingId = _messages[existingIndex].id;
+        if (contactLocationSnapshot != null) {
+          _messageContactLocations[existingId] = contactLocationSnapshot;
+        }
+        if (receptionDetailsSnapshot != null) {
+          _messageReceptionDetails[existingId] = receptionDetailsSnapshot;
+        }
+        _persistMessages();
+      }
       return; // Skip duplicate
     }
 
     _messages.add(finalMessage);
     if (contactLocationSnapshot != null) {
       _messageContactLocations[finalMessage.id] = contactLocationSnapshot;
+    }
+    if (receptionDetailsSnapshot != null) {
+      _messageReceptionDetails[finalMessage.id] = receptionDetailsSnapshot;
     }
 
     // If it's a SAR marker message, extract and store the marker
@@ -593,6 +620,7 @@ class MessagesProvider with ChangeNotifier {
       await _storageService.saveMessages(
         _messages,
         messageContactLocations: _messageContactLocations,
+        messageReceptionDetails: _messageReceptionDetails,
       );
     } catch (e) {
       debugPrint('❌ [MessagesProvider] Error persisting messages: $e');
@@ -709,6 +737,7 @@ class MessagesProvider with ChangeNotifier {
       _messageContactMap.remove(messageId);
       _groupedMessageMapping.remove(messageId);
       _messageContactLocations.remove(messageId);
+      _messageReceptionDetails.remove(messageId);
 
       debugPrint('🗑️ [MessagesProvider] Message $messageId deleted');
 
@@ -738,6 +767,7 @@ class MessagesProvider with ChangeNotifier {
     _messages.clear();
     _sarMarkers.clear();
     _messageContactLocations.clear();
+    _messageReceptionDetails.clear();
     _persistMessages();
     notifyListeners();
   }
@@ -753,6 +783,7 @@ class MessagesProvider with ChangeNotifier {
     _messages.clear();
     _sarMarkers.clear();
     _messageContactLocations.clear();
+    _messageReceptionDetails.clear();
     _persistMessages();
     notifyListeners();
   }
@@ -1062,10 +1093,11 @@ class MessagesProvider with ChangeNotifier {
         '  Message text preview: ${message.text.substring(0, message.text.length > 30 ? 30 : message.text.length)}...',
       );
 
+      // Once the device accepts a direct message and returns an ACK tag, the
+      // send itself succeeded locally even if end-to-end delivery confirmation
+      // may still arrive later. Keep ACK tracking, but stop showing "waiting".
       final updatedMessage = message.copyWith(
-        deliveryStatus: expectedAckTag > 0
-            ? MessageDeliveryStatus.sending
-            : MessageDeliveryStatus.sent,
+        deliveryStatus: MessageDeliveryStatus.sent,
         expectedAckTag: expectedAckTag > 0 ? expectedAckTag : null,
         suggestedTimeoutMs: expectedAckTag > 0 ? effectiveTimeout : null,
       );

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../l10n/app_localizations.dart';
 import '../../models/message.dart';
+import '../../providers/app_provider.dart';
 import '../../providers/connection_provider.dart';
 import '../../providers/contacts_provider.dart';
 import '../../providers/voice_provider.dart';
@@ -218,11 +219,18 @@ class _VoiceMessageBubbleState extends State<VoiceMessageBubble> {
     int pathLen = 0,
   }) async {
     if (_isRequesting) return;
+    setState(() {
+      _isRequesting = true;
+      _autoPlayWhenReady = true;
+      _errorText = null;
+    });
+
     final connectionProvider = context.read<ConnectionProvider>();
     final voiceProvider = context.read<VoiceProvider>();
     voiceProvider.resumeIncomingSession(sessionId);
     final contactsProvider = context.read<ContactsProvider>();
-    final resolution = await TransmissionTargetResolver.resolveFetchTarget(
+    final appProvider = context.read<AppProvider>();
+    var resolution = await TransmissionTargetResolver.resolveFetchTarget(
       contactsProvider: contactsProvider,
       refreshContacts: connectionProvider.getContacts,
       isSentByMe: widget.isSentByMe,
@@ -235,6 +243,7 @@ class _VoiceMessageBubbleState extends State<VoiceMessageBubble> {
     if (!mounted) return;
 
     if (resolution.failure == TransmissionTargetFailure.unknownContact) {
+      _clearRequestState();
       await _showBlockingAlert(
         'Cannot fetch voice',
         'Sender contact is unknown. Sync contacts first.',
@@ -242,6 +251,7 @@ class _VoiceMessageBubbleState extends State<VoiceMessageBubble> {
       return;
     }
     if (resolution.failure == TransmissionTargetFailure.unknownRoute) {
+      _clearRequestState();
       await _showBlockingAlert(
         'Cannot fetch voice',
         'Sender route is unknown. Sync contacts/path first.',
@@ -249,27 +259,85 @@ class _VoiceMessageBubbleState extends State<VoiceMessageBubble> {
       return;
     }
     if (resolution.failure == TransmissionTargetFailure.tooFar) {
+      _clearRequestState();
       await _showBlockingAlert(
         'Cannot fetch voice',
         'Message is too far (${resolution.hops} hops, max ${resolution.maxHops}).',
       );
       return;
     }
+    if (resolution.failure == TransmissionTargetFailure.unreachable) {
+      _clearRequestState();
+      await _showBlockingAlert(
+        'Cannot fetch voice',
+        'Sender route did not respond to a path check. Sync contacts/path and try again.',
+      );
+      return;
+    }
 
-    final sender = resolution.target!;
+    var sender = resolution.target!;
+    var routeVerified = await appProvider.verifyRawTransportRoute(sender);
+    if (!mounted) return;
+    if (!routeVerified) {
+      await connectionProvider.getContacts();
+      if (!mounted) return;
+      resolution = await TransmissionTargetResolver.resolveFetchTarget(
+        contactsProvider: contactsProvider,
+        refreshContacts: connectionProvider.getContacts,
+        isSentByMe: widget.isSentByMe,
+        recipientPublicKey: widget.message.recipientPublicKey,
+        senderPublicKeyPrefix: widget.message.senderPublicKeyPrefix,
+        senderKey6FromEnvelope: envelope?.senderKey6,
+        senderName: widget.message.senderName,
+        maxFetchHops: _maxFetchHops,
+      );
+      if (!mounted) return;
+      if (resolution.failure == TransmissionTargetFailure.unknownContact) {
+        _clearRequestState();
+        await _showBlockingAlert(
+          'Cannot fetch voice',
+          'Sender contact is unknown. Sync contacts first.',
+        );
+        return;
+      }
+      if (resolution.failure == TransmissionTargetFailure.unknownRoute) {
+        _clearRequestState();
+        await _showBlockingAlert(
+          'Cannot fetch voice',
+          'Sender route is unknown. Sync contacts/path first.',
+        );
+        return;
+      }
+      if (resolution.failure == TransmissionTargetFailure.tooFar) {
+        _clearRequestState();
+        await _showBlockingAlert(
+          'Cannot fetch voice',
+          'Message is too far (${resolution.hops} hops, max ${resolution.maxHops}).',
+        );
+        return;
+      }
+      sender = resolution.target!;
+      routeVerified = await appProvider.verifyRawTransportRoute(sender);
+      if (!mounted) return;
+      if (!routeVerified) {
+        _clearRequestState();
+        await _showBlockingAlert(
+          'Cannot fetch voice',
+          'Sender route did not respond on the raw transport path.',
+        );
+        return;
+      }
+    }
+
     if (sender.outPathLen >= 2) {
       _showToast(
         'Voice fetch over ${sender.outPathLen} hops may take a while.',
       );
     }
 
-    if (!mounted) return;
-    setState(() {
-      _errorText = null;
-    });
-
     final deviceKey = connectionProvider.deviceInfo.publicKey;
     if (deviceKey == null || deviceKey.length < 6) {
+      _clearRequestState();
       await _showBlockingAlert(
         'Cannot fetch voice',
         'Device key is unavailable.',
@@ -304,12 +372,6 @@ class _VoiceMessageBubbleState extends State<VoiceMessageBubble> {
             timestampSec: DateTime.now().millisecondsSinceEpoch ~/ 1000,
             version: 2,
           );
-
-    setState(() {
-      _isRequesting = true;
-      _autoPlayWhenReady = true;
-      _errorText = null;
-    });
 
     try {
       await connectionProvider.sendRawVoicePacket(
@@ -370,6 +432,14 @@ class _VoiceMessageBubbleState extends State<VoiceMessageBubble> {
       _isRequesting = false;
       _autoPlayWhenReady = false;
       _errorText = AppLocalizations.of(context)!.voiceUnavailable;
+    });
+  }
+
+  void _clearRequestState() {
+    if (!mounted) return;
+    setState(() {
+      _isRequesting = false;
+      _autoPlayWhenReady = false;
     });
   }
 

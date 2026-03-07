@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:meshcore_client/meshcore_client.dart';
 import '../l10n/app_localizations.dart';
+import '../providers/connection_provider.dart';
+import '../providers/contacts_provider.dart';
+import '../utils/log_rx_route_decoder.dart';
 
 class PacketLogScreen extends StatefulWidget {
   final MeshCoreBleService bleService;
@@ -456,6 +460,26 @@ class _PacketLogCard extends StatelessWidget {
     final isRx = log.direction == PacketDirection.rx;
     final directionColor = isRx ? Colors.green : Colors.blue;
     final rxInfo = log.logRxDataInfo;
+    final contacts = context.watch<ContactsProvider>().contacts;
+    final connectionProvider = context.watch<ConnectionProvider>();
+    final decodedRoute = LogRxRouteDecoder.decode(log.rawData);
+    final ownPublicKey = connectionProvider.deviceInfo.publicKey;
+    final ownName =
+        connectionProvider.deviceInfo.selfName ??
+        connectionProvider.deviceInfo.displayName;
+    final resolvedPath = decodedRoute?.pathHashes
+        .map(
+          (hash) => LogRxRouteDecoder.resolveHash(
+            hash,
+            contacts: contacts,
+            ownPublicKey: ownPublicKey,
+            ownName: ownName,
+          ),
+        )
+        .toList();
+    final originalSender = resolvedPath != null && resolvedPath.isNotEmpty
+        ? resolvedPath.first
+        : null;
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -578,6 +602,14 @@ class _PacketLogCard extends StatelessWidget {
                         ],
                       ],
                     ),
+                  ),
+                ],
+                if (isRx && decodedRoute != null) ...[
+                  const SizedBox(height: 12),
+                  _RouteSection(
+                    route: decodedRoute,
+                    path: resolvedPath ?? const [],
+                    originalSender: originalSender,
                   ),
                 ],
                 const SizedBox(height: 12),
@@ -720,6 +752,162 @@ class _PacketLogCard extends StatelessWidget {
     if (snr >= 10) return Colors.green;
     if (snr >= 0) return Colors.amber;
     return Colors.redAccent;
+  }
+}
+
+class _RouteSection extends StatelessWidget {
+  final DecodedLogRxRoute route;
+  final List<ResolvedNodeHash> path;
+  final ResolvedNodeHash? originalSender;
+
+  const _RouteSection({
+    required this.route,
+    required this.path,
+    required this.originalSender,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Theme.of(
+          context,
+        ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.alt_route, size: 16),
+              SizedBox(width: 6),
+              Text(
+                'Mesh Route',
+                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              _FactCard(
+                icon: Icons.route,
+                label: 'Payload',
+                value: _payloadTypeLabel(route.payloadType),
+              ),
+              _FactCard(
+                icon: Icons.hub,
+                label: 'Hops',
+                value: '${route.pathHashes.length}',
+              ),
+              if (originalSender != null)
+                _FactCard(
+                  icon: Icons.person_pin_circle,
+                  label: 'Original sender',
+                  value: _nodeLabel(originalSender!),
+                ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (path.isEmpty)
+            Text(
+              'Direct packet, no hop path attached.',
+              style: TextStyle(fontSize: 12, color: Colors.grey[700]),
+            )
+          else
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                for (var i = 0; i < path.length; i++) ...[
+                  _RouteHopChip(index: i + 1, node: path[i]),
+                  if (i < path.length - 1)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 2),
+                      child: Icon(Icons.arrow_right_alt, size: 16),
+                    ),
+                ],
+              ],
+            ),
+        ],
+      ),
+    );
+  }
+
+  static String _payloadTypeLabel(int payloadType) {
+    switch (payloadType) {
+      case 0x00:
+        return 'REQ';
+      case 0x01:
+        return 'RESP';
+      case 0x02:
+        return 'TXT';
+      case 0x03:
+        return 'ACK';
+      case 0x04:
+        return 'ADVERT';
+      case 0x05:
+        return 'GRP_TXT';
+      case 0x06:
+        return 'GRP_DATA';
+      case 0x07:
+        return 'ANON_REQ';
+      case 0x08:
+        return 'PATH';
+      case 0x09:
+        return 'TRACE';
+      case 0x0A:
+        return 'MULTIPART';
+      case 0x0B:
+        return 'CONTROL';
+      default:
+        return '0x${payloadType.toRadixString(16).padLeft(2, '0')}';
+    }
+  }
+
+  static String _nodeLabel(ResolvedNodeHash node) {
+    if (node.isOwnNode) {
+      return '${node.label} (${node.hexLabel})';
+    }
+    if (node.matchCount == 0) {
+      return node.hexLabel;
+    }
+    if (node.isUniqueMatch) {
+      return '${node.label} (${node.hexLabel})';
+    }
+    return '${node.label} (${node.hexLabel}, ${node.matchCount} matches)';
+  }
+}
+
+class _RouteHopChip extends StatelessWidget {
+  final int index;
+  final ResolvedNodeHash node;
+
+  const _RouteHopChip({required this.index, required this.node});
+
+  @override
+  Widget build(BuildContext context) {
+    final color = node.isOwnNode
+        ? Colors.blue
+        : node.isUniqueMatch
+        ? Colors.green
+        : Colors.orange;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withValues(alpha: 0.35)),
+      ),
+      child: Text(
+        '$index. ${_RouteSection._nodeLabel(node)}',
+        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+      ),
+    );
   }
 }
 

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'connection_provider.dart';
@@ -16,9 +17,12 @@ import '../services/packet_capture_storage_service.dart';
 import '../models/contact.dart';
 import '../models/message.dart';
 import '../models/ble_packet_log.dart';
+import '../models/message_reception_details.dart';
 import '../utils/drawing_message_parser.dart';
+import '../utils/raw_route_probe.dart';
 import '../utils/voice_message_parser.dart';
 import '../utils/image_message_parser.dart';
+import '../utils/message_airtime_estimator.dart';
 
 /// Main App Provider - coordinates all other providers
 class AppProvider with ChangeNotifier {
@@ -70,6 +74,8 @@ class AppProvider with ChangeNotifier {
       FragmentAckWaitRegistry();
   final FragmentAckWaitRegistry _imageFragmentAckWaiters =
       FragmentAckWaitRegistry();
+  final FragmentAckWaitRegistry _rawProbeWaiters = FragmentAckWaitRegistry();
+  final Map<String, Future<bool>> _pendingRawRouteProbes = {};
   Timer? _packetCaptureFlushTimer;
   String? _lastPersistedPacketSignature;
   bool _isPersistingPacketCapture = false;
@@ -633,6 +639,9 @@ class AppProvider with ChangeNotifier {
               capturedAt: enrichedMessage.receivedAt,
             )
           : null;
+      final receptionDetailsSnapshot = _buildReceptionDetailsSnapshot(
+        enrichedMessage,
+      );
 
       // Check if message is a drawing broadcast
       if (DrawingMessageParser.isDrawingMessage(enrichedMessage.text)) {
@@ -664,6 +673,7 @@ class AppProvider with ChangeNotifier {
             updatedMessage,
             contactLookup: (name) => '',
             contactLocationSnapshot: contactLocationSnapshot,
+            receptionDetailsSnapshot: receptionDetailsSnapshot,
           );
 
           // Broadcast drawing message to SSE clients if server is running
@@ -700,6 +710,7 @@ class AppProvider with ChangeNotifier {
             }
           },
           contactLocationSnapshot: contactLocationSnapshot,
+          receptionDetailsSnapshot: receptionDetailsSnapshot,
         );
         connectionProvider.broadcastMessageToSseClients(enrichedMessage);
         return;
@@ -728,6 +739,7 @@ class AppProvider with ChangeNotifier {
             }
           },
           contactLocationSnapshot: contactLocationSnapshot,
+          receptionDetailsSnapshot: receptionDetailsSnapshot,
         );
         connectionProvider.broadcastMessageToSseClients(enrichedMessage);
         return;
@@ -765,11 +777,15 @@ class AppProvider with ChangeNotifier {
           }
         },
         contactLocationSnapshot: contactLocationSnapshot,
+        receptionDetailsSnapshot: receptionDetailsSnapshot,
       );
 
       // Broadcast message to SSE clients if server is running
       connectionProvider.broadcastMessageToSseClients(enrichedMessage);
     };
+
+    // Keep a compact receive-time snapshot because packet logs roll over.
+    // This lets the UI still show timing/link details after app restarts.
 
     // When telemetry is received via PUSH_CODE_TELEMETRY_RESPONSE (0x8B)
     // Used by older firmware versions for telemetry responses
@@ -796,6 +812,18 @@ class AppProvider with ChangeNotifier {
     // Magic 0x72 'r' = voice fetch request; 0x69 'i' = image fetch request.
     // Magic 0x56 'V' = voice packet; magic 0x49 'I' = image packet.
     connectionProvider.onRawDataReceived = (payload, snrRaw, rssiDbm) {
+      final rawProbeRequest = RawRouteProbeRequest.tryParseBinary(payload);
+      if (rawProbeRequest != null) {
+        _handleRawRouteProbeRequest(rawProbeRequest);
+        return;
+      }
+
+      final rawProbeAck = RawRouteProbeAck.tryParseBinary(payload);
+      if (rawProbeAck != null) {
+        _completeRawRouteProbeAck(rawProbeAck.nonce);
+        return;
+      }
+
       final voiceFetchRequest = VoiceFetchRequest.tryParseBinary(payload);
       if (voiceFetchRequest != null) {
         final requester = _resolveVoiceFetchRequester(voiceFetchRequest);
@@ -1559,6 +1587,78 @@ class AppProvider with ChangeNotifier {
   }
 
   String _fragmentAckKey(String sessionId, int index) => '$sessionId:$index';
+  String _rawProbeKey(int nonce) =>
+      nonce.toRadixString(16).padLeft(8, '0').toLowerCase();
+
+  Future<bool> verifyRawTransportRoute(
+    Contact target, {
+    Duration timeout = const Duration(seconds: 8),
+  }) async {
+    if (!connectionProvider.deviceInfo.isConnected) {
+      return false;
+    }
+    if (target.outPathLen < 0 || target.outPathLen > _maxDirectPayloadHops) {
+      return false;
+    }
+    if (target.outPath.isEmpty) {
+      return false;
+    }
+
+    final probeKey = _routeProbeTargetKey(target);
+    final pendingProbe = _pendingRawRouteProbes[probeKey];
+    if (pendingProbe != null) {
+      return pendingProbe;
+    }
+
+    final deviceKey = connectionProvider.deviceInfo.publicKey;
+    if (deviceKey == null || deviceKey.length < 6) {
+      return false;
+    }
+
+    final requesterKey6 = deviceKey
+        .sublist(0, 6)
+        .map((b) => b.toRadixString(16).padLeft(2, '0'))
+        .join();
+    final future = () async {
+      final nonce = math.Random.secure().nextInt(0x100000000);
+      final ackFuture = _rawProbeWaiters.waitFor(
+        _rawProbeKey(nonce),
+        timeout: timeout,
+      );
+
+      try {
+        await connectionProvider.sendRawVoicePacket(
+          contactPath: target.outPath,
+          contactPathLen: target.outPathLen,
+          payload: RawRouteProbeRequest(
+            nonce: nonce,
+            requesterKey6: requesterKey6,
+          ).encodeBinary(),
+        );
+        return await ackFuture;
+      } catch (e) {
+        debugPrint(
+          '⚠️ [AppProvider] Raw route probe failed for ${target.advName}: $e',
+        );
+        _rawProbeWaiters.complete(_rawProbeKey(nonce));
+        return false;
+      }
+    }();
+
+    _pendingRawRouteProbes[probeKey] = future;
+    try {
+      return await future;
+    } finally {
+      _pendingRawRouteProbes.remove(probeKey);
+    }
+  }
+
+  String _routeProbeTargetKey(Contact target) {
+    if (target.publicKeyHex.isNotEmpty) {
+      return 'pk:${target.publicKeyHex}';
+    }
+    return 'name:${target.advName}:${target.outPathLen}:${target.outPath.map((b) => b.toRadixString(16).padLeft(2, '0')).join()}';
+  }
 
   Future<bool> _waitForVoiceFragmentAck({
     required String sessionId,
@@ -1608,6 +1708,37 @@ class AppProvider with ChangeNotifier {
     );
   }
 
+  void _handleRawRouteProbeRequest(RawRouteProbeRequest request) {
+    final requester = _resolveContactByPrefixHex(request.requesterKey6);
+    if (requester == null) {
+      debugPrint(
+        '⚠️ [AppProvider] Raw route probe requester not found: ${request.requesterKey6}',
+      );
+      return;
+    }
+    if (requester.outPathLen < 0 ||
+        requester.outPathLen > _maxDirectPayloadHops) {
+      debugPrint(
+        '⚠️ [AppProvider] Raw route probe requester out of range: ${requester.outPathLen}',
+      );
+      return;
+    }
+    if (requester.outPath.isEmpty) {
+      return;
+    }
+    unawaited(
+      connectionProvider.sendRawVoicePacket(
+        contactPath: requester.outPath,
+        contactPathLen: requester.outPathLen,
+        payload: RawRouteProbeAck(nonce: request.nonce).encodeBinary(),
+      ),
+    );
+  }
+
+  void _completeRawRouteProbeAck(int nonce) {
+    _rawProbeWaiters.complete(_rawProbeKey(nonce));
+  }
+
   void _sendVoiceFragmentAck(VoicePacket packet) {
     final senderKey6 = _voiceSessionSenderKey6[packet.sessionId];
     if (senderKey6 == null) return;
@@ -1646,6 +1777,95 @@ class AppProvider with ChangeNotifier {
         ).encodeBinary(),
       ),
     );
+  }
+
+  MessageReceptionDetails? _buildReceptionDetailsSnapshot(Message message) {
+    final matchedRxLog = _findBestMatchingRxLog(message);
+    final estimatedTx = estimateMessageTransmitDuration(
+      message,
+      radioBw: connectionProvider.deviceInfo.radioBw,
+      radioSf: connectionProvider.deviceInfo.radioSf,
+      radioCr: connectionProvider.deviceInfo.radioCr,
+    );
+    final senderToReceiptMs = _senderToReceiptMs(message);
+    final estimatedTransmitMs = estimatedTx > Duration.zero
+        ? estimatedTx.inMilliseconds
+        : null;
+    final postTransmitDelayMs =
+        senderToReceiptMs != null && estimatedTransmitMs != null
+        ? (senderToReceiptMs - estimatedTransmitMs).clamp(0, 86400000).toInt()
+        : null;
+
+    if (matchedRxLog == null &&
+        senderToReceiptMs == null &&
+        estimatedTransmitMs == null) {
+      return null;
+    }
+
+    return MessageReceptionDetails(
+      capturedAt: DateTime.now(),
+      packetLoggedAt: matchedRxLog?.timestamp,
+      rssiDbm: matchedRxLog?.logRxDataInfo?.rssiDbm,
+      snrDb: matchedRxLog?.logRxDataInfo?.snrDb,
+      pathBytes: _extractPathBytesFromLog(matchedRxLog),
+      senderToReceiptMs: senderToReceiptMs,
+      estimatedTransmitMs: estimatedTransmitMs,
+      postTransmitDelayMs: postTransmitDelayMs,
+    );
+  }
+
+  int? _senderToReceiptMs(Message message) {
+    if (message.senderTimestamp <= 0) return null;
+    final senderAt = DateTime.fromMillisecondsSinceEpoch(
+      message.senderTimestamp * 1000,
+      isUtc: true,
+    );
+    final deltaMs = message.receivedAt
+        .toUtc()
+        .difference(senderAt)
+        .inMilliseconds;
+    if (deltaMs < 0 || deltaMs > 86400000) return null;
+    return deltaMs;
+  }
+
+  BlePacketLog? _findBestMatchingRxLog(Message message) {
+    if (message.pathLen < 0 || message.pathLen >= 255) return null;
+    final expectedPayloadType = message.messageType == MessageType.channel
+        ? 0x05
+        : 0x02;
+    BlePacketLog? bestLog;
+    var bestDeltaMs = 999999999;
+
+    for (final log in connectionProvider.bleService.packetLogs) {
+      if (log.responseCode != 0x88) continue;
+      if (log.rawData.length < 6) continue;
+
+      final raw = log.rawData;
+      final payloadType = (raw[3] >> 2) & 0x0F;
+      final pathLen = raw[4];
+      if (payloadType != expectedPayloadType) continue;
+      if (pathLen != message.pathLen) continue;
+      if (raw.length < 5 + pathLen) continue;
+
+      final deltaMs =
+          (log.timestamp.difference(message.receivedAt).inMilliseconds).abs();
+      if (deltaMs < bestDeltaMs) {
+        bestDeltaMs = deltaMs;
+        bestLog = log;
+      }
+    }
+
+    if (bestDeltaMs > 30000) return null;
+    return bestLog;
+  }
+
+  List<int>? _extractPathBytesFromLog(BlePacketLog? log) {
+    if (log == null) return null;
+    final raw = log.rawData;
+    if (raw.length < 6) return null;
+    final pathLen = raw[4];
+    if (pathLen <= 0 || raw.length < 5 + pathLen) return null;
+    return raw.sublist(5, 5 + pathLen);
   }
 
   // Removed _syncMessages() - messages are automatically synced via PUSH_CODE_MSG_WAITING events

@@ -40,7 +40,7 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   group('MessagesProvider retransmission', () {
-    test('direct messages stay pending until delivery ACK arrives', () {
+    test('direct messages become sent before delivery ACK arrives', () {
       final provider = MessagesProvider();
       provider.addSentMessage(
         _buildDirectMessage('m1'),
@@ -51,7 +51,7 @@ void main() {
 
       expect(
         provider.messages.single.deliveryStatus,
-        MessageDeliveryStatus.sending,
+        MessageDeliveryStatus.sent,
       );
       expect(provider.messages.single.expectedAckTag, 77);
 
@@ -62,6 +62,24 @@ void main() {
         MessageDeliveryStatus.delivered,
       );
       expect(provider.messages.single.roundTripTimeMs, 180);
+    });
+
+    test('direct messages stay sent after device accept until confirm arrives', () {
+      final provider = MessagesProvider();
+      provider.addSentMessage(
+        _buildDirectMessage('m1b'),
+        contact: _buildContact(),
+      );
+
+      provider.markMessageSent('m1b', 78, 250);
+
+      expect(
+        provider.messages.single.deliveryStatus,
+        MessageDeliveryStatus.sent,
+      );
+      expect(provider.messages.single.expectedAckTag, 78);
+      expect(provider.messages.single.roundTripTimeMs, isNull);
+      expect(provider.messages.single.deliveredAt, isNull);
     });
 
     test('channel messages are marked sent immediately', () {

@@ -10,36 +10,26 @@ import 'contacts_provider.dart';
 
 enum SensorRefreshState { idle, refreshing, success, timeout, unavailable }
 
-enum SensorMetric {
-  lastSeen,
-  voltage,
-  battery,
-  temperature,
-  humidity,
-  pressure,
-  gps,
-  updated,
-}
-
 class SensorsProvider with ChangeNotifier {
   static const String _watchedSensorsKey = 'watched_sensor_keys';
   static const String _visibleSensorMetricsKey = 'visible_sensor_metrics';
-  static const Set<SensorMetric> _defaultVisibleMetrics = <SensorMetric>{
-    SensorMetric.lastSeen,
-    SensorMetric.voltage,
-    SensorMetric.battery,
-    SensorMetric.temperature,
-    SensorMetric.humidity,
-    SensorMetric.pressure,
-    SensorMetric.gps,
-    SensorMetric.updated,
+  static const String _fieldSpanKey = 'sensor_field_spans';
+  static const Set<String> _defaultVisibleFields = <String>{
+    'voltage',
+    'battery',
+    'temperature',
+    'humidity',
+    'pressure',
+    'gps',
   };
 
   final List<String> _watchedSensorKeys = <String>[];
   final Map<String, SensorRefreshState> _refreshStates =
       <String, SensorRefreshState>{};
-  final Map<String, Set<SensorMetric>> _visibleMetricsBySensor =
-      <String, Set<SensorMetric>>{};
+  final Map<String, Set<String>> _visibleFieldsBySensor =
+      <String, Set<String>>{};
+  final Map<String, Map<String, int>> _fieldSpansBySensor =
+      <String, Map<String, int>>{};
   bool _isLoaded = false;
   bool _isRefreshingAll = false;
 
@@ -59,25 +49,33 @@ class SensorsProvider with ChangeNotifier {
       final prefs = await SharedPreferences.getInstance();
       final stored = prefs.getStringList(_watchedSensorsKey) ?? <String>[];
       final storedMetricsJson = prefs.getString(_visibleSensorMetricsKey);
+      final storedSpansJson = prefs.getString(_fieldSpanKey);
       _watchedSensorKeys
         ..clear()
         ..addAll(stored);
-      _visibleMetricsBySensor.clear();
+      _visibleFieldsBySensor.clear();
+      _fieldSpansBySensor.clear();
       if (storedMetricsJson != null && storedMetricsJson.isNotEmpty) {
         final decoded = jsonDecode(storedMetricsJson) as Map<String, dynamic>;
         for (final entry in decoded.entries) {
-          final metricNames = (entry.value as List<dynamic>).cast<String>();
-          _visibleMetricsBySensor[entry.key] = metricNames
-              .map(_metricFromName)
-              .whereType<SensorMetric>()
+          _visibleFieldsBySensor[entry.key] = (entry.value as List<dynamic>)
+              .cast<String>()
               .toSet();
         }
       }
+      if (storedSpansJson != null && storedSpansJson.isNotEmpty) {
+        final decoded = jsonDecode(storedSpansJson) as Map<String, dynamic>;
+        for (final entry in decoded.entries) {
+          _fieldSpansBySensor[entry.key] = (entry.value as Map<String, dynamic>)
+              .map((key, value) => MapEntry(key, value as int));
+        }
+      }
       for (final key in _watchedSensorKeys) {
-        _visibleMetricsBySensor.putIfAbsent(
+        _visibleFieldsBySensor.putIfAbsent(
           key,
-          () => Set<SensorMetric>.from(_defaultVisibleMetrics),
+          () => Set<String>.from(_defaultVisibleFields),
         );
+        _fieldSpansBySensor.putIfAbsent(key, () => <String, int>{});
       }
     } catch (e) {
       debugPrint('Error loading watched sensors: $e');
@@ -100,8 +98,8 @@ class SensorsProvider with ChangeNotifier {
     try {
       final prefs = await SharedPreferences.getInstance();
       final encoded = <String, List<String>>{};
-      for (final entry in _visibleMetricsBySensor.entries) {
-        encoded[entry.key] = entry.value.map((metric) => metric.name).toList();
+      for (final entry in _visibleFieldsBySensor.entries) {
+        encoded[entry.key] = entry.value.toList();
       }
       await prefs.setString(_visibleSensorMetricsKey, jsonEncode(encoded));
     } catch (e) {
@@ -109,32 +107,60 @@ class SensorsProvider with ChangeNotifier {
     }
   }
 
-  Set<SensorMetric> visibleMetricsFor(String publicKeyHex) =>
-      Set<SensorMetric>.unmodifiable(
-        _visibleMetricsBySensor[publicKeyHex] ?? _defaultVisibleMetrics,
-      );
+  Future<void> _persistFieldSpans() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_fieldSpanKey, jsonEncode(_fieldSpansBySensor));
+    } catch (e) {
+      debugPrint('Error saving sensor field spans: $e');
+    }
+  }
 
-  bool showsMetric(String publicKeyHex, SensorMetric metric) =>
-      visibleMetricsFor(publicKeyHex).contains(metric);
+  Set<String> visibleFieldsFor(String publicKeyHex) => Set<String>.unmodifiable(
+    _visibleFieldsBySensor[publicKeyHex] ?? _defaultVisibleFields,
+  );
+
+  bool showsField(String publicKeyHex, String fieldKey) =>
+      visibleFieldsFor(publicKeyHex).contains(fieldKey);
+
+  int fieldSpanFor(String publicKeyHex, String fieldKey) {
+    final sensorSpans = _fieldSpansBySensor[publicKeyHex];
+    final span = sensorSpans?[fieldKey] ?? 1;
+    return span == 2 ? 2 : 1;
+  }
 
   Future<void> toggleMetric(
     String publicKeyHex,
-    SensorMetric metric,
+    String fieldKey,
     bool visible,
   ) async {
-    final visibleMetrics = _visibleMetricsBySensor.putIfAbsent(
+    final visibleFields = _visibleFieldsBySensor.putIfAbsent(
       publicKeyHex,
-      () => Set<SensorMetric>.from(_defaultVisibleMetrics),
+      () => Set<String>.from(_defaultVisibleFields),
     );
     if (visible) {
-      visibleMetrics.add(metric);
+      visibleFields.add(fieldKey);
     } else {
-      if (visibleMetrics.length == 1 && visibleMetrics.contains(metric)) {
+      if (visibleFields.length == 1 && visibleFields.contains(fieldKey)) {
         return;
       }
-      visibleMetrics.remove(metric);
+      visibleFields.remove(fieldKey);
     }
     await _persistVisibleMetrics();
+    notifyListeners();
+  }
+
+  Future<void> setFieldSpan(
+    String publicKeyHex,
+    String fieldKey,
+    int span,
+  ) async {
+    final sensorSpans = _fieldSpansBySensor.putIfAbsent(
+      publicKeyHex,
+      () => <String, int>{},
+    );
+    sensorSpans[fieldKey] = span == 2 ? 2 : 1;
+    await _persistFieldSpans();
     notifyListeners();
   }
 
@@ -151,19 +177,23 @@ class SensorsProvider with ChangeNotifier {
 
     _watchedSensorKeys.add(contact.publicKeyHex);
     await _persistWatchedSensors();
-    _visibleMetricsBySensor[contact.publicKeyHex] = Set<SensorMetric>.from(
-      _defaultVisibleMetrics,
+    _visibleFieldsBySensor[contact.publicKeyHex] = Set<String>.from(
+      _defaultVisibleFields,
     );
+    _fieldSpansBySensor[contact.publicKeyHex] = <String, int>{'gps': 2};
     await _persistVisibleMetrics();
+    await _persistFieldSpans();
     notifyListeners();
   }
 
   Future<void> removeSensor(String publicKeyHex) async {
     _watchedSensorKeys.remove(publicKeyHex);
     _refreshStates.remove(publicKeyHex);
-    _visibleMetricsBySensor.remove(publicKeyHex);
+    _visibleFieldsBySensor.remove(publicKeyHex);
+    _fieldSpansBySensor.remove(publicKeyHex);
     await _persistWatchedSensors();
     await _persistVisibleMetrics();
+    await _persistFieldSpans();
     notifyListeners();
   }
 
@@ -220,14 +250,5 @@ class SensorsProvider with ChangeNotifier {
       _isRefreshingAll = false;
       notifyListeners();
     }
-  }
-
-  SensorMetric? _metricFromName(String name) {
-    for (final metric in SensorMetric.values) {
-      if (metric.name == name) {
-        return metric;
-      }
-    }
-    return null;
   }
 }

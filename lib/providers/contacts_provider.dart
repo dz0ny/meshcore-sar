@@ -416,19 +416,20 @@ class ContactsProvider with ChangeNotifier {
 
       final previousTelemetry = contact.telemetry;
 
-      // Keep last valid GPS whenever current telemetry does not provide a
-      // valid GPS fix.
-      if (_shouldRetainLastValidGps(previousTelemetry, telemetry.gpsLocation)) {
-        debugPrint(
-          '  ⚠️ Retaining last valid GPS. Incoming telemetry GPS is invalid/missing: $incomingGps',
-        );
-        final mergedTelemetry = _mergeTelemetryForContact(
-          existingTelemetry: previousTelemetry,
-          incomingTelemetry: telemetry,
-        );
-        if (mergedTelemetry != null) {
-          telemetry = mergedTelemetry;
+      final mergedTelemetry = _mergeTelemetryForContact(
+        existingTelemetry: previousTelemetry,
+        incomingTelemetry: telemetry,
+      );
+      if (mergedTelemetry != null) {
+        if (_shouldRetainLastValidGps(
+          previousTelemetry,
+          telemetry.gpsLocation,
+        )) {
+          debugPrint(
+            '  ⚠️ Retaining last valid GPS. Incoming telemetry GPS is invalid/missing: $incomingGps',
+          );
         }
+        telemetry = mergedTelemetry;
       }
 
       // Update contact with new telemetry AND last seen time
@@ -504,24 +505,28 @@ class ContactsProvider with ChangeNotifier {
     }
 
     final incomingGps = _getValidGpsOrNull(incomingTelemetry.gpsLocation);
-    if (incomingGps != null) {
-      return incomingTelemetry;
-    }
-
     final previousGps = _getValidGpsOrNull(existingTelemetry?.gpsLocation);
-    if (previousGps == null) {
-      return incomingTelemetry;
-    }
+    final mergedExtraSensorData = <String, dynamic>{
+      ...?existingTelemetry?.extraSensorData,
+      ...?incomingTelemetry.extraSensorData,
+    };
 
     return ContactTelemetry(
-      gpsLocation: previousGps,
-      batteryPercentage: incomingTelemetry.batteryPercentage,
-      batteryMilliVolts: incomingTelemetry.batteryMilliVolts,
-      temperature: incomingTelemetry.temperature,
+      gpsLocation: incomingGps ?? previousGps,
+      batteryPercentage:
+          incomingTelemetry.batteryPercentage ??
+          existingTelemetry?.batteryPercentage,
+      batteryMilliVolts:
+          incomingTelemetry.batteryMilliVolts ??
+          existingTelemetry?.batteryMilliVolts,
+      temperature:
+          incomingTelemetry.temperature ?? existingTelemetry?.temperature,
       timestamp: incomingTelemetry.timestamp,
-      humidity: incomingTelemetry.humidity,
-      pressure: incomingTelemetry.pressure,
-      extraSensorData: incomingTelemetry.extraSensorData,
+      humidity: incomingTelemetry.humidity ?? existingTelemetry?.humidity,
+      pressure: incomingTelemetry.pressure ?? existingTelemetry?.pressure,
+      extraSensorData: mergedExtraSensorData.isEmpty
+          ? null
+          : mergedExtraSensorData,
     );
   }
 

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart' as flutter_map;
+import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
 
 import '../l10n/app_localizations.dart';
@@ -6,6 +8,7 @@ import '../models/contact.dart';
 import '../providers/connection_provider.dart';
 import '../providers/contacts_provider.dart';
 import '../providers/sensors_provider.dart';
+import '../utils/location_formats.dart';
 
 class SensorsTab extends StatelessWidget {
   const SensorsTab({super.key});
@@ -83,15 +86,15 @@ class SensorsTab extends StatelessWidget {
   Future<void> _showMetricSelector(
     BuildContext context,
     String publicKeyHex,
+    Contact? contact,
   ) async {
     await showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
       builder: (sheetContext) => Consumer<SensorsProvider>(
         builder: (context, sensorsProvider, child) {
-          final visibleMetrics = sensorsProvider.visibleMetricsFor(
-            publicKeyHex,
-          );
+          final visibleFields = sensorsProvider.visibleFieldsFor(publicKeyHex);
+          final options = _fieldOptionsFor(contact);
           return SafeArea(
             child: ListView(
               shrinkWrap: true,
@@ -107,24 +110,48 @@ class SensorsTab extends StatelessWidget {
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
                 const SizedBox(height: 20),
-                Wrap(
-                  spacing: 10,
-                  runSpacing: 10,
-                  children: SensorMetric.values.map((metric) {
-                    final visible = visibleMetrics.contains(metric);
-                    return FilterChip(
-                      selected: visible,
-                      label: Text(_metricLabel(metric)),
-                      onSelected: (value) {
-                        sensorsProvider.toggleMetric(
-                          publicKeyHex,
-                          metric,
-                          value,
-                        );
-                      },
-                    );
-                  }).toList(),
-                ),
+                ...options.map((option) {
+                  final visible = visibleFields.contains(option.key);
+                  final span = sensorsProvider.fieldSpanFor(
+                    publicKeyHex,
+                    option.key,
+                  );
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: FilterChip(
+                            selected: visible,
+                            label: Text(option.label),
+                            onSelected: (value) {
+                              sensorsProvider.toggleMetric(
+                                publicKeyHex,
+                                option.key,
+                                value,
+                              );
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        SegmentedButton<int>(
+                          segments: const [
+                            ButtonSegment<int>(value: 1, label: Text('1x')),
+                            ButtonSegment<int>(value: 2, label: Text('2x')),
+                          ],
+                          selected: <int>{span},
+                          onSelectionChanged: (selection) {
+                            sensorsProvider.setFieldSpan(
+                              publicKeyHex,
+                              option.key,
+                              selection.first,
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                  );
+                }),
               ],
             ),
           );
@@ -170,11 +197,18 @@ class SensorsTab extends StatelessWidget {
                     return _SensorCard(
                       contact: contact,
                       state: sensorsProvider.stateFor(key),
-                      visibleMetrics: sensorsProvider.visibleMetricsFor(key),
+                      visibleFields: sensorsProvider.visibleFieldsFor(key),
+                      fieldSpans: {
+                        for (final field in sensorsProvider.visibleFieldsFor(
+                          key,
+                        ))
+                          field: sensorsProvider.fieldSpanFor(key, field),
+                      },
                       onRemove: () async {
                         await sensorsProvider.removeSensor(key);
                       },
-                      onCustomize: () => _showMetricSelector(context, key),
+                      onCustomize: () =>
+                          _showMetricSelector(context, key, contact),
                     );
                   }),
               ],
@@ -265,14 +299,16 @@ class _EmptySensorsState extends StatelessWidget {
 class _SensorCard extends StatelessWidget {
   final Contact? contact;
   final SensorRefreshState state;
-  final Set<SensorMetric> visibleMetrics;
+  final Set<String> visibleFields;
+  final Map<String, int> fieldSpans;
   final Future<void> Function() onRemove;
   final VoidCallback onCustomize;
 
   const _SensorCard({
     required this.contact,
     required this.state,
-    required this.visibleMetrics,
+    required this.visibleFields,
+    required this.fieldSpans,
     required this.onRemove,
     required this.onCustomize,
   });
@@ -303,7 +339,7 @@ class _SensorCard extends StatelessWidget {
         ],
       ),
       child: Padding(
-        padding: const EdgeInsets.all(18),
+        padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -331,11 +367,36 @@ class _SensorCard extends StatelessWidget {
                       ),
                       if (telemetry != null) ...[
                         const SizedBox(height: 2),
-                        Text(
-                          '${_formatTelemetryDateTime(telemetry.timestamp)} • ${_formatTelemetryTime(telemetry.timestamp)}',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 4,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            Text(
+                              '${_formatTelemetryDateTime(telemetry.timestamp)} • ${_formatTelemetryTime(telemetry.timestamp)}',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                            if (state == SensorRefreshState.refreshing)
+                              const _InlineStateMeta(
+                                label: 'Refreshing',
+                                color: Color(0xFF266AC2),
+                                spinning: true,
+                              ),
+                            if (state == SensorRefreshState.success)
+                              const _InlineStateMeta(
+                                label: 'Updated',
+                                color: Color(0xFF218B63),
+                                icon: Icons.check_circle,
+                              ),
+                            if (state == SensorRefreshState.unavailable)
+                              const _InlineStateMeta(
+                                label: 'Unavailable',
+                                color: Color(0xFFB13B55),
+                                icon: Icons.error_outline,
+                              ),
+                          ],
                         ),
                       ],
                     ],
@@ -363,30 +424,6 @@ class _SensorCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 12),
-            if (((state != SensorRefreshState.idle &&
-                        state != SensorRefreshState.timeout) ||
-                    state == SensorRefreshState.unavailable) ||
-                (contact != null &&
-                    visibleMetrics.contains(SensorMetric.lastSeen)))
-              Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: Wrap(
-                  spacing: 10,
-                  runSpacing: 10,
-                  children: [
-                    if (state != SensorRefreshState.idle &&
-                        state != SensorRefreshState.timeout)
-                      _StatusPill(state: state),
-                    if (contact != null &&
-                        visibleMetrics.contains(SensorMetric.lastSeen))
-                      _InfoPill(
-                        icon: Icons.schedule,
-                        label:
-                            '${l10n.lastSeen}: ${contact!.timeSinceLastSeen}',
-                      ),
-                  ],
-                ),
-              ),
             if (contact == null)
               const Text(
                 'This node is no longer available in the contact list.',
@@ -398,12 +435,28 @@ class _SensorCard extends StatelessWidget {
                 'All fields are hidden. Use Visible fields to choose what to show.',
               )
             else
-              Wrap(
-                spacing: 12,
-                runSpacing: 12,
-                children: metrics
-                    .map((metric) => _MetricTile(data: metric))
-                    .toList(),
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  const spacing = 8.0;
+                  final compactWidth = (constraints.maxWidth - spacing) / 2;
+
+                  return Wrap(
+                    spacing: spacing,
+                    runSpacing: spacing,
+                    children: metrics
+                        .map(
+                          (metric) => _MetricTile(
+                            data: metric,
+                            width:
+                                (fieldSpans[metric.fieldKey] == 2 ||
+                                    metric.wide)
+                                ? constraints.maxWidth
+                                : compactWidth,
+                          ),
+                        )
+                        .toList(),
+                  );
+                },
               ),
           ],
         ),
@@ -418,10 +471,11 @@ class _SensorCard extends StatelessWidget {
   ) {
     final items = <_MetricCardData>[];
 
-    if (visibleMetrics.contains(SensorMetric.voltage) &&
+    if (visibleFields.contains('voltage') &&
         telemetry.batteryMilliVolts != null) {
       items.add(
         _MetricCardData(
+          fieldKey: 'voltage',
           icon: Icons.bolt,
           label: l10n.voltage,
           value: '${(telemetry.batteryMilliVolts! / 1000).toStringAsFixed(3)}V',
@@ -429,10 +483,11 @@ class _SensorCard extends StatelessWidget {
         ),
       );
     }
-    if (visibleMetrics.contains(SensorMetric.battery) &&
+    if (visibleFields.contains('battery') &&
         telemetry.batteryPercentage != null) {
       items.add(
         _MetricCardData(
+          fieldKey: 'battery',
           icon: Icons.battery_5_bar,
           label: l10n.battery,
           value: '${telemetry.batteryPercentage!.toStringAsFixed(0)}%',
@@ -440,10 +495,11 @@ class _SensorCard extends StatelessWidget {
         ),
       );
     }
-    if (visibleMetrics.contains(SensorMetric.temperature) &&
+    if (visibleFields.contains('temperature') &&
         telemetry.temperature != null) {
       items.add(
         _MetricCardData(
+          fieldKey: 'temperature',
           icon: Icons.thermostat,
           label: l10n.temperature,
           value: '${telemetry.temperature!.toStringAsFixed(1)}°C',
@@ -451,10 +507,10 @@ class _SensorCard extends StatelessWidget {
         ),
       );
     }
-    if (visibleMetrics.contains(SensorMetric.humidity) &&
-        telemetry.humidity != null) {
+    if (visibleFields.contains('humidity') && telemetry.humidity != null) {
       items.add(
         _MetricCardData(
+          fieldKey: 'humidity',
           icon: Icons.water_drop,
           label: l10n.humidity,
           value: '${telemetry.humidity!.toStringAsFixed(1)}%',
@@ -462,10 +518,10 @@ class _SensorCard extends StatelessWidget {
         ),
       );
     }
-    if (visibleMetrics.contains(SensorMetric.pressure) &&
-        telemetry.pressure != null) {
+    if (visibleFields.contains('pressure') && telemetry.pressure != null) {
       items.add(
         _MetricCardData(
+          fieldKey: 'pressure',
           icon: Icons.compress,
           label: l10n.pressure,
           value: '${telemetry.pressure!.toStringAsFixed(1)} hPa',
@@ -473,35 +529,38 @@ class _SensorCard extends StatelessWidget {
         ),
       );
     }
-    if (visibleMetrics.contains(SensorMetric.gps) &&
-        telemetry.gpsLocation != null) {
+    if (visibleFields.contains('gps') && telemetry.gpsLocation != null) {
       items.add(
         _MetricCardData(
+          fieldKey: 'gps',
           icon: Icons.place,
           label: l10n.gpsTelemetry,
           value:
               '${telemetry.gpsLocation!.latitude.toStringAsFixed(5)}, ${telemetry.gpsLocation!.longitude.toStringAsFixed(5)}',
           accent: const Color(0xFFAA3F57),
           wide: true,
-        ),
-      );
-    }
-    if (visibleMetrics.contains(SensorMetric.updated)) {
-      items.add(
-        _MetricCardData(
-          icon: Icons.update,
-          label: l10n.updated,
-          value: _formatTelemetryTime(telemetry.timestamp),
-          accent: const Color(0xFF6C727F),
+          mapLocation: LatLng(
+            telemetry.gpsLocation!.latitude,
+            telemetry.gpsLocation!.longitude,
+          ),
+          secondaryValue: formatPlusCode(
+            telemetry.gpsLocation!.latitude,
+            telemetry.gpsLocation!.longitude,
+          ),
         ),
       );
     }
     if (telemetry.extraSensorData != null) {
       for (final entry in telemetry.extraSensorData!.entries) {
+        final fieldKey = _extraFieldKey(entry.key);
+        if (!visibleFields.contains(fieldKey)) {
+          continue;
+        }
         items.add(
           _MetricCardData(
+            fieldKey: fieldKey,
             icon: Icons.sensors,
-            label: entry.key,
+            label: _formatExtraFieldLabel(entry.key),
             value: '${entry.value}',
             accent: const Color(0xFF3E657C),
           ),
@@ -531,81 +590,48 @@ class _SensorCard extends StatelessWidget {
   }
 }
 
-class _StatusPill extends StatelessWidget {
-  final SensorRefreshState state;
-
-  const _StatusPill({required this.state});
-
-  @override
-  Widget build(BuildContext context) {
-    final (label, color, icon) = switch (state) {
-      SensorRefreshState.idle => (
-        'Idle',
-        const Color(0xFF5D7185),
-        Icons.sensors,
-      ),
-      SensorRefreshState.refreshing => (
-        'Refreshing',
-        const Color(0xFF266AC2),
-        Icons.sync,
-      ),
-      SensorRefreshState.success => (
-        'Updated',
-        const Color(0xFF218B63),
-        Icons.check_circle,
-      ),
-      SensorRefreshState.timeout => (
-        'No response',
-        const Color(0xFFC17B1D),
-        Icons.schedule,
-      ),
-      SensorRefreshState.unavailable => (
-        'Unavailable',
-        const Color(0xFFB13B55),
-        Icons.error_outline,
-      ),
-    };
-
-    return _InfoPill(
-      icon: icon,
-      label: label,
-      foreground: color,
-      background: color.withValues(alpha: 0.10),
-    );
-  }
-}
-
-class _InfoPill extends StatelessWidget {
-  final IconData icon;
+class _InlineStateMeta extends StatelessWidget {
   final String label;
-  final Color? foreground;
-  final Color? background;
+  final Color color;
+  final IconData? icon;
+  final bool spinning;
 
-  const _InfoPill({
-    required this.icon,
+  const _InlineStateMeta({
     required this.label,
-    this.foreground,
-    this.background,
+    required this.color,
+    this.icon,
+    this.spinning = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    final color = foreground ?? Theme.of(context).colorScheme.onSurfaceVariant;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color:
-            background ?? Theme.of(context).colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(18),
+        color: color.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(999),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 18, color: color),
-          const SizedBox(width: 8),
+          if (spinning)
+            SizedBox(
+              width: 11,
+              height: 11,
+              child: CircularProgressIndicator(
+                strokeWidth: 1.7,
+                valueColor: AlwaysStoppedAnimation<Color>(color),
+              ),
+            )
+          else if (icon != null)
+            Icon(icon, size: 11, color: color),
+          const SizedBox(width: 4),
           Text(
             label,
-            style: TextStyle(color: color, fontWeight: FontWeight.w600),
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: color,
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ],
       ),
@@ -639,89 +665,389 @@ class _InlineAlertBadge extends StatelessWidget {
 
 class _MetricTile extends StatelessWidget {
   final _MetricCardData data;
+  final double width;
 
-  const _MetricTile({required this.data});
+  const _MetricTile({required this.data, required this.width});
 
-  @override
-  Widget build(BuildContext context) {
-    final width = data.wide ? 320.0 : 168.0;
+  Future<void> _showExpandedMap(BuildContext context) async {
+    final location = data.mapLocation;
+    if (location == null) return;
 
-    return Container(
-      width: width,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: data.accent.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: data.accent.withValues(alpha: 0.14)),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: data.accent.withValues(alpha: 0.14),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(data.icon, color: data.accent, size: 20),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return Dialog(
+          insetPadding: const EdgeInsets.all(16),
+          clipBehavior: Clip.antiAlias,
+          child: SizedBox(
+            height: 420,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  data.label,
-                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                    color: data.accent,
-                    fontWeight: FontWeight.w700,
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 14, 8, 8),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              data.label,
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              data.value,
+                              style: Theme.of(context).textTheme.bodyMedium,
+                            ),
+                            if (data.secondaryValue != null)
+                              Text(
+                                data.secondaryValue!,
+                                style: Theme.of(context).textTheme.bodySmall,
+                              ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => Navigator.of(dialogContext).pop(),
+                        icon: const Icon(Icons.close),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 6),
-                Text(
-                  data.value,
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    height: 1.1,
+                Expanded(
+                  child: flutter_map.FlutterMap(
+                    options: flutter_map.MapOptions(
+                      initialCenter: location,
+                      initialZoom: 15,
+                    ),
+                    children: [
+                      flutter_map.TileLayer(
+                        urlTemplate:
+                            'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                        userAgentPackageName:
+                            'com.meshcore.sar.meshcore_sar_app',
+                      ),
+                      flutter_map.MarkerLayer(
+                        markers: [
+                          flutter_map.Marker(
+                            point: location,
+                            width: 40,
+                            height: 40,
+                            child: Icon(
+                              Icons.location_on,
+                              color: data.accent,
+                              size: 34,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
           ),
-        ],
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: width,
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: data.accent.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: data.accent.withValues(alpha: 0.14)),
       ),
+      child: data.mapLocation == null
+          ? Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _MetricIcon(accent: data.accent, icon: data.icon),
+                const SizedBox(width: 10),
+                Expanded(child: _MetricText(data: data)),
+              ],
+            )
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _MetricIcon(accent: data.accent, icon: data.icon),
+                    const SizedBox(width: 10),
+                    Expanded(child: _MetricText(data: data)),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(14),
+                    onTap: () => _showExpandedMap(context),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(14),
+                      child: SizedBox(
+                        height: 104,
+                        width: double.infinity,
+                        child: Stack(
+                          children: [
+                            flutter_map.FlutterMap(
+                              options: flutter_map.MapOptions(
+                                initialCenter: data.mapLocation!,
+                                initialZoom: 14,
+                                interactionOptions:
+                                    const flutter_map.InteractionOptions(
+                                      flags: flutter_map.InteractiveFlag.none,
+                                    ),
+                              ),
+                              children: [
+                                flutter_map.TileLayer(
+                                  urlTemplate:
+                                      'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                                  userAgentPackageName:
+                                      'com.meshcore.sar.meshcore_sar_app',
+                                ),
+                                flutter_map.MarkerLayer(
+                                  markers: [
+                                    flutter_map.Marker(
+                                      point: data.mapLocation!,
+                                      width: 32,
+                                      height: 32,
+                                      child: Icon(
+                                        Icons.location_on,
+                                        color: data.accent,
+                                        size: 28,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                            Positioned(
+                              right: 8,
+                              bottom: 8,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 3,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withValues(alpha: 0.55),
+                                  borderRadius: BorderRadius.circular(999),
+                                ),
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.open_in_full,
+                                      size: 12,
+                                      color: Colors.white,
+                                    ),
+                                    SizedBox(width: 4),
+                                    Text(
+                                      'Open map',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+    );
+  }
+}
+
+class _MetricIcon extends StatelessWidget {
+  final Color accent;
+  final IconData icon;
+
+  const _MetricIcon({required this.accent, required this.icon});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 32,
+      height: 32,
+      decoration: BoxDecoration(
+        color: accent.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Icon(icon, color: accent, size: 18),
+    );
+  }
+}
+
+class _MetricText extends StatelessWidget {
+  final _MetricCardData data;
+
+  const _MetricText({required this.data});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          data.label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: Theme.of(context).textTheme.labelMedium?.copyWith(
+            color: data.accent,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          data.value,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+            fontWeight: FontWeight.w700,
+            height: 1.1,
+          ),
+        ),
+        if (data.secondaryValue != null) ...[
+          const SizedBox(height: 4),
+          Text(
+            data.secondaryValue!,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ],
     );
   }
 }
 
 class _MetricCardData {
+  final String fieldKey;
   final IconData icon;
   final String label;
   final String value;
+  final String? secondaryValue;
   final Color accent;
   final bool wide;
+  final LatLng? mapLocation;
 
   const _MetricCardData({
+    required this.fieldKey,
     required this.icon,
     required this.label,
     required this.value,
+    this.secondaryValue,
     required this.accent,
     this.wide = false,
+    this.mapLocation,
   });
 }
 
-String _metricLabel(SensorMetric metric) {
-  return switch (metric) {
-    SensorMetric.lastSeen => 'Last seen',
-    SensorMetric.voltage => 'Voltage',
-    SensorMetric.battery => 'Battery',
-    SensorMetric.temperature => 'Temperature',
-    SensorMetric.humidity => 'Humidity',
-    SensorMetric.pressure => 'Pressure',
-    SensorMetric.gps => 'GPS',
-    SensorMetric.updated => 'Updated',
+class _FieldOption {
+  final String key;
+  final String label;
+
+  const _FieldOption({required this.key, required this.label});
+}
+
+List<_FieldOption> _fieldOptionsFor(Contact? contact) {
+  final telemetry = contact?.telemetry;
+  final options = <_FieldOption>[
+    if (telemetry?.batteryMilliVolts != null)
+      const _FieldOption(key: 'voltage', label: 'Voltage'),
+    if (telemetry?.batteryPercentage != null)
+      const _FieldOption(key: 'battery', label: 'Battery'),
+    if (telemetry?.temperature != null)
+      const _FieldOption(key: 'temperature', label: 'Temperature'),
+    if (telemetry?.humidity != null)
+      const _FieldOption(key: 'humidity', label: 'Humidity'),
+    if (telemetry?.pressure != null)
+      const _FieldOption(key: 'pressure', label: 'Pressure'),
+    if (telemetry?.gpsLocation != null)
+      const _FieldOption(key: 'gps', label: 'GPS'),
+  ];
+
+  final extraSensorData = telemetry?.extraSensorData;
+  if (extraSensorData != null) {
+    for (final key in extraSensorData.keys) {
+      options.add(
+        _FieldOption(
+          key: _extraFieldKey(key),
+          label: _formatExtraFieldLabel(key),
+        ),
+      );
+    }
+  }
+
+  return options;
+}
+
+String _extraFieldKey(String label) {
+  return 'extra:$label';
+}
+
+String _formatExtraFieldLabel(String rawKey) {
+  final knownPrefixes = <String, String>{
+    'altitude': 'Altitude',
+    'illuminance': 'Illuminance',
+    'presence': 'Presence',
+    'digital_input': 'Digital input',
+    'digital_output': 'Digital output',
+    'analog_input': 'Analog input',
+    'analog_output': 'Analog output',
+    'accelerometer': 'Accelerometer',
+    'gyrometer': 'Gyrometer',
   };
+
+  for (final entry in knownPrefixes.entries) {
+    final prefix = '${entry.key}_';
+    if (rawKey == entry.key) {
+      return entry.value;
+    }
+    if (rawKey.startsWith(prefix)) {
+      final suffix = rawKey.substring(prefix.length);
+      final channel = int.tryParse(suffix);
+      if (channel != null) {
+        return '${entry.value} (ch $channel)';
+      }
+      return entry.value;
+    }
+  }
+
+  final parts = rawKey.split('_');
+  if (parts.isEmpty) return rawKey;
+  final channel = parts.length > 1 ? parts.last : null;
+  final base = parts.length > 1
+      ? parts.sublist(0, parts.length - 1).join(' ')
+      : rawKey;
+  final title = base
+      .split(' ')
+      .where((part) => part.isNotEmpty)
+      .map((part) => '${part[0].toUpperCase()}${part.substring(1)}')
+      .join(' ');
+  if (channel != null && int.tryParse(channel) != null) {
+    return '$title (ch $channel)';
+  }
+  return title;
 }
 
 IconData _typeIcon(Contact contact) {

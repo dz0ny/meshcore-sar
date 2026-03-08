@@ -15,6 +15,10 @@ class LocalePreferences {
     Locale('fr'), // French
     Locale('it'), // Italian
     Locale('el'), // Greek
+    Locale('pt'), // Portuguese
+    Locale('tr'), // Turkish
+    Locale('pl'), // Polish
+    Locale('uk'), // Ukrainian
     Locale('ru'), // Russian
     Locale('zh'), // Chinese
   ];
@@ -66,6 +70,14 @@ class LocalePreferences {
         return 'Italiano';
       case 'el':
         return 'Greek';
+      case 'pt':
+        return 'Portuguese';
+      case 'tr':
+        return 'Turkish';
+      case 'pl':
+        return 'Polish';
+      case 'uk':
+        return 'Ukrainian';
       case 'ru':
         return 'Русский';
       case 'zh':
@@ -94,6 +106,14 @@ class LocalePreferences {
         return 'Italiano';
       case 'el':
         return 'Ελληνικά';
+      case 'pt':
+        return 'Português';
+      case 'tr':
+        return 'Türkçe';
+      case 'pl':
+        return 'Polski';
+      case 'uk':
+        return 'Українська';
       case 'ru':
         return 'Русский';
       case 'zh':

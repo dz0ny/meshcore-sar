@@ -304,6 +304,51 @@ class _MessagesTabState extends State<MessagesTab> {
     if (!mounted) return;
   }
 
+  Future<void> _replyToMessage(Message message) async {
+    final l10n = AppLocalizations.of(context)!;
+    final contactsProvider = context.read<ContactsProvider>();
+
+    String destinationType;
+    Contact? recipient;
+
+    if (message.isChannelMessage) {
+      final channelIdx = message.channelIdx ?? 0;
+      destinationType = MessageDestinationPreferences.destinationTypeChannel;
+
+      if (channelIdx != 0) {
+        recipient = contactsProvider.channels.where((contact) {
+          return contact.publicKey.length > 1 &&
+              contact.publicKey[1] == channelIdx;
+        }).firstOrNull;
+
+        if (recipient == null) {
+          ToastLogger.error(context, l10n.cannotReplyContactNotFound);
+          return;
+        }
+      }
+    } else {
+      final senderPrefix = message.senderPublicKeyPrefix;
+      if (senderPrefix == null || senderPrefix.length < 6) {
+        ToastLogger.error(context, l10n.cannotReplySenderMissing);
+        return;
+      }
+
+      recipient = contactsProvider.findContactByPrefix(senderPrefix);
+      if (recipient == null) {
+        ToastLogger.error(context, l10n.cannotReplyContactNotFound);
+        return;
+      }
+
+      destinationType = recipient.isRoom
+          ? MessageDestinationPreferences.destinationTypeRoom
+          : MessageDestinationPreferences.destinationTypeContact;
+    }
+
+    await _onRecipientSelected(destinationType, recipient);
+    if (!mounted) return;
+    _focusNode.requestFocus();
+  }
+
   /// Get icon for current destination type
   IconData _getDestinationIcon() {
     if (_destinationType ==
@@ -1538,6 +1583,7 @@ class _MessagesTabState extends State<MessagesTab> {
                   onRefresh: _handleRefresh,
                   onNavigateToMap: widget.onNavigateToMap,
                   onMessageTap: _handleMessageTap,
+                  onReplyToMessage: _replyToMessage,
                 ),
               ),
               Positioned(

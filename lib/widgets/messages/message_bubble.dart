@@ -44,6 +44,7 @@ import 'system_message_bubble.dart';
 class MessageBubble extends StatefulWidget {
   final Message message;
   final VoidCallback? onTap;
+  final VoidCallback? onReply;
   final bool isHighlighted;
   final VoidCallback? onNavigateToMap;
 
@@ -54,6 +55,7 @@ class MessageBubble extends StatefulWidget {
     super.key,
     required this.message,
     this.onTap,
+    this.onReply,
     this.isHighlighted = false,
     this.onNavigateToMap,
     this.isCompact = false,
@@ -209,6 +211,15 @@ class _MessageBubbleState extends State<MessageBubble> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            if (!isOwnMessage && widget.onReply != null)
+              ListTile(
+                leading: const Icon(Icons.reply),
+                title: Text(AppLocalizations.of(context)!.reply),
+                onTap: () {
+                  Navigator.pop(context);
+                  widget.onReply?.call();
+                },
+              ),
             // Copy text option
             ListTile(
               leading: const Icon(Icons.copy),

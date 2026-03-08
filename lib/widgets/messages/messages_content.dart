@@ -14,6 +14,7 @@ class MessagesContent extends StatelessWidget {
   final Future<void> Function() onRefresh;
   final VoidCallback? onNavigateToMap;
   final ValueChanged<Message>? onMessageTap;
+  final ValueChanged<Message>? onReplyToMessage;
 
   const MessagesContent({
     super.key,
@@ -24,6 +25,7 @@ class MessagesContent extends StatelessWidget {
     required this.onRefresh,
     this.onNavigateToMap,
     this.onMessageTap,
+    this.onReplyToMessage,
   });
 
   @override
@@ -86,6 +88,9 @@ class MessagesContent extends StatelessWidget {
                   onTap: onMessageTap == null
                       ? null
                       : () => onMessageTap!(message),
+                  onReply: onReplyToMessage == null
+                      ? null
+                      : () => onReplyToMessage!(message),
                 );
               },
             ),

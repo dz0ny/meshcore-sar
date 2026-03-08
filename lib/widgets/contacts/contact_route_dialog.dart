@@ -196,6 +196,8 @@ class _ContactRouteDialogState extends State<ContactRouteDialog> {
                 });
               },
               autoRouteRotationEnabled: appProvider.autoRouteRotationEnabled,
+              nearestRelayFallbackEnabled:
+                  appProvider.nearestRelayFallbackEnabled,
               clearPathOnMaxRetry: appProvider.clearPathOnMaxRetry,
             ),
             const SizedBox(height: 16),
@@ -264,12 +266,14 @@ class _AutomationRoutingInfo extends StatelessWidget {
   final bool isExpanded;
   final VoidCallback onToggle;
   final bool autoRouteRotationEnabled;
+  final bool nearestRelayFallbackEnabled;
   final bool clearPathOnMaxRetry;
 
   const _AutomationRoutingInfo({
     required this.isExpanded,
     required this.onToggle,
     required this.autoRouteRotationEnabled,
+    required this.nearestRelayFallbackEnabled,
     required this.clearPathOnMaxRetry,
   });
 
@@ -335,6 +339,12 @@ class _AutomationRoutingInfo extends StatelessWidget {
                       ? 'Auto route rotation on'
                       : 'Auto route rotation off',
                   icon: Icons.swap_horiz,
+                ),
+                _InfoChip(
+                  label: nearestRelayFallbackEnabled
+                      ? 'Nearest repeater fallback on'
+                      : 'Nearest repeater fallback off',
+                  icon: Icons.router,
                 ),
                 _InfoChip(
                   label: clearPathOnMaxRetry

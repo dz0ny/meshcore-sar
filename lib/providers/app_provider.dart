@@ -98,6 +98,9 @@ class AppProvider with ChangeNotifier {
   bool _clearPathOnMaxRetry =
       MessagingRoutePreferences.defaultClearPathOnMaxRetry;
   bool get clearPathOnMaxRetry => _clearPathOnMaxRetry;
+  bool _nearestRelayFallbackEnabled =
+      MessagingRoutePreferences.defaultNearestRelayFallbackEnabled;
+  bool get nearestRelayFallbackEnabled => _nearestRelayFallbackEnabled;
   final PathHistoryService _pathHistoryService = PathHistoryService();
   final NearestRouterSelector _nearestRouterSelector =
       const NearestRouterSelector();
@@ -458,6 +461,8 @@ class AppProvider with ChangeNotifier {
           await MessagingRoutePreferences.getAutoRouteRotationEnabled();
       _clearPathOnMaxRetry =
           await MessagingRoutePreferences.getClearPathOnMaxRetry();
+      _nearestRelayFallbackEnabled =
+          await MessagingRoutePreferences.getNearestRelayFallbackEnabled();
       notifyListeners();
     } catch (e) {
       debugPrint('Error loading messaging route settings: $e');
@@ -481,6 +486,16 @@ class AppProvider with ChangeNotifier {
       notifyListeners();
     } catch (e) {
       debugPrint('Error saving clear path on max retry setting: $e');
+    }
+  }
+
+  Future<void> toggleNearestRelayFallbackEnabled(bool enabled) async {
+    try {
+      _nearestRelayFallbackEnabled = enabled;
+      await MessagingRoutePreferences.setNearestRelayFallbackEnabled(enabled);
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error saving nearest relay fallback setting: $e');
     }
   }
 
@@ -713,6 +728,19 @@ class AppProvider with ChangeNotifier {
       final receptionDetailsSnapshot = _buildReceptionDetailsSnapshot(
         enrichedMessage,
       );
+      final receivedPathBytes = receptionDetailsSnapshot?.pathBytes;
+      if (senderContact != null &&
+          enrichedMessage.isChannelMessage &&
+          (enrichedMessage.channelIdx ?? 0) == 0 &&
+          receivedPathBytes != null &&
+          receivedPathBytes.isNotEmpty) {
+        unawaited(
+          _learnPathFromPublicMessage(
+            contact: senderContact,
+            pathBytes: receivedPathBytes,
+          ),
+        );
+      }
 
       // Check if message is a drawing broadcast
       if (DrawingMessageParser.isDrawingMessage(enrichedMessage.text)) {
@@ -1379,6 +1407,10 @@ class AppProvider with ChangeNotifier {
     required Contact contact,
     required Message message,
   }) async {
+    if (!_nearestRelayFallbackEnabled) {
+      return false;
+    }
+
     final latestContact =
         contactsProvider.findContactByKey(contact.publicKey) ?? contact;
     final session =
@@ -1489,6 +1521,38 @@ class AppProvider with ChangeNotifier {
   String _key6(Uint8List publicKey) {
     final bytes = publicKey.sublist(0, math.min(6, publicKey.length));
     return bytes.map((byte) => byte.toRadixString(16).padLeft(2, '0')).join();
+  }
+
+  Future<void> _learnPathFromPublicMessage({
+    required Contact contact,
+    required List<int> pathBytes,
+  }) async {
+    final preferred = await RouteHashPreferences.getHashSize();
+    final inferredHashSize = _inferReceivedPathHashSize(
+      pathBytes,
+      preferredHashSize: preferred,
+    );
+    await _pathHistoryService.recordReceivedBytePath(
+      contact.publicKeyHex,
+      pathBytes,
+      inferredHashSize,
+    );
+  }
+
+  int _inferReceivedPathHashSize(
+    List<int> pathBytes, {
+    required int preferredHashSize,
+  }) {
+    final preferred = preferredHashSize;
+    final candidates = {preferred, 3, 2, 1}.toList();
+    for (final candidate in candidates) {
+      if (candidate >= 1 &&
+          candidate <= 3 &&
+          pathBytes.length % candidate == 0) {
+        return candidate;
+      }
+    }
+    return 1;
   }
 
   /// Initialize the app (load contacts, sync time, etc.)

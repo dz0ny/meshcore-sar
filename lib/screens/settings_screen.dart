@@ -991,6 +991,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
             Consumer<AppProvider>(
               builder: (context, appProvider, child) => SwitchListTile(
                 secondary: const Icon(Icons.route),
+                title: const Text('Nearest repeater fallback'),
+                subtitle: const Text(
+                  'After normal retries fail, try one final resend through the nearest repeater',
+                ),
+                value: appProvider.nearestRelayFallbackEnabled,
+                onChanged: (value) async {
+                  await appProvider.toggleNearestRelayFallbackEnabled(value);
+                },
+              ),
+            ),
+            Consumer<AppProvider>(
+              builder: (context, appProvider, child) => SwitchListTile(
+                secondary: const Icon(Icons.route),
                 title: const Text('Clear path on max retry'),
                 subtitle: const Text(
                   'Clear the route only after all retries and final router fallback fail',

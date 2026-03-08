@@ -3,11 +3,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 class MessagingRoutePreferences {
   static const bool defaultAutoRouteRotationEnabled = false;
   static const bool defaultClearPathOnMaxRetry = false;
+  static const bool defaultNearestRelayFallbackEnabled = true;
 
   static const String _autoRouteRotationKey =
       'messaging_auto_route_rotation_enabled';
   static const String _clearPathOnMaxRetryKey =
       'messaging_clear_path_on_max_retry';
+  static const String _nearestRelayFallbackKey =
+      'messaging_nearest_relay_fallback_enabled';
 
   static Future<bool> getAutoRouteRotationEnabled() async {
     final prefs = await SharedPreferences.getInstance();
@@ -28,5 +31,16 @@ class MessagingRoutePreferences {
   static Future<void> setClearPathOnMaxRetry(bool enabled) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_clearPathOnMaxRetryKey, enabled);
+  }
+
+  static Future<bool> getNearestRelayFallbackEnabled() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_nearestRelayFallbackKey) ??
+        defaultNearestRelayFallbackEnabled;
+  }
+
+  static Future<void> setNearestRelayFallbackEnabled(bool enabled) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_nearestRelayFallbackKey, enabled);
   }
 }

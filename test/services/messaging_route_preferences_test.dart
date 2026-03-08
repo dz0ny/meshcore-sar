@@ -16,16 +16,25 @@ void main() {
       isFalse,
     );
     expect(await MessagingRoutePreferences.getClearPathOnMaxRetry(), isFalse);
+    expect(
+      await MessagingRoutePreferences.getNearestRelayFallbackEnabled(),
+      isTrue,
+    );
   });
 
   test('route preferences persist changes', () async {
     await MessagingRoutePreferences.setAutoRouteRotationEnabled(true);
     await MessagingRoutePreferences.setClearPathOnMaxRetry(true);
+    await MessagingRoutePreferences.setNearestRelayFallbackEnabled(false);
 
     expect(
       await MessagingRoutePreferences.getAutoRouteRotationEnabled(),
       isTrue,
     );
     expect(await MessagingRoutePreferences.getClearPathOnMaxRetry(), isTrue);
+    expect(
+      await MessagingRoutePreferences.getNearestRelayFallbackEnabled(),
+      isFalse,
+    );
   });
 }

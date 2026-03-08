@@ -67,6 +67,45 @@ class PathHistoryService {
     );
   }
 
+  Future<void> recordReceivedBytePath(
+    String contactPublicKeyHex,
+    List<int> pathBytes,
+    int hashSize,
+  ) async {
+    await initialize();
+    if (pathBytes.isEmpty) {
+      return;
+    }
+    if (hashSize < 1 || hashSize > 3) {
+      return;
+    }
+    if (pathBytes.length % hashSize != 0) {
+      return;
+    }
+
+    final history = _historyFor(contactPublicKeyHex);
+    final signature = pathBytes
+        .map((byte) => byte.toRadixString(16).padLeft(2, '0'))
+        .join();
+    final existing = _findDirectPath(history.directPaths, signature);
+    final updated = PathRecord(
+      pathBytes: List<int>.from(pathBytes),
+      hopCount: pathBytes.length ~/ hashSize,
+      hashSize: hashSize,
+      successCount: existing?.successCount ?? 0,
+      failureCount: existing?.failureCount ?? 0,
+      lastRoundTripTimeMs: existing?.lastRoundTripTimeMs ?? 0,
+      lastUsedAt: DateTime.now(),
+    );
+
+    await _saveHistory(
+      contactPublicKeyHex,
+      history.copyWith(
+        directPaths: _upsertDirectPath(history.directPaths, updated),
+      ),
+    );
+  }
+
   Future<PathSelection> getSelectionForContact(
     Contact contact, {
     required bool autoRouteRotationEnabled,

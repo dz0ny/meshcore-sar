@@ -127,4 +127,16 @@ void main() {
 
     expect(selection.mode, PathSelectionMode.flood);
   });
+
+  test('received public byte path is added to history', () async {
+    final service = PathHistoryService();
+    await service.initialize();
+    await service.recordReceivedBytePath('abc123', [0x01, 0x02, 0x03], 3);
+
+    final history = service.historyFor('abc123');
+    expect(history.directPaths, hasLength(1));
+    expect(history.directPaths.single.pathBytes, [0x01, 0x02, 0x03]);
+    expect(history.directPaths.single.hashSize, 3);
+    expect(history.directPaths.single.hopCount, 1);
+  });
 }

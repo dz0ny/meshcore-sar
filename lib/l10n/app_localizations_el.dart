@@ -12,180 +12,180 @@ class AppLocalizationsEl extends AppLocalizations {
   String get appTitle => 'MeshCore SAR';
 
   @override
-  String get messages => 'Messages';
+  String get messages => 'Μηνύματα';
 
   @override
-  String get contacts => 'Contacts';
+  String get contacts => 'Επαφές';
 
   @override
-  String get map => 'Map';
+  String get map => 'Χάρτης';
 
   @override
-  String get settings => 'Settings';
+  String get settings => 'Ρυθμίσεις';
 
   @override
-  String get connect => 'Connect';
+  String get connect => 'Σύνδεση';
 
   @override
-  String get disconnect => 'Disconnect';
+  String get disconnect => 'Αποσύνδεση';
 
   @override
-  String get noDevicesFound => 'No devices found';
+  String get noDevicesFound => 'Δεν βρέθηκαν συσκευές';
 
   @override
-  String get scanAgain => 'Scan Again';
+  String get scanAgain => 'Σάρωση ξανά';
 
   @override
-  String get tapToConnect => 'Tap to connect';
+  String get tapToConnect => 'Πατήστε για σύνδεση';
 
   @override
-  String get deviceNotConnected => 'Device not connected';
+  String get deviceNotConnected => 'Η συσκευή δεν είναι συνδεδεμένη';
 
   @override
-  String get locationPermissionDenied => 'Location permission denied';
+  String get locationPermissionDenied => 'Η άδεια τοποθεσίας απορρίφθηκε';
 
   @override
   String get locationPermissionPermanentlyDenied =>
-      'Location permission permanently denied. Please enable in Settings.';
+      'Η άδεια τοποθεσίας απορρίφθηκε μόνιμα. Ενεργοποιήστε την στις Ρυθμίσεις.';
 
   @override
   String get locationPermissionRequired =>
-      'Location permission is required for GPS tracking and team coordination. You can enable it later in Settings.';
+      'Απαιτείται άδεια τοποθεσίας για παρακολούθηση GPS και συντονισμό ομάδας. Μπορείτε να την ενεργοποιήσετε αργότερα στις Ρυθμίσεις.';
 
   @override
   String get locationServicesDisabled =>
-      'Location services are disabled. Please enable them in Settings.';
+      'Οι υπηρεσίες τοποθεσίας είναι απενεργοποιημένες. Ενεργοποιήστε τις στις Ρυθμίσεις.';
 
   @override
-  String get failedToGetGpsLocation => 'Failed to get GPS location';
+  String get failedToGetGpsLocation => 'Αποτυχία λήψης τοποθεσίας GPS';
 
   @override
   String failedToAdvertise(String error) {
-    return 'Failed to advertise: $error';
+    return 'Αποτυχία μετάδοσης: $error';
   }
 
   @override
-  String get cancelReconnection => 'Cancel reconnection';
+  String get cancelReconnection => 'Ακύρωση επανασύνδεσης';
 
   @override
-  String get general => 'General';
+  String get general => 'Γενικά';
 
   @override
-  String get theme => 'Theme';
+  String get theme => 'Θέμα';
 
   @override
-  String get chooseTheme => 'Choose Theme';
+  String get chooseTheme => 'Επιλογή θέματος';
 
   @override
-  String get light => 'Light';
+  String get light => 'Φωτεινό';
 
   @override
-  String get dark => 'Dark';
+  String get dark => 'Σκούρο';
 
   @override
-  String get blueLightTheme => 'Blue light theme';
+  String get blueLightTheme => 'Μπλε φωτεινό θέμα';
 
   @override
-  String get blueDarkTheme => 'Blue dark theme';
+  String get blueDarkTheme => 'Μπλε σκούρο θέμα';
 
   @override
-  String get sarRed => 'SAR Red';
+  String get sarRed => 'SAR Κόκκινο';
 
   @override
-  String get alertEmergencyMode => 'Alert/Emergency mode';
+  String get alertEmergencyMode => 'Λειτουργία συναγερμού/έκτακτης ανάγκης';
 
   @override
-  String get sarGreen => 'SAR Green';
+  String get sarGreen => 'SAR Πράσινο';
 
   @override
-  String get safeAllClearMode => 'Safe/All Clear mode';
+  String get safeAllClearMode => 'Λειτουργία ασφαλείας/όλα καθαρά';
 
   @override
-  String get autoSystem => 'Auto (System)';
+  String get autoSystem => 'Αυτόματο (σύστημα)';
 
   @override
-  String get followSystemTheme => 'Follow system theme';
+  String get followSystemTheme => 'Ακολουθεί το θέμα συστήματος';
 
   @override
-  String get showRxTxIndicators => 'Show RX/TX Indicators';
+  String get showRxTxIndicators => 'Εμφάνιση ενδείξεων RX/TX';
 
   @override
   String get displayPacketActivity =>
-      'Display packet activity indicators in top bar';
+      'Εμφάνιση ενδείξεων δραστηριότητας πακέτων στην επάνω μπάρα';
 
   @override
-  String get disableMap => 'Disable Map';
+  String get disableMap => 'Απενεργοποίηση χάρτη';
 
   @override
   String get disableMapDescription =>
-      'Hide the map tab to reduce battery usage';
+      'Απόκρυψη της καρτέλας χάρτη για μείωση κατανάλωσης μπαταρίας';
 
   @override
-  String get language => 'Language';
+  String get language => 'Γλώσσα';
 
   @override
-  String get chooseLanguage => 'Choose Language';
+  String get chooseLanguage => 'Επιλογή γλώσσας';
 
   @override
-  String get save => 'Save';
+  String get save => 'Αποθήκευση';
 
   @override
-  String get cancel => 'Cancel';
+  String get cancel => 'Ακύρωση';
 
   @override
-  String get close => 'Close';
+  String get close => 'Κλείσιμο';
 
   @override
-  String get about => 'About';
+  String get about => 'Σχετικά';
 
   @override
-  String get appVersion => 'App Version';
+  String get appVersion => 'Έκδοση εφαρμογής';
 
   @override
-  String get appName => 'App Name';
+  String get appName => 'Όνομα εφαρμογής';
 
   @override
-  String get aboutMeshCoreSar => 'About MeshCore SAR';
+  String get aboutMeshCoreSar => 'Σχετικά με το MeshCore SAR';
 
   @override
   String get aboutDescription =>
-      'A Search & Rescue application designed for emergency response teams. Features include:\n\n• BLE mesh networking for device-to-device communication\n• Offline maps with multiple layer options\n• Real-time team member tracking\n• SAR tactical markers (found person, fire, staging)\n• Contact management and messaging\n• GPS tracking with compass heading\n• Map tile caching for offline use';
+      'Εφαρμογή Έρευνας και Διάσωσης σχεδιασμένη για ομάδες απόκρισης έκτακτης ανάγκης. Περιλαμβάνει:\n\n• Δικτύωση BLE mesh για επικοινωνία συσκευή με συσκευή\n• Χάρτες εκτός σύνδεσης με πολλαπλά επίπεδα\n• Παρακολούθηση μελών ομάδας σε πραγματικό χρόνο\n• Τακτικούς δείκτες SAR (εντοπισμένο άτομο, φωτιά, σημείο συγκέντρωσης)\n• Διαχείριση επαφών και μηνυμάτων\n• Παρακολούθηση GPS με πυξίδα κατεύθυνσης\n• Cache πλακιδίων χάρτη για χρήση εκτός σύνδεσης';
 
   @override
-  String get technologiesUsed => 'Technologies Used:';
+  String get technologiesUsed => 'Χρησιμοποιούμενες τεχνολογίες:';
 
   @override
   String get technologiesList =>
-      '• Flutter for cross-platform development\n• BLE (Bluetooth Low Energy) for mesh networking\n• OpenStreetMap for mapping\n• Provider for state management\n• SharedPreferences for local storage';
+      '• Flutter για ανάπτυξη πολλαπλών πλατφορμών\n• BLE (Bluetooth Low Energy) για δικτύωση mesh\n• OpenStreetMap για χαρτογράφηση\n• Provider για διαχείριση κατάστασης\n• SharedPreferences για τοπική αποθήκευση';
 
   @override
-  String get moreInfo => 'More Info';
+  String get moreInfo => 'Περισσότερες πληροφορίες';
 
   @override
-  String get packageName => 'Package Name';
+  String get packageName => 'Όνομα πακέτου';
 
   @override
-  String get sampleData => 'Sample Data';
+  String get sampleData => 'Δείγματα δεδομένων';
 
   @override
   String get sampleDataDescription =>
-      'Load or clear sample contacts, channel messages, and SAR markers for testing';
+      'Φόρτωση ή εκκαθάριση δοκιμαστικών επαφών, μηνυμάτων καναλιού και δεικτών SAR για έλεγχο';
 
   @override
-  String get loadSampleData => 'Load Sample Data';
+  String get loadSampleData => 'Φόρτωση δειγμάτων δεδομένων';
 
   @override
-  String get clearAllData => 'Clear All Data';
+  String get clearAllData => 'Εκκαθάριση όλων των δεδομένων';
 
   @override
-  String get clearAllDataConfirmTitle => 'Clear All Data';
+  String get clearAllDataConfirmTitle => 'Εκκαθάριση όλων των δεδομένων';
 
   @override
   String get clearAllDataConfirmMessage =>
-      'This will clear all contacts and SAR markers. Are you sure?';
+      'Αυτό θα διαγράψει όλες τις επαφές και τους δείκτες SAR. Είστε βέβαιοι;';
 
   @override
-  String get clear => 'Clear';
+  String get clear => 'Εκκαθάριση';
 
   @override
   String loadedSampleData(
@@ -194,471 +194,476 @@ class AppLocalizationsEl extends AppLocalizations {
     int sarCount,
     int messageCount,
   ) {
-    return 'Loaded $teamCount team members, $channelCount channels, $sarCount SAR markers, $messageCount messages';
+    return 'Φορτώθηκαν $teamCount μέλη ομάδας, $channelCount κανάλια, $sarCount δείκτες SAR, $messageCount μηνύματα';
   }
 
   @override
   String failedToLoadSampleData(String error) {
-    return 'Failed to load sample data: $error';
+    return 'Αποτυχία φόρτωσης δειγμάτων δεδομένων: $error';
   }
 
   @override
-  String get allDataCleared => 'All data cleared';
+  String get allDataCleared => 'Όλα τα δεδομένα διαγράφηκαν';
 
   @override
   String get failedToStartBackgroundTracking =>
-      'Failed to start background tracking. Check permissions and BLE connection.';
+      'Αποτυχία εκκίνησης παρακολούθησης στο παρασκήνιο. Ελέγξτε τα δικαιώματα και τη σύνδεση BLE.';
 
   @override
   String locationBroadcast(String latitude, String longitude) {
-    return 'Location broadcast: $latitude, $longitude';
+    return 'Μετάδοση τοποθεσίας: $latitude, $longitude';
   }
 
   @override
   String get defaultPinInfo =>
-      'The default pin for devices without a screen is 123456. Trouble pairing? Forget the bluetooth device in system settings.';
+      'Το προεπιλεγμένο PIN για συσκευές χωρίς οθόνη είναι 123456. Πρόβλημα στη σύζευξη; Ξεχάστε τη συσκευή Bluetooth από τις ρυθμίσεις συστήματος.';
 
   @override
-  String get noMessagesYet => 'No messages yet';
+  String get noMessagesYet => 'Δεν υπάρχουν ακόμη μηνύματα';
 
   @override
-  String get pullDownToSync => 'Pull down to sync messages';
+  String get pullDownToSync =>
+      'Τραβήξτε προς τα κάτω για συγχρονισμό μηνυμάτων';
 
   @override
-  String get deleteContact => 'Delete Contact';
+  String get deleteContact => 'Διαγραφή επαφής';
 
   @override
-  String get delete => 'Delete';
+  String get delete => 'Διαγραφή';
 
   @override
-  String get viewOnMap => 'View on Map';
+  String get viewOnMap => 'Προβολή στον χάρτη';
 
   @override
-  String get refresh => 'Refresh';
+  String get refresh => 'Ανανέωση';
 
   @override
-  String get resetPath => 'Reset Path (Re-route)';
+  String get resetPath => 'Επαναφορά διαδρομής (νέα δρομολόγηση)';
 
   @override
-  String get publicKeyCopied => 'Public key copied to clipboard';
+  String get publicKeyCopied => 'Το δημόσιο κλειδί αντιγράφηκε στο πρόχειρο';
 
   @override
   String copiedToClipboard(String label) {
-    return '$label copied to clipboard';
+    return 'Το $label αντιγράφηκε στο πρόχειρο';
   }
 
   @override
-  String get pleaseEnterPassword => 'Please enter a password';
+  String get pleaseEnterPassword => 'Παρακαλώ εισαγάγετε κωδικό';
 
   @override
   String failedToSyncContacts(String error) {
-    return 'Failed to sync contacts: $error';
+    return 'Αποτυχία συγχρονισμού επαφών: $error';
   }
 
   @override
   String get loggedInSuccessfully =>
-      'Logged in successfully! Waiting for room messages...';
+      'Η σύνδεση ολοκληρώθηκε με επιτυχία! Αναμονή για μηνύματα δωματίου...';
 
   @override
-  String get loginFailed => 'Login failed - incorrect password';
+  String get loginFailed => 'Αποτυχία σύνδεσης - λανθασμένος κωδικός';
 
   @override
   String loggingIn(String roomName) {
-    return 'Logging in to $roomName...';
+    return 'Σύνδεση στο $roomName...';
   }
 
   @override
   String failedToSendLogin(String error) {
-    return 'Failed to send login: $error';
+    return 'Αποτυχία αποστολής σύνδεσης: $error';
   }
 
   @override
-  String get lowLocationAccuracy => 'Low Location Accuracy';
+  String get lowLocationAccuracy => 'Χαμηλή ακρίβεια τοποθεσίας';
 
   @override
-  String get continue_ => 'Continue';
+  String get continue_ => 'Συνέχεια';
 
   @override
-  String get sendSarMarker => 'Send SAR marker';
+  String get sendSarMarker => 'Αποστολή δείκτη SAR';
 
   @override
-  String get deleteDrawing => 'Delete Drawing';
+  String get deleteDrawing => 'Διαγραφή σχεδίου';
 
   @override
-  String get drawingTools => 'Drawing Tools';
+  String get drawingTools => 'Εργαλεία σχεδίασης';
 
   @override
-  String get drawLine => 'Draw Line';
+  String get drawLine => 'Σχεδίαση γραμμής';
 
   @override
-  String get drawLineDesc => 'Draw a freehand line on the map';
+  String get drawLineDesc => 'Σχεδίαση ελεύθερης γραμμής στον χάρτη';
 
   @override
-  String get drawRectangle => 'Draw Rectangle';
+  String get drawRectangle => 'Σχεδίαση ορθογωνίου';
 
   @override
-  String get drawRectangleDesc => 'Draw a rectangular area on the map';
+  String get drawRectangleDesc => 'Σχεδίαση ορθογώνιας περιοχής στον χάρτη';
 
   @override
-  String get measureDistance => 'Measure Distance';
+  String get measureDistance => 'Μέτρηση απόστασης';
 
   @override
-  String get measureDistanceDesc => 'Long press two points to measure';
+  String get measureDistanceDesc =>
+      'Παρατεταμένο πάτημα σε δύο σημεία για μέτρηση';
 
   @override
-  String get clearMeasurement => 'Clear Measurement';
+  String get clearMeasurement => 'Εκκαθάριση μέτρησης';
 
   @override
   String distanceLabel(String distance) {
-    return 'Distance: $distance';
+    return 'Απόσταση: $distance';
   }
 
   @override
-  String get longPressForSecondPoint => 'Long press for second point';
+  String get longPressForSecondPoint =>
+      'Παρατεταμένο πάτημα για δεύτερο σημείο';
 
   @override
-  String get longPressToStartMeasurement => 'Long press to set first point';
+  String get longPressToStartMeasurement =>
+      'Παρατεταμένο πάτημα για ορισμό πρώτου σημείου';
 
   @override
   String get longPressToStartNewMeasurement =>
-      'Long press to start new measurement';
+      'Παρατεταμένο πάτημα για νέα μέτρηση';
 
   @override
-  String get shareDrawings => 'Share Drawings';
+  String get shareDrawings => 'Κοινοποίηση σχεδίων';
 
   @override
-  String get clearAllDrawings => 'Clear All Drawings';
+  String get clearAllDrawings => 'Εκκαθάριση όλων των σχεδίων';
 
   @override
-  String get completeLine => 'Complete Line';
+  String get completeLine => 'Ολοκλήρωση γραμμής';
 
   @override
   String broadcastDrawingsToTeam(int count, String plural) {
-    return 'Broadcast $count drawing$plural to team';
+    return 'Μετάδοση $count σχεδίου$plural στην ομάδα';
   }
 
   @override
   String removeAllDrawings(int count, String plural) {
-    return 'Remove all $count drawing$plural';
+    return 'Αφαίρεση όλων των $count σχεδίων$plural';
   }
 
   @override
   String deleteAllDrawingsConfirm(int count, String plural) {
-    return 'Delete all $count drawing$plural from the map?';
+    return 'Διαγραφή όλων των $count σχεδίων$plural από τον χάρτη;';
   }
 
   @override
-  String get drawing => 'Drawing';
+  String get drawing => 'Σχέδιο';
 
   @override
   String shareDrawingsCount(int count, String plural) {
-    return 'Share $count Drawing$plural';
+    return 'Κοινοποίηση $count σχεδίου$plural';
   }
 
   @override
-  String get showReceivedDrawings => 'Show Received Drawings';
+  String get showReceivedDrawings => 'Εμφάνιση ληφθέντων σχεδίων';
 
   @override
-  String get showingAllDrawings => 'Showing all drawings';
+  String get showingAllDrawings => 'Εμφανίζονται όλα τα σχέδια';
 
   @override
-  String get showingOnlyYourDrawings => 'Showing only your drawings';
+  String get showingOnlyYourDrawings => 'Εμφανίζονται μόνο τα δικά σας σχέδια';
 
   @override
-  String get showSarMarkers => 'Show SAR Markers';
+  String get showSarMarkers => 'Εμφάνιση δεικτών SAR';
 
   @override
-  String get showingSarMarkers => 'Showing SAR markers';
+  String get showingSarMarkers => 'Εμφανίζονται δείκτες SAR';
 
   @override
-  String get hidingSarMarkers => 'Hiding SAR markers';
+  String get hidingSarMarkers => 'Απόκρυψη δεικτών SAR';
 
   @override
-  String get clearAll => 'Clear All';
+  String get clearAll => 'Εκκαθάριση όλων';
 
   @override
-  String get publicChannel => 'Public Channel';
+  String get publicChannel => 'Δημόσιο κανάλι';
 
   @override
-  String get broadcastToAll => 'Broadcast to all nearby nodes (ephemeral)';
+  String get broadcastToAll =>
+      'Μετάδοση σε όλους τους κοντινούς κόμβους (προσωρινό)';
 
   @override
-  String get storedPermanently => 'Stored permanently in room';
+  String get storedPermanently => 'Αποθηκευμένο μόνιμα στο δωμάτιο';
 
   @override
-  String get notConnectedToDevice => 'Not connected to device';
+  String get notConnectedToDevice => 'Δεν υπάρχει σύνδεση με συσκευή';
 
   @override
-  String get typeYourMessage => 'Type your message...';
+  String get typeYourMessage => 'Πληκτρολογήστε το μήνυμά σας...';
 
   @override
-  String get quickLocationMarker => 'Quick location marker';
+  String get quickLocationMarker => 'Γρήγορος δείκτης τοποθεσίας';
 
   @override
-  String get markerType => 'Marker Type';
+  String get markerType => 'Τύπος δείκτη';
 
   @override
-  String get sendTo => 'Send To';
+  String get sendTo => 'Αποστολή σε';
 
   @override
-  String get noDestinationsAvailable => 'No destinations available.';
+  String get noDestinationsAvailable => 'Δεν υπάρχουν διαθέσιμοι προορισμοί.';
 
   @override
-  String get selectDestination => 'Select destination...';
+  String get selectDestination => 'Επιλέξτε προορισμό...';
 
   @override
   String get ephemeralBroadcastInfo =>
-      'Ephemeral: Broadcast over-the-air only. Not stored - nodes must be online.';
+      'Προσωρινό: Μετάδοση μόνο ασύρματα. Δεν αποθηκεύεται - οι κόμβοι πρέπει να είναι συνδεδεμένοι.';
 
   @override
   String get persistentRoomInfo =>
-      'Persistent: Stored immutably in room. Synced automatically and preserved offline.';
+      'Μόνιμο: Αποθηκεύεται αμετάβλητα στο δωμάτιο. Συγχρονίζεται αυτόματα και διατηρείται εκτός σύνδεσης.';
 
   @override
-  String get location => 'Location';
+  String get location => 'Τοποθεσία';
 
   @override
-  String get fromMap => 'From Map';
+  String get fromMap => 'Από χάρτη';
 
   @override
-  String get gettingLocation => 'Getting location...';
+  String get gettingLocation => 'Λήψη τοποθεσίας...';
 
   @override
-  String get locationError => 'Location Error';
+  String get locationError => 'Σφάλμα τοποθεσίας';
 
   @override
-  String get retry => 'Retry';
+  String get retry => 'Επανάληψη';
 
   @override
-  String get refreshLocation => 'Refresh location';
+  String get refreshLocation => 'Ανανέωση τοποθεσίας';
 
   @override
   String accuracyMeters(int accuracy) {
-    return 'Accuracy: ±${accuracy}m';
+    return 'Ακρίβεια: ±$accuracyμ';
   }
 
   @override
-  String get notesOptional => 'Notes (optional)';
+  String get notesOptional => 'Σημειώσεις (προαιρετικό)';
 
   @override
-  String get addAdditionalInformation => 'Add additional information...';
+  String get addAdditionalInformation => 'Προσθέστε επιπλέον πληροφορίες...';
 
   @override
   String lowAccuracyWarning(int accuracy) {
-    return 'Location accuracy is ±${accuracy}m. This may not be accurate enough for SAR operations.\n\nContinue anyway?';
+    return 'Η ακρίβεια τοποθεσίας είναι ±$accuracyμ. Αυτό ίσως δεν είναι αρκετά ακριβές για επιχειρήσεις SAR.\n\nΣυνέχεια ούτως ή άλλως;';
   }
 
   @override
-  String get loginToRoom => 'Login to Room';
+  String get loginToRoom => 'Σύνδεση στο δωμάτιο';
 
   @override
   String get enterPasswordInfo =>
-      'Enter the password to access this room. The password will be saved for future use.';
+      'Εισαγάγετε τον κωδικό για πρόσβαση σε αυτό το δωμάτιο. Ο κωδικός θα αποθηκευτεί για μελλοντική χρήση.';
 
   @override
-  String get password => 'Password';
+  String get password => 'Κωδικός πρόσβασης';
 
   @override
-  String get enterRoomPassword => 'Enter room password';
+  String get enterRoomPassword => 'Εισαγάγετε κωδικό δωματίου';
 
   @override
-  String get loggingInDots => 'Logging in...';
+  String get loggingInDots => 'Σύνδεση...';
 
   @override
-  String get login => 'Login';
+  String get login => 'Σύνδεση';
 
   @override
   String failedToAddRoom(String error) {
-    return 'Failed to add room to device: $error\n\nThe room may not have advertised yet.\nTry waiting for the room to broadcast.';
+    return 'Αποτυχία προσθήκης δωματίου στη συσκευή: $error\n\nΤο δωμάτιο ίσως δεν έχει μεταδοθεί ακόμη.\nΠεριμένετε να αρχίσει να εκπέμπει.';
   }
 
   @override
-  String get direct => 'Direct';
+  String get direct => 'Άμεσο';
 
   @override
-  String get flood => 'Flood';
+  String get flood => 'Πλημμυρικό';
 
   @override
-  String get loggedIn => 'Logged In';
+  String get loggedIn => 'Συνδεδεμένος';
 
   @override
-  String get noGpsData => 'No GPS data';
+  String get noGpsData => 'Δεν υπάρχουν δεδομένα GPS';
 
   @override
-  String get distance => 'Distance';
+  String get distance => 'Απόσταση';
 
   @override
   String directPingTimeout(String name) {
-    return 'Direct ping timeout - retrying $name with flooding...';
+    return 'Λήξη χρόνου άμεσου ping - επανάληψη προς $name με flooding...';
   }
 
   @override
   String pingFailed(String name) {
-    return 'Ping failed to $name - no response received';
+    return 'Αποτυχία ping προς $name - δεν ελήφθη απάντηση';
   }
 
   @override
   String deleteContactConfirmation(String name) {
-    return 'Are you sure you want to delete \"$name\"?\n\nThis will remove the contact from both the app and the companion radio device.';
+    return 'Είστε βέβαιοι ότι θέλετε να διαγράψετε το \"$name\";\n\nΑυτό θα αφαιρέσει την επαφή τόσο από την εφαρμογή όσο και από τη συνοδευτική συσκευή radio.';
   }
 
   @override
   String failedToRemoveContact(String error) {
-    return 'Failed to remove contact: $error';
+    return 'Αποτυχία αφαίρεσης επαφής: $error';
   }
 
   @override
-  String get type => 'Type';
+  String get type => 'Τύπος';
 
   @override
-  String get publicKey => 'Public Key';
+  String get publicKey => 'Δημόσιο κλειδί';
 
   @override
-  String get lastSeen => 'Last Seen';
+  String get lastSeen => 'Τελευταία εμφάνιση';
 
   @override
-  String get roomStatus => 'Room Status';
+  String get roomStatus => 'Κατάσταση δωματίου';
 
   @override
-  String get loginStatus => 'Login Status';
+  String get loginStatus => 'Κατάσταση σύνδεσης';
 
   @override
-  String get notLoggedIn => 'Not Logged In';
+  String get notLoggedIn => 'Μη συνδεδεμένος';
 
   @override
-  String get adminAccess => 'Admin Access';
+  String get adminAccess => 'Πρόσβαση διαχειριστή';
 
   @override
-  String get yes => 'Yes';
+  String get yes => 'Ναι';
 
   @override
-  String get no => 'No';
+  String get no => 'Όχι';
 
   @override
-  String get permissions => 'Permissions';
+  String get permissions => 'Δικαιώματα';
 
   @override
-  String get passwordSaved => 'Password Saved';
+  String get passwordSaved => 'Ο κωδικός αποθηκεύτηκε';
 
   @override
-  String get locationColon => 'Location:';
+  String get locationColon => 'Τοποθεσία:';
 
   @override
-  String get telemetry => 'Telemetry';
+  String get telemetry => 'Τηλεμετρία';
 
   @override
-  String get voltage => 'Voltage';
+  String get voltage => 'Τάση';
 
   @override
-  String get battery => 'Battery';
+  String get battery => 'Μπαταρία';
 
   @override
-  String get temperature => 'Temperature';
+  String get temperature => 'Θερμοκρασία';
 
   @override
-  String get humidity => 'Humidity';
+  String get humidity => 'Υγρασία';
 
   @override
-  String get pressure => 'Pressure';
+  String get pressure => 'Πίεση';
 
   @override
-  String get gpsTelemetry => 'GPS (Telemetry)';
+  String get gpsTelemetry => 'GPS (τηλεμετρία)';
 
   @override
-  String get updated => 'Updated';
+  String get updated => 'Ενημερώθηκε';
 
   @override
   String pathResetInfo(String name) {
-    return 'Path reset for $name. Next message will find a new route.';
+    return 'Η διαδρομή για το $name επαναφέρθηκε. Το επόμενο μήνυμα θα βρει νέα διαδρομή.';
   }
 
   @override
-  String get reLoginToRoom => 'Re-Login to Room';
+  String get reLoginToRoom => 'Επανασύνδεση στο δωμάτιο';
 
   @override
-  String get heading => 'Heading';
+  String get heading => 'Κατεύθυνση';
 
   @override
-  String get elevation => 'Elevation';
+  String get elevation => 'Υψόμετρο';
 
   @override
-  String get accuracy => 'Accuracy';
+  String get accuracy => 'Ακρίβεια';
 
   @override
-  String get bearing => 'Bearing';
+  String get bearing => 'Πορεία';
 
   @override
-  String get direction => 'Direction';
+  String get direction => 'Κατεύθυνση';
 
   @override
-  String get filterMarkers => 'Filter Markers';
+  String get filterMarkers => 'Φιλτράρισμα δεικτών';
 
   @override
-  String get filterMarkersTooltip => 'Filter markers';
+  String get filterMarkersTooltip => 'Φιλτράρισμα δεικτών';
 
   @override
-  String get contactsFilter => 'Contacts';
+  String get contactsFilter => 'Επαφές';
 
   @override
-  String get repeatersFilter => 'Repeaters';
+  String get repeatersFilter => 'Αναμεταδότες';
 
   @override
-  String get sarMarkers => 'SAR Markers';
+  String get sarMarkers => 'Δείκτες SAR';
 
   @override
-  String get foundPerson => 'Found Person';
+  String get foundPerson => 'Εντοπισμένο άτομο';
 
   @override
-  String get fire => 'Fire';
+  String get fire => 'Φωτιά';
 
   @override
-  String get stagingArea => 'Staging Area';
+  String get stagingArea => 'Σημείο συγκέντρωσης';
 
   @override
-  String get showAll => 'Show All';
+  String get showAll => 'Εμφάνιση όλων';
 
   @override
-  String get locationUnavailable => 'Location unavailable';
+  String get locationUnavailable => 'Η τοποθεσία δεν είναι διαθέσιμη';
 
   @override
-  String get ahead => 'ahead';
+  String get ahead => 'μπροστά';
 
   @override
   String degreesRight(int degrees) {
-    return '$degrees° right';
+    return '$degrees° δεξιά';
   }
 
   @override
   String degreesLeft(int degrees) {
-    return '$degrees° left';
+    return '$degrees° αριστερά';
   }
 
   @override
   String latLonFormat(String latitude, String longitude) {
-    return 'Lat: $latitude Lon: $longitude';
+    return 'Γεωγρ. πλάτος: $latitude Γεωγρ. μήκος: $longitude';
   }
 
   @override
-  String get noContactsYet => 'No contacts yet';
+  String get noContactsYet => 'Δεν υπάρχουν ακόμη επαφές';
 
   @override
   String get connectToDeviceToLoadContacts =>
-      'Connect to a device to load contacts';
+      'Συνδεθείτε σε συσκευή για φόρτωση επαφών';
 
   @override
-  String get teamMembers => 'Team Members';
+  String get teamMembers => 'Μέλη ομάδας';
 
   @override
-  String get repeaters => 'Repeaters';
+  String get repeaters => 'Αναμεταδότες';
 
   @override
-  String get rooms => 'Rooms';
+  String get rooms => 'Δωμάτια';
 
   @override
-  String get channels => 'Channels';
+  String get channels => 'Κανάλια';
 
   @override
-  String get selectMapLayer => 'Select Map Layer';
+  String get selectMapLayer => 'Επιλογή επιπέδου χάρτη';
 
   @override
   String get openStreetMap => 'OpenStreetMap';
@@ -667,63 +672,64 @@ class AppLocalizationsEl extends AppLocalizations {
   String get openTopoMap => 'OpenTopoMap';
 
   @override
-  String get esriSatellite => 'ESRI Satellite';
+  String get esriSatellite => 'Δορυφορικός ESRI';
 
   @override
-  String get googleHybrid => 'Google Hybrid';
+  String get googleHybrid => 'Υβριδικός Google';
 
   @override
-  String get googleRoadmap => 'Google Roadmap';
+  String get googleRoadmap => 'Οδικός χάρτης Google';
 
   @override
-  String get googleTerrain => 'Google Terrain';
+  String get googleTerrain => 'Ανάγλυφο Google';
 
   @override
-  String get dragToPosition => 'Drag to Position';
+  String get dragToPosition => 'Σύρετε στη θέση';
 
   @override
-  String get createSarMarker => 'Create SAR Marker';
+  String get createSarMarker => 'Δημιουργία δείκτη SAR';
 
   @override
-  String get compass => 'Compass';
+  String get compass => 'Πυξίδα';
 
   @override
-  String get navigationAndContacts => 'Navigation & Contacts';
+  String get navigationAndContacts => 'Πλοήγηση και επαφές';
 
   @override
-  String get sarAlert => 'SAR ALERT';
+  String get sarAlert => 'ΣΥΝΑΓΕΡΜΟΣ SAR';
 
   @override
-  String get textCopiedToClipboard => 'Text copied to clipboard';
+  String get textCopiedToClipboard => 'Το κείμενο αντιγράφηκε στο πρόχειρο';
 
   @override
   String get cannotReplySenderMissing =>
-      'Cannot reply: sender information missing';
+      'Αδυναμία απάντησης: λείπουν πληροφορίες αποστολέα';
 
   @override
-  String get cannotReplyContactNotFound => 'Cannot reply: contact not found';
+  String get cannotReplyContactNotFound =>
+      'Αδυναμία απάντησης: η επαφή δεν βρέθηκε';
 
   @override
-  String get copyText => 'Copy text';
+  String get copyText => 'Αντιγραφή κειμένου';
 
   @override
-  String get saveAsTemplate => 'Save as Template';
+  String get saveAsTemplate => 'Αποθήκευση ως πρότυπο';
 
   @override
-  String get templateSaved => 'Template saved successfully';
+  String get templateSaved => 'Το πρότυπο αποθηκεύτηκε επιτυχώς';
 
   @override
-  String get templateAlreadyExists => 'Template with this emoji already exists';
+  String get templateAlreadyExists => 'Υπάρχει ήδη πρότυπο με αυτό το emoji';
 
   @override
-  String get deleteMessage => 'Delete message';
+  String get deleteMessage => 'Διαγραφή μηνύματος';
 
   @override
   String get deleteMessageConfirmation =>
-      'Are you sure you want to delete this message?';
+      'Είστε βέβαιοι ότι θέλετε να διαγράψετε αυτό το μήνυμα;';
 
   @override
-  String get shareLocation => 'Share location';
+  String get shareLocation => 'Κοινοποίηση τοποθεσίας';
 
   @override
   String shareLocationText(
@@ -732,344 +738,347 @@ class AppLocalizationsEl extends AppLocalizations {
     String lon,
     String url,
   ) {
-    return '$markerInfo\n\nCoordinates: $lat, $lon\n\nGoogle Maps: $url';
+    return '$markerInfo\n\nΣυντεταγμένες: $lat, $lon\n\nGoogle Maps: $url';
   }
 
   @override
-  String get sarLocationShare => 'SAR Location';
+  String get sarLocationShare => 'Τοποθεσία SAR';
 
   @override
-  String get justNow => 'Just now';
+  String get justNow => 'Μόλις τώρα';
 
   @override
   String minutesAgo(int minutes) {
-    return '${minutes}m ago';
+    return 'πριν από $minutesλ';
   }
 
   @override
   String hoursAgo(int hours) {
-    return '${hours}h ago';
+    return 'πριν από $hoursω';
   }
 
   @override
   String daysAgo(int days) {
-    return '${days}d ago';
+    return 'πριν από $daysη';
   }
 
   @override
   String secondsAgo(int seconds) {
-    return '${seconds}s ago';
+    return 'πριν από $secondsδ';
   }
 
   @override
-  String get sending => 'Sending...';
+  String get sending => 'Αποστολή...';
 
   @override
-  String get sent => 'Sent';
+  String get sent => 'Στάλθηκε';
 
   @override
-  String get delivered => 'Delivered';
+  String get delivered => 'Παραδόθηκε';
 
   @override
   String deliveredWithTime(int time) {
-    return 'Delivered (${time}ms)';
+    return 'Παραδόθηκε (${time}ms)';
   }
 
   @override
-  String get failed => 'Failed';
+  String get failed => 'Απέτυχε';
 
   @override
-  String get broadcast => 'Broadcast';
+  String get broadcast => 'Μετάδοση';
 
   @override
   String deliveredToContacts(int delivered, int total) {
-    return 'Delivered to $delivered/$total contacts';
+    return 'Παραδόθηκε σε $delivered/$total επαφές';
   }
 
   @override
-  String get allDelivered => 'All delivered';
+  String get allDelivered => 'Όλα παραδόθηκαν';
 
   @override
-  String get recipientDetails => 'Recipient Details';
+  String get recipientDetails => 'Λεπτομέρειες παραλήπτη';
 
   @override
-  String get pending => 'Pending';
+  String get pending => 'Σε εκκρεμότητα';
 
   @override
-  String get sarMarkerFoundPerson => 'Found Person';
+  String get sarMarkerFoundPerson => 'Εντοπισμένο άτομο';
 
   @override
-  String get sarMarkerFire => 'Fire Location';
+  String get sarMarkerFire => 'Σημείο φωτιάς';
 
   @override
-  String get sarMarkerStagingArea => 'Staging Area';
+  String get sarMarkerStagingArea => 'Σημείο συγκέντρωσης';
 
   @override
-  String get sarMarkerObject => 'Object Found';
+  String get sarMarkerObject => 'Εντοπισμένο αντικείμενο';
 
   @override
-  String get from => 'From';
+  String get from => 'Από';
 
   @override
-  String get coordinates => 'Coordinates';
+  String get coordinates => 'Συντεταγμένες';
 
   @override
-  String get tapToViewOnMap => 'Tap to view on map';
+  String get tapToViewOnMap => 'Πατήστε για προβολή στον χάρτη';
 
   @override
-  String get radioSettings => 'Radio Settings';
+  String get radioSettings => 'Ρυθμίσεις radio';
 
   @override
-  String get frequencyMHz => 'Frequency (MHz)';
+  String get frequencyMHz => 'Συχνότητα (MHz)';
 
   @override
-  String get frequencyExample => 'e.g., 869.618';
+  String get frequencyExample => 'π.χ. 869.618';
 
   @override
-  String get bandwidth => 'Bandwidth';
+  String get bandwidth => 'Εύρος ζώνης';
 
   @override
-  String get spreadingFactor => 'Spreading Factor';
+  String get spreadingFactor => 'Συντελεστής εξάπλωσης';
 
   @override
-  String get codingRate => 'Coding Rate';
+  String get codingRate => 'Ρυθμός κωδικοποίησης';
 
   @override
-  String get txPowerDbm => 'TX Power (dBm)';
+  String get txPowerDbm => 'Ισχύς TX (dBm)';
 
   @override
   String maxPowerDbm(int power) {
-    return 'Max: $power dBm';
+    return 'Μέγ.: $power dBm';
   }
 
   @override
-  String get you => 'You';
+  String get you => 'Εσείς';
 
   @override
   String exportFailed(String error) {
-    return 'Export failed: $error';
+    return 'Η εξαγωγή απέτυχε: $error';
   }
 
   @override
   String importFailed(String error) {
-    return 'Import failed: $error';
+    return 'Η εισαγωγή απέτυχε: $error';
   }
 
   @override
-  String get unknown => 'Unknown';
+  String get unknown => 'Άγνωστο';
 
   @override
-  String get onlineLayers => 'Online Layers';
+  String get onlineLayers => 'Επίπεδα online';
 
   @override
-  String get locationTrail => 'Location Trail';
+  String get locationTrail => 'Ίχνος τοποθεσίας';
 
   @override
-  String get showTrailOnMap => 'Show Trail on Map';
+  String get showTrailOnMap => 'Εμφάνιση ίχνους στον χάρτη';
 
   @override
-  String get trailVisible => 'Trail is visible on the map';
+  String get trailVisible => 'Το ίχνος είναι ορατό στον χάρτη';
 
   @override
-  String get trailHiddenRecording => 'Trail is hidden (still recording)';
+  String get trailHiddenRecording =>
+      'Το ίχνος είναι κρυφό (συνεχίζεται η καταγραφή)';
 
   @override
-  String get duration => 'Duration';
+  String get duration => 'Διάρκεια';
 
   @override
-  String get points => 'Points';
+  String get points => 'Σημεία';
 
   @override
-  String get clearTrail => 'Clear Trail';
+  String get clearTrail => 'Εκκαθάριση ίχνους';
 
   @override
-  String get clearTrailQuestion => 'Clear Trail?';
+  String get clearTrailQuestion => 'Εκκαθάριση ίχνους;';
 
   @override
   String get clearTrailConfirmation =>
-      'Are you sure you want to clear the current location trail? This action cannot be undone.';
+      'Είστε βέβαιοι ότι θέλετε να διαγράψετε το τρέχον ίχνος τοποθεσίας; Αυτή η ενέργεια δεν αναιρείται.';
 
   @override
-  String get noTrailRecorded => 'No trail recorded yet';
+  String get noTrailRecorded => 'Δεν έχει καταγραφεί ακόμη ίχνος';
 
   @override
   String get startTrackingToRecord =>
-      'Start location tracking to record your trail';
+      'Ξεκινήστε παρακολούθηση τοποθεσίας για καταγραφή ίχνους';
 
   @override
-  String get trailControls => 'Trail Controls';
+  String get trailControls => 'Στοιχεία ελέγχου ίχνους';
 
   @override
-  String get contactTrails => 'Contact Trails';
+  String get contactTrails => 'Ίχνη επαφών';
 
   @override
-  String get showAllContactTrails => 'Show All Contact Trails';
+  String get showAllContactTrails => 'Εμφάνιση όλων των ιχνών επαφών';
 
   @override
   String get noContactsWithLocationHistory =>
-      'No contacts with location history';
+      'Δεν υπάρχουν επαφές με ιστορικό τοποθεσίας';
 
   @override
   String showingTrailsForContacts(int count) {
-    return 'Showing trails for $count contacts';
+    return 'Εμφανίζονται ίχνη για $count επαφές';
   }
 
   @override
-  String get individualContactTrails => 'Individual Contact Trails';
+  String get individualContactTrails => 'Μεμονωμένα ίχνη επαφών';
 
   @override
-  String get deviceInformation => 'Device Information';
+  String get deviceInformation => 'Πληροφορίες συσκευής';
 
   @override
-  String get bleName => 'BLE Name';
+  String get bleName => 'Όνομα BLE';
 
   @override
-  String get meshName => 'Mesh Name';
+  String get meshName => 'Όνομα mesh';
 
   @override
-  String get notSet => 'Not set';
+  String get notSet => 'Δεν έχει οριστεί';
 
   @override
-  String get model => 'Model';
+  String get model => 'Μοντέλο';
 
   @override
-  String get version => 'Version';
+  String get version => 'Έκδοση';
 
   @override
-  String get buildDate => 'Build Date';
+  String get buildDate => 'Ημερομηνία build';
 
   @override
-  String get firmware => 'Firmware';
+  String get firmware => 'Υλικολογισμικό';
 
   @override
-  String get maxContacts => 'Max Contacts';
+  String get maxContacts => 'Μέγιστες επαφές';
 
   @override
-  String get maxChannels => 'Max Channels';
+  String get maxChannels => 'Μέγιστα κανάλια';
 
   @override
-  String get publicInfo => 'Public Info';
+  String get publicInfo => 'Δημόσιες πληροφορίες';
 
   @override
-  String get meshNetworkName => 'Mesh Network Name';
+  String get meshNetworkName => 'Όνομα δικτύου mesh';
 
   @override
-  String get nameBroadcastInMesh => 'Name broadcast in mesh advertisements';
+  String get nameBroadcastInMesh =>
+      'Όνομα που μεταδίδεται στις διαφημίσεις mesh';
 
   @override
-  String get telemetryAndLocationSharing => 'Telemetry & Location Sharing';
+  String get telemetryAndLocationSharing =>
+      'Τηλεμετρία και κοινοποίηση τοποθεσίας';
 
   @override
-  String get lat => 'Lat';
+  String get lat => 'Πλάτος';
 
   @override
-  String get lon => 'Lon';
+  String get lon => 'Μήκος';
 
   @override
-  String get useCurrentLocation => 'Use current location';
+  String get useCurrentLocation => 'Χρήση τρέχουσας τοποθεσίας';
 
   @override
-  String get noneUnknown => 'None/Unknown';
+  String get noneUnknown => 'Κανένα/Άγνωστο';
 
   @override
-  String get chatNode => 'Chat Node';
+  String get chatNode => 'Κόμβος συνομιλίας';
 
   @override
-  String get repeater => 'Repeater';
+  String get repeater => 'Αναμεταδότης';
 
   @override
-  String get roomChannel => 'Room/Channel';
+  String get roomChannel => 'Δωμάτιο/Κανάλι';
 
   @override
   String typeNumber(int number) {
-    return 'Type $number';
+    return 'Τύπος $number';
   }
 
   @override
   String copiedToClipboardShort(String label) {
-    return 'Copied $label to clipboard';
+    return 'Το $label αντιγράφηκε στο πρόχειρο';
   }
 
   @override
   String failedToSave(String error) {
-    return 'Failed to save: $error';
+    return 'Αποτυχία αποθήκευσης: $error';
   }
 
   @override
   String failedToGetLocation(String error) {
-    return 'Failed to get location: $error';
+    return 'Αποτυχία λήψης τοποθεσίας: $error';
   }
 
   @override
-  String get sarTemplates => 'SAR Templates';
+  String get sarTemplates => 'Πρότυπα SAR';
 
   @override
-  String get manageSarTemplates => 'Manage cursor on target templates';
+  String get manageSarTemplates => 'Διαχείριση προτύπων SAR';
 
   @override
-  String get addTemplate => 'Add Template';
+  String get addTemplate => 'Προσθήκη προτύπου';
 
   @override
-  String get editTemplate => 'Edit Template';
+  String get editTemplate => 'Επεξεργασία προτύπου';
 
   @override
-  String get deleteTemplate => 'Delete Template';
+  String get deleteTemplate => 'Διαγραφή προτύπου';
 
   @override
-  String get templateName => 'Template Name';
+  String get templateName => 'Όνομα προτύπου';
 
   @override
-  String get templateNameHint => 'e.g. Found Person';
+  String get templateNameHint => 'π.χ. Εντοπισμένο άτομο';
 
   @override
   String get templateEmoji => 'Emoji';
 
   @override
-  String get emojiRequired => 'Emoji is required';
+  String get emojiRequired => 'Το emoji είναι υποχρεωτικό';
 
   @override
-  String get nameRequired => 'Name is required';
+  String get nameRequired => 'Το όνομα είναι υποχρεωτικό';
 
   @override
-  String get templateDescription => 'Description (Optional)';
+  String get templateDescription => 'Περιγραφή (προαιρετική)';
 
   @override
-  String get templateDescriptionHint => 'Add additional context...';
+  String get templateDescriptionHint => 'Προσθέστε επιπλέον πληροφορίες...';
 
   @override
-  String get templateColor => 'Color';
+  String get templateColor => 'Χρώμα';
 
   @override
-  String get previewFormat => 'Preview (SAR Message Format)';
+  String get previewFormat => 'Προεπισκόπηση (μορφή μηνύματος SAR)';
 
   @override
-  String get importFromClipboard => 'Import';
+  String get importFromClipboard => 'Εισαγωγή';
 
   @override
-  String get exportToClipboard => 'Export';
+  String get exportToClipboard => 'Εξαγωγή';
 
   @override
   String deleteTemplateConfirmation(String name) {
-    return 'Delete template \'$name\'?';
+    return 'Διαγραφή προτύπου «$name»;';
   }
 
   @override
-  String get templateAdded => 'Template added';
+  String get templateAdded => 'Το πρότυπο προστέθηκε';
 
   @override
-  String get templateUpdated => 'Template updated';
+  String get templateUpdated => 'Το πρότυπο ενημερώθηκε';
 
   @override
-  String get templateDeleted => 'Template deleted';
+  String get templateDeleted => 'Το πρότυπο διαγράφηκε';
 
   @override
   String templatesImported(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'Imported $count templates',
-      one: 'Imported 1 template',
-      zero: 'No templates imported',
+      other: 'Εισήχθησαν $count πρότυπα',
+      one: 'Εισήχθη 1 πρότυπο',
+      zero: 'Δεν εισήχθησαν πρότυπα',
     );
     return '$_temp0';
   }
@@ -1079,559 +1088,583 @@ class AppLocalizationsEl extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'Exported $count templates to clipboard',
-      one: 'Exported 1 template to clipboard',
+      other: 'Εξήχθησαν $count πρότυπα στο πρόχειρο',
+      one: 'Εξήχθη 1 πρότυπο στο πρόχειρο',
     );
     return '$_temp0';
   }
 
   @override
-  String get resetToDefaults => 'Reset to Defaults';
+  String get resetToDefaults => 'Επαναφορά προεπιλογών';
 
   @override
   String get resetToDefaultsConfirmation =>
-      'This will delete all custom templates and restore the 4 default templates. Continue?';
+      'Αυτό θα διαγράψει όλα τα προσαρμοσμένα πρότυπα και θα επαναφέρει τα 4 προεπιλεγμένα πρότυπα. Συνέχεια;';
 
   @override
-  String get reset => 'Reset';
+  String get reset => 'Επαναφορά';
 
   @override
-  String get resetComplete => 'Templates reset to defaults';
+  String get resetComplete => 'Τα πρότυπα επανήλθαν στις προεπιλογές';
 
   @override
-  String get noTemplates => 'No templates available';
+  String get noTemplates => 'Δεν υπάρχουν διαθέσιμα πρότυπα';
 
   @override
-  String get tapAddToCreate => 'Tap + to create your first template';
+  String get tapAddToCreate =>
+      'Πατήστε + για να δημιουργήσετε το πρώτο σας πρότυπο';
 
   @override
-  String get ok => 'OK';
+  String get ok => 'ΟΚ';
 
   @override
-  String get permissionsSection => 'Permissions';
+  String get permissionsSection => 'Δικαιώματα';
 
   @override
-  String get locationPermission => 'Location Permission';
+  String get locationPermission => 'Άδεια τοποθεσίας';
 
   @override
-  String get checking => 'Checking...';
+  String get checking => 'Έλεγχος...';
 
   @override
-  String get locationPermissionGrantedAlways => 'Granted (Always)';
+  String get locationPermissionGrantedAlways => 'Δόθηκε (πάντα)';
 
   @override
-  String get locationPermissionGrantedWhileInUse => 'Granted (While In Use)';
+  String get locationPermissionGrantedWhileInUse => 'Δόθηκε (κατά τη χρήση)';
 
   @override
-  String get locationPermissionDeniedTapToRequest => 'Denied - Tap to request';
+  String get locationPermissionDeniedTapToRequest =>
+      'Απορρίφθηκε - πατήστε για αίτημα';
 
   @override
   String get locationPermissionPermanentlyDeniedOpenSettings =>
-      'Permanently Denied - Open Settings';
+      'Μόνιμα απορριφθείσα - άνοιγμα ρυθμίσεων';
 
   @override
   String get locationPermissionDialogContent =>
-      'Location permission is permanently denied. Please enable it in your device settings to use GPS tracking and location sharing features.';
+      'Η άδεια τοποθεσίας έχει απορριφθεί μόνιμα. Ενεργοποιήστε την από τις ρυθμίσεις της συσκευής σας για να χρησιμοποιήσετε παρακολούθηση GPS και κοινοποίηση τοποθεσίας.';
 
   @override
-  String get openSettings => 'Open Settings';
+  String get openSettings => 'Άνοιγμα ρυθμίσεων';
 
   @override
-  String get locationPermissionGranted => 'Location permission granted!';
+  String get locationPermissionGranted => 'Η άδεια τοποθεσίας δόθηκε!';
 
   @override
   String get locationPermissionRequiredForGps =>
-      'Location permission is required for GPS tracking and location sharing.';
+      'Απαιτείται άδεια τοποθεσίας για παρακολούθηση GPS και κοινοποίηση τοποθεσίας.';
 
   @override
   String get locationPermissionAlreadyGranted =>
-      'Location permission is already granted.';
+      'Η άδεια τοποθεσίας έχει ήδη δοθεί.';
 
   @override
-  String get sarNavyBlue => 'SAR Navy Blue';
+  String get sarNavyBlue => 'SAR Ναυτικό μπλε';
 
   @override
-  String get sarNavyBlueDescription => 'Professional/Operations Mode';
+  String get sarNavyBlueDescription => 'Επαγγελματική/Επιχειρησιακή λειτουργία';
 
   @override
-  String get selectRecipient => 'Select Recipient';
+  String get selectRecipient => 'Επιλογή παραλήπτη';
 
   @override
-  String get broadcastToAllNearby => 'Broadcast to all nearby';
+  String get broadcastToAllNearby => 'Μετάδοση σε όλους τους κοντινούς';
 
   @override
-  String get searchRecipients => 'Search recipients...';
+  String get searchRecipients => 'Αναζήτηση παραληπτών...';
 
   @override
-  String get noContactsFound => 'No contacts found';
+  String get noContactsFound => 'Δεν βρέθηκαν επαφές';
 
   @override
-  String get noRoomsFound => 'No rooms found';
+  String get noRoomsFound => 'Δεν βρέθηκαν δωμάτια';
 
   @override
-  String get noRecipientsAvailable => 'No recipients available';
+  String get noRecipientsAvailable => 'Δεν υπάρχουν διαθέσιμοι παραλήπτες';
 
   @override
-  String get noChannelsFound => 'No channels found';
+  String get noChannelsFound => 'Δεν βρέθηκαν κανάλια';
 
   @override
-  String get newMessage => 'New message';
+  String get newMessage => 'Νέο μήνυμα';
 
   @override
-  String get channel => 'Channel';
+  String get channel => 'Κανάλι';
 
   @override
-  String get samplePoliceLead => 'Police Lead';
+  String get samplePoliceLead => 'Επικεφαλής αστυνομίας';
 
   @override
-  String get sampleDroneOperator => 'Drone Operator';
+  String get sampleDroneOperator => 'Χειριστής drone';
 
   @override
-  String get sampleFirefighterAlpha => 'Firefighter';
+  String get sampleFirefighterAlpha => 'Πυροσβέστης';
 
   @override
-  String get sampleMedicCharlie => 'Medic';
+  String get sampleMedicCharlie => 'Διασώστης';
 
   @override
-  String get sampleCommandDelta => 'Command';
+  String get sampleCommandDelta => 'Διοίκηση';
 
   @override
-  String get sampleFireEngine => 'Fire Engine';
+  String get sampleFireEngine => 'Πυροσβεστικό όχημα';
 
   @override
-  String get sampleAirSupport => 'Air Support';
+  String get sampleAirSupport => 'Εναέρια υποστήριξη';
 
   @override
-  String get sampleBaseCoordinator => 'Base Coordinator';
+  String get sampleBaseCoordinator => 'Συντονιστής βάσης';
 
   @override
-  String get channelEmergency => 'Emergency';
+  String get channelEmergency => 'Έκτακτη ανάγκη';
 
   @override
-  String get channelCoordination => 'Coordination';
+  String get channelCoordination => 'Συντονισμός';
 
   @override
-  String get channelUpdates => 'Updates';
+  String get channelUpdates => 'Ενημερώσεις';
 
   @override
-  String get sampleTeamMember => 'Sample Team Member';
+  String get sampleTeamMember => 'Δοκιμαστικό μέλος ομάδας';
 
   @override
-  String get sampleScout => 'Sample Scout';
+  String get sampleScout => 'Δοκιμαστικός ανιχνευτής';
 
   @override
-  String get sampleBase => 'Sample Base';
+  String get sampleBase => 'Δοκιμαστική βάση';
 
   @override
-  String get sampleSearcher => 'Sample Searcher';
+  String get sampleSearcher => 'Δοκιμαστικός ερευνητής';
 
   @override
-  String get sampleObjectBackpack => ' Backpack found - blue color';
+  String get sampleObjectBackpack => ' Βρέθηκε σακίδιο - μπλε χρώμα';
 
   @override
-  String get sampleObjectVehicle => ' Vehicle abandoned - check for owner';
+  String get sampleObjectVehicle =>
+      ' Εγκαταλελειμμένο όχημα - έλεγχος για ιδιοκτήτη';
 
   @override
-  String get sampleObjectCamping => ' Camping equipment discovered';
+  String get sampleObjectCamping => ' Εντοπίστηκε εξοπλισμός κατασκήνωσης';
 
   @override
-  String get sampleObjectTrailMarker => ' Trail marker found off-path';
+  String get sampleObjectTrailMarker =>
+      ' Βρέθηκε σημάδι μονοπατιού εκτός διαδρομής';
 
   @override
-  String get sampleMsgAllTeamsCheckIn => 'All teams check in';
+  String get sampleMsgAllTeamsCheckIn => 'Όλες οι ομάδες, κάντε check-in';
 
   @override
-  String get sampleMsgWeatherUpdate => 'Weather update: Clear skies, temp 18°C';
+  String get sampleMsgWeatherUpdate =>
+      'Ενημέρωση καιρού: Αίθριος ουρανός, θερμ. 18°C';
 
   @override
-  String get sampleMsgBaseCamp => 'Base camp established at staging area';
+  String get sampleMsgBaseCamp =>
+      'Η βάση εγκαταστάθηκε στο σημείο συγκέντρωσης';
 
   @override
-  String get sampleMsgTeamAlpha => 'Team moving to sector 2';
+  String get sampleMsgTeamAlpha => 'Η ομάδα κινείται προς τον τομέα 2';
 
   @override
-  String get sampleMsgRadioCheck => 'Radio check - all stations respond';
+  String get sampleMsgRadioCheck =>
+      'Έλεγχος ασυρμάτου - όλοι οι σταθμοί να απαντήσουν';
 
   @override
-  String get sampleMsgWaterSupply => 'Water supply available at checkpoint 3';
+  String get sampleMsgWaterSupply => 'Διαθέσιμο νερό στο σημείο ελέγχου 3';
 
   @override
-  String get sampleMsgTeamBravo => 'Team reporting: sector 1 clear';
+  String get sampleMsgTeamBravo => 'Αναφορά ομάδας: ο τομέας 1 είναι καθαρός';
 
   @override
-  String get sampleMsgEtaRallyPoint => 'ETA to rally point: 15 minutes';
+  String get sampleMsgEtaRallyPoint =>
+      'Εκτιμώμενη άφιξη στο σημείο συγκέντρωσης: 15 λεπτά';
 
   @override
-  String get sampleMsgSupplyDrop => 'Supply drop confirmed for 14:00';
+  String get sampleMsgSupplyDrop =>
+      'Η ρίψη εφοδίων επιβεβαιώθηκε για τις 14:00';
 
   @override
-  String get sampleMsgDroneSurvey => 'Drone survey completed - no findings';
+  String get sampleMsgDroneSurvey =>
+      'Η έρευνα με drone ολοκληρώθηκε - δεν βρέθηκε κάτι';
 
   @override
-  String get sampleMsgTeamCharlie => 'Team requesting backup';
+  String get sampleMsgTeamCharlie => 'Η ομάδα ζητά ενισχύσεις';
 
   @override
-  String get sampleMsgRadioDiscipline => 'All units: maintain radio discipline';
+  String get sampleMsgRadioDiscipline =>
+      'Όλες οι μονάδες: τηρείτε πειθαρχία ασυρμάτου';
 
   @override
   String get sampleMsgUrgentMedical =>
-      'URGENT: Medical assistance needed at sector 4';
+      'ΕΠΕΙΓΟΝ: Απαιτείται ιατρική βοήθεια στον τομέα 4';
 
   @override
-  String get sampleMsgAdultMale => ' Adult male, conscious';
+  String get sampleMsgAdultMale => ' Ενήλικος άνδρας, σε συνείδηση';
 
   @override
-  String get sampleMsgFireSpotted => 'Fire spotted - coordinates incoming';
+  String get sampleMsgFireSpotted =>
+      'Εντοπίστηκε φωτιά - ακολουθούν συντεταγμένες';
 
   @override
-  String get sampleMsgSpreadingRapidly => ' Spreading rapidly!';
+  String get sampleMsgSpreadingRapidly => ' Εξαπλώνεται γρήγορα!';
 
   @override
-  String get sampleMsgPriorityHelicopter => 'PRIORITY: Need helicopter support';
+  String get sampleMsgPriorityHelicopter =>
+      'ΠΡΟΤΕΡΑΙΟΤΗΤΑ: Απαιτείται υποστήριξη ελικοπτέρου';
 
   @override
   String get sampleMsgMedicalTeamEnRoute =>
-      'Medical team en route to your location';
+      'Η ιατρική ομάδα κατευθύνεται στη θέση σας';
 
   @override
-  String get sampleMsgEvacHelicopter => 'Evac helicopter ETA 10 minutes';
+  String get sampleMsgEvacHelicopter => 'Ελικόπτερο εκκένωσης σε 10 λεπτά';
 
   @override
-  String get sampleMsgEmergencyResolved => 'Emergency resolved - all clear';
+  String get sampleMsgEmergencyResolved =>
+      'Το περιστατικό επιλύθηκε - όλα καθαρά';
 
   @override
-  String get sampleMsgEmergencyStagingArea => ' Emergency staging area';
+  String get sampleMsgEmergencyStagingArea =>
+      ' Χώρος συγκέντρωσης έκτακτης ανάγκης';
 
   @override
   String get sampleMsgEmergencyServices =>
-      'Emergency services notified and responding';
+      'Οι υπηρεσίες έκτακτης ανάγκης ειδοποιήθηκαν και ανταποκρίνονται';
 
   @override
-  String get sampleAlphaTeamLead => 'Team Lead';
+  String get sampleAlphaTeamLead => 'Αρχηγός ομάδας';
 
   @override
-  String get sampleBravoScout => 'Scout';
+  String get sampleBravoScout => 'Ανιχνευτής';
 
   @override
-  String get sampleCharlieMedic => 'Medic';
+  String get sampleCharlieMedic => 'Διασώστης';
 
   @override
-  String get sampleDeltaNavigator => 'Navigator';
+  String get sampleDeltaNavigator => 'Πλοηγός';
 
   @override
-  String get sampleEchoSupport => 'Support';
+  String get sampleEchoSupport => 'Υποστήριξη';
 
   @override
-  String get sampleBaseCommand => 'Base Command';
+  String get sampleBaseCommand => 'Διοίκηση βάσης';
 
   @override
-  String get sampleFieldCoordinator => 'Field Coordinator';
+  String get sampleFieldCoordinator => 'Συντονιστής πεδίου';
 
   @override
-  String get sampleMedicalTeam => 'Medical Team';
+  String get sampleMedicalTeam => 'Ιατρική ομάδα';
 
   @override
-  String get mapDrawing => 'Map Drawing';
+  String get mapDrawing => 'Σχέδιο χάρτη';
 
   @override
-  String get navigateToDrawing => 'Navigate to Drawing';
+  String get navigateToDrawing => 'Πλοήγηση προς το σχέδιο';
 
   @override
-  String get copyCoordinates => 'Copy Coordinates';
+  String get copyCoordinates => 'Αντιγραφή συντεταγμένων';
 
   @override
-  String get hideFromMap => 'Hide from Map';
+  String get hideFromMap => 'Απόκρυψη από χάρτη';
 
   @override
-  String get lineDrawing => 'Line Drawing';
+  String get lineDrawing => 'Σχέδιο γραμμής';
 
   @override
-  String get rectangleDrawing => 'Rectangle Drawing';
+  String get rectangleDrawing => 'Σχέδιο ορθογωνίου';
 
   @override
-  String get manualCoordinates => 'Manual Coordinates';
+  String get manualCoordinates => 'Χειροκίνητες συντεταγμένες';
 
   @override
-  String get enterCoordinatesManually => 'Enter coordinates manually';
+  String get enterCoordinatesManually => 'Εισαγωγή συντεταγμένων χειροκίνητα';
 
   @override
-  String get latitudeLabel => 'Latitude';
+  String get latitudeLabel => 'Γεωγραφικό πλάτος';
 
   @override
-  String get longitudeLabel => 'Longitude';
+  String get longitudeLabel => 'Γεωγραφικό μήκος';
 
   @override
-  String get exampleCoordinates => 'Example: 46.0569, 14.5058';
+  String get exampleCoordinates => 'Παράδειγμα: 46.0569, 14.5058';
 
   @override
-  String get shareDrawing => 'Share Drawing';
+  String get shareDrawing => 'Κοινοποίηση σχεδίου';
 
   @override
-  String get shareWithAllNearbyDevices => 'Share with all nearby devices';
+  String get shareWithAllNearbyDevices =>
+      'Κοινοποίηση σε όλες τις κοντινές συσκευές';
 
   @override
-  String get shareToRoom => 'Share to Room';
+  String get shareToRoom => 'Κοινοποίηση στο δωμάτιο';
 
   @override
-  String get sendToPersistentStorage => 'Send to persistent room storage';
+  String get sendToPersistentStorage =>
+      'Αποστολή σε μόνιμη αποθήκευση δωματίου';
 
   @override
   String get deleteDrawingConfirm =>
-      'Are you sure you want to delete this drawing?';
+      'Είστε βέβαιοι ότι θέλετε να διαγράψετε αυτό το σχέδιο;';
 
   @override
-  String get drawingDeleted => 'Drawing deleted';
+  String get drawingDeleted => 'Το σχέδιο διαγράφηκε';
 
   @override
   String yourDrawingsCount(int count) {
-    return 'Your Drawings ($count)';
+    return 'Τα σχέδιά σας ($count)';
   }
 
   @override
-  String get shared => 'Shared';
+  String get shared => 'Κοινοποιημένο';
 
   @override
-  String get line => 'Line';
+  String get line => 'Γραμμή';
 
   @override
-  String get rectangle => 'Rectangle';
+  String get rectangle => 'Ορθογώνιο';
 
   @override
-  String get updateAvailable => 'Update Available';
+  String get updateAvailable => 'Διαθέσιμη ενημέρωση';
 
   @override
-  String get currentVersion => 'Current';
+  String get currentVersion => 'Τρέχουσα';
 
   @override
-  String get latestVersion => 'Latest';
+  String get latestVersion => 'Τελευταία';
 
   @override
-  String get downloadUpdate => 'Download';
+  String get downloadUpdate => 'Λήψη';
 
   @override
-  String get updateLater => 'Later';
+  String get updateLater => 'Αργότερα';
 
   @override
-  String get cadastralParcels => 'Cadastral Parcels';
+  String get cadastralParcels => 'Κτηματολογικά τεμάχια';
 
   @override
-  String get forestRoads => 'Forest Roads';
+  String get forestRoads => 'Δασικοί δρόμοι';
 
   @override
-  String get wmsOverlays => 'WMS Overlays';
+  String get wmsOverlays => 'Επικαλύψεις WMS';
 
   @override
-  String get hikingTrails => 'Hiking Trails';
+  String get hikingTrails => 'Πεζοπορικά μονοπάτια';
 
   @override
-  String get mainRoads => 'Main Roads';
+  String get mainRoads => 'Κύριοι δρόμοι';
 
   @override
-  String get houseNumbers => 'House Numbers';
+  String get houseNumbers => 'Αριθμοί κτιρίων';
 
   @override
-  String get fireHazardZones => 'Fire Hazard Zones';
+  String get fireHazardZones => 'Ζώνες κινδύνου πυρκαγιάς';
 
   @override
-  String get historicalFires => 'Historical Fires';
+  String get historicalFires => 'Ιστορικές πυρκαγιές';
 
   @override
-  String get firebreaks => 'Firebreaks';
+  String get firebreaks => 'Αντιπυρικές ζώνες';
 
   @override
-  String get krasFireZones => 'Kras Fire Zones';
+  String get krasFireZones => 'Ζώνες πυρκαγιάς Κρας';
 
   @override
-  String get placeNames => 'Place Names';
+  String get placeNames => 'Τοπωνύμια';
 
   @override
-  String get municipalityBorders => 'Municipality Borders';
+  String get municipalityBorders => 'Όρια δήμων';
 
   @override
-  String get topographicMap => 'Topographic Map 1:25000';
+  String get topographicMap => 'Τοπογραφικός χάρτης 1:25000';
 
   @override
-  String get recentMessages => 'Recent Messages';
+  String get recentMessages => 'Πρόσφατα μηνύματα';
 
   @override
-  String get addChannel => 'Add Channel';
+  String get addChannel => 'Προσθήκη καναλιού';
 
   @override
-  String get channelName => 'Channel Name';
+  String get channelName => 'Όνομα καναλιού';
 
   @override
-  String get channelNameHint => 'e.g., Rescue Team Alpha';
+  String get channelNameHint => 'π.χ. Ομάδα Διάσωσης Άλφα';
 
   @override
-  String get channelSecret => 'Channel Secret';
+  String get channelSecret => 'Μυστικό καναλιού';
 
   @override
-  String get channelSecretHint => 'Shared password for this channel';
+  String get channelSecretHint => 'Κοινός κωδικός για αυτό το κανάλι';
 
   @override
   String get channelSecretHelp =>
-      'This secret must be shared with all team members who need access to this channel';
+      'Αυτό το μυστικό πρέπει να είναι κοινό σε όλα τα μέλη της ομάδας που χρειάζονται πρόσβαση σε αυτό το κανάλι';
 
   @override
   String get channelTypesInfo =>
-      'Hash channels (#team): Secret auto-generated from name. Same name = same channel across devices.\n\nPrivate channels: Use explicit secret. Only those with the secret can join.';
+      'Κανάλια hash (#team): Το μυστικό δημιουργείται αυτόματα από το όνομα. Ίδιο όνομα = ίδιο κανάλι σε όλες τις συσκευές.\n\nΙδιωτικά κανάλια: Χρησιμοποιήστε ρητό μυστικό. Μόνο όσοι το γνωρίζουν μπορούν να συμμετάσχουν.';
 
   @override
   String get hashChannelInfo =>
-      'Hash channel: Secret will be auto-generated from the channel name. Anyone using the same name will join the same channel.';
+      'Κανάλι hash: Το μυστικό θα δημιουργηθεί αυτόματα από το όνομα του καναλιού. Όποιος χρησιμοποιεί το ίδιο όνομα θα μπει στο ίδιο κανάλι.';
 
   @override
-  String get channelNameRequired => 'Channel name is required';
+  String get channelNameRequired => 'Το όνομα καναλιού είναι υποχρεωτικό';
 
   @override
-  String get channelNameTooLong => 'Channel name must be 31 characters or less';
+  String get channelNameTooLong =>
+      'Το όνομα καναλιού πρέπει να έχει έως 31 χαρακτήρες';
 
   @override
-  String get channelSecretRequired => 'Channel secret is required';
+  String get channelSecretRequired => 'Το μυστικό καναλιού είναι υποχρεωτικό';
 
   @override
   String get channelSecretTooLong =>
-      'Channel secret must be 32 characters or less';
+      'Το μυστικό καναλιού πρέπει να έχει έως 32 χαρακτήρες';
 
   @override
-  String get invalidAsciiCharacters => 'Only ASCII characters are allowed';
+  String get invalidAsciiCharacters => 'Επιτρέπονται μόνο χαρακτήρες ASCII';
 
   @override
-  String get channelCreatedSuccessfully => 'Channel created successfully';
+  String get channelCreatedSuccessfully => 'Το κανάλι δημιουργήθηκε επιτυχώς';
 
   @override
   String channelCreationFailed(String error) {
-    return 'Failed to create channel: $error';
+    return 'Αποτυχία δημιουργίας καναλιού: $error';
   }
 
   @override
-  String get deleteChannel => 'Delete Channel';
+  String get deleteChannel => 'Διαγραφή καναλιού';
 
   @override
   String deleteChannelConfirmation(String channelName) {
-    return 'Are you sure you want to delete channel \"$channelName\"? This action cannot be undone.';
+    return 'Είστε βέβαιοι ότι θέλετε να διαγράψετε το κανάλι \"$channelName\"; Αυτή η ενέργεια δεν αναιρείται.';
   }
 
   @override
-  String get channelDeletedSuccessfully => 'Channel deleted successfully';
+  String get channelDeletedSuccessfully => 'Το κανάλι διαγράφηκε επιτυχώς';
 
   @override
   String channelDeletionFailed(String error) {
-    return 'Failed to delete channel: $error';
+    return 'Αποτυχία διαγραφής καναλιού: $error';
   }
 
   @override
-  String get createChannel => 'Create Channel';
+  String get createChannel => 'Δημιουργία καναλιού';
 
   @override
-  String get wizardBack => 'Back';
+  String get wizardBack => 'Πίσω';
 
   @override
-  String get wizardSkip => 'Skip';
+  String get wizardSkip => 'Παράλειψη';
 
   @override
-  String get wizardNext => 'Next';
+  String get wizardNext => 'Επόμενο';
 
   @override
-  String get wizardGetStarted => 'Get Started';
+  String get wizardGetStarted => 'Ξεκινήστε';
 
   @override
-  String get wizardWelcomeTitle => 'Welcome to MeshCore SAR';
+  String get wizardWelcomeTitle => 'Καλώς ήρθατε στο MeshCore SAR';
 
   @override
   String get wizardWelcomeDescription =>
-      'A powerful off-grid communication tool for search and rescue operations. Connect with your team using mesh radio technology when traditional networks are unavailable.';
+      'Ένα ισχυρό εργαλείο επικοινωνίας εκτός δικτύου για επιχειρήσεις έρευνας και διάσωσης. Συνδεθείτε με την ομάδα σας χρησιμοποιώντας τεχνολογία mesh radio όταν τα παραδοσιακά δίκτυα δεν είναι διαθέσιμα.';
 
   @override
-  String get wizardConnectingTitle => 'Connecting to Your Radio';
+  String get wizardConnectingTitle => 'Σύνδεση στο radio σας';
 
   @override
   String get wizardConnectingDescription =>
-      'Connect your smartphone to a MeshCore radio device via Bluetooth to start communicating off-grid.';
+      'Συνδέστε το smartphone σας με μια συσκευή MeshCore radio μέσω Bluetooth για να αρχίσετε να επικοινωνείτε εκτός δικτύου.';
 
   @override
-  String get wizardConnectingFeature1 => 'Scan for nearby MeshCore devices';
+  String get wizardConnectingFeature1 =>
+      'Σάρωση για κοντινές συσκευές MeshCore';
 
   @override
-  String get wizardConnectingFeature2 => 'Pair with your radio via Bluetooth';
+  String get wizardConnectingFeature2 =>
+      'Σύζευξη με το radio σας μέσω Bluetooth';
 
   @override
   String get wizardConnectingFeature3 =>
-      'Works completely offline - no internet required';
+      'Λειτουργεί πλήρως εκτός σύνδεσης - δεν απαιτείται internet';
 
   @override
-  String get wizardChannelTitle => 'Channels';
+  String get wizardChannelTitle => 'Κανάλια';
 
   @override
   String get wizardChannelDescription =>
-      'Broadcast messages to everyone on a channel, perfect for team-wide announcements and coordination.';
+      'Μεταδώστε μηνύματα σε όλους σε ένα κανάλι, ιδανικό για ανακοινώσεις και συντονισμό σε όλη την ομάδα.';
 
   @override
   String get wizardChannelFeature1 =>
-      'Public Channel for general team communication';
+      'Δημόσιο κανάλι για γενική επικοινωνία ομάδας';
 
   @override
   String get wizardChannelFeature2 =>
-      'Create custom channels for specific groups';
+      'Δημιουργία προσαρμοσμένων καναλιών για συγκεκριμένες ομάδες';
 
   @override
   String get wizardChannelFeature3 =>
-      'Messages are automatically relayed by the mesh';
+      'Τα μηνύματα αναμεταδίδονται αυτόματα από το mesh';
 
   @override
-  String get wizardContactsTitle => 'Contacts';
+  String get wizardContactsTitle => 'Επαφές';
 
   @override
   String get wizardContactsDescription =>
-      'Your team members appear automatically as they join the mesh network. Send them direct messages or view their location.';
+      'Τα μέλη της ομάδας σας εμφανίζονται αυτόματα καθώς συνδέονται στο δίκτυο mesh. Στείλτε τους άμεσα μηνύματα ή δείτε την τοποθεσία τους.';
 
   @override
-  String get wizardContactsFeature1 => 'Contacts discovered automatically';
+  String get wizardContactsFeature1 => 'Οι επαφές εντοπίζονται αυτόματα';
 
   @override
-  String get wizardContactsFeature2 => 'Send private direct messages';
+  String get wizardContactsFeature2 => 'Αποστολή ιδιωτικών άμεσων μηνυμάτων';
 
   @override
-  String get wizardContactsFeature3 => 'View battery level and last seen time';
+  String get wizardContactsFeature3 =>
+      'Προβολή επιπέδου μπαταρίας και χρόνου τελευταίας εμφάνισης';
 
   @override
-  String get wizardMapTitle => 'Map & Location';
+  String get wizardMapTitle => 'Χάρτης και τοποθεσία';
 
   @override
   String get wizardMapDescription =>
-      'Track your team in real-time and mark important locations for search and rescue operations.';
+      'Παρακολουθήστε την ομάδα σας σε πραγματικό χρόνο και σημειώστε σημαντικές τοποθεσίες για επιχειρήσεις έρευνας και διάσωσης.';
 
   @override
   String get wizardMapFeature1 =>
-      'SAR markers for found persons, fires, and staging areas';
+      'Δείκτες SAR για εντοπισμένα άτομα, φωτιές και σημεία συγκέντρωσης';
 
   @override
-  String get wizardMapFeature2 => 'Real-time GPS tracking of team members';
+  String get wizardMapFeature2 =>
+      'Παρακολούθηση GPS των μελών της ομάδας σε πραγματικό χρόνο';
 
   @override
-  String get wizardMapFeature3 => 'Download offline maps for remote areas';
+  String get wizardMapFeature3 =>
+      'Λήψη χαρτών εκτός σύνδεσης για απομακρυσμένες περιοχές';
 
   @override
-  String get wizardMapFeature4 => 'Draw shapes and share tactical information';
+  String get wizardMapFeature4 =>
+      'Σχεδίαση σχημάτων και κοινοποίηση τακτικών πληροφοριών';
 
   @override
-  String get viewWelcomeTutorial => 'View Welcome Tutorial';
+  String get viewWelcomeTutorial => 'Προβολή οδηγού καλωσορίσματος';
 
   @override
-  String get allTeamContacts => 'All Team Contacts';
+  String get allTeamContacts => 'Όλες οι επαφές ομάδας';
 
   @override
   String directMessagesInfo(int count) {
-    return 'Direct messages with ACKs. Sent to $count team members.';
+    return 'Άμεσα μηνύματα με ACK. Στάλθηκαν σε $count μέλη ομάδας.';
   }
 
   @override
   String sarMarkerSentToContacts(int count) {
-    return 'SAR marker sent to $count contacts';
+    return 'Ο δείκτης SAR στάλθηκε σε $count επαφές';
   }
 
   @override
-  String get noContactsAvailable => 'No team contacts available';
+  String get noContactsAvailable => 'Δεν υπάρχουν διαθέσιμες επαφές ομάδας';
 
   @override
   String get reply => 'Απάντηση';

@@ -4,67 +4,67 @@
   "@appTitle": {
     "description": "The application title"
   },
-  "messages": "Messages",
+  "messages": "Μηνύματα",
   "@messages": {
     "description": "Messages tab label"
   },
-  "contacts": "Contacts",
+  "contacts": "Επαφές",
   "@contacts": {
     "description": "Contacts tab label"
   },
-  "map": "Map",
+  "map": "Χάρτης",
   "@map": {
     "description": "Map tab label"
   },
-  "settings": "Settings",
+  "settings": "Ρυθμίσεις",
   "@settings": {
     "description": "Settings screen title"
   },
-  "connect": "Connect",
+  "connect": "Σύνδεση",
   "@connect": {
     "description": "Connect button label"
   },
-  "disconnect": "Disconnect",
+  "disconnect": "Αποσύνδεση",
   "@disconnect": {
     "description": "Disconnect button label"
   },
-  "noDevicesFound": "No devices found",
+  "noDevicesFound": "Δεν βρέθηκαν συσκευές",
   "@noDevicesFound": {
     "description": "Text shown when no BLE devices are found"
   },
-  "scanAgain": "Scan Again",
+  "scanAgain": "Σάρωση ξανά",
   "@scanAgain": {
     "description": "Button to restart BLE scanning"
   },
-  "tapToConnect": "Tap to connect",
+  "tapToConnect": "Πατήστε για σύνδεση",
   "@tapToConnect": {
     "description": "Subtitle text for device in scan list"
   },
-  "deviceNotConnected": "Device not connected",
+  "deviceNotConnected": "Η συσκευή δεν είναι συνδεδεμένη",
   "@deviceNotConnected": {
     "description": "Error message when device is not connected"
   },
-  "locationPermissionDenied": "Location permission denied",
+  "locationPermissionDenied": "Η άδεια τοποθεσίας απορρίφθηκε",
   "@locationPermissionDenied": {
     "description": "Error when location permission is denied"
   },
-  "locationPermissionPermanentlyDenied": "Location permission permanently denied. Please enable in Settings.",
+  "locationPermissionPermanentlyDenied": "Η άδεια τοποθεσίας απορρίφθηκε μόνιμα. Ενεργοποιήστε την στις Ρυθμίσεις.",
   "@locationPermissionPermanentlyDenied": {
     "description": "Error when location permission is permanently denied"
   },
-  "locationPermissionRequired": "Location permission is required for GPS tracking and team coordination. You can enable it later in Settings.",
+  "locationPermissionRequired": "Απαιτείται άδεια τοποθεσίας για παρακολούθηση GPS και συντονισμό ομάδας. Μπορείτε να την ενεργοποιήσετε αργότερα στις Ρυθμίσεις.",
   "@locationPermissionRequired": {
     "description": "Message when location permission is needed"
   },
-  "locationServicesDisabled": "Location services are disabled. Please enable them in Settings.",
+  "locationServicesDisabled": "Οι υπηρεσίες τοποθεσίας είναι απενεργοποιημένες. Ενεργοποιήστε τις στις Ρυθμίσεις.",
   "@locationServicesDisabled": {
     "description": "Error when location services are disabled"
   },
-  "failedToGetGpsLocation": "Failed to get GPS location",
+  "failedToGetGpsLocation": "Αποτυχία λήψης τοποθεσίας GPS",
   "@failedToGetGpsLocation": {
     "description": "Error when GPS location cannot be obtained"
   },
-  "failedToAdvertise": "Failed to advertise: {error}",
+  "failedToAdvertise": "Αποτυχία μετάδοσης: {error}",
   "@failedToAdvertise": {
     "description": "Error message for failed advertisement",
     "placeholders": {
@@ -73,163 +73,163 @@
       }
     }
   },
-  "cancelReconnection": "Cancel reconnection",
+  "cancelReconnection": "Ακύρωση επανασύνδεσης",
   "@cancelReconnection": {
     "description": "Tooltip for cancel reconnection button"
   },
-  "general": "General",
+  "general": "Γενικά",
   "@general": {
     "description": "General settings section header"
   },
-  "theme": "Theme",
+  "theme": "Θέμα",
   "@theme": {
     "description": "Theme setting label"
   },
-  "chooseTheme": "Choose Theme",
+  "chooseTheme": "Επιλογή θέματος",
   "@chooseTheme": {
     "description": "Theme selection dialog title"
   },
-  "light": "Light",
+  "light": "Φωτεινό",
   "@light": {
     "description": "Light theme option"
   },
-  "dark": "Dark",
+  "dark": "Σκούρο",
   "@dark": {
     "description": "Dark theme option"
   },
-  "blueLightTheme": "Blue light theme",
+  "blueLightTheme": "Μπλε φωτεινό θέμα",
   "@blueLightTheme": {
     "description": "Description for blue light theme"
   },
-  "blueDarkTheme": "Blue dark theme",
+  "blueDarkTheme": "Μπλε σκούρο θέμα",
   "@blueDarkTheme": {
     "description": "Description for blue dark theme"
   },
-  "sarRed": "SAR Red",
+  "sarRed": "SAR Κόκκινο",
   "@sarRed": {
     "description": "SAR Red theme option"
   },
-  "alertEmergencyMode": "Alert/Emergency mode",
+  "alertEmergencyMode": "Λειτουργία συναγερμού/έκτακτης ανάγκης",
   "@alertEmergencyMode": {
     "description": "Description for SAR Red theme"
   },
-  "sarGreen": "SAR Green",
+  "sarGreen": "SAR Πράσινο",
   "@sarGreen": {
     "description": "SAR Green theme option"
   },
-  "safeAllClearMode": "Safe/All Clear mode",
+  "safeAllClearMode": "Λειτουργία ασφαλείας/όλα καθαρά",
   "@safeAllClearMode": {
     "description": "Description for SAR Green theme"
   },
-  "autoSystem": "Auto (System)",
+  "autoSystem": "Αυτόματο (σύστημα)",
   "@autoSystem": {
     "description": "Auto/System theme option"
   },
-  "followSystemTheme": "Follow system theme",
+  "followSystemTheme": "Ακολουθεί το θέμα συστήματος",
   "@followSystemTheme": {
     "description": "Description for system theme"
   },
-  "showRxTxIndicators": "Show RX/TX Indicators",
+  "showRxTxIndicators": "Εμφάνιση ενδείξεων RX/TX",
   "@showRxTxIndicators": {
     "description": "Setting to show RX/TX indicators"
   },
-  "displayPacketActivity": "Display packet activity indicators in top bar",
+  "displayPacketActivity": "Εμφάνιση ενδείξεων δραστηριότητας πακέτων στην επάνω μπάρα",
   "@displayPacketActivity": {
     "description": "Description for RX/TX indicators setting"
   },
-  "disableMap": "Disable Map",
+  "disableMap": "Απενεργοποίηση χάρτη",
   "@disableMap": {
     "description": "Setting to disable the map tab"
   },
-  "disableMapDescription": "Hide the map tab to reduce battery usage",
+  "disableMapDescription": "Απόκρυψη της καρτέλας χάρτη για μείωση κατανάλωσης μπαταρίας",
   "@disableMapDescription": {
     "description": "Description for disable map setting"
   },
-  "language": "Language",
+  "language": "Γλώσσα",
   "@language": {
     "description": "Language setting label"
   },
-  "chooseLanguage": "Choose Language",
+  "chooseLanguage": "Επιλογή γλώσσας",
   "@chooseLanguage": {
     "description": "Language selection dialog title"
   },
-  "save": "Save",
+  "save": "Αποθήκευση",
   "@save": {
     "description": "Save button label"
   },
-  "cancel": "Cancel",
+  "cancel": "Ακύρωση",
   "@cancel": {
     "description": "Cancel button label"
   },
-  "close": "Close",
+  "close": "Κλείσιμο",
   "@close": {
     "description": "Close button label"
   },
-  "about": "About",
+  "about": "Σχετικά",
   "@about": {
     "description": "About section header"
   },
-  "appVersion": "App Version",
+  "appVersion": "Έκδοση εφαρμογής",
   "@appVersion": {
     "description": "App version label"
   },
-  "appName": "App Name",
+  "appName": "Όνομα εφαρμογής",
   "@appName": {
     "description": "App name label"
   },
-  "aboutMeshCoreSar": "About MeshCore SAR",
+  "aboutMeshCoreSar": "Σχετικά με το MeshCore SAR",
   "@aboutMeshCoreSar": {
     "description": "About dialog title"
   },
-  "aboutDescription": "A Search & Rescue application designed for emergency response teams. Features include:\n\n• BLE mesh networking for device-to-device communication\n• Offline maps with multiple layer options\n• Real-time team member tracking\n• SAR tactical markers (found person, fire, staging)\n• Contact management and messaging\n• GPS tracking with compass heading\n• Map tile caching for offline use",
+  "aboutDescription": "Εφαρμογή Έρευνας και Διάσωσης σχεδιασμένη για ομάδες απόκρισης έκτακτης ανάγκης. Περιλαμβάνει:\n\n• Δικτύωση BLE mesh για επικοινωνία συσκευή με συσκευή\n• Χάρτες εκτός σύνδεσης με πολλαπλά επίπεδα\n• Παρακολούθηση μελών ομάδας σε πραγματικό χρόνο\n• Τακτικούς δείκτες SAR (εντοπισμένο άτομο, φωτιά, σημείο συγκέντρωσης)\n• Διαχείριση επαφών και μηνυμάτων\n• Παρακολούθηση GPS με πυξίδα κατεύθυνσης\n• Cache πλακιδίων χάρτη για χρήση εκτός σύνδεσης",
   "@aboutDescription": {
     "description": "About dialog description"
   },
-  "technologiesUsed": "Technologies Used:",
+  "technologiesUsed": "Χρησιμοποιούμενες τεχνολογίες:",
   "@technologiesUsed": {
     "description": "Technologies used section title"
   },
-  "technologiesList": "• Flutter for cross-platform development\n• BLE (Bluetooth Low Energy) for mesh networking\n• OpenStreetMap for mapping\n• Provider for state management\n• SharedPreferences for local storage",
+  "technologiesList": "• Flutter για ανάπτυξη πολλαπλών πλατφορμών\n• BLE (Bluetooth Low Energy) για δικτύωση mesh\n• OpenStreetMap για χαρτογράφηση\n• Provider για διαχείριση κατάστασης\n• SharedPreferences για τοπική αποθήκευση",
   "@technologiesList": {
     "description": "List of technologies used"
   },
-  "moreInfo": "More Info",
+  "moreInfo": "Περισσότερες πληροφορίες",
   "@moreInfo": {
     "description": "More info button label"
   },
-  "packageName": "Package Name",
+  "packageName": "Όνομα πακέτου",
   "@packageName": {
     "description": "Package name label"
   },
-  "sampleData": "Sample Data",
+  "sampleData": "Δείγματα δεδομένων",
   "@sampleData": {
     "description": "Sample data section header"
   },
-  "sampleDataDescription": "Load or clear sample contacts, channel messages, and SAR markers for testing",
+  "sampleDataDescription": "Φόρτωση ή εκκαθάριση δοκιμαστικών επαφών, μηνυμάτων καναλιού και δεικτών SAR για έλεγχο",
   "@sampleDataDescription": {
     "description": "Sample data section description"
   },
-  "loadSampleData": "Load Sample Data",
+  "loadSampleData": "Φόρτωση δειγμάτων δεδομένων",
   "@loadSampleData": {
     "description": "Load sample data button"
   },
-  "clearAllData": "Clear All Data",
+  "clearAllData": "Εκκαθάριση όλων των δεδομένων",
   "@clearAllData": {
     "description": "Clear all data button"
   },
-  "clearAllDataConfirmTitle": "Clear All Data",
+  "clearAllDataConfirmTitle": "Εκκαθάριση όλων των δεδομένων",
   "@clearAllDataConfirmTitle": {
     "description": "Clear data confirmation dialog title"
   },
-  "clearAllDataConfirmMessage": "This will clear all contacts and SAR markers. Are you sure?",
+  "clearAllDataConfirmMessage": "Αυτό θα διαγράψει όλες τις επαφές και τους δείκτες SAR. Είστε βέβαιοι;",
   "@clearAllDataConfirmMessage": {
     "description": "Clear data confirmation message"
   },
-  "clear": "Clear",
+  "clear": "Εκκαθάριση",
   "@clear": {
     "description": "Clear button label"
   },
-  "loadedSampleData": "Loaded {teamCount} team members, {channelCount} channels, {sarCount} SAR markers, {messageCount} messages",
+  "loadedSampleData": "Φορτώθηκαν {teamCount} μέλη ομάδας, {channelCount} κανάλια, {sarCount} δείκτες SAR, {messageCount} μηνύματα",
   "@loadedSampleData": {
     "description": "Success message after loading sample data",
     "placeholders": {
@@ -247,7 +247,7 @@
       }
     }
   },
-  "failedToLoadSampleData": "Failed to load sample data: {error}",
+  "failedToLoadSampleData": "Αποτυχία φόρτωσης δειγμάτων δεδομένων: {error}",
   "@failedToLoadSampleData": {
     "description": "Error message when sample data fails to load",
     "placeholders": {
@@ -256,15 +256,15 @@
       }
     }
   },
-  "allDataCleared": "All data cleared",
+  "allDataCleared": "Όλα τα δεδομένα διαγράφηκαν",
   "@allDataCleared": {
     "description": "Success message after clearing all data"
   },
-  "failedToStartBackgroundTracking": "Failed to start background tracking. Check permissions and BLE connection.",
+  "failedToStartBackgroundTracking": "Αποτυχία εκκίνησης παρακολούθησης στο παρασκήνιο. Ελέγξτε τα δικαιώματα και τη σύνδεση BLE.",
   "@failedToStartBackgroundTracking": {
     "description": "Error message when background tracking fails to start"
   },
-  "locationBroadcast": "Location broadcast: {latitude}, {longitude}",
+  "locationBroadcast": "Μετάδοση τοποθεσίας: {latitude}, {longitude}",
   "@locationBroadcast": {
     "description": "Success message for location broadcast",
     "placeholders": {
@@ -276,43 +276,43 @@
       }
     }
   },
-  "defaultPinInfo": "The default pin for devices without a screen is 123456. Trouble pairing? Forget the bluetooth device in system settings.",
+  "defaultPinInfo": "Το προεπιλεγμένο PIN για συσκευές χωρίς οθόνη είναι 123456. Πρόβλημα στη σύζευξη; Ξεχάστε τη συσκευή Bluetooth από τις ρυθμίσεις συστήματος.",
   "@defaultPinInfo": {
     "description": "Information about default PIN for pairing"
   },
-  "noMessagesYet": "No messages yet",
+  "noMessagesYet": "Δεν υπάρχουν ακόμη μηνύματα",
   "@noMessagesYet": {
     "description": "Empty state message when there are no messages"
   },
-  "pullDownToSync": "Pull down to sync messages",
+  "pullDownToSync": "Τραβήξτε προς τα κάτω για συγχρονισμό μηνυμάτων",
   "@pullDownToSync": {
     "description": "Instruction to pull down to refresh messages"
   },
-  "deleteContact": "Delete Contact",
+  "deleteContact": "Διαγραφή επαφής",
   "@deleteContact": {
     "description": "Delete contact action label"
   },
-  "delete": "Delete",
+  "delete": "Διαγραφή",
   "@delete": {
     "description": "Delete button label"
   },
-  "viewOnMap": "View on Map",
+  "viewOnMap": "Προβολή στον χάρτη",
   "@viewOnMap": {
     "description": "Action to view contact location on map"
   },
-  "refresh": "Refresh",
+  "refresh": "Ανανέωση",
   "@refresh": {
     "description": "Refresh button label"
   },
-  "resetPath": "Reset Path (Re-route)",
+  "resetPath": "Επαναφορά διαδρομής (νέα δρομολόγηση)",
   "@resetPath": {
     "description": "Action to reset contact path for re-routing"
   },
-  "publicKeyCopied": "Public key copied to clipboard",
+  "publicKeyCopied": "Το δημόσιο κλειδί αντιγράφηκε στο πρόχειρο",
   "@publicKeyCopied": {
     "description": "Success message when public key is copied"
   },
-  "copiedToClipboard": "{label} copied to clipboard",
+  "copiedToClipboard": "Το {label} αντιγράφηκε στο πρόχειρο",
   "@copiedToClipboard": {
     "description": "Success message when a value is copied to clipboard",
     "placeholders": {
@@ -321,11 +321,11 @@
       }
     }
   },
-  "pleaseEnterPassword": "Please enter a password",
+  "pleaseEnterPassword": "Παρακαλώ εισαγάγετε κωδικό",
   "@pleaseEnterPassword": {
     "description": "Validation message for empty password field"
   },
-  "failedToSyncContacts": "Failed to sync contacts: {error}",
+  "failedToSyncContacts": "Αποτυχία συγχρονισμού επαφών: {error}",
   "@failedToSyncContacts": {
     "description": "Error message when contact sync fails",
     "placeholders": {
@@ -334,15 +334,15 @@
       }
     }
   },
-  "loggedInSuccessfully": "Logged in successfully! Waiting for room messages...",
+  "loggedInSuccessfully": "Η σύνδεση ολοκληρώθηκε με επιτυχία! Αναμονή για μηνύματα δωματίου...",
   "@loggedInSuccessfully": {
     "description": "Success message after successful room login"
   },
-  "loginFailed": "Login failed - incorrect password",
+  "loginFailed": "Αποτυχία σύνδεσης - λανθασμένος κωδικός",
   "@loginFailed": {
     "description": "Error message when room login fails"
   },
-  "loggingIn": "Logging in to {roomName}...",
+  "loggingIn": "Σύνδεση στο {roomName}...",
   "@loggingIn": {
     "description": "Status message during room login process",
     "placeholders": {
@@ -351,7 +351,7 @@
       }
     }
   },
-  "failedToSendLogin": "Failed to send login: {error}",
+  "failedToSendLogin": "Αποτυχία αποστολής σύνδεσης: {error}",
   "@failedToSendLogin": {
     "description": "Error message when login command fails to send",
     "placeholders": {
@@ -360,55 +360,55 @@
       }
     }
   },
-  "lowLocationAccuracy": "Low Location Accuracy",
+  "lowLocationAccuracy": "Χαμηλή ακρίβεια τοποθεσίας",
   "@lowLocationAccuracy": {
     "description": "Warning title for low GPS accuracy"
   },
-  "continue_": "Continue",
+  "continue_": "Συνέχεια",
   "@continue_": {
     "description": "Continue button label"
   },
-  "sendSarMarker": "Send SAR marker",
+  "sendSarMarker": "Αποστολή δείκτη SAR",
   "@sendSarMarker": {
     "description": "Action to send SAR marker"
   },
-  "deleteDrawing": "Delete Drawing",
+  "deleteDrawing": "Διαγραφή σχεδίου",
   "@deleteDrawing": {
     "description": "Action to delete a map drawing"
   },
-  "drawingTools": "Drawing Tools",
+  "drawingTools": "Εργαλεία σχεδίασης",
   "@drawingTools": {
     "description": "Drawing tools section or menu title"
   },
-  "drawLine": "Draw Line",
+  "drawLine": "Σχεδίαση γραμμής",
   "@drawLine": {
     "description": "Map drawing mode: line"
   },
-  "drawLineDesc": "Draw a freehand line on the map",
+  "drawLineDesc": "Σχεδίαση ελεύθερης γραμμής στον χάρτη",
   "@drawLineDesc": {
     "description": "Description for line drawing mode"
   },
-  "drawRectangle": "Draw Rectangle",
+  "drawRectangle": "Σχεδίαση ορθογωνίου",
   "@drawRectangle": {
     "description": "Map drawing mode: rectangle"
   },
-  "drawRectangleDesc": "Draw a rectangular area on the map",
+  "drawRectangleDesc": "Σχεδίαση ορθογώνιας περιοχής στον χάρτη",
   "@drawRectangleDesc": {
     "description": "Description for rectangle drawing mode"
   },
-  "measureDistance": "Measure Distance",
+  "measureDistance": "Μέτρηση απόστασης",
   "@measureDistance": {
     "description": "Map drawing mode: measure distance"
   },
-  "measureDistanceDesc": "Long press two points to measure",
+  "measureDistanceDesc": "Παρατεταμένο πάτημα σε δύο σημεία για μέτρηση",
   "@measureDistanceDesc": {
     "description": "Description for distance measurement mode"
   },
-  "clearMeasurement": "Clear Measurement",
+  "clearMeasurement": "Εκκαθάριση μέτρησης",
   "@clearMeasurement": {
     "description": "Tooltip to clear measurement"
   },
-  "distanceLabel": "Distance: {distance}",
+  "distanceLabel": "Απόσταση: {distance}",
   "@distanceLabel": {
     "description": "Label showing measured distance",
     "placeholders": {
@@ -417,31 +417,31 @@
       }
     }
   },
-  "longPressForSecondPoint": "Long press for second point",
+  "longPressForSecondPoint": "Παρατεταμένο πάτημα για δεύτερο σημείο",
   "@longPressForSecondPoint": {
     "description": "Instruction when first measurement point is set"
   },
-  "longPressToStartMeasurement": "Long press to set first point",
+  "longPressToStartMeasurement": "Παρατεταμένο πάτημα για ορισμό πρώτου σημείου",
   "@longPressToStartMeasurement": {
     "description": "Instruction to start measurement"
   },
-  "longPressToStartNewMeasurement": "Long press to start new measurement",
+  "longPressToStartNewMeasurement": "Παρατεταμένο πάτημα για νέα μέτρηση",
   "@longPressToStartNewMeasurement": {
     "description": "Instruction to restart measurement after completion"
   },
-  "shareDrawings": "Share Drawings",
+  "shareDrawings": "Κοινοποίηση σχεδίων",
   "@shareDrawings": {
     "description": "Action to share drawings to network"
   },
-  "clearAllDrawings": "Clear All Drawings",
+  "clearAllDrawings": "Εκκαθάριση όλων των σχεδίων",
   "@clearAllDrawings": {
     "description": "Action to clear all local drawings"
   },
-  "completeLine": "Complete Line",
+  "completeLine": "Ολοκλήρωση γραμμής",
   "@completeLine": {
     "description": "Tooltip to complete drawing a line"
   },
-  "broadcastDrawingsToTeam": "Broadcast {count} drawing{plural} to team",
+  "broadcastDrawingsToTeam": "Μετάδοση {count} σχεδίου{plural} στην ομάδα",
   "@broadcastDrawingsToTeam": {
     "description": "Subtitle showing how many drawings will be broadcast",
     "placeholders": {
@@ -453,7 +453,7 @@
       }
     }
   },
-  "removeAllDrawings": "Remove all {count} drawing{plural}",
+  "removeAllDrawings": "Αφαίρεση όλων των {count} σχεδίων{plural}",
   "@removeAllDrawings": {
     "description": "Subtitle for remove all drawings action",
     "placeholders": {
@@ -465,7 +465,7 @@
       }
     }
   },
-  "deleteAllDrawingsConfirm": "Delete all {count} drawing{plural} from the map?",
+  "deleteAllDrawingsConfirm": "Διαγραφή όλων των {count} σχεδίων{plural} από τον χάρτη;",
   "@deleteAllDrawingsConfirm": {
     "description": "Confirmation dialog message for deleting all drawings",
     "placeholders": {
@@ -477,11 +477,11 @@
       }
     }
   },
-  "drawing": "Drawing",
+  "drawing": "Σχέδιο",
   "@drawing": {
     "description": "Generic drawing label"
   },
-  "shareDrawingsCount": "Share {count} Drawing{plural}",
+  "shareDrawingsCount": "Κοινοποίηση {count} σχεδίου{plural}",
   "@shareDrawingsCount": {
     "description": "Title for share drawings dialog",
     "placeholders": {
@@ -493,107 +493,107 @@
       }
     }
   },
-  "showReceivedDrawings": "Show Received Drawings",
+  "showReceivedDrawings": "Εμφάνιση ληφθέντων σχεδίων",
   "@showReceivedDrawings": {
     "description": "Toggle to show/hide received drawings from other team members"
   },
-  "showingAllDrawings": "Showing all drawings",
+  "showingAllDrawings": "Εμφανίζονται όλα τα σχέδια",
   "@showingAllDrawings": {
     "description": "Subtitle when received drawings are visible"
   },
-  "showingOnlyYourDrawings": "Showing only your drawings",
+  "showingOnlyYourDrawings": "Εμφανίζονται μόνο τα δικά σας σχέδια",
   "@showingOnlyYourDrawings": {
     "description": "Subtitle when received drawings are hidden"
   },
-  "showSarMarkers": "Show SAR Markers",
+  "showSarMarkers": "Εμφάνιση δεικτών SAR",
   "@showSarMarkers": {
     "description": "Toggle to show/hide SAR markers on map"
   },
-  "showingSarMarkers": "Showing SAR markers",
+  "showingSarMarkers": "Εμφανίζονται δείκτες SAR",
   "@showingSarMarkers": {
     "description": "Subtitle when SAR markers are visible"
   },
-  "hidingSarMarkers": "Hiding SAR markers",
+  "hidingSarMarkers": "Απόκρυψη δεικτών SAR",
   "@hidingSarMarkers": {
     "description": "Subtitle when SAR markers are hidden"
   },
-  "clearAll": "Clear All",
+  "clearAll": "Εκκαθάριση όλων",
   "@clearAll": {
     "description": "Clear all button label"
   },
-  "publicChannel": "Public Channel",
+  "publicChannel": "Δημόσιο κανάλι",
   "@publicChannel": {
     "description": "Public channel option for sharing"
   },
-  "broadcastToAll": "Broadcast to all nearby nodes (ephemeral)",
+  "broadcastToAll": "Μετάδοση σε όλους τους κοντινούς κόμβους (προσωρινό)",
   "@broadcastToAll": {
     "description": "Description for public channel broadcast"
   },
-  "storedPermanently": "Stored permanently in room",
+  "storedPermanently": "Αποθηκευμένο μόνιμα στο δωμάτιο",
   "@storedPermanently": {
     "description": "Description for room storage permanence"
   },
-  "notConnectedToDevice": "Not connected to device",
+  "notConnectedToDevice": "Δεν υπάρχει σύνδεση με συσκευή",
   "@notConnectedToDevice": {
     "description": "Error message when device is not connected for direct messaging"
   },
-  "typeYourMessage": "Type your message...",
+  "typeYourMessage": "Πληκτρολογήστε το μήνυμά σας...",
   "@typeYourMessage": {
     "description": "Placeholder text for message input field"
   },
-  "quickLocationMarker": "Quick location marker",
+  "quickLocationMarker": "Γρήγορος δείκτης τοποθεσίας",
   "@quickLocationMarker": {
     "description": "Subtitle for SAR marker sheet header"
   },
-  "markerType": "Marker Type",
+  "markerType": "Τύπος δείκτη",
   "@markerType": {
     "description": "Label for marker type selection section"
   },
-  "sendTo": "Send To",
+  "sendTo": "Αποστολή σε",
   "@sendTo": {
     "description": "Label for destination selection section"
   },
-  "noDestinationsAvailable": "No destinations available.",
+  "noDestinationsAvailable": "Δεν υπάρχουν διαθέσιμοι προορισμοί.",
   "@noDestinationsAvailable": {
     "description": "Warning when no rooms or channels exist"
   },
-  "selectDestination": "Select destination...",
+  "selectDestination": "Επιλέξτε προορισμό...",
   "@selectDestination": {
     "description": "Placeholder for destination dropdown"
   },
-  "ephemeralBroadcastInfo": "Ephemeral: Broadcast over-the-air only. Not stored - nodes must be online.",
+  "ephemeralBroadcastInfo": "Προσωρινό: Μετάδοση μόνο ασύρματα. Δεν αποθηκεύεται - οι κόμβοι πρέπει να είναι συνδεδεμένοι.",
   "@ephemeralBroadcastInfo": {
     "description": "Information about ephemeral channel broadcasts"
   },
-  "persistentRoomInfo": "Persistent: Stored immutably in room. Synced automatically and preserved offline.",
+  "persistentRoomInfo": "Μόνιμο: Αποθηκεύεται αμετάβλητα στο δωμάτιο. Συγχρονίζεται αυτόματα και διατηρείται εκτός σύνδεσης.",
   "@persistentRoomInfo": {
     "description": "Information about persistent room storage"
   },
-  "location": "Location",
+  "location": "Τοποθεσία",
   "@location": {
     "description": "Label for location section"
   },
-  "fromMap": "From Map",
+  "fromMap": "Από χάρτη",
   "@fromMap": {
     "description": "Badge showing location is from map tap"
   },
-  "gettingLocation": "Getting location...",
+  "gettingLocation": "Λήψη τοποθεσίας...",
   "@gettingLocation": {
     "description": "Loading message while fetching GPS location"
   },
-  "locationError": "Location Error",
+  "locationError": "Σφάλμα τοποθεσίας",
   "@locationError": {
     "description": "Title for location error messages"
   },
-  "retry": "Retry",
+  "retry": "Επανάληψη",
   "@retry": {
     "description": "Retry button label"
   },
-  "refreshLocation": "Refresh location",
+  "refreshLocation": "Ανανέωση τοποθεσίας",
   "@refreshLocation": {
     "description": "Tooltip for refresh location button"
   },
-  "accuracyMeters": "Accuracy: ±{accuracy}m",
+  "accuracyMeters": "Ακρίβεια: ±{accuracy}μ",
   "@accuracyMeters": {
     "description": "Display of GPS accuracy in meters",
     "placeholders": {
@@ -602,15 +602,15 @@
       }
     }
   },
-  "notesOptional": "Notes (optional)",
+  "notesOptional": "Σημειώσεις (προαιρετικό)",
   "@notesOptional": {
     "description": "Label for optional notes field"
   },
-  "addAdditionalInformation": "Add additional information...",
+  "addAdditionalInformation": "Προσθέστε επιπλέον πληροφορίες...",
   "@addAdditionalInformation": {
     "description": "Placeholder for notes field"
   },
-  "lowAccuracyWarning": "Location accuracy is ±{accuracy}m. This may not be accurate enough for SAR operations.\n\nContinue anyway?",
+  "lowAccuracyWarning": "Η ακρίβεια τοποθεσίας είναι ±{accuracy}μ. Αυτό ίσως δεν είναι αρκετά ακριβές για επιχειρήσεις SAR.\n\nΣυνέχεια ούτως ή άλλως;",
   "@lowAccuracyWarning": {
     "description": "Warning dialog content for low GPS accuracy",
     "placeholders": {
@@ -619,31 +619,31 @@
       }
     }
   },
-  "loginToRoom": "Login to Room",
+  "loginToRoom": "Σύνδεση στο δωμάτιο",
   "@loginToRoom": {
     "description": "Title for room login dialog"
   },
-  "enterPasswordInfo": "Enter the password to access this room. The password will be saved for future use.",
+  "enterPasswordInfo": "Εισαγάγετε τον κωδικό για πρόσβαση σε αυτό το δωμάτιο. Ο κωδικός θα αποθηκευτεί για μελλοντική χρήση.",
   "@enterPasswordInfo": {
     "description": "Information about room password"
   },
-  "password": "Password",
+  "password": "Κωδικός πρόσβασης",
   "@password": {
     "description": "Password field label"
   },
-  "enterRoomPassword": "Enter room password",
+  "enterRoomPassword": "Εισαγάγετε κωδικό δωματίου",
   "@enterRoomPassword": {
     "description": "Password field hint"
   },
-  "loggingInDots": "Logging in...",
+  "loggingInDots": "Σύνδεση...",
   "@loggingInDots": {
     "description": "Button text while logging in"
   },
-  "login": "Login",
+  "login": "Σύνδεση",
   "@login": {
     "description": "Login button label"
   },
-  "failedToAddRoom": "Failed to add room to device: {error}\n\nThe room may not have advertised yet.\nTry waiting for the room to broadcast.",
+  "failedToAddRoom": "Αποτυχία προσθήκης δωματίου στη συσκευή: {error}\n\nΤο δωμάτιο ίσως δεν έχει μεταδοθεί ακόμη.\nΠεριμένετε να αρχίσει να εκπέμπει.",
   "@failedToAddRoom": {
     "description": "Error message when adding room fails",
     "placeholders": {
@@ -652,27 +652,27 @@
       }
     }
   },
-  "direct": "Direct",
+  "direct": "Άμεσο",
   "@direct": {
     "description": "Direct routing indicator"
   },
-  "flood": "Flood",
+  "flood": "Πλημμυρικό",
   "@flood": {
     "description": "Flood routing indicator"
   },
-  "loggedIn": "Logged In",
+  "loggedIn": "Συνδεδεμένος",
   "@loggedIn": {
     "description": "Logged in status badge"
   },
-  "noGpsData": "No GPS data",
+  "noGpsData": "Δεν υπάρχουν δεδομένα GPS",
   "@noGpsData": {
     "description": "Message when GPS data is not available"
   },
-  "distance": "Distance",
+  "distance": "Απόσταση",
   "@distance": {
     "description": "Distance label"
   },
-  "directPingTimeout": "Direct ping timeout - retrying {name} with flooding...",
+  "directPingTimeout": "Λήξη χρόνου άμεσου ping - επανάληψη προς {name} με flooding...",
   "@directPingTimeout": {
     "description": "Warning when direct ping times out",
     "placeholders": {
@@ -681,7 +681,7 @@
       }
     }
   },
-  "pingFailed": "Ping failed to {name} - no response received",
+  "pingFailed": "Αποτυχία ping προς {name} - δεν ελήφθη απάντηση",
   "@pingFailed": {
     "description": "Error message when ping fails",
     "placeholders": {
@@ -690,7 +690,7 @@
       }
     }
   },
-  "deleteContactConfirmation": "Are you sure you want to delete \"{name}\"?\n\nThis will remove the contact from both the app and the companion radio device.",
+  "deleteContactConfirmation": "Είστε βέβαιοι ότι θέλετε να διαγράψετε το \"{name}\";\n\nΑυτό θα αφαιρέσει την επαφή τόσο από την εφαρμογή όσο και από τη συνοδευτική συσκευή radio.",
   "@deleteContactConfirmation": {
     "description": "Confirmation message for deleting contact",
     "placeholders": {
@@ -699,7 +699,7 @@
       }
     }
   },
-  "failedToRemoveContact": "Failed to remove contact: {error}",
+  "failedToRemoveContact": "Αποτυχία αφαίρεσης επαφής: {error}",
   "@failedToRemoveContact": {
     "description": "Error message when contact removal fails",
     "placeholders": {
@@ -708,87 +708,87 @@
       }
     }
   },
-  "type": "Type",
+  "type": "Τύπος",
   "@type": {
     "description": "Contact type label"
   },
-  "publicKey": "Public Key",
+  "publicKey": "Δημόσιο κλειδί",
   "@publicKey": {
     "description": "Public key label"
   },
-  "lastSeen": "Last Seen",
+  "lastSeen": "Τελευταία εμφάνιση",
   "@lastSeen": {
     "description": "Last seen label"
   },
-  "roomStatus": "Room Status",
+  "roomStatus": "Κατάσταση δωματίου",
   "@roomStatus": {
     "description": "Room status section header"
   },
-  "loginStatus": "Login Status",
+  "loginStatus": "Κατάσταση σύνδεσης",
   "@loginStatus": {
     "description": "Login status label"
   },
-  "notLoggedIn": "Not Logged In",
+  "notLoggedIn": "Μη συνδεδεμένος",
   "@notLoggedIn": {
     "description": "Not logged in status"
   },
-  "adminAccess": "Admin Access",
+  "adminAccess": "Πρόσβαση διαχειριστή",
   "@adminAccess": {
     "description": "Admin access label"
   },
-  "yes": "Yes",
+  "yes": "Ναι",
   "@yes": {
     "description": "Yes answer"
   },
-  "no": "No",
+  "no": "Όχι",
   "@no": {
     "description": "No answer"
   },
-  "permissions": "Permissions",
+  "permissions": "Δικαιώματα",
   "@permissions": {
     "description": "Permissions label"
   },
-  "passwordSaved": "Password Saved",
+  "passwordSaved": "Ο κωδικός αποθηκεύτηκε",
   "@passwordSaved": {
     "description": "Password saved label"
   },
-  "locationColon": "Location:",
+  "locationColon": "Τοποθεσία:",
   "@locationColon": {
     "description": "Location section header"
   },
-  "telemetry": "Telemetry",
+  "telemetry": "Τηλεμετρία",
   "@telemetry": {
     "description": "Telemetry section header"
   },
-  "voltage": "Voltage",
+  "voltage": "Τάση",
   "@voltage": {
     "description": "Voltage label"
   },
-  "battery": "Battery",
+  "battery": "Μπαταρία",
   "@battery": {
     "description": "Battery label"
   },
-  "temperature": "Temperature",
+  "temperature": "Θερμοκρασία",
   "@temperature": {
     "description": "Temperature label"
   },
-  "humidity": "Humidity",
+  "humidity": "Υγρασία",
   "@humidity": {
     "description": "Humidity label"
   },
-  "pressure": "Pressure",
+  "pressure": "Πίεση",
   "@pressure": {
     "description": "Pressure label"
   },
-  "gpsTelemetry": "GPS (Telemetry)",
+  "gpsTelemetry": "GPS (τηλεμετρία)",
   "@gpsTelemetry": {
     "description": "GPS from telemetry label"
   },
-  "updated": "Updated",
+  "updated": "Ενημερώθηκε",
   "@updated": {
     "description": "Updated timestamp label"
   },
-  "pathResetInfo": "Path reset for {name}. Next message will find a new route.",
+  "pathResetInfo": "Η διαδρομή για το {name} επαναφέρθηκε. Το επόμενο μήνυμα θα βρει νέα διαδρομή.",
   "@pathResetInfo": {
     "description": "Info message after path reset",
     "placeholders": {
@@ -797,75 +797,75 @@
       }
     }
   },
-  "reLoginToRoom": "Re-Login to Room",
+  "reLoginToRoom": "Επανασύνδεση στο δωμάτιο",
   "@reLoginToRoom": {
     "description": "Button to re-login to room"
   },
-  "heading": "Heading",
+  "heading": "Κατεύθυνση",
   "@heading": {
     "description": "Compass heading label"
   },
-  "elevation": "Elevation",
+  "elevation": "Υψόμετρο",
   "@elevation": {
     "description": "Elevation/altitude label"
   },
-  "accuracy": "Accuracy",
+  "accuracy": "Ακρίβεια",
   "@accuracy": {
     "description": "GPS accuracy label"
   },
-  "bearing": "Bearing",
+  "bearing": "Πορεία",
   "@bearing": {
     "description": "Bearing label in compass"
   },
-  "direction": "Direction",
+  "direction": "Κατεύθυνση",
   "@direction": {
     "description": "Direction label in compass"
   },
-  "filterMarkers": "Filter Markers",
+  "filterMarkers": "Φιλτράρισμα δεικτών",
   "@filterMarkers": {
     "description": "Title for filter markers dialog"
   },
-  "filterMarkersTooltip": "Filter markers",
+  "filterMarkersTooltip": "Φιλτράρισμα δεικτών",
   "@filterMarkersTooltip": {
     "description": "Tooltip for filter button"
   },
-  "contactsFilter": "Contacts",
+  "contactsFilter": "Επαφές",
   "@contactsFilter": {
     "description": "Filter option for contacts"
   },
-  "repeatersFilter": "Repeaters",
+  "repeatersFilter": "Αναμεταδότες",
   "@repeatersFilter": {
     "description": "Filter option for repeaters"
   },
-  "sarMarkers": "SAR Markers",
+  "sarMarkers": "Δείκτες SAR",
   "@sarMarkers": {
     "description": "SAR markers section header"
   },
-  "foundPerson": "Found Person",
+  "foundPerson": "Εντοπισμένο άτομο",
   "@foundPerson": {
     "description": "Found person SAR marker type"
   },
-  "fire": "Fire",
+  "fire": "Φωτιά",
   "@fire": {
     "description": "Fire SAR marker type"
   },
-  "stagingArea": "Staging Area",
+  "stagingArea": "Σημείο συγκέντρωσης",
   "@stagingArea": {
     "description": "Staging area SAR marker type"
   },
-  "showAll": "Show All",
+  "showAll": "Εμφάνιση όλων",
   "@showAll": {
     "description": "Button to show all filters"
   },
-  "locationUnavailable": "Location unavailable",
+  "locationUnavailable": "Η τοποθεσία δεν είναι διαθέσιμη",
   "@locationUnavailable": {
     "description": "Message when GPS location is unavailable"
   },
-  "ahead": "ahead",
+  "ahead": "μπροστά",
   "@ahead": {
     "description": "Relative bearing direction - ahead"
   },
-  "degreesRight": "{degrees}° right",
+  "degreesRight": "{degrees}° δεξιά",
   "@degreesRight": {
     "description": "Relative bearing direction - right",
     "placeholders": {
@@ -874,7 +874,7 @@
       }
     }
   },
-  "degreesLeft": "{degrees}° left",
+  "degreesLeft": "{degrees}° αριστερά",
   "@degreesLeft": {
     "description": "Relative bearing direction - left",
     "placeholders": {
@@ -883,7 +883,7 @@
       }
     }
   },
-  "latLonFormat": "Lat: {latitude} Lon: {longitude}",
+  "latLonFormat": "Γεωγρ. πλάτος: {latitude} Γεωγρ. μήκος: {longitude}",
   "@latLonFormat": {
     "description": "Latitude and longitude display format",
     "placeholders": {
@@ -895,31 +895,31 @@
       }
     }
   },
-  "noContactsYet": "No contacts yet",
+  "noContactsYet": "Δεν υπάρχουν ακόμη επαφές",
   "@noContactsYet": {
     "description": "Empty state message when there are no contacts"
   },
-  "connectToDeviceToLoadContacts": "Connect to a device to load contacts",
+  "connectToDeviceToLoadContacts": "Συνδεθείτε σε συσκευή για φόρτωση επαφών",
   "@connectToDeviceToLoadContacts": {
     "description": "Instruction to connect device to load contacts"
   },
-  "teamMembers": "Team Members",
+  "teamMembers": "Μέλη ομάδας",
   "@teamMembers": {
     "description": "Section header for team members (chat contacts)"
   },
-  "repeaters": "Repeaters",
+  "repeaters": "Αναμεταδότες",
   "@repeaters": {
     "description": "Section header for repeater nodes"
   },
-  "rooms": "Rooms",
+  "rooms": "Δωμάτια",
   "@rooms": {
     "description": "Section header for rooms"
   },
-  "channels": "Channels",
+  "channels": "Κανάλια",
   "@channels": {
     "description": "Section header for broadcast channels"
   },
-  "selectMapLayer": "Select Map Layer",
+  "selectMapLayer": "Επιλογή επιπέδου χάρτη",
   "@selectMapLayer": {
     "description": "Title for map layer selection dialog"
   },
@@ -931,83 +931,83 @@
   "@openTopoMap": {
     "description": "OpenTopoMap layer name"
   },
-  "esriSatellite": "ESRI Satellite",
+  "esriSatellite": "Δορυφορικός ESRI",
   "@esriSatellite": {
     "description": "ESRI Satellite imagery layer name"
   },
-  "googleHybrid": "Google Hybrid",
+  "googleHybrid": "Υβριδικός Google",
   "@googleHybrid": {
     "description": "Google Hybrid layer name (satellite + labels)"
   },
-  "googleRoadmap": "Google Roadmap",
+  "googleRoadmap": "Οδικός χάρτης Google",
   "@googleRoadmap": {
     "description": "Google Roadmap layer name (street map)"
   },
-  "googleTerrain": "Google Terrain",
+  "googleTerrain": "Ανάγλυφο Google",
   "@googleTerrain": {
     "description": "Google Terrain layer name (topographic)"
   },
-  "dragToPosition": "Drag to Position",
+  "dragToPosition": "Σύρετε στη θέση",
   "@dragToPosition": {
     "description": "Label when dragging a pin on map"
   },
-  "createSarMarker": "Create SAR Marker",
+  "createSarMarker": "Δημιουργία δείκτη SAR",
   "@createSarMarker": {
     "description": "Label for creating SAR marker from pin"
   },
-  "compass": "Compass",
+  "compass": "Πυξίδα",
   "@compass": {
     "description": "Compass title in detailed compass dialog"
   },
-  "navigationAndContacts": "Navigation & Contacts",
+  "navigationAndContacts": "Πλοήγηση και επαφές",
   "@navigationAndContacts": {
     "description": "Subtitle for compass dialog"
   },
-  "sarAlert": "SAR ALERT",
+  "sarAlert": "ΣΥΝΑΓΕΡΜΟΣ SAR",
   "@sarAlert": {
     "description": "Label for SAR alert badge on messages"
   },
-  "textCopiedToClipboard": "Text copied to clipboard",
+  "textCopiedToClipboard": "Το κείμενο αντιγράφηκε στο πρόχειρο",
   "@textCopiedToClipboard": {
     "description": "Success message when text is copied"
   },
-  "cannotReplySenderMissing": "Cannot reply: sender information missing",
+  "cannotReplySenderMissing": "Αδυναμία απάντησης: λείπουν πληροφορίες αποστολέα",
   "@cannotReplySenderMissing": {
     "description": "Error when sender info is missing for reply"
   },
-  "cannotReplyContactNotFound": "Cannot reply: contact not found",
+  "cannotReplyContactNotFound": "Αδυναμία απάντησης: η επαφή δεν βρέθηκε",
   "@cannotReplyContactNotFound": {
     "description": "Error when contact not found for reply"
   },
-  "copyText": "Copy text",
+  "copyText": "Αντιγραφή κειμένου",
   "@copyText": {
     "description": "Option to copy message text to clipboard"
   },
-  "saveAsTemplate": "Save as Template",
+  "saveAsTemplate": "Αποθήκευση ως πρότυπο",
   "@saveAsTemplate": {
     "description": "Option to save SAR message as a reusable template"
   },
-  "templateSaved": "Template saved successfully",
+  "templateSaved": "Το πρότυπο αποθηκεύτηκε επιτυχώς",
   "@templateSaved": {
     "description": "Success message when SAR template is saved"
   },
-  "templateAlreadyExists": "Template with this emoji already exists",
+  "templateAlreadyExists": "Υπάρχει ήδη πρότυπο με αυτό το emoji",
   "@templateAlreadyExists": {
     "description": "Error message when trying to save duplicate template"
   },
-  "deleteMessage": "Delete message",
+  "deleteMessage": "Διαγραφή μηνύματος",
   "@deleteMessage": {
     "description": "Dialog title for deleting a message"
   },
-  "deleteMessageConfirmation": "Are you sure you want to delete this message?",
+  "deleteMessageConfirmation": "Είστε βέβαιοι ότι θέλετε να διαγράψετε αυτό το μήνυμα;",
   "@deleteMessageConfirmation": {
     "description": "Confirmation text for message deletion"
   },
-  "shareLocation": "Share location",
+  "shareLocation": "Κοινοποίηση τοποθεσίας",
   "@shareLocation": {
     "description": "Option to share SAR marker location"
   },
-  "shareLocationText": "{markerInfo}\n\nCoordinates: {lat}, {lon}\n\nGoogle Maps: {url}",
+  "shareLocationText": "{markerInfo}\n\nΣυντεταγμένες: {lat}, {lon}\n\nGoogle Maps: {url}",
   "@shareLocationText": {
     "description": "Formatted text for sharing SAR marker location",
     "placeholders": {
@@ -1025,15 +1025,15 @@
       }
     }
   },
-  "sarLocationShare": "SAR Location",
+  "sarLocationShare": "Τοποθεσία SAR",
   "@sarLocationShare": {
     "description": "Subject line when sharing SAR marker location"
   },
-  "justNow": "Just now",
+  "justNow": "Μόλις τώρα",
   "@justNow": {
     "description": "Time indicator for very recent activity"
   },
-  "minutesAgo": "{minutes}m ago",
+  "minutesAgo": "πριν από {minutes}λ",
   "@minutesAgo": {
     "description": "Time indicator for minutes ago",
     "placeholders": {
@@ -1042,7 +1042,7 @@
       }
     }
   },
-  "hoursAgo": "{hours}h ago",
+  "hoursAgo": "πριν από {hours}ω",
   "@hoursAgo": {
     "description": "Time indicator for hours ago",
     "placeholders": {
@@ -1051,7 +1051,7 @@
       }
     }
   },
-  "daysAgo": "{days}d ago",
+  "daysAgo": "πριν από {days}η",
   "@daysAgo": {
     "description": "Time indicator for days ago",
     "placeholders": {
@@ -1060,7 +1060,7 @@
       }
     }
   },
-  "secondsAgo": "{seconds}s ago",
+  "secondsAgo": "πριν από {seconds}δ",
   "@secondsAgo": {
     "description": "Time indicator for seconds ago",
     "placeholders": {
@@ -1069,19 +1069,19 @@
       }
     }
   },
-  "sending": "Sending...",
+  "sending": "Αποστολή...",
   "@sending": {
     "description": "Delivery status: sending"
   },
-  "sent": "Sent",
+  "sent": "Στάλθηκε",
   "@sent": {
     "description": "Delivery status: sent"
   },
-  "delivered": "Delivered",
+  "delivered": "Παραδόθηκε",
   "@delivered": {
     "description": "Delivery status: delivered"
   },
-  "deliveredWithTime": "Delivered ({time}ms)",
+  "deliveredWithTime": "Παραδόθηκε ({time}ms)",
   "@deliveredWithTime": {
     "description": "Delivery status with round-trip time",
     "placeholders": {
@@ -1090,15 +1090,15 @@
       }
     }
   },
-  "failed": "Failed",
+  "failed": "Απέτυχε",
   "@failed": {
     "description": "Delivery status: failed"
   },
-  "broadcast": "Broadcast",
+  "broadcast": "Μετάδοση",
   "@broadcast": {
     "description": "Delivery status for channel messages (no echoes yet)"
   },
-  "deliveredToContacts": "Delivered to {delivered}/{total} contacts",
+  "deliveredToContacts": "Παραδόθηκε σε {delivered}/{total} επαφές",
   "@deliveredToContacts": {
     "description": "Grouped message delivery count",
     "placeholders": {
@@ -1110,75 +1110,75 @@
       }
     }
   },
-  "allDelivered": "All delivered",
+  "allDelivered": "Όλα παραδόθηκαν",
   "@allDelivered": {
     "description": "Status when all recipients received the message"
   },
-  "recipientDetails": "Recipient Details",
+  "recipientDetails": "Λεπτομέρειες παραλήπτη",
   "@recipientDetails": {
     "description": "Header for expandable recipient list"
   },
-  "pending": "Pending",
+  "pending": "Σε εκκρεμότητα",
   "@pending": {
     "description": "Delivery status: pending/waiting"
   },
-  "sarMarkerFoundPerson": "Found Person",
+  "sarMarkerFoundPerson": "Εντοπισμένο άτομο",
   "@sarMarkerFoundPerson": {
     "description": "SAR marker type: found person"
   },
-  "sarMarkerFire": "Fire Location",
+  "sarMarkerFire": "Σημείο φωτιάς",
   "@sarMarkerFire": {
     "description": "SAR marker type: fire"
   },
-  "sarMarkerStagingArea": "Staging Area",
+  "sarMarkerStagingArea": "Σημείο συγκέντρωσης",
   "@sarMarkerStagingArea": {
     "description": "SAR marker type: staging area"
   },
-  "sarMarkerObject": "Object Found",
+  "sarMarkerObject": "Εντοπισμένο αντικείμενο",
   "@sarMarkerObject": {
     "description": "SAR marker type: object"
   },
-  "from": "From",
+  "from": "Από",
   "@from": {
     "description": "Sender label in notifications"
   },
-  "coordinates": "Coordinates",
+  "coordinates": "Συντεταγμένες",
   "@coordinates": {
     "description": "Coordinates label"
   },
-  "tapToViewOnMap": "Tap to view on map",
+  "tapToViewOnMap": "Πατήστε για προβολή στον χάρτη",
   "@tapToViewOnMap": {
     "description": "Notification action text"
   },
-  "radioSettings": "Radio Settings",
+  "radioSettings": "Ρυθμίσεις radio",
   "@radioSettings": {
     "description": "Section title for radio settings"
   },
-  "frequencyMHz": "Frequency (MHz)",
+  "frequencyMHz": "Συχνότητα (MHz)",
   "@frequencyMHz": {
     "description": "Label for radio frequency field"
   },
-  "frequencyExample": "e.g., 869.618",
+  "frequencyExample": "π.χ. 869.618",
   "@frequencyExample": {
     "description": "Helper text example for frequency"
   },
-  "bandwidth": "Bandwidth",
+  "bandwidth": "Εύρος ζώνης",
   "@bandwidth": {
     "description": "Label for bandwidth dropdown"
   },
-  "spreadingFactor": "Spreading Factor",
+  "spreadingFactor": "Συντελεστής εξάπλωσης",
   "@spreadingFactor": {
     "description": "Label for spreading factor dropdown"
   },
-  "codingRate": "Coding Rate",
+  "codingRate": "Ρυθμός κωδικοποίησης",
   "@codingRate": {
     "description": "Label for coding rate dropdown"
   },
-  "txPowerDbm": "TX Power (dBm)",
+  "txPowerDbm": "Ισχύς TX (dBm)",
   "@txPowerDbm": {
     "description": "Label for TX power field"
   },
-  "maxPowerDbm": "Max: {power} dBm",
+  "maxPowerDbm": "Μέγ.: {power} dBm",
   "@maxPowerDbm": {
     "description": "Helper text showing maximum TX power",
     "placeholders": {
@@ -1187,11 +1187,11 @@
       }
     }
   },
-  "you": "You",
+  "you": "Εσείς",
   "@you": {
     "description": "Label for the current user in message bubbles"
   },
-  "exportFailed": "Export failed: {error}",
+  "exportFailed": "Η εξαγωγή απέτυχε: {error}",
   "@exportFailed": {
     "description": "Error message when export fails",
     "placeholders": {
@@ -1200,7 +1200,7 @@
       }
     }
   },
-  "importFailed": "Import failed: {error}",
+  "importFailed": "Η εισαγωγή απέτυχε: {error}",
   "@importFailed": {
     "description": "Error message when import fails",
     "placeholders": {
@@ -1209,75 +1209,75 @@
       }
     }
   },
-  "unknown": "Unknown",
+  "unknown": "Άγνωστο",
   "@unknown": {
     "description": "Unknown value label"
   },
-  "onlineLayers": "Online Layers",
+  "onlineLayers": "Επίπεδα online",
   "@onlineLayers": {
     "description": "Section header for online map layers"
   },
-  "locationTrail": "Location Trail",
+  "locationTrail": "Ίχνος τοποθεσίας",
   "@locationTrail": {
     "description": "Location trail title"
   },
-  "showTrailOnMap": "Show Trail on Map",
+  "showTrailOnMap": "Εμφάνιση ίχνους στον χάρτη",
   "@showTrailOnMap": {
     "description": "Toggle to show/hide trail on map"
   },
-  "trailVisible": "Trail is visible on the map",
+  "trailVisible": "Το ίχνος είναι ορατό στον χάρτη",
   "@trailVisible": {
     "description": "Trail visibility status - visible"
   },
-  "trailHiddenRecording": "Trail is hidden (still recording)",
+  "trailHiddenRecording": "Το ίχνος είναι κρυφό (συνεχίζεται η καταγραφή)",
   "@trailHiddenRecording": {
     "description": "Trail visibility status - hidden but recording"
   },
-  "duration": "Duration",
+  "duration": "Διάρκεια",
   "@duration": {
     "description": "Duration label"
   },
-  "points": "Points",
+  "points": "Σημεία",
   "@points": {
     "description": "Trail points count label"
   },
-  "clearTrail": "Clear Trail",
+  "clearTrail": "Εκκαθάριση ίχνους",
   "@clearTrail": {
     "description": "Button to clear location trail"
   },
-  "clearTrailQuestion": "Clear Trail?",
+  "clearTrailQuestion": "Εκκαθάριση ίχνους;",
   "@clearTrailQuestion": {
     "description": "Confirmation dialog title"
   },
-  "clearTrailConfirmation": "Are you sure you want to clear the current location trail? This action cannot be undone.",
+  "clearTrailConfirmation": "Είστε βέβαιοι ότι θέλετε να διαγράψετε το τρέχον ίχνος τοποθεσίας; Αυτή η ενέργεια δεν αναιρείται.",
   "@clearTrailConfirmation": {
     "description": "Confirmation dialog message"
   },
-  "noTrailRecorded": "No trail recorded yet",
+  "noTrailRecorded": "Δεν έχει καταγραφεί ακόμη ίχνος",
   "@noTrailRecorded": {
     "description": "Message when no trail exists"
   },
-  "startTrackingToRecord": "Start location tracking to record your trail",
+  "startTrackingToRecord": "Ξεκινήστε παρακολούθηση τοποθεσίας για καταγραφή ίχνους",
   "@startTrackingToRecord": {
     "description": "Instructions to start trail recording"
   },
-  "trailControls": "Trail Controls",
+  "trailControls": "Στοιχεία ελέγχου ίχνους",
   "@trailControls": {
     "description": "Trail controls tooltip"
   },
-  "contactTrails": "Contact Trails",
+  "contactTrails": "Ίχνη επαφών",
   "@contactTrails": {
     "description": "Contact trails section header"
   },
-  "showAllContactTrails": "Show All Contact Trails",
+  "showAllContactTrails": "Εμφάνιση όλων των ιχνών επαφών",
   "@showAllContactTrails": {
     "description": "Toggle label to show all contact trails"
   },
-  "noContactsWithLocationHistory": "No contacts with location history",
+  "noContactsWithLocationHistory": "Δεν υπάρχουν επαφές με ιστορικό τοποθεσίας",
   "@noContactsWithLocationHistory": {
     "description": "Subtitle when no contacts have trails"
   },
-  "showingTrailsForContacts": "Showing trails for {count} contacts",
+  "showingTrailsForContacts": "Εμφανίζονται ίχνη για {count} επαφές",
   "@showingTrailsForContacts": {
     "description": "Subtitle showing number of contacts with trails",
     "placeholders": {
@@ -1286,95 +1286,95 @@
       }
     }
   },
-  "individualContactTrails": "Individual Contact Trails",
+  "individualContactTrails": "Μεμονωμένα ίχνη επαφών",
   "@individualContactTrails": {
     "description": "Expansion tile title for individual contact trails"
   },
-  "deviceInformation": "Device Information",
+  "deviceInformation": "Πληροφορίες συσκευής",
   "@deviceInformation": {
     "description": "Device information section header"
   },
-  "bleName": "BLE Name",
+  "bleName": "Όνομα BLE",
   "@bleName": {
     "description": "Bluetooth Low Energy device name label"
   },
-  "meshName": "Mesh Name",
+  "meshName": "Όνομα mesh",
   "@meshName": {
     "description": "Mesh network name label"
   },
-  "notSet": "Not set",
+  "notSet": "Δεν έχει οριστεί",
   "@notSet": {
     "description": "Label when a value is not set"
   },
-  "model": "Model",
+  "model": "Μοντέλο",
   "@model": {
     "description": "Device model label"
   },
-  "version": "Version",
+  "version": "Έκδοση",
   "@version": {
     "description": "Version label"
   },
-  "buildDate": "Build Date",
+  "buildDate": "Ημερομηνία build",
   "@buildDate": {
     "description": "Firmware build date label"
   },
-  "firmware": "Firmware",
+  "firmware": "Υλικολογισμικό",
   "@firmware": {
     "description": "Firmware label"
   },
-  "maxContacts": "Max Contacts",
+  "maxContacts": "Μέγιστες επαφές",
   "@maxContacts": {
     "description": "Maximum contacts capacity label"
   },
-  "maxChannels": "Max Channels",
+  "maxChannels": "Μέγιστα κανάλια",
   "@maxChannels": {
     "description": "Maximum channels capacity label"
   },
-  "publicInfo": "Public Info",
+  "publicInfo": "Δημόσιες πληροφορίες",
   "@publicInfo": {
     "description": "Public information section header"
   },
-  "meshNetworkName": "Mesh Network Name",
+  "meshNetworkName": "Όνομα δικτύου mesh",
   "@meshNetworkName": {
     "description": "Mesh network name field label"
   },
-  "nameBroadcastInMesh": "Name broadcast in mesh advertisements",
+  "nameBroadcastInMesh": "Όνομα που μεταδίδεται στις διαφημίσεις mesh",
   "@nameBroadcastInMesh": {
     "description": "Helper text for mesh network name field"
   },
-  "telemetryAndLocationSharing": "Telemetry & Location Sharing",
+  "telemetryAndLocationSharing": "Τηλεμετρία και κοινοποίηση τοποθεσίας",
   "@telemetryAndLocationSharing": {
     "description": "Telemetry and location sharing toggle label"
   },
-  "lat": "Lat",
+  "lat": "Πλάτος",
   "@lat": {
     "description": "Latitude field label (short form)"
   },
-  "lon": "Lon",
+  "lon": "Μήκος",
   "@lon": {
     "description": "Longitude field label (short form)"
   },
-  "useCurrentLocation": "Use current location",
+  "useCurrentLocation": "Χρήση τρέχουσας τοποθεσίας",
   "@useCurrentLocation": {
     "description": "Tooltip for use current location button"
   },
-  "noneUnknown": "None/Unknown",
+  "noneUnknown": "Κανένα/Άγνωστο",
   "@noneUnknown": {
     "description": "Device type: none or unknown"
   },
-  "chatNode": "Chat Node",
+  "chatNode": "Κόμβος συνομιλίας",
   "@chatNode": {
     "description": "Device type: chat node"
   },
-  "repeater": "Repeater",
+  "repeater": "Αναμεταδότης",
   "@repeater": {
     "description": "Device type: repeater"
   },
-  "roomChannel": "Room/Channel",
+  "roomChannel": "Δωμάτιο/Κανάλι",
   "@roomChannel": {
     "description": "Device type: room or channel"
   },
-  "typeNumber": "Type {number}",
+  "typeNumber": "Τύπος {number}",
   "@typeNumber": {
     "description": "Generic device type with number",
     "placeholders": {
@@ -1383,7 +1383,7 @@
       }
     }
   },
-  "copiedToClipboardShort": "Copied {label} to clipboard",
+  "copiedToClipboardShort": "Το {label} αντιγράφηκε στο πρόχειρο",
   "@copiedToClipboardShort": {
     "description": "Short success message when copying to clipboard",
     "placeholders": {
@@ -1392,7 +1392,7 @@
       }
     }
   },
-  "failedToSave": "Failed to save: {error}",
+  "failedToSave": "Αποτυχία αποθήκευσης: {error}",
   "@failedToSave": {
     "description": "Generic error message for save failures",
     "placeholders": {
@@ -1401,7 +1401,7 @@
       }
     }
   },
-  "failedToGetLocation": "Failed to get location: {error}",
+  "failedToGetLocation": "Αποτυχία λήψης τοποθεσίας: {error}",
   "@failedToGetLocation": {
     "description": "Error message when getting location fails",
     "placeholders": {
@@ -1410,31 +1410,31 @@
       }
     }
   },
-  "sarTemplates": "SAR Templates",
+  "sarTemplates": "Πρότυπα SAR",
   "@sarTemplates": {
     "description": "SAR templates menu title"
   },
-  "manageSarTemplates": "Manage cursor on target templates",
+  "manageSarTemplates": "Διαχείριση προτύπων SAR",
   "@manageSarTemplates": {
     "description": "Subtitle for SAR templates settings"
   },
-  "addTemplate": "Add Template",
+  "addTemplate": "Προσθήκη προτύπου",
   "@addTemplate": {
     "description": "Button to add new SAR template"
   },
-  "editTemplate": "Edit Template",
+  "editTemplate": "Επεξεργασία προτύπου",
   "@editTemplate": {
     "description": "Dialog title for editing template"
   },
-  "deleteTemplate": "Delete Template",
+  "deleteTemplate": "Διαγραφή προτύπου",
   "@deleteTemplate": {
     "description": "Action to delete template"
   },
-  "templateName": "Template Name",
+  "templateName": "Όνομα προτύπου",
   "@templateName": {
     "description": "Label for template name field"
   },
-  "templateNameHint": "e.g. Found Person",
+  "templateNameHint": "π.χ. Εντοπισμένο άτομο",
   "@templateNameHint": {
     "description": "Hint text for template name"
   },
@@ -1442,39 +1442,39 @@
   "@templateEmoji": {
     "description": "Label for template emoji field"
   },
-  "emojiRequired": "Emoji is required",
+  "emojiRequired": "Το emoji είναι υποχρεωτικό",
   "@emojiRequired": {
     "description": "Validation error when emoji field is empty"
   },
-  "nameRequired": "Name is required",
+  "nameRequired": "Το όνομα είναι υποχρεωτικό",
   "@nameRequired": {
     "description": "Validation error when name field is empty"
   },
-  "templateDescription": "Description (Optional)",
+  "templateDescription": "Περιγραφή (προαιρετική)",
   "@templateDescription": {
     "description": "Label for template description field"
   },
-  "templateDescriptionHint": "Add additional context...",
+  "templateDescriptionHint": "Προσθέστε επιπλέον πληροφορίες...",
   "@templateDescriptionHint": {
     "description": "Hint text for template description"
   },
-  "templateColor": "Color",
+  "templateColor": "Χρώμα",
   "@templateColor": {
     "description": "Label for template color picker"
   },
-  "previewFormat": "Preview (SAR Message Format)",
+  "previewFormat": "Προεπισκόπηση (μορφή μηνύματος SAR)",
   "@previewFormat": {
     "description": "Label for format preview"
   },
-  "importFromClipboard": "Import",
+  "importFromClipboard": "Εισαγωγή",
   "@importFromClipboard": {
     "description": "Button to import templates from clipboard"
   },
-  "exportToClipboard": "Export",
+  "exportToClipboard": "Εξαγωγή",
   "@exportToClipboard": {
     "description": "Button to export templates to clipboard"
   },
-  "deleteTemplateConfirmation": "Delete template '{name}'?",
+  "deleteTemplateConfirmation": "Διαγραφή προτύπου «{name}»;",
   "@deleteTemplateConfirmation": {
     "description": "Confirmation message for template deletion",
     "placeholders": {
@@ -1483,19 +1483,19 @@
       }
     }
   },
-  "templateAdded": "Template added",
+  "templateAdded": "Το πρότυπο προστέθηκε",
   "@templateAdded": {
     "description": "Success message when template is added"
   },
-  "templateUpdated": "Template updated",
+  "templateUpdated": "Το πρότυπο ενημερώθηκε",
   "@templateUpdated": {
     "description": "Success message when template is updated"
   },
-  "templateDeleted": "Template deleted",
+  "templateDeleted": "Το πρότυπο διαγράφηκε",
   "@templateDeleted": {
     "description": "Success message when template is deleted"
   },
-  "templatesImported": "{count, plural, =0{No templates imported} =1{Imported 1 template} other{Imported {count} templates}}",
+  "templatesImported": "{count, plural, =0{Δεν εισήχθησαν πρότυπα} =1{Εισήχθη 1 πρότυπο} other{Εισήχθησαν {count} πρότυπα}}",
   "@templatesImported": {
     "description": "Success message after importing templates",
     "placeholders": {
@@ -1504,7 +1504,7 @@
       }
     }
   },
-  "templatesExported": "{count, plural, =1{Exported 1 template to clipboard} other{Exported {count} templates to clipboard}}",
+  "templatesExported": "{count, plural, =1{Εξήχθη 1 πρότυπο στο πρόχειρο} other{Εξήχθησαν {count} πρότυπα στο πρόχειρο}}",
   "@templatesExported": {
     "description": "Success message after exporting templates",
     "placeholders": {
@@ -1513,391 +1513,391 @@
       }
     }
   },
-  "resetToDefaults": "Reset to Defaults",
+  "resetToDefaults": "Επαναφορά προεπιλογών",
   "@resetToDefaults": {
     "description": "Action to reset templates to defaults"
   },
-  "resetToDefaultsConfirmation": "This will delete all custom templates and restore the 4 default templates. Continue?",
+  "resetToDefaultsConfirmation": "Αυτό θα διαγράψει όλα τα προσαρμοσμένα πρότυπα και θα επαναφέρει τα 4 προεπιλεγμένα πρότυπα. Συνέχεια;",
   "@resetToDefaultsConfirmation": {
     "description": "Confirmation message for reset to defaults"
   },
-  "reset": "Reset",
+  "reset": "Επαναφορά",
   "@reset": {
     "description": "Reset button label"
   },
-  "resetComplete": "Templates reset to defaults",
+  "resetComplete": "Τα πρότυπα επανήλθαν στις προεπιλογές",
   "@resetComplete": {
     "description": "Success message after reset"
   },
-  "noTemplates": "No templates available",
+  "noTemplates": "Δεν υπάρχουν διαθέσιμα πρότυπα",
   "@noTemplates": {
     "description": "Message when no templates exist"
   },
-  "tapAddToCreate": "Tap + to create your first template",
+  "tapAddToCreate": "Πατήστε + για να δημιουργήσετε το πρώτο σας πρότυπο",
   "@tapAddToCreate": {
     "description": "Helper text when no templates exist"
   },
-  "ok": "OK",
+  "ok": "ΟΚ",
   "@ok": {
     "description": "OK button label"
   },
-  "permissionsSection": "Permissions",
+  "permissionsSection": "Δικαιώματα",
   "@permissionsSection": {
     "description": "Permissions section header"
   },
-  "locationPermission": "Location Permission",
+  "locationPermission": "Άδεια τοποθεσίας",
   "@locationPermission": {
     "description": "Location permission label"
   },
-  "checking": "Checking...",
+  "checking": "Έλεγχος...",
   "@checking": {
     "description": "Loading state indicator"
   },
-  "locationPermissionGrantedAlways": "Granted (Always)",
+  "locationPermissionGrantedAlways": "Δόθηκε (πάντα)",
   "@locationPermissionGrantedAlways": {
     "description": "Location permission status: granted always"
   },
-  "locationPermissionGrantedWhileInUse": "Granted (While In Use)",
+  "locationPermissionGrantedWhileInUse": "Δόθηκε (κατά τη χρήση)",
   "@locationPermissionGrantedWhileInUse": {
     "description": "Location permission status: granted while in use"
   },
-  "locationPermissionDeniedTapToRequest": "Denied - Tap to request",
+  "locationPermissionDeniedTapToRequest": "Απορρίφθηκε - πατήστε για αίτημα",
   "@locationPermissionDeniedTapToRequest": {
     "description": "Location permission status: denied, user can request"
   },
-  "locationPermissionPermanentlyDeniedOpenSettings": "Permanently Denied - Open Settings",
+  "locationPermissionPermanentlyDeniedOpenSettings": "Μόνιμα απορριφθείσα - άνοιγμα ρυθμίσεων",
   "@locationPermissionPermanentlyDeniedOpenSettings": {
     "description": "Location permission status: permanently denied"
   },
-  "locationPermissionDialogContent": "Location permission is permanently denied. Please enable it in your device settings to use GPS tracking and location sharing features.",
+  "locationPermissionDialogContent": "Η άδεια τοποθεσίας έχει απορριφθεί μόνιμα. Ενεργοποιήστε την από τις ρυθμίσεις της συσκευής σας για να χρησιμοποιήσετε παρακολούθηση GPS και κοινοποίηση τοποθεσίας.",
   "@locationPermissionDialogContent": {
     "description": "Content for location permission dialog when permanently denied"
   },
-  "openSettings": "Open Settings",
+  "openSettings": "Άνοιγμα ρυθμίσεων",
   "@openSettings": {
     "description": "Button to open device settings"
   },
-  "locationPermissionGranted": "Location permission granted!",
+  "locationPermissionGranted": "Η άδεια τοποθεσίας δόθηκε!",
   "@locationPermissionGranted": {
     "description": "Success message when location permission is granted"
   },
-  "locationPermissionRequiredForGps": "Location permission is required for GPS tracking and location sharing.",
+  "locationPermissionRequiredForGps": "Απαιτείται άδεια τοποθεσίας για παρακολούθηση GPS και κοινοποίηση τοποθεσίας.",
   "@locationPermissionRequiredForGps": {
     "description": "Info message about location permission requirement"
   },
-  "locationPermissionAlreadyGranted": "Location permission is already granted.",
+  "locationPermissionAlreadyGranted": "Η άδεια τοποθεσίας έχει ήδη δοθεί.",
   "@locationPermissionAlreadyGranted": {
     "description": "Info message when permission is already granted"
   },
-  "sarNavyBlue": "SAR Navy Blue",
+  "sarNavyBlue": "SAR Ναυτικό μπλε",
   "@sarNavyBlue": {
     "description": "SAR Navy Blue theme name"
   },
-  "sarNavyBlueDescription": "Professional/Operations Mode",
+  "sarNavyBlueDescription": "Επαγγελματική/Επιχειρησιακή λειτουργία",
   "@sarNavyBlueDescription": {
     "description": "Description for SAR Navy Blue theme"
   },
-  "selectRecipient": "Select Recipient",
+  "selectRecipient": "Επιλογή παραλήπτη",
   "@selectRecipient": {
     "description": "Title for recipient selector sheet"
   },
-  "broadcastToAllNearby": "Broadcast to all nearby",
+  "broadcastToAllNearby": "Μετάδοση σε όλους τους κοντινούς",
   "@broadcastToAllNearby": {
     "description": "Subtitle for public channel option"
   },
-  "searchRecipients": "Search recipients...",
+  "searchRecipients": "Αναζήτηση παραληπτών...",
   "@searchRecipients": {
     "description": "Placeholder text for recipient search field"
   },
-  "noContactsFound": "No contacts found",
+  "noContactsFound": "Δεν βρέθηκαν επαφές",
   "@noContactsFound": {
     "description": "Message when no contacts match search"
   },
-  "noRoomsFound": "No rooms found",
+  "noRoomsFound": "Δεν βρέθηκαν δωμάτια",
   "@noRoomsFound": {
     "description": "Message when no rooms match search"
   },
-  "noRecipientsAvailable": "No recipients available",
+  "noRecipientsAvailable": "Δεν υπάρχουν διαθέσιμοι παραλήπτες",
   "@noRecipientsAvailable": {
     "description": "Message when no recipients exist (contacts, rooms, or channels)"
   },
-  "noChannelsFound": "No channels found",
+  "noChannelsFound": "Δεν βρέθηκαν κανάλια",
   "@noChannelsFound": {
     "description": "Message when no channels match the search"
   },
-  "newMessage": "New message",
+  "newMessage": "Νέο μήνυμα",
   "@newMessage": {
     "description": "Notification title for new message"
   },
-  "channel": "Channel",
+  "channel": "Κανάλι",
   "@channel": {
     "description": "Channel label in notifications"
   },
-  "samplePoliceLead": "Police Lead",
+  "samplePoliceLead": "Επικεφαλής αστυνομίας",
   "@samplePoliceLead": {
     "description": "Sample team member name"
   },
-  "sampleDroneOperator": "Drone Operator",
+  "sampleDroneOperator": "Χειριστής drone",
   "@sampleDroneOperator": {
     "description": "Sample team member name"
   },
-  "sampleFirefighterAlpha": "Firefighter",
+  "sampleFirefighterAlpha": "Πυροσβέστης",
   "@sampleFirefighterAlpha": {
     "description": "Sample team member name"
   },
-  "sampleMedicCharlie": "Medic",
+  "sampleMedicCharlie": "Διασώστης",
   "@sampleMedicCharlie": {
     "description": "Sample team member name"
   },
-  "sampleCommandDelta": "Command",
+  "sampleCommandDelta": "Διοίκηση",
   "@sampleCommandDelta": {
     "description": "Sample team member name"
   },
-  "sampleFireEngine": "Fire Engine",
+  "sampleFireEngine": "Πυροσβεστικό όχημα",
   "@sampleFireEngine": {
     "description": "Sample team member name"
   },
-  "sampleAirSupport": "Air Support",
+  "sampleAirSupport": "Εναέρια υποστήριξη",
   "@sampleAirSupport": {
     "description": "Sample team member name"
   },
-  "sampleBaseCoordinator": "Base Coordinator",
+  "sampleBaseCoordinator": "Συντονιστής βάσης",
   "@sampleBaseCoordinator": {
     "description": "Sample team member name"
   },
-  "channelEmergency": "Emergency",
+  "channelEmergency": "Έκτακτη ανάγκη",
   "@channelEmergency": {
     "description": "Emergency channel name"
   },
-  "channelCoordination": "Coordination",
+  "channelCoordination": "Συντονισμός",
   "@channelCoordination": {
     "description": "Coordination channel name"
   },
-  "channelUpdates": "Updates",
+  "channelUpdates": "Ενημερώσεις",
   "@channelUpdates": {
     "description": "Updates channel name"
   },
-  "sampleTeamMember": "Sample Team Member",
+  "sampleTeamMember": "Δοκιμαστικό μέλος ομάδας",
   "@sampleTeamMember": {
     "description": "Sample sender name"
   },
-  "sampleScout": "Sample Scout",
+  "sampleScout": "Δοκιμαστικός ανιχνευτής",
   "@sampleScout": {
     "description": "Sample sender name"
   },
-  "sampleBase": "Sample Base",
+  "sampleBase": "Δοκιμαστική βάση",
   "@sampleBase": {
     "description": "Sample sender name"
   },
-  "sampleSearcher": "Sample Searcher",
+  "sampleSearcher": "Δοκιμαστικός ερευνητής",
   "@sampleSearcher": {
     "description": "Sample sender name"
   },
-  "sampleObjectBackpack": " Backpack found - blue color",
+  "sampleObjectBackpack": " Βρέθηκε σακίδιο - μπλε χρώμα",
   "@sampleObjectBackpack": {
     "description": "Sample object note"
   },
-  "sampleObjectVehicle": " Vehicle abandoned - check for owner",
+  "sampleObjectVehicle": " Εγκαταλελειμμένο όχημα - έλεγχος για ιδιοκτήτη",
   "@sampleObjectVehicle": {
     "description": "Sample object note"
   },
-  "sampleObjectCamping": " Camping equipment discovered",
+  "sampleObjectCamping": " Εντοπίστηκε εξοπλισμός κατασκήνωσης",
   "@sampleObjectCamping": {
     "description": "Sample object note"
   },
-  "sampleObjectTrailMarker": " Trail marker found off-path",
+  "sampleObjectTrailMarker": " Βρέθηκε σημάδι μονοπατιού εκτός διαδρομής",
   "@sampleObjectTrailMarker": {
     "description": "Sample object note"
   },
-  "sampleMsgAllTeamsCheckIn": "All teams check in",
+  "sampleMsgAllTeamsCheckIn": "Όλες οι ομάδες, κάντε check-in",
   "@sampleMsgAllTeamsCheckIn": {
     "description": "Sample channel message"
   },
-  "sampleMsgWeatherUpdate": "Weather update: Clear skies, temp 18°C",
+  "sampleMsgWeatherUpdate": "Ενημέρωση καιρού: Αίθριος ουρανός, θερμ. 18°C",
   "@sampleMsgWeatherUpdate": {
     "description": "Sample channel message"
   },
-  "sampleMsgBaseCamp": "Base camp established at staging area",
+  "sampleMsgBaseCamp": "Η βάση εγκαταστάθηκε στο σημείο συγκέντρωσης",
   "@sampleMsgBaseCamp": {
     "description": "Sample channel message"
   },
-  "sampleMsgTeamAlpha": "Team moving to sector 2",
+  "sampleMsgTeamAlpha": "Η ομάδα κινείται προς τον τομέα 2",
   "@sampleMsgTeamAlpha": {
     "description": "Sample channel message"
   },
-  "sampleMsgRadioCheck": "Radio check - all stations respond",
+  "sampleMsgRadioCheck": "Έλεγχος ασυρμάτου - όλοι οι σταθμοί να απαντήσουν",
   "@sampleMsgRadioCheck": {
     "description": "Sample channel message"
   },
-  "sampleMsgWaterSupply": "Water supply available at checkpoint 3",
+  "sampleMsgWaterSupply": "Διαθέσιμο νερό στο σημείο ελέγχου 3",
   "@sampleMsgWaterSupply": {
     "description": "Sample channel message"
   },
-  "sampleMsgTeamBravo": "Team reporting: sector 1 clear",
+  "sampleMsgTeamBravo": "Αναφορά ομάδας: ο τομέας 1 είναι καθαρός",
   "@sampleMsgTeamBravo": {
     "description": "Sample channel message"
   },
-  "sampleMsgEtaRallyPoint": "ETA to rally point: 15 minutes",
+  "sampleMsgEtaRallyPoint": "Εκτιμώμενη άφιξη στο σημείο συγκέντρωσης: 15 λεπτά",
   "@sampleMsgEtaRallyPoint": {
     "description": "Sample channel message"
   },
-  "sampleMsgSupplyDrop": "Supply drop confirmed for 14:00",
+  "sampleMsgSupplyDrop": "Η ρίψη εφοδίων επιβεβαιώθηκε για τις 14:00",
   "@sampleMsgSupplyDrop": {
     "description": "Sample channel message"
   },
-  "sampleMsgDroneSurvey": "Drone survey completed - no findings",
+  "sampleMsgDroneSurvey": "Η έρευνα με drone ολοκληρώθηκε - δεν βρέθηκε κάτι",
   "@sampleMsgDroneSurvey": {
     "description": "Sample channel message"
   },
-  "sampleMsgTeamCharlie": "Team requesting backup",
+  "sampleMsgTeamCharlie": "Η ομάδα ζητά ενισχύσεις",
   "@sampleMsgTeamCharlie": {
     "description": "Sample channel message"
   },
-  "sampleMsgRadioDiscipline": "All units: maintain radio discipline",
+  "sampleMsgRadioDiscipline": "Όλες οι μονάδες: τηρείτε πειθαρχία ασυρμάτου",
   "@sampleMsgRadioDiscipline": {
     "description": "Sample channel message"
   },
-  "sampleMsgUrgentMedical": "URGENT: Medical assistance needed at sector 4",
+  "sampleMsgUrgentMedical": "ΕΠΕΙΓΟΝ: Απαιτείται ιατρική βοήθεια στον τομέα 4",
   "@sampleMsgUrgentMedical": {
     "description": "Sample emergency message"
   },
-  "sampleMsgAdultMale": " Adult male, conscious",
+  "sampleMsgAdultMale": " Ενήλικος άνδρας, σε συνείδηση",
   "@sampleMsgAdultMale": {
     "description": "Sample emergency message note"
   },
-  "sampleMsgFireSpotted": "Fire spotted - coordinates incoming",
+  "sampleMsgFireSpotted": "Εντοπίστηκε φωτιά - ακολουθούν συντεταγμένες",
   "@sampleMsgFireSpotted": {
     "description": "Sample emergency message"
   },
-  "sampleMsgSpreadingRapidly": " Spreading rapidly!",
+  "sampleMsgSpreadingRapidly": " Εξαπλώνεται γρήγορα!",
   "@sampleMsgSpreadingRapidly": {
     "description": "Sample emergency message note"
   },
-  "sampleMsgPriorityHelicopter": "PRIORITY: Need helicopter support",
+  "sampleMsgPriorityHelicopter": "ΠΡΟΤΕΡΑΙΟΤΗΤΑ: Απαιτείται υποστήριξη ελικοπτέρου",
   "@sampleMsgPriorityHelicopter": {
     "description": "Sample emergency message"
   },
-  "sampleMsgMedicalTeamEnRoute": "Medical team en route to your location",
+  "sampleMsgMedicalTeamEnRoute": "Η ιατρική ομάδα κατευθύνεται στη θέση σας",
   "@sampleMsgMedicalTeamEnRoute": {
     "description": "Sample emergency message"
   },
-  "sampleMsgEvacHelicopter": "Evac helicopter ETA 10 minutes",
+  "sampleMsgEvacHelicopter": "Ελικόπτερο εκκένωσης σε 10 λεπτά",
   "@sampleMsgEvacHelicopter": {
     "description": "Sample emergency message"
   },
-  "sampleMsgEmergencyResolved": "Emergency resolved - all clear",
+  "sampleMsgEmergencyResolved": "Το περιστατικό επιλύθηκε - όλα καθαρά",
   "@sampleMsgEmergencyResolved": {
     "description": "Sample emergency message"
   },
-  "sampleMsgEmergencyStagingArea": " Emergency staging area",
+  "sampleMsgEmergencyStagingArea": " Χώρος συγκέντρωσης έκτακτης ανάγκης",
   "@sampleMsgEmergencyStagingArea": {
     "description": "Sample emergency message note"
   },
-  "sampleMsgEmergencyServices": "Emergency services notified and responding",
+  "sampleMsgEmergencyServices": "Οι υπηρεσίες έκτακτης ανάγκης ειδοποιήθηκαν και ανταποκρίνονται",
   "@sampleMsgEmergencyServices": {
     "description": "Sample emergency message"
   },
-  "sampleAlphaTeamLead": "Team Lead",
+  "sampleAlphaTeamLead": "Αρχηγός ομάδας",
   "@sampleAlphaTeamLead": {
     "description": "Sample team name"
   },
-  "sampleBravoScout": "Scout",
+  "sampleBravoScout": "Ανιχνευτής",
   "@sampleBravoScout": {
     "description": "Sample team name"
   },
-  "sampleCharlieMedic": "Medic",
+  "sampleCharlieMedic": "Διασώστης",
   "@sampleCharlieMedic": {
     "description": "Sample team name"
   },
-  "sampleDeltaNavigator": "Navigator",
+  "sampleDeltaNavigator": "Πλοηγός",
   "@sampleDeltaNavigator": {
     "description": "Sample team name"
   },
-  "sampleEchoSupport": "Support",
+  "sampleEchoSupport": "Υποστήριξη",
   "@sampleEchoSupport": {
     "description": "Sample team name"
   },
-  "sampleBaseCommand": "Base Command",
+  "sampleBaseCommand": "Διοίκηση βάσης",
   "@sampleBaseCommand": {
     "description": "Sample team name"
   },
-  "sampleFieldCoordinator": "Field Coordinator",
+  "sampleFieldCoordinator": "Συντονιστής πεδίου",
   "@sampleFieldCoordinator": {
     "description": "Sample team name"
   },
-  "sampleMedicalTeam": "Medical Team",
+  "sampleMedicalTeam": "Ιατρική ομάδα",
   "@sampleMedicalTeam": {
     "description": "Sample team name"
   },
-  "mapDrawing": "Map Drawing",
+  "mapDrawing": "Σχέδιο χάρτη",
   "@mapDrawing": {
     "description": "Label for map drawing messages"
   },
-  "navigateToDrawing": "Navigate to Drawing",
+  "navigateToDrawing": "Πλοήγηση προς το σχέδιο",
   "@navigateToDrawing": {
     "description": "Option to navigate to drawing on map"
   },
-  "copyCoordinates": "Copy Coordinates",
+  "copyCoordinates": "Αντιγραφή συντεταγμένων",
   "@copyCoordinates": {
     "description": "Option to copy coordinates to clipboard"
   },
-  "hideFromMap": "Hide from Map",
+  "hideFromMap": "Απόκρυψη από χάρτη",
   "@hideFromMap": {
     "description": "Option to hide drawing from map"
   },
-  "lineDrawing": "Line Drawing",
+  "lineDrawing": "Σχέδιο γραμμής",
   "@lineDrawing": {
     "description": "Label for line type drawings"
   },
-  "rectangleDrawing": "Rectangle Drawing",
+  "rectangleDrawing": "Σχέδιο ορθογωνίου",
   "@rectangleDrawing": {
     "description": "Label for rectangle type drawings"
   },
-  "manualCoordinates": "Manual Coordinates",
+  "manualCoordinates": "Χειροκίνητες συντεταγμένες",
   "@manualCoordinates": {
     "description": "Label for manual coordinate input toggle"
   },
-  "enterCoordinatesManually": "Enter coordinates manually",
+  "enterCoordinatesManually": "Εισαγωγή συντεταγμένων χειροκίνητα",
   "@enterCoordinatesManually": {
     "description": "Description for manual coordinate input option"
   },
-  "latitudeLabel": "Latitude",
+  "latitudeLabel": "Γεωγραφικό πλάτος",
   "@latitudeLabel": {
     "description": "Label for latitude input field"
   },
-  "longitudeLabel": "Longitude",
+  "longitudeLabel": "Γεωγραφικό μήκος",
   "@longitudeLabel": {
     "description": "Label for longitude input field"
   },
-  "exampleCoordinates": "Example: 46.0569, 14.5058",
+  "exampleCoordinates": "Παράδειγμα: 46.0569, 14.5058",
   "@exampleCoordinates": {
     "description": "Example coordinate format hint"
   },
-  "shareDrawing": "Share Drawing",
+  "shareDrawing": "Κοινοποίηση σχεδίου",
   "@shareDrawing": {
     "description": "Title for share single drawing dialog"
   },
-  "shareWithAllNearbyDevices": "Share with all nearby devices",
+  "shareWithAllNearbyDevices": "Κοινοποίηση σε όλες τις κοντινές συσκευές",
   "@shareWithAllNearbyDevices": {
     "description": "Subtitle for public channel sharing option"
   },
-  "shareToRoom": "Share to Room",
+  "shareToRoom": "Κοινοποίηση στο δωμάτιο",
   "@shareToRoom": {
     "description": "Header for room sharing section"
   },
-  "sendToPersistentStorage": "Send to persistent room storage",
+  "sendToPersistentStorage": "Αποστολή σε μόνιμη αποθήκευση δωματίου",
   "@sendToPersistentStorage": {
     "description": "Subtitle for room sharing option"
   },
-  "deleteDrawingConfirm": "Are you sure you want to delete this drawing?",
+  "deleteDrawingConfirm": "Είστε βέβαιοι ότι θέλετε να διαγράψετε αυτό το σχέδιο;",
   "@deleteDrawingConfirm": {
     "description": "Confirmation message for deleting a single drawing"
   },
-  "drawingDeleted": "Drawing deleted",
+  "drawingDeleted": "Το σχέδιο διαγράφηκε",
   "@drawingDeleted": {
     "description": "Success message after deleting a drawing"
   },
-  "yourDrawingsCount": "Your Drawings ({count})",
+  "yourDrawingsCount": "Τα σχέδιά σας ({count})",
   "@yourDrawingsCount": {
     "description": "Header showing count of user's drawings",
     "placeholders": {
@@ -1906,151 +1906,151 @@
       }
     }
   },
-  "shared": "Shared",
+  "shared": "Κοινοποιημένο",
   "@shared": {
     "description": "Status label for shared drawings"
   },
-  "line": "Line",
+  "line": "Γραμμή",
   "@line": {
     "description": "Line drawing type label"
   },
-  "rectangle": "Rectangle",
+  "rectangle": "Ορθογώνιο",
   "@rectangle": {
     "description": "Rectangle drawing type label"
   },
-  "updateAvailable": "Update Available",
+  "updateAvailable": "Διαθέσιμη ενημέρωση",
   "@updateAvailable": {
     "description": "Title for update dialog when new version is available"
   },
-  "currentVersion": "Current",
+  "currentVersion": "Τρέχουσα",
   "@currentVersion": {
     "description": "Label for current app version"
   },
-  "latestVersion": "Latest",
+  "latestVersion": "Τελευταία",
   "@latestVersion": {
     "description": "Label for latest available app version"
   },
-  "downloadUpdate": "Download",
+  "downloadUpdate": "Λήψη",
   "@downloadUpdate": {
     "description": "Button to download app update"
   },
-  "updateLater": "Later",
+  "updateLater": "Αργότερα",
   "@updateLater": {
     "description": "Button to dismiss update dialog"
   },
-  "cadastralParcels": "Cadastral Parcels",
+  "cadastralParcels": "Κτηματολογικά τεμάχια",
   "@cadastralParcels": {
     "description": "Label for cadastral parcels WMS overlay layer"
   },
-  "forestRoads": "Forest Roads",
+  "forestRoads": "Δασικοί δρόμοι",
   "@forestRoads": {
     "description": "Label for forest roads WMS overlay layer"
   },
-  "wmsOverlays": "WMS Overlays",
+  "wmsOverlays": "Επικαλύψεις WMS",
   "@wmsOverlays": {
     "description": "Section header for WMS overlay layers in layer selector"
   },
-  "hikingTrails": "Hiking Trails",
+  "hikingTrails": "Πεζοπορικά μονοπάτια",
   "@hikingTrails": {
     "description": "Label for hiking/mountain trails WMS overlay layer"
   },
-  "mainRoads": "Main Roads",
+  "mainRoads": "Κύριοι δρόμοι",
   "@mainRoads": {
     "description": "Label for main roads WMS overlay layer"
   },
-  "houseNumbers": "House Numbers",
+  "houseNumbers": "Αριθμοί κτιρίων",
   "@houseNumbers": {
     "description": "Label for house numbers WMS overlay layer"
   },
-  "fireHazardZones": "Fire Hazard Zones",
+  "fireHazardZones": "Ζώνες κινδύνου πυρκαγιάς",
   "@fireHazardZones": {
     "description": "Label for fire hazard risk zones WMS overlay layer"
   },
-  "historicalFires": "Historical Fires",
+  "historicalFires": "Ιστορικές πυρκαγιές",
   "@historicalFires": {
     "description": "Label for historical forest fires WMS overlay layer"
   },
-  "firebreaks": "Firebreaks",
+  "firebreaks": "Αντιπυρικές ζώνες",
   "@firebreaks": {
     "description": "Label for firebreaks WMS overlay layer"
   },
-  "krasFireZones": "Kras Fire Zones",
+  "krasFireZones": "Ζώνες πυρκαγιάς Κρας",
   "@krasFireZones": {
     "description": "Label for Kras fire zones WMS overlay layer"
   },
-  "placeNames": "Place Names",
+  "placeNames": "Τοπωνύμια",
   "@placeNames": {
     "description": "Label for geographic place names WMS overlay layer"
   },
-  "municipalityBorders": "Municipality Borders",
+  "municipalityBorders": "Όρια δήμων",
   "@municipalityBorders": {
     "description": "Label for municipality borders WMS overlay layer"
   },
-  "topographicMap": "Topographic Map 1:25000",
+  "topographicMap": "Τοπογραφικός χάρτης 1:25000",
   "@topographicMap": {
     "description": "Label for DTK25 topographic base map layer"
   },
-  "recentMessages": "Recent Messages",
+  "recentMessages": "Πρόσφατα μηνύματα",
   "@recentMessages": {
     "description": "Header for recent messages overlay on map in fullscreen mode"
   },
-  "addChannel": "Add Channel",
+  "addChannel": "Προσθήκη καναλιού",
   "@addChannel": {
     "description": "Button to add a new channel"
   },
-  "channelName": "Channel Name",
+  "channelName": "Όνομα καναλιού",
   "@channelName": {
     "description": "Label for channel name field"
   },
-  "channelNameHint": "e.g., Rescue Team Alpha",
+  "channelNameHint": "π.χ. Ομάδα Διάσωσης Άλφα",
   "@channelNameHint": {
     "description": "Hint for channel name field"
   },
-  "channelSecret": "Channel Secret",
+  "channelSecret": "Μυστικό καναλιού",
   "@channelSecret": {
     "description": "Label for channel secret field"
   },
-  "channelSecretHint": "Shared password for this channel",
+  "channelSecretHint": "Κοινός κωδικός για αυτό το κανάλι",
   "@channelSecretHint": {
     "description": "Hint for channel secret field"
   },
-  "channelSecretHelp": "This secret must be shared with all team members who need access to this channel",
+  "channelSecretHelp": "Αυτό το μυστικό πρέπει να είναι κοινό σε όλα τα μέλη της ομάδας που χρειάζονται πρόσβαση σε αυτό το κανάλι",
   "@channelSecretHelp": {
     "description": "Help text explaining channel secret"
   },
-  "channelTypesInfo": "Hash channels (#team): Secret auto-generated from name. Same name = same channel across devices.\n\nPrivate channels: Use explicit secret. Only those with the secret can join.",
+  "channelTypesInfo": "Κανάλια hash (#team): Το μυστικό δημιουργείται αυτόματα από το όνομα. Ίδιο όνομα = ίδιο κανάλι σε όλες τις συσκευές.\n\nΙδιωτικά κανάλια: Χρησιμοποιήστε ρητό μυστικό. Μόνο όσοι το γνωρίζουν μπορούν να συμμετάσχουν.",
   "@channelTypesInfo": {
     "description": "Information banner explaining hash and private channel types"
   },
-  "hashChannelInfo": "Hash channel: Secret will be auto-generated from the channel name. Anyone using the same name will join the same channel.",
+  "hashChannelInfo": "Κανάλι hash: Το μυστικό θα δημιουργηθεί αυτόματα από το όνομα του καναλιού. Όποιος χρησιμοποιεί το ίδιο όνομα θα μπει στο ίδιο κανάλι.",
   "@hashChannelInfo": {
     "description": "Help text for hash channels (# prefix)"
   },
-  "channelNameRequired": "Channel name is required",
+  "channelNameRequired": "Το όνομα καναλιού είναι υποχρεωτικό",
   "@channelNameRequired": {
     "description": "Validation error for empty channel name"
   },
-  "channelNameTooLong": "Channel name must be 31 characters or less",
+  "channelNameTooLong": "Το όνομα καναλιού πρέπει να έχει έως 31 χαρακτήρες",
   "@channelNameTooLong": {
     "description": "Validation error for channel name too long"
   },
-  "channelSecretRequired": "Channel secret is required",
+  "channelSecretRequired": "Το μυστικό καναλιού είναι υποχρεωτικό",
   "@channelSecretRequired": {
     "description": "Validation error for empty channel secret"
   },
-  "channelSecretTooLong": "Channel secret must be 32 characters or less",
+  "channelSecretTooLong": "Το μυστικό καναλιού πρέπει να έχει έως 32 χαρακτήρες",
   "@channelSecretTooLong": {
     "description": "Validation error for channel secret too long"
   },
-  "invalidAsciiCharacters": "Only ASCII characters are allowed",
+  "invalidAsciiCharacters": "Επιτρέπονται μόνο χαρακτήρες ASCII",
   "@invalidAsciiCharacters": {
     "description": "Validation error for non-ASCII characters"
   },
-  "channelCreatedSuccessfully": "Channel created successfully",
+  "channelCreatedSuccessfully": "Το κανάλι δημιουργήθηκε επιτυχώς",
   "@channelCreatedSuccessfully": {
     "description": "Success message after creating channel"
   },
-  "channelCreationFailed": "Failed to create channel: {error}",
+  "channelCreationFailed": "Αποτυχία δημιουργίας καναλιού: {error}",
   "@channelCreationFailed": {
     "description": "Error message when channel creation fails",
     "placeholders": {
@@ -2059,11 +2059,11 @@
       }
     }
   },
-  "deleteChannel": "Delete Channel",
+  "deleteChannel": "Διαγραφή καναλιού",
   "@deleteChannel": {
     "description": "Delete channel button/menu item"
   },
-  "deleteChannelConfirmation": "Are you sure you want to delete channel \"{channelName}\"? This action cannot be undone.",
+  "deleteChannelConfirmation": "Είστε βέβαιοι ότι θέλετε να διαγράψετε το κανάλι \"{channelName}\"; Αυτή η ενέργεια δεν αναιρείται.",
   "@deleteChannelConfirmation": {
     "description": "Confirmation dialog when deleting a channel",
     "placeholders": {
@@ -2072,11 +2072,11 @@
       }
     }
   },
-  "channelDeletedSuccessfully": "Channel deleted successfully",
+  "channelDeletedSuccessfully": "Το κανάλι διαγράφηκε επιτυχώς",
   "@channelDeletedSuccessfully": {
     "description": "Success message after deleting channel"
   },
-  "channelDeletionFailed": "Failed to delete channel: {error}",
+  "channelDeletionFailed": "Αποτυχία διαγραφής καναλιού: {error}",
   "@channelDeletionFailed": {
     "description": "Error message when channel deletion fails",
     "placeholders": {
@@ -2085,127 +2085,127 @@
       }
     }
   },
-  "createChannel": "Create Channel",
+  "createChannel": "Δημιουργία καναλιού",
   "@createChannel": {
     "description": "Button text for creating a channel"
   },
-  "wizardBack": "Back",
+  "wizardBack": "Πίσω",
   "@wizardBack": {
     "description": "Wizard back button text"
   },
-  "wizardSkip": "Skip",
+  "wizardSkip": "Παράλειψη",
   "@wizardSkip": {
     "description": "Wizard skip button text"
   },
-  "wizardNext": "Next",
+  "wizardNext": "Επόμενο",
   "@wizardNext": {
     "description": "Wizard next button text"
   },
-  "wizardGetStarted": "Get Started",
+  "wizardGetStarted": "Ξεκινήστε",
   "@wizardGetStarted": {
     "description": "Wizard final button text to complete onboarding"
   },
-  "wizardWelcomeTitle": "Welcome to MeshCore SAR",
+  "wizardWelcomeTitle": "Καλώς ήρθατε στο MeshCore SAR",
   "@wizardWelcomeTitle": {
     "description": "Welcome wizard first page title"
   },
-  "wizardWelcomeDescription": "A powerful off-grid communication tool for search and rescue operations. Connect with your team using mesh radio technology when traditional networks are unavailable.",
+  "wizardWelcomeDescription": "Ένα ισχυρό εργαλείο επικοινωνίας εκτός δικτύου για επιχειρήσεις έρευνας και διάσωσης. Συνδεθείτε με την ομάδα σας χρησιμοποιώντας τεχνολογία mesh radio όταν τα παραδοσιακά δίκτυα δεν είναι διαθέσιμα.",
   "@wizardWelcomeDescription": {
     "description": "Welcome wizard first page description"
   },
-  "wizardConnectingTitle": "Connecting to Your Radio",
+  "wizardConnectingTitle": "Σύνδεση στο radio σας",
   "@wizardConnectingTitle": {
     "description": "Wizard connecting page title"
   },
-  "wizardConnectingDescription": "Connect your smartphone to a MeshCore radio device via Bluetooth to start communicating off-grid.",
+  "wizardConnectingDescription": "Συνδέστε το smartphone σας με μια συσκευή MeshCore radio μέσω Bluetooth για να αρχίσετε να επικοινωνείτε εκτός δικτύου.",
   "@wizardConnectingDescription": {
     "description": "Wizard connecting page description"
   },
-  "wizardConnectingFeature1": "Scan for nearby MeshCore devices",
+  "wizardConnectingFeature1": "Σάρωση για κοντινές συσκευές MeshCore",
   "@wizardConnectingFeature1": {
     "description": "Wizard connecting feature 1"
   },
-  "wizardConnectingFeature2": "Pair with your radio via Bluetooth",
+  "wizardConnectingFeature2": "Σύζευξη με το radio σας μέσω Bluetooth",
   "@wizardConnectingFeature2": {
     "description": "Wizard connecting feature 2"
   },
-  "wizardConnectingFeature3": "Works completely offline - no internet required",
+  "wizardConnectingFeature3": "Λειτουργεί πλήρως εκτός σύνδεσης - δεν απαιτείται internet",
   "@wizardConnectingFeature3": {
     "description": "Wizard connecting feature 3"
   },
-  "wizardChannelTitle": "Channels",
+  "wizardChannelTitle": "Κανάλια",
   "@wizardChannelTitle": {
     "description": "Wizard channel page title"
   },
-  "wizardChannelDescription": "Broadcast messages to everyone on a channel, perfect for team-wide announcements and coordination.",
+  "wizardChannelDescription": "Μεταδώστε μηνύματα σε όλους σε ένα κανάλι, ιδανικό για ανακοινώσεις και συντονισμό σε όλη την ομάδα.",
   "@wizardChannelDescription": {
     "description": "Wizard channel page description"
   },
-  "wizardChannelFeature1": "Public Channel for general team communication",
+  "wizardChannelFeature1": "Δημόσιο κανάλι για γενική επικοινωνία ομάδας",
   "@wizardChannelFeature1": {
     "description": "Wizard channel feature 1"
   },
-  "wizardChannelFeature2": "Create custom channels for specific groups",
+  "wizardChannelFeature2": "Δημιουργία προσαρμοσμένων καναλιών για συγκεκριμένες ομάδες",
   "@wizardChannelFeature2": {
     "description": "Wizard channel feature 2"
   },
-  "wizardChannelFeature3": "Messages are automatically relayed by the mesh",
+  "wizardChannelFeature3": "Τα μηνύματα αναμεταδίδονται αυτόματα από το mesh",
   "@wizardChannelFeature3": {
     "description": "Wizard channel feature 3"
   },
-  "wizardContactsTitle": "Contacts",
+  "wizardContactsTitle": "Επαφές",
   "@wizardContactsTitle": {
     "description": "Wizard contacts page title"
   },
-  "wizardContactsDescription": "Your team members appear automatically as they join the mesh network. Send them direct messages or view their location.",
+  "wizardContactsDescription": "Τα μέλη της ομάδας σας εμφανίζονται αυτόματα καθώς συνδέονται στο δίκτυο mesh. Στείλτε τους άμεσα μηνύματα ή δείτε την τοποθεσία τους.",
   "@wizardContactsDescription": {
     "description": "Wizard contacts page description"
   },
-  "wizardContactsFeature1": "Contacts discovered automatically",
+  "wizardContactsFeature1": "Οι επαφές εντοπίζονται αυτόματα",
   "@wizardContactsFeature1": {
     "description": "Wizard contacts feature 1"
   },
-  "wizardContactsFeature2": "Send private direct messages",
+  "wizardContactsFeature2": "Αποστολή ιδιωτικών άμεσων μηνυμάτων",
   "@wizardContactsFeature2": {
     "description": "Wizard contacts feature 2"
   },
-  "wizardContactsFeature3": "View battery level and last seen time",
+  "wizardContactsFeature3": "Προβολή επιπέδου μπαταρίας και χρόνου τελευταίας εμφάνισης",
   "@wizardContactsFeature3": {
     "description": "Wizard contacts feature 3"
   },
-  "wizardMapTitle": "Map & Location",
+  "wizardMapTitle": "Χάρτης και τοποθεσία",
   "@wizardMapTitle": {
     "description": "Wizard map page title"
   },
-  "wizardMapDescription": "Track your team in real-time and mark important locations for search and rescue operations.",
+  "wizardMapDescription": "Παρακολουθήστε την ομάδα σας σε πραγματικό χρόνο και σημειώστε σημαντικές τοποθεσίες για επιχειρήσεις έρευνας και διάσωσης.",
   "@wizardMapDescription": {
     "description": "Wizard map page description"
   },
-  "wizardMapFeature1": "SAR markers for found persons, fires, and staging areas",
+  "wizardMapFeature1": "Δείκτες SAR για εντοπισμένα άτομα, φωτιές και σημεία συγκέντρωσης",
   "@wizardMapFeature1": {
     "description": "Wizard map feature 1"
   },
-  "wizardMapFeature2": "Real-time GPS tracking of team members",
+  "wizardMapFeature2": "Παρακολούθηση GPS των μελών της ομάδας σε πραγματικό χρόνο",
   "@wizardMapFeature2": {
     "description": "Wizard map feature 2"
   },
-  "wizardMapFeature3": "Download offline maps for remote areas",
+  "wizardMapFeature3": "Λήψη χαρτών εκτός σύνδεσης για απομακρυσμένες περιοχές",
   "@wizardMapFeature3": {
     "description": "Wizard map feature 3"
   },
-  "wizardMapFeature4": "Draw shapes and share tactical information",
+  "wizardMapFeature4": "Σχεδίαση σχημάτων και κοινοποίηση τακτικών πληροφοριών",
   "@wizardMapFeature4": {
     "description": "Wizard map feature 4"
   },
-  "viewWelcomeTutorial": "View Welcome Tutorial",
+  "viewWelcomeTutorial": "Προβολή οδηγού καλωσορίσματος",
   "@viewWelcomeTutorial": {
     "description": "Settings option to re-show welcome wizard"
   },
-  "allTeamContacts": "All Team Contacts",
+  "allTeamContacts": "Όλες οι επαφές ομάδας",
   "@allTeamContacts": {
     "description": "Destination option to send SAR marker to all team contacts"
   },
-  "directMessagesInfo": "Direct messages with ACKs. Sent to {count} team members.",
+  "directMessagesInfo": "Άμεσα μηνύματα με ACK. Στάλθηκαν σε {count} μέλη ομάδας.",
   "@directMessagesInfo": {
     "description": "Information about sending to all contacts",
     "placeholders": {
@@ -2214,7 +2214,7 @@
       }
     }
   },
-  "sarMarkerSentToContacts": "SAR marker sent to {count} contacts",
+  "sarMarkerSentToContacts": "Ο δείκτης SAR στάλθηκε σε {count} επαφές",
   "@sarMarkerSentToContacts": {
     "description": "Success message after sending SAR marker to all contacts",
     "placeholders": {
@@ -2223,7 +2223,7 @@
       }
     }
   },
-  "noContactsAvailable": "No team contacts available",
+  "noContactsAvailable": "Δεν υπάρχουν διαθέσιμες επαφές ομάδας",
   "@noContactsAvailable": {
     "description": "Message when there are no chat contacts to send to"
   },

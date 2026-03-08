@@ -8,13 +8,11 @@ import '../../models/room_login_state.dart';
 import '../../providers/connection_provider.dart';
 import '../../providers/contacts_provider.dart';
 import '../../providers/map_provider.dart';
-import '../../providers/app_provider.dart';
 import 'contact_route_dialog.dart';
 import 'room_login_sheet.dart';
 import '../common/contact_avatar.dart';
 import '../../utils/location_formats.dart';
 import '../../utils/toast_logger.dart';
-import '../../utils/battery_display_helper.dart';
 import '../../l10n/app_localizations.dart';
 
 class ContactTile extends StatelessWidget {
@@ -46,12 +44,6 @@ class ContactTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final appProvider = context.watch<AppProvider>();
-    final isSimpleMode = appProvider.isSimpleMode;
-
-    final hasTelemetry =
-        contact.telemetry != null && contact.telemetry!.isRecent;
-    final battery = contact.displayBattery;
     final location = contact.displayLocation;
     // Calculate distance if both positions are available
     String? distanceText;
@@ -102,13 +94,11 @@ class ContactTile extends StatelessWidget {
           )
         : null;
     void handleTap() {
-      if (isSimpleMode && contact.type == ContactType.chat) {
+      if (contact.type == ContactType.chat) {
         _showSetRouteDialog(context, contact);
-      } else if (isSimpleMode && contact.type == ContactType.repeater) {
+      } else if (contact.type == ContactType.repeater) {
         _jumpToMapForRepeater(context, contact);
-      } else if (isSimpleMode &&
-          contact.type == ContactType.room &&
-          !contact.isPublicChannel) {
+      } else if (contact.type == ContactType.room && !contact.isPublicChannel) {
         _showRoomLoginDialog(context, contact);
       } else {
         _showContactDetails(context, contact);
@@ -155,137 +145,33 @@ class ContactTile extends StatelessWidget {
           : colorScheme.onSurfaceVariant,
       fontWeight: FontWeight.w600,
     );
-    final subtitleWidget = isSimpleMode
-        ? Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (location != null) ...[
-                const SizedBox(height: 2),
-                _buildLocationLine(
-                  context,
-                  latitude: location.latitude,
-                  longitude: location.longitude,
-                  distanceText: distanceText,
-                ),
-                if (contact.type != ContactType.channel) ...[
-                  const SizedBox(height: 6),
-                  Row(children: [_buildRoutePill(context, contact)]),
-                ],
-              ] else
-                Padding(
-                  padding: const EdgeInsets.only(top: 4),
-                  child: Text(
-                    AppLocalizations.of(context)!.noGpsData,
-                    style: Theme.of(
-                      context,
-                    ).textTheme.labelSmall?.copyWith(color: Colors.grey),
-                  ),
-                ),
-            ],
-          )
-        : Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 2),
-              if (roomLoginState != null && roomLoginState.isLoggedIn) ...[
-                Row(
-                  children: [
-                    if (roomLoginState.isAdmin)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 4,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.red.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(4),
-                          border: Border.all(color: Colors.red, width: 1),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(
-                              Icons.admin_panel_settings,
-                              size: 10,
-                              color: Colors.red,
-                            ),
-                            const SizedBox(width: 2),
-                            Text(
-                              AppLocalizations.of(context)!.admin,
-                              style: Theme.of(context).textTheme.labelSmall
-                                  ?.copyWith(
-                                    color: Colors.red,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 10,
-                                  ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    if (roomLoginState.isAdmin) const SizedBox(width: 4),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 4,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.green.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(4),
-                        border: Border.all(color: Colors.green, width: 1),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(
-                            Icons.check_circle,
-                            size: 10,
-                            color: Colors.green,
-                          ),
-                          const SizedBox(width: 2),
-                          Text(
-                            AppLocalizations.of(context)!.loggedIn,
-                            style: Theme.of(context).textTheme.labelSmall
-                                ?.copyWith(
-                                  color: Colors.green,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 10,
-                                ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-              ],
-              Row(
-                children: [
-                  if (location != null) ...[
-                    Expanded(
-                      child: _buildLocationLine(
-                        context,
-                        latitude: location.latitude,
-                        longitude: location.longitude,
-                        distanceText: distanceText,
-                        telemetryActive: hasTelemetry,
-                      ),
-                    ),
-                  ] else ...[
-                    const Icon(Icons.sensors_off, size: 12, color: Colors.grey),
-                    const SizedBox(width: 4),
-                    Text(
-                      AppLocalizations.of(context)!.noGpsData,
-                      style: Theme.of(context).textTheme.labelSmall,
-                    ),
-                  ],
-                ],
-              ),
-              if (contact.type != ContactType.channel) ...[
-                const SizedBox(height: 6),
-                Row(children: [_buildRoutePill(context, contact)]),
-              ],
-            ],
-          );
+    final subtitleWidget = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (location != null) ...[
+          const SizedBox(height: 2),
+          _buildLocationLine(
+            context,
+            latitude: location.latitude,
+            longitude: location.longitude,
+            distanceText: distanceText,
+          ),
+          if (contact.type != ContactType.channel) ...[
+            const SizedBox(height: 6),
+            Row(children: [_buildRoutePill(context, contact)]),
+          ],
+        ] else
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(
+              AppLocalizations.of(context)!.noGpsData,
+              style: Theme.of(
+                context,
+              ).textTheme.labelSmall?.copyWith(color: Colors.grey),
+            ),
+          ),
+      ],
+    );
 
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
@@ -383,10 +269,6 @@ class ContactTile extends StatelessWidget {
                           ),
                           const SizedBox(width: 8),
                           Text(timeAgoText, style: timeAgoStyle),
-                          if (!isSimpleMode && battery != null) ...[
-                            const SizedBox(width: 6),
-                            _buildBatteryBadge(context, battery),
-                          ],
                           if (isPingInProgress) ...[
                             const SizedBox(width: 6),
                             SizedBox(
@@ -1433,35 +1315,6 @@ class ContactTile extends StatelessWidget {
                 context,
               ).textTheme.labelSmall?.color?.withValues(alpha: 0.82),
               fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBatteryBadge(BuildContext context, double battery) {
-    final color = BatteryDisplayHelper.getBatteryColor(battery);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            BatteryDisplayHelper.getBatteryIcon(battery),
-            size: 12,
-            color: color,
-          ),
-          const SizedBox(width: 4),
-          Text(
-            '${battery.round()}%',
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: color,
-              fontWeight: FontWeight.w700,
             ),
           ),
         ],

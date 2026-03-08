@@ -27,7 +27,6 @@ import '../widgets/map_debug_info.dart';
 import '../widgets/map/compass_widget.dart';
 import '../widgets/map/detailed_compass_dialog.dart';
 import '../widgets/map/drawing_layer.dart';
-import '../widgets/map/drawing_toolbar.dart';
 import '../widgets/map/location_trail_layer.dart';
 import '../widgets/map/trail_controls.dart';
 import '../widgets/map/map_message_overlay.dart';
@@ -708,78 +707,6 @@ class _MapTabState extends State<MapTab> with AutomaticKeepAliveClientMixin {
     );
   }
 
-  void _showOptionsMenu(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setModalState) => Container(
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.settings),
-                      const SizedBox(width: 12),
-                      Text(
-                        AppLocalizations.of(context)!.mapOptions,
-                        style: Theme.of(context).textTheme.titleMedium
-                            ?.copyWith(fontWeight: FontWeight.bold),
-                      ),
-                    ],
-                  ),
-                ),
-                const Divider(),
-                // Map Debug Info toggle
-                SwitchListTile(
-                  secondary: const Icon(Icons.developer_mode),
-                  title: Text(AppLocalizations.of(context)!.showMapDebugInfo),
-                  subtitle: Text(
-                    AppLocalizations.of(context)!.displayZoomLevelBounds,
-                  ),
-                  value: _showMapDebugInfo,
-                  onChanged: (value) {
-                    setState(() {
-                      _showMapDebugInfo = value;
-                    });
-                    setModalState(() {});
-                    _saveSettings();
-                  },
-                ),
-                const Divider(),
-                // Fullscreen mode toggle
-                SwitchListTile(
-                  secondary: const Icon(Icons.fullscreen),
-                  title: Text(AppLocalizations.of(context)!.fullscreenMode),
-                  subtitle: Text(
-                    AppLocalizations.of(context)!.hideUiFullMapView,
-                  ),
-                  value: _isFullscreen,
-                  onChanged: (value) {
-                    setState(() {
-                      _isFullscreen = value;
-                    });
-                    setModalState(() {});
-                    _saveSettings();
-                    // Notify parent about fullscreen change
-                    widget.onFullscreenChanged?.call(value);
-                  },
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
   void _showDetailedCompass(
     BuildContext context,
     List<Contact> contacts,
@@ -1190,8 +1117,6 @@ class _MapTabState extends State<MapTab> with AutomaticKeepAliveClientMixin {
   @override
   Widget build(BuildContext context) {
     super.build(context); // Required for AutomaticKeepAliveClientMixin
-    final appProvider = context.watch<AppProvider>();
-    final isSimpleMode = appProvider.isSimpleMode;
 
     return Consumer3<ContactsProvider, MessagesProvider, DrawingProvider>(
       builder: (context, contactsProvider, messagesProvider, drawingProvider, child) {
@@ -1207,879 +1132,835 @@ class _MapTabState extends State<MapTab> with AutomaticKeepAliveClientMixin {
           children: [
             // Map widget
             Listener(
-                    onPointerMove: (PointerMoveEvent event) {
-                      // Track pointer movement for mobile drag (onPointerHover doesn't work on mobile)
-                      if (_isDraggingPin) {
-                        final latLng = _mapController.camera
-                            .screenOffsetToLatLng(event.localPosition);
+              onPointerMove: (PointerMoveEvent event) {
+                // Track pointer movement for mobile drag (onPointerHover doesn't work on mobile)
+                if (_isDraggingPin) {
+                  final latLng = _mapController.camera.screenOffsetToLatLng(
+                    event.localPosition,
+                  );
+                  setState(() {
+                    _droppedPinLocation = latLng;
+                  });
+                }
+              },
+              child: FlutterMap(
+                mapController: _mapController,
+                options: MapOptions(
+                  // Use the layer's CRS if it has one (for WMS layers), otherwise default to EPSG:3857
+                  crs: _currentLayer.crs ?? const Epsg3857(),
+                  // Use saved position if available, otherwise use calculated center
+                  initialCenter: _savedMapCenter ?? center,
+                  initialZoom: _savedMapZoom ?? _defaultZoom,
+                  minZoom: 0, // Allow full zoom out to see world view
+                  maxZoom:
+                      _currentLayer.maxZoom, // Respect current layer's maximum
+                  interactionOptions: InteractionOptions(
+                    flags: _isDraggingPin
+                        ? InteractiveFlag
+                              .none // Disable map interaction while dragging pin
+                        : InteractiveFlag.all,
+                  ),
+                  onMapEvent: (event) {
+                    // Save map position when user stops panning/zooming
+                    if (event is MapEventMoveEnd ||
+                        event is MapEventScrollWheelZoom) {
+                      _saveMapPosition();
+                    }
+                    // Trigger rebuild on rotation change to show/hide reset button
+                    if (event is MapEventRotateEnd ||
+                        event is MapEventRotateStart) {
+                      setState(() {});
+                    }
+                  },
+                  onLongPress: (tapPosition, point) {
+                    // Handle measurement mode - set measurement points only, no SAR marker
+                    if (drawingProvider.drawingMode == DrawingMode.measure) {
+                      if (drawingProvider.measurementPoint1 == null) {
+                        // Set first measurement point
+                        drawingProvider.setMeasurementPoint1(point);
+                      } else if (drawingProvider.measurementPoint2 == null) {
+                        // Set second measurement point
+                        drawingProvider.setMeasurementPoint2(point);
+                      } else {
+                        // Clear and start new measurement
+                        drawingProvider.clearMeasurement();
+                        drawingProvider.setMeasurementPoint1(point);
+                      }
+                      // Don't drop SAR marker pin in measurement mode
+                      return;
+                    }
+
+                    // Skip if in other drawing modes
+                    if (drawingProvider.isDrawing) return;
+
+                    // Drop a pin at long press location for SAR marker creation
+                    if (_droppedPinLocation == null) {
+                      setState(() {
+                        _droppedPinLocation = point;
+                      });
+                    }
+                  },
+                  onPointerDown: (event, point) {
+                    // Check if pointer is near the pin to start dragging
+                    if (_droppedPinLocation != null) {
+                      final distance = _calculateDistanceInMeters(
+                        _droppedPinLocation!.latitude,
+                        _droppedPinLocation!.longitude,
+                        point.latitude,
+                        point.longitude,
+                      );
+                      // If within ~50m of pin, start dragging
+                      if (distance <= 50) {
                         setState(() {
-                          _droppedPinLocation = latLng;
+                          _isDraggingPin = true;
                         });
                       }
-                    },
-                    child: FlutterMap(
-                      mapController: _mapController,
-                      options: MapOptions(
-                        // Use the layer's CRS if it has one (for WMS layers), otherwise default to EPSG:3857
-                        crs: _currentLayer.crs ?? const Epsg3857(),
-                        // Use saved position if available, otherwise use calculated center
-                        initialCenter: _savedMapCenter ?? center,
-                        initialZoom: _savedMapZoom ?? _defaultZoom,
-                        minZoom: 0, // Allow full zoom out to see world view
-                        maxZoom: _currentLayer
-                            .maxZoom, // Respect current layer's maximum
-                        interactionOptions: InteractionOptions(
-                          flags: _isDraggingPin
-                              ? InteractiveFlag
-                                    .none // Disable map interaction while dragging pin
-                              : InteractiveFlag.all,
+                    }
+                  },
+                  onPointerHover: (event, point) {
+                    // Update rectangle preview while dragging
+                    if (drawingProvider.drawingMode == DrawingMode.rectangle &&
+                        drawingProvider.rectangleStartPoint != null) {
+                      drawingProvider.updateRectangleEndPoint(point);
+                      return;
+                    }
+
+                    // Update pin location while dragging
+                    if (_isDraggingPin) {
+                      setState(() {
+                        _droppedPinLocation = point;
+                      });
+                    }
+                  },
+                  onPointerUp: (event, point) {
+                    // Stop dragging on pointer release
+                    if (_isDraggingPin) {
+                      setState(() {
+                        _isDraggingPin = false;
+                      });
+                    }
+                  },
+                  onTap: (tapPosition, point) {
+                    // Handle drawing mode taps
+                    if (drawingProvider.drawingMode == DrawingMode.line) {
+                      if (drawingProvider.currentLinePoints.isEmpty) {
+                        // Start new line
+                        drawingProvider.startLine(point);
+                      } else {
+                        // Add point to current line
+                        drawingProvider.addLinePoint(point);
+                      }
+                      return;
+                    } else if (drawingProvider.drawingMode ==
+                        DrawingMode.rectangle) {
+                      if (drawingProvider.rectangleStartPoint == null) {
+                        // Start rectangle
+                        drawingProvider.startRectangle(point);
+                      } else {
+                        // Complete rectangle
+                        drawingProvider.completeRectangle(point);
+                      }
+                      return;
+                    }
+
+                    // Clear dropped pin if tapping elsewhere (not on the pin itself)
+                    if (_droppedPinLocation != null && !_isDraggingPin) {
+                      // Check if tap is far from the pin
+                      final distance = _calculateDistanceInMeters(
+                        _droppedPinLocation!.latitude,
+                        _droppedPinLocation!.longitude,
+                        point.latitude,
+                        point.longitude,
+                      );
+                      // If tap is more than ~50m away, clear pin
+                      if (distance > 50) {
+                        setState(() {
+                          _droppedPinLocation = null;
+                        });
+                      }
+                    }
+                  },
+                ),
+                children: [
+                  // Render raster or WMS tile layer based on layer type
+                  if (_currentLayer.isWms &&
+                      _currentLayer.wmsBaseUrl != null &&
+                      _currentLayer.crs != null)
+                    // WMS Base Layer (e.g., Slovenian Aerial Imagery)
+                    flutter_map.TileLayer(
+                      wmsOptions: WMSTileLayerOptions(
+                        baseUrl: _currentLayer.wmsBaseUrl!,
+                        layers: _currentLayer.wmsLayers ?? [],
+                        styles: _currentLayer.wmsStyles ?? [],
+                        format: _currentLayer.wmsFormat ?? 'image/jpeg',
+                        transparent: _currentLayer.wmsTransparent ?? false,
+                        crs: _currentLayer.crs!,
+                      ),
+                      // Use cached tile provider for offline support
+                      tileProvider: _tileProvider,
+                      userAgentPackageName: 'com.meshcore.sar',
+                      maxZoom: _currentLayer.maxZoom,
+                      errorTileCallback: (tile, error, stackTrace) {
+                        debugPrint(
+                          '🔴 WMS Base Layer tile error at ${tile.coordinates}: $error',
+                        );
+                      },
+                    )
+                  else if (!_currentLayer.isWms)
+                    flutter_map.TileLayer(
+                      urlTemplate: _currentLayer.urlTemplate,
+                      tileProvider: _tileProvider,
+                      userAgentPackageName: 'com.meshcore.sar',
+                      maxZoom: _currentLayer.maxZoom,
+                    ),
+                  // WMS Overlays (rendered after base layer, before polylines)
+                  // Note: These overlays only work with EPSG:3794 CRS (Slovenian coordinate system)
+                  // Cadastral parcels overlay
+                  Consumer<MapProvider>(
+                    builder: (context, mapProvider, _) {
+                      // Only show if enabled and map is using Slovenian CRS
+                      if (!mapProvider.showCadastralOverlay ||
+                          _currentLayer.crs == null) {
+                        return const SizedBox.shrink();
+                      }
+                      return flutter_map.TileLayer(
+                        wmsOptions: WMSTileLayerOptions(
+                          baseUrl:
+                              'https://prostor.zgs.gov.si/geowebcache/service/wms?',
+                          layers: const ['pregledovalnik:kn_parcele'],
+                          styles: const ['parcele'],
+                          format: 'image/png',
+                          transparent: true,
+                          crs: slovenianCrs,
                         ),
-                        onMapEvent: (event) {
-                          // Save map position when user stops panning/zooming
-                          if (event is MapEventMoveEnd ||
-                              event is MapEventScrollWheelZoom) {
-                            _saveMapPosition();
-                          }
-                          // Trigger rebuild on rotation change to show/hide reset button
-                          if (event is MapEventRotateEnd ||
-                              event is MapEventRotateStart) {
-                            setState(() {});
+                        tileProvider: _tileProvider,
+                        userAgentPackageName: 'com.meshcore.sar',
+                        maxZoom: 19,
+                        errorTileCallback: (tile, error, stackTrace) {
+                          debugPrint(
+                            '🔴 Cadastral overlay tile error at ${tile.coordinates}: $error',
+                          );
+                          if (stackTrace != null) {
+                            debugPrint('   StackTrace: $stackTrace');
                           }
                         },
-                        onLongPress: (tapPosition, point) {
-                          // Handle measurement mode - set measurement points only, no SAR marker
-                          if (drawingProvider.drawingMode ==
-                              DrawingMode.measure) {
-                            if (drawingProvider.measurementPoint1 == null) {
-                              // Set first measurement point
-                              drawingProvider.setMeasurementPoint1(point);
-                            } else if (drawingProvider.measurementPoint2 ==
-                                null) {
-                              // Set second measurement point
-                              drawingProvider.setMeasurementPoint2(point);
-                            } else {
-                              // Clear and start new measurement
-                              drawingProvider.clearMeasurement();
-                              drawingProvider.setMeasurementPoint1(point);
-                            }
-                            // Don't drop SAR marker pin in measurement mode
-                            return;
+                      );
+                    },
+                  ),
+                  // Forest roads overlay
+                  Consumer<MapProvider>(
+                    builder: (context, mapProvider, _) {
+                      // Only show if enabled and map is using Slovenian CRS
+                      if (!mapProvider.showForestRoadsOverlay ||
+                          _currentLayer.crs == null) {
+                        return const SizedBox.shrink();
+                      }
+                      return flutter_map.TileLayer(
+                        wmsOptions: WMSTileLayerOptions(
+                          baseUrl: 'https://prostor.zgs.gov.si/geoserver/wms?',
+                          layers: const ['pregledovalnik:gozdne_ceste'],
+                          styles: const ['gozdne_ceste'],
+                          format: 'image/png',
+                          transparent: true,
+                          crs: slovenianCrs,
+                        ),
+                        tileProvider: _tileProvider,
+                        userAgentPackageName: 'com.meshcore.sar',
+                        maxZoom: 19,
+                        errorTileCallback: (tile, error, stackTrace) {
+                          debugPrint(
+                            '🔴 Forest roads overlay tile error at ${tile.coordinates}: $error',
+                          );
+                          if (stackTrace != null) {
+                            debugPrint('   StackTrace: $stackTrace');
                           }
+                        },
+                      );
+                    },
+                  ),
+                  // Hiking trails overlay
+                  Consumer<MapProvider>(
+                    builder: (context, mapProvider, _) {
+                      if (!mapProvider.showHikingTrailsOverlay ||
+                          _currentLayer.crs == null) {
+                        return const SizedBox.shrink();
+                      }
+                      return flutter_map.TileLayer(
+                        wmsOptions: WMSTileLayerOptions(
+                          baseUrl: 'https://prostor.zgs.gov.si/geoserver/wms?',
+                          layers: const [
+                            'pregledovalnik:KGI_LINIJE_PLANINSKE_POTI_G',
+                          ],
+                          format: 'image/png',
+                          transparent: true,
+                          crs: slovenianCrs,
+                        ),
+                        tileProvider: _tileProvider,
+                        userAgentPackageName: 'com.meshcore.sar',
+                        maxZoom: 19,
+                        errorTileCallback: (tile, error, stackTrace) {
+                          debugPrint(
+                            '🔴 Hiking trails overlay tile error at ${tile.coordinates}: $error',
+                          );
+                        },
+                      );
+                    },
+                  ),
+                  // Main roads overlay
+                  Consumer<MapProvider>(
+                    builder: (context, mapProvider, _) {
+                      if (!mapProvider.showMainRoadsOverlay ||
+                          _currentLayer.crs == null) {
+                        return const SizedBox.shrink();
+                      }
+                      return flutter_map.TileLayer(
+                        wmsOptions: WMSTileLayerOptions(
+                          baseUrl: 'https://prostor.zgs.gov.si/geoserver/wms?',
+                          layers: const ['pregledovalnik:KGI_LINIJE_CESTE_G'],
+                          format: 'image/png',
+                          transparent: true,
+                          crs: slovenianCrs,
+                        ),
+                        tileProvider: _tileProvider,
+                        userAgentPackageName: 'com.meshcore.sar',
+                        maxZoom: 19,
+                        errorTileCallback: (tile, error, stackTrace) {
+                          debugPrint(
+                            '🔴 Main roads overlay tile error at ${tile.coordinates}: $error',
+                          );
+                        },
+                      );
+                    },
+                  ),
+                  // House numbers overlay
+                  Consumer<MapProvider>(
+                    builder: (context, mapProvider, _) {
+                      if (!mapProvider.showHouseNumbersOverlay ||
+                          _currentLayer.crs == null) {
+                        return const SizedBox.shrink();
+                      }
+                      return flutter_map.TileLayer(
+                        wmsOptions: WMSTileLayerOptions(
+                          baseUrl: 'https://prostor.zgs.gov.si/geoserver/wms?',
+                          layers: const ['pregledovalnik:NEP_HISNE_STEVILKE'],
+                          format: 'image/png',
+                          transparent: true,
+                          crs: slovenianCrs,
+                        ),
+                        tileProvider: _tileProvider,
+                        userAgentPackageName: 'com.meshcore.sar',
+                        maxZoom: 19,
+                        errorTileCallback: (tile, error, stackTrace) {
+                          debugPrint(
+                            '🔴 House numbers overlay tile error at ${tile.coordinates}: $error',
+                          );
+                        },
+                      );
+                    },
+                  ),
+                  // Fire hazard zones overlay
+                  Consumer<MapProvider>(
+                    builder: (context, mapProvider, _) {
+                      if (!mapProvider.showFireHazardZonesOverlay ||
+                          _currentLayer.crs == null) {
+                        return const SizedBox.shrink();
+                      }
+                      return flutter_map.TileLayer(
+                        wmsOptions: WMSTileLayerOptions(
+                          baseUrl: 'https://prostor.zgs.gov.si/geoserver/wms?',
+                          layers: const ['pregledovalnik:pozarna_ogrozenost'],
+                          format: 'image/png',
+                          transparent: true,
+                          crs: slovenianCrs,
+                        ),
+                        tileProvider: _tileProvider,
+                        userAgentPackageName: 'com.meshcore.sar',
+                        maxZoom: 19,
+                        errorTileCallback: (tile, error, stackTrace) {
+                          debugPrint(
+                            '🔴 Fire hazard zones overlay tile error at ${tile.coordinates}: $error',
+                          );
+                        },
+                      );
+                    },
+                  ),
+                  // Historical fires overlay
+                  Consumer<MapProvider>(
+                    builder: (context, mapProvider, _) {
+                      if (!mapProvider.showHistoricalFiresOverlay ||
+                          _currentLayer.crs == null) {
+                        return const SizedBox.shrink();
+                      }
+                      return flutter_map.TileLayer(
+                        wmsOptions: WMSTileLayerOptions(
+                          baseUrl: 'https://prostor.zgs.gov.si/geoserver/wms?',
+                          layers: const ['pregledovalnik:gozdni_pozari'],
+                          format: 'image/png',
+                          transparent: true,
+                          crs: slovenianCrs,
+                        ),
+                        tileProvider: _tileProvider,
+                        userAgentPackageName: 'com.meshcore.sar',
+                        maxZoom: 19,
+                        errorTileCallback: (tile, error, stackTrace) {
+                          debugPrint(
+                            '🔴 Historical fires overlay tile error at ${tile.coordinates}: $error',
+                          );
+                        },
+                      );
+                    },
+                  ),
+                  // Firebreaks overlay
+                  Consumer<MapProvider>(
+                    builder: (context, mapProvider, _) {
+                      if (!mapProvider.showFirebreaksOverlay ||
+                          _currentLayer.crs == null) {
+                        return const SizedBox.shrink();
+                      }
+                      return flutter_map.TileLayer(
+                        wmsOptions: WMSTileLayerOptions(
+                          baseUrl: 'https://prostor.zgs.gov.si/geoserver/wms?',
+                          layers: const ['pregledovalnik:protipozarne_preseke'],
+                          format: 'image/png',
+                          transparent: true,
+                          crs: slovenianCrs,
+                        ),
+                        tileProvider: _tileProvider,
+                        userAgentPackageName: 'com.meshcore.sar',
+                        maxZoom: 19,
+                        errorTileCallback: (tile, error, stackTrace) {
+                          debugPrint(
+                            '🔴 Firebreaks overlay tile error at ${tile.coordinates}: $error',
+                          );
+                        },
+                      );
+                    },
+                  ),
+                  // Kras fire zones overlay
+                  Consumer<MapProvider>(
+                    builder: (context, mapProvider, _) {
+                      if (!mapProvider.showKrasFireZonesOverlay ||
+                          _currentLayer.crs == null) {
+                        return const SizedBox.shrink();
+                      }
+                      return flutter_map.TileLayer(
+                        wmsOptions: WMSTileLayerOptions(
+                          baseUrl: 'https://prostor.zgs.gov.si/geoserver/wms?',
+                          layers: const ['pregledovalnik:pozarisce_kras'],
+                          format: 'image/png',
+                          transparent: true,
+                          crs: slovenianCrs,
+                        ),
+                        tileProvider: _tileProvider,
+                        userAgentPackageName: 'com.meshcore.sar',
+                        maxZoom: 19,
+                        errorTileCallback: (tile, error, stackTrace) {
+                          debugPrint(
+                            '🔴 Kras fire zones overlay tile error at ${tile.coordinates}: $error',
+                          );
+                        },
+                      );
+                    },
+                  ),
+                  // Place names overlay
+                  Consumer<MapProvider>(
+                    builder: (context, mapProvider, _) {
+                      if (!mapProvider.showPlaceNamesOverlay ||
+                          _currentLayer.crs == null) {
+                        return const SizedBox.shrink();
+                      }
+                      return flutter_map.TileLayer(
+                        wmsOptions: WMSTileLayerOptions(
+                          baseUrl: 'https://prostor.zgs.gov.si/geoserver/wms?',
+                          layers: const ['pregledovalnik:zemljepisna_imena'],
+                          format: 'image/png',
+                          transparent: true,
+                          crs: slovenianCrs,
+                        ),
+                        tileProvider: _tileProvider,
+                        userAgentPackageName: 'com.meshcore.sar',
+                        maxZoom: 19,
+                        errorTileCallback: (tile, error, stackTrace) {
+                          debugPrint(
+                            '🔴 Place names overlay tile error at ${tile.coordinates}: $error',
+                          );
+                        },
+                      );
+                    },
+                  ),
+                  // Municipality borders overlay
+                  Consumer<MapProvider>(
+                    builder: (context, mapProvider, _) {
+                      if (!mapProvider.showMunicipalityBordersOverlay ||
+                          _currentLayer.crs == null) {
+                        return const SizedBox.shrink();
+                      }
+                      return flutter_map.TileLayer(
+                        wmsOptions: WMSTileLayerOptions(
+                          baseUrl: 'https://prostor.zgs.gov.si/geoserver/wms?',
+                          layers: const ['pregledovalnik:NEP_RPE_OBCINE'],
+                          styles: const ['obcine'],
+                          format: 'image/png',
+                          transparent: true,
+                          crs: slovenianCrs,
+                        ),
+                        tileProvider: _tileProvider,
+                        userAgentPackageName: 'com.meshcore.sar',
+                        maxZoom: 19,
+                        errorTileCallback: (tile, error, stackTrace) {
+                          debugPrint(
+                            '🔴 Municipality borders overlay tile error at ${tile.coordinates}: $error',
+                          );
+                        },
+                      );
+                    },
+                  ),
+                  // Imported trail layer (rendered at bottom for reference)
+                  Consumer<MapProvider>(
+                    builder: (context, mapProvider, _) {
+                      if (mapProvider.importedTrail == null ||
+                          mapProvider.importedTrail!.points.length < 2) {
+                        return const SizedBox.shrink();
+                      }
 
-                          // Skip if in other drawing modes
-                          if (drawingProvider.isDrawing) return;
+                      return PolylineLayer(
+                        polylines: [
+                          Polyline(
+                            points: mapProvider.importedTrail!.latLngPoints,
+                            color: Colors.green.withValues(alpha: 0.7),
+                            strokeWidth: 3.0,
+                            borderColor: Colors.white.withValues(alpha: 0.4),
+                            borderStrokeWidth: 1.0,
+                            // DOTTED pattern to distinguish from other trails
+                            pattern: StrokePattern.dotted(spacingFactor: 2),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                  // Contact trail polylines (rendered before user trail and markers)
+                  Consumer<MapProvider>(
+                    builder: (context, mapProvider, _) {
+                      // Determine which contacts to show trails for
+                      final contactsToShow = mapProvider.showAllContactTrails
+                          ? contactsWithLocation // Show all when master toggle is ON
+                          : contactsWithLocation.where(
+                              (contact) => mapProvider.isContactPathVisible(
+                                contact.publicKeyHex,
+                              ),
+                            ); // Individual toggles
 
-                          // Drop a pin at long press location for SAR marker creation
-                          if (_droppedPinLocation == null) {
-                            setState(() {
-                              _droppedPinLocation = point;
-                            });
-                          }
-                        },
-                        onPointerDown: (event, point) {
-                          // Check if pointer is near the pin to start dragging
-                          if (_droppedPinLocation != null) {
-                            final distance = _calculateDistanceInMeters(
-                              _droppedPinLocation!.latitude,
-                              _droppedPinLocation!.longitude,
-                              point.latitude,
-                              point.longitude,
-                            );
-                            // If within ~50m of pin, start dragging
-                            if (distance <= 50) {
-                              setState(() {
-                                _isDraggingPin = true;
-                              });
-                            }
-                          }
-                        },
-                        onPointerHover: (event, point) {
-                          // Update rectangle preview while dragging
-                          if (drawingProvider.drawingMode ==
-                                  DrawingMode.rectangle &&
-                              drawingProvider.rectangleStartPoint != null) {
-                            drawingProvider.updateRectangleEndPoint(point);
-                            return;
-                          }
+                      return PolylineLayer(
+                        polylines: contactsToShow
+                            .where(
+                              (contact) => contact.advertHistory.length >= 2,
+                            )
+                            .map((contact) {
+                              // Use TrailColorService for consistent, emoji-based colors
+                              final color = TrailColorService.getTrailColor(
+                                contact,
+                              );
 
-                          // Update pin location while dragging
-                          if (_isDraggingPin) {
-                            setState(() {
-                              _droppedPinLocation = point;
-                            });
-                          }
-                        },
-                        onPointerUp: (event, point) {
-                          // Stop dragging on pointer release
-                          if (_isDraggingPin) {
-                            setState(() {
-                              _isDraggingPin = false;
-                            });
-                          }
-                        },
-                        onTap: (tapPosition, point) {
-                          // Handle drawing mode taps
-                          if (drawingProvider.drawingMode == DrawingMode.line) {
-                            if (drawingProvider.currentLinePoints.isEmpty) {
-                              // Start new line
-                              drawingProvider.startLine(point);
-                            } else {
-                              // Add point to current line
-                              drawingProvider.addLinePoint(point);
-                            }
-                            return;
-                          } else if (drawingProvider.drawingMode ==
-                              DrawingMode.rectangle) {
-                            if (drawingProvider.rectangleStartPoint == null) {
-                              // Start rectangle
-                              drawingProvider.startRectangle(point);
-                            } else {
-                              // Complete rectangle
-                              drawingProvider.completeRectangle(point);
-                            }
-                            return;
-                          }
-
-                          // Clear dropped pin if tapping elsewhere (not on the pin itself)
-                          if (_droppedPinLocation != null && !_isDraggingPin) {
-                            // Check if tap is far from the pin
-                            final distance = _calculateDistanceInMeters(
-                              _droppedPinLocation!.latitude,
-                              _droppedPinLocation!.longitude,
-                              point.latitude,
-                              point.longitude,
-                            );
-                            // If tap is more than ~50m away, clear pin
-                            if (distance > 50) {
-                              setState(() {
-                                _droppedPinLocation = null;
-                              });
-                            }
-                          }
+                              return Polyline(
+                                points: contact.advertHistory
+                                    .map((advert) => advert.location)
+                                    .toList(),
+                                color: color.withValues(
+                                  alpha: 0.95,
+                                ), // More opaque for better visibility
+                                strokeWidth:
+                                    4.5, // Thicker for better visibility on all map backgrounds
+                                borderColor: Colors.white.withValues(
+                                  alpha: 0.6,
+                                ), // Stronger border contrast
+                                borderStrokeWidth: 2.0, // Wider border
+                                // DASHED pattern to distinguish from solid user trail
+                                pattern: StrokePattern.dashed(segments: [8, 4]),
+                              );
+                            })
+                            .toList(),
+                      );
+                    },
+                  ),
+                  // Location trail layer (rendered after paths, before drawings)
+                  const LocationTrailLayer(),
+                  // Measurement line layer (rendered before drawings)
+                  if (drawingProvider.measurementPoint1 != null &&
+                      drawingProvider.measurementPoint2 != null)
+                    PolylineLayer(
+                      polylines: [
+                        Polyline(
+                          points: [
+                            drawingProvider.measurementPoint1!,
+                            drawingProvider.measurementPoint2!,
+                          ],
+                          color: Colors.yellow.withValues(alpha: 0.8),
+                          strokeWidth: 3.0,
+                          borderColor: Colors.black.withValues(alpha: 0.5),
+                          borderStrokeWidth: 1.0,
+                          pattern: StrokePattern.dashed(segments: [10, 5]),
+                        ),
+                      ],
+                    ),
+                  // Drawing layer (rendered after paths, before markers)
+                  DrawingLayer(
+                    drawings: drawingProvider.drawings,
+                    previewDrawing: drawingProvider.getPreviewDrawing(),
+                  ),
+                  MarkerLayer(
+                    markers: [
+                      // Contact markers
+                      ..._markerService.generateContactMarkers(
+                        contacts: contactsWithLocation,
+                        context: context,
+                        mapRotation: _getMapRotation(),
+                        userPosition: _locationService.currentPosition,
+                        onTap: (contact) {
+                          _showDetailedCompassWithContact(
+                            context,
+                            contactsProvider.contactsWithLocation,
+                            messagesProvider.sarMarkers,
+                            contact,
+                          );
                         },
                       ),
-                      children: [
-                        // Render raster or WMS tile layer based on layer type
-                        if (_currentLayer.isWms &&
-                            _currentLayer.wmsBaseUrl != null &&
-                            _currentLayer.crs != null)
-                          // WMS Base Layer (e.g., Slovenian Aerial Imagery)
-                          flutter_map.TileLayer(
-                            wmsOptions: WMSTileLayerOptions(
-                              baseUrl: _currentLayer.wmsBaseUrl!,
-                              layers: _currentLayer.wmsLayers ?? [],
-                              styles: _currentLayer.wmsStyles ?? [],
-                              format: _currentLayer.wmsFormat ?? 'image/jpeg',
-                              transparent:
-                                  _currentLayer.wmsTransparent ?? false,
-                              crs: _currentLayer.crs!,
-                            ),
-                            // Use cached tile provider for offline support
-                            tileProvider: _tileProvider,
-                            userAgentPackageName: 'com.meshcore.sar',
-                            maxZoom: _currentLayer.maxZoom,
-                            errorTileCallback: (tile, error, stackTrace) {
-                              debugPrint(
-                                '🔴 WMS Base Layer tile error at ${tile.coordinates}: $error',
-                              );
-                            },
-                          )
-                        else if (!_currentLayer.isWms)
-                          flutter_map.TileLayer(
-                            urlTemplate: _currentLayer.urlTemplate,
-                            tileProvider: _tileProvider,
-                            userAgentPackageName: 'com.meshcore.sar',
-                            maxZoom: _currentLayer.maxZoom,
-                          ),
-                        // WMS Overlays (rendered after base layer, before polylines)
-                        // Note: These overlays only work with EPSG:3794 CRS (Slovenian coordinate system)
-                        // Cadastral parcels overlay
-                        Consumer<MapProvider>(
-                          builder: (context, mapProvider, _) {
-                            // Only show if enabled and map is using Slovenian CRS
-                            if (!mapProvider.showCadastralOverlay ||
-                                _currentLayer.crs == null) {
-                              return const SizedBox.shrink();
-                            }
-                            return flutter_map.TileLayer(
-                              wmsOptions: WMSTileLayerOptions(
-                                baseUrl:
-                                    'https://prostor.zgs.gov.si/geowebcache/service/wms?',
-                                layers: const ['pregledovalnik:kn_parcele'],
-                                styles: const ['parcele'],
-                                format: 'image/png',
-                                transparent: true,
-                                crs: slovenianCrs,
-                              ),
-                              tileProvider: _tileProvider,
-                              userAgentPackageName: 'com.meshcore.sar',
-                              maxZoom: 19,
-                              errorTileCallback: (tile, error, stackTrace) {
-                                debugPrint(
-                                  '🔴 Cadastral overlay tile error at ${tile.coordinates}: $error',
-                                );
-                                if (stackTrace != null) {
-                                  debugPrint('   StackTrace: $stackTrace');
-                                }
-                              },
-                            );
-                          },
-                        ),
-                        // Forest roads overlay
-                        Consumer<MapProvider>(
-                          builder: (context, mapProvider, _) {
-                            // Only show if enabled and map is using Slovenian CRS
-                            if (!mapProvider.showForestRoadsOverlay ||
-                                _currentLayer.crs == null) {
-                              return const SizedBox.shrink();
-                            }
-                            return flutter_map.TileLayer(
-                              wmsOptions: WMSTileLayerOptions(
-                                baseUrl:
-                                    'https://prostor.zgs.gov.si/geoserver/wms?',
-                                layers: const ['pregledovalnik:gozdne_ceste'],
-                                styles: const ['gozdne_ceste'],
-                                format: 'image/png',
-                                transparent: true,
-                                crs: slovenianCrs,
-                              ),
-                              tileProvider: _tileProvider,
-                              userAgentPackageName: 'com.meshcore.sar',
-                              maxZoom: 19,
-                              errorTileCallback: (tile, error, stackTrace) {
-                                debugPrint(
-                                  '🔴 Forest roads overlay tile error at ${tile.coordinates}: $error',
-                                );
-                                if (stackTrace != null) {
-                                  debugPrint('   StackTrace: $stackTrace');
-                                }
-                              },
-                            );
-                          },
-                        ),
-                        // Hiking trails overlay
-                        Consumer<MapProvider>(
-                          builder: (context, mapProvider, _) {
-                            if (!mapProvider.showHikingTrailsOverlay ||
-                                _currentLayer.crs == null) {
-                              return const SizedBox.shrink();
-                            }
-                            return flutter_map.TileLayer(
-                              wmsOptions: WMSTileLayerOptions(
-                                baseUrl:
-                                    'https://prostor.zgs.gov.si/geoserver/wms?',
-                                layers: const [
-                                  'pregledovalnik:KGI_LINIJE_PLANINSKE_POTI_G',
-                                ],
-                                format: 'image/png',
-                                transparent: true,
-                                crs: slovenianCrs,
-                              ),
-                              tileProvider: _tileProvider,
-                              userAgentPackageName: 'com.meshcore.sar',
-                              maxZoom: 19,
-                              errorTileCallback: (tile, error, stackTrace) {
-                                debugPrint(
-                                  '🔴 Hiking trails overlay tile error at ${tile.coordinates}: $error',
-                                );
-                              },
-                            );
-                          },
-                        ),
-                        // Main roads overlay
-                        Consumer<MapProvider>(
-                          builder: (context, mapProvider, _) {
-                            if (!mapProvider.showMainRoadsOverlay ||
-                                _currentLayer.crs == null) {
-                              return const SizedBox.shrink();
-                            }
-                            return flutter_map.TileLayer(
-                              wmsOptions: WMSTileLayerOptions(
-                                baseUrl:
-                                    'https://prostor.zgs.gov.si/geoserver/wms?',
-                                layers: const [
-                                  'pregledovalnik:KGI_LINIJE_CESTE_G',
-                                ],
-                                format: 'image/png',
-                                transparent: true,
-                                crs: slovenianCrs,
-                              ),
-                              tileProvider: _tileProvider,
-                              userAgentPackageName: 'com.meshcore.sar',
-                              maxZoom: 19,
-                              errorTileCallback: (tile, error, stackTrace) {
-                                debugPrint(
-                                  '🔴 Main roads overlay tile error at ${tile.coordinates}: $error',
-                                );
-                              },
-                            );
-                          },
-                        ),
-                        // House numbers overlay
-                        Consumer<MapProvider>(
-                          builder: (context, mapProvider, _) {
-                            if (!mapProvider.showHouseNumbersOverlay ||
-                                _currentLayer.crs == null) {
-                              return const SizedBox.shrink();
-                            }
-                            return flutter_map.TileLayer(
-                              wmsOptions: WMSTileLayerOptions(
-                                baseUrl:
-                                    'https://prostor.zgs.gov.si/geoserver/wms?',
-                                layers: const [
-                                  'pregledovalnik:NEP_HISNE_STEVILKE',
-                                ],
-                                format: 'image/png',
-                                transparent: true,
-                                crs: slovenianCrs,
-                              ),
-                              tileProvider: _tileProvider,
-                              userAgentPackageName: 'com.meshcore.sar',
-                              maxZoom: 19,
-                              errorTileCallback: (tile, error, stackTrace) {
-                                debugPrint(
-                                  '🔴 House numbers overlay tile error at ${tile.coordinates}: $error',
-                                );
-                              },
-                            );
-                          },
-                        ),
-                        // Fire hazard zones overlay
-                        Consumer<MapProvider>(
-                          builder: (context, mapProvider, _) {
-                            if (!mapProvider.showFireHazardZonesOverlay ||
-                                _currentLayer.crs == null) {
-                              return const SizedBox.shrink();
-                            }
-                            return flutter_map.TileLayer(
-                              wmsOptions: WMSTileLayerOptions(
-                                baseUrl:
-                                    'https://prostor.zgs.gov.si/geoserver/wms?',
-                                layers: const [
-                                  'pregledovalnik:pozarna_ogrozenost',
-                                ],
-                                format: 'image/png',
-                                transparent: true,
-                                crs: slovenianCrs,
-                              ),
-                              tileProvider: _tileProvider,
-                              userAgentPackageName: 'com.meshcore.sar',
-                              maxZoom: 19,
-                              errorTileCallback: (tile, error, stackTrace) {
-                                debugPrint(
-                                  '🔴 Fire hazard zones overlay tile error at ${tile.coordinates}: $error',
-                                );
-                              },
-                            );
-                          },
-                        ),
-                        // Historical fires overlay
-                        Consumer<MapProvider>(
-                          builder: (context, mapProvider, _) {
-                            if (!mapProvider.showHistoricalFiresOverlay ||
-                                _currentLayer.crs == null) {
-                              return const SizedBox.shrink();
-                            }
-                            return flutter_map.TileLayer(
-                              wmsOptions: WMSTileLayerOptions(
-                                baseUrl:
-                                    'https://prostor.zgs.gov.si/geoserver/wms?',
-                                layers: const ['pregledovalnik:gozdni_pozari'],
-                                format: 'image/png',
-                                transparent: true,
-                                crs: slovenianCrs,
-                              ),
-                              tileProvider: _tileProvider,
-                              userAgentPackageName: 'com.meshcore.sar',
-                              maxZoom: 19,
-                              errorTileCallback: (tile, error, stackTrace) {
-                                debugPrint(
-                                  '🔴 Historical fires overlay tile error at ${tile.coordinates}: $error',
-                                );
-                              },
-                            );
-                          },
-                        ),
-                        // Firebreaks overlay
-                        Consumer<MapProvider>(
-                          builder: (context, mapProvider, _) {
-                            if (!mapProvider.showFirebreaksOverlay ||
-                                _currentLayer.crs == null) {
-                              return const SizedBox.shrink();
-                            }
-                            return flutter_map.TileLayer(
-                              wmsOptions: WMSTileLayerOptions(
-                                baseUrl:
-                                    'https://prostor.zgs.gov.si/geoserver/wms?',
-                                layers: const [
-                                  'pregledovalnik:protipozarne_preseke',
-                                ],
-                                format: 'image/png',
-                                transparent: true,
-                                crs: slovenianCrs,
-                              ),
-                              tileProvider: _tileProvider,
-                              userAgentPackageName: 'com.meshcore.sar',
-                              maxZoom: 19,
-                              errorTileCallback: (tile, error, stackTrace) {
-                                debugPrint(
-                                  '🔴 Firebreaks overlay tile error at ${tile.coordinates}: $error',
-                                );
-                              },
-                            );
-                          },
-                        ),
-                        // Kras fire zones overlay
-                        Consumer<MapProvider>(
-                          builder: (context, mapProvider, _) {
-                            if (!mapProvider.showKrasFireZonesOverlay ||
-                                _currentLayer.crs == null) {
-                              return const SizedBox.shrink();
-                            }
-                            return flutter_map.TileLayer(
-                              wmsOptions: WMSTileLayerOptions(
-                                baseUrl:
-                                    'https://prostor.zgs.gov.si/geoserver/wms?',
-                                layers: const ['pregledovalnik:pozarisce_kras'],
-                                format: 'image/png',
-                                transparent: true,
-                                crs: slovenianCrs,
-                              ),
-                              tileProvider: _tileProvider,
-                              userAgentPackageName: 'com.meshcore.sar',
-                              maxZoom: 19,
-                              errorTileCallback: (tile, error, stackTrace) {
-                                debugPrint(
-                                  '🔴 Kras fire zones overlay tile error at ${tile.coordinates}: $error',
-                                );
-                              },
-                            );
-                          },
-                        ),
-                        // Place names overlay
-                        Consumer<MapProvider>(
-                          builder: (context, mapProvider, _) {
-                            if (!mapProvider.showPlaceNamesOverlay ||
-                                _currentLayer.crs == null) {
-                              return const SizedBox.shrink();
-                            }
-                            return flutter_map.TileLayer(
-                              wmsOptions: WMSTileLayerOptions(
-                                baseUrl:
-                                    'https://prostor.zgs.gov.si/geoserver/wms?',
-                                layers: const [
-                                  'pregledovalnik:zemljepisna_imena',
-                                ],
-                                format: 'image/png',
-                                transparent: true,
-                                crs: slovenianCrs,
-                              ),
-                              tileProvider: _tileProvider,
-                              userAgentPackageName: 'com.meshcore.sar',
-                              maxZoom: 19,
-                              errorTileCallback: (tile, error, stackTrace) {
-                                debugPrint(
-                                  '🔴 Place names overlay tile error at ${tile.coordinates}: $error',
-                                );
-                              },
-                            );
-                          },
-                        ),
-                        // Municipality borders overlay
-                        Consumer<MapProvider>(
-                          builder: (context, mapProvider, _) {
-                            if (!mapProvider.showMunicipalityBordersOverlay ||
-                                _currentLayer.crs == null) {
-                              return const SizedBox.shrink();
-                            }
-                            return flutter_map.TileLayer(
-                              wmsOptions: WMSTileLayerOptions(
-                                baseUrl:
-                                    'https://prostor.zgs.gov.si/geoserver/wms?',
-                                layers: const ['pregledovalnik:NEP_RPE_OBCINE'],
-                                styles: const ['obcine'],
-                                format: 'image/png',
-                                transparent: true,
-                                crs: slovenianCrs,
-                              ),
-                              tileProvider: _tileProvider,
-                              userAgentPackageName: 'com.meshcore.sar',
-                              maxZoom: 19,
-                              errorTileCallback: (tile, error, stackTrace) {
-                                debugPrint(
-                                  '🔴 Municipality borders overlay tile error at ${tile.coordinates}: $error',
-                                );
-                              },
-                            );
-                          },
-                        ),
-                        // Imported trail layer (rendered at bottom for reference)
-                        Consumer<MapProvider>(
-                          builder: (context, mapProvider, _) {
-                            if (mapProvider.importedTrail == null ||
-                                mapProvider.importedTrail!.points.length < 2) {
-                              return const SizedBox.shrink();
-                            }
-
-                            return PolylineLayer(
-                              polylines: [
-                                Polyline(
-                                  points:
-                                      mapProvider.importedTrail!.latLngPoints,
-                                  color: Colors.green.withValues(alpha: 0.7),
-                                  strokeWidth: 3.0,
-                                  borderColor: Colors.white.withValues(
-                                    alpha: 0.4,
-                                  ),
-                                  borderStrokeWidth: 1.0,
-                                  // DOTTED pattern to distinguish from other trails
-                                  pattern: StrokePattern.dotted(
-                                    spacingFactor: 2,
+                      // SAR markers
+                      ..._markerService.generateSarMarkers(
+                        sarMarkers: sarMarkers,
+                        context: context,
+                        mapRotation: _getMapRotation(),
+                        onTap: (marker) {
+                          // Navigate to the corresponding message in Messages tab
+                          messagesProvider.navigateToMessage(marker.id);
+                          widget.onNavigateToMessages?.call();
+                        },
+                      ),
+                      // User location marker with directional pointer
+                      if (_markerService.generateUserLocationMarker(
+                            position: _locationService.currentPosition,
+                            heading: _currentHeading,
+                            context: context,
+                          ) !=
+                          null)
+                        _markerService.generateUserLocationMarker(
+                          position: _locationService.currentPosition,
+                          heading: _currentHeading,
+                          context: context,
+                        )!,
+                      // Measurement point 1 marker
+                      if (drawingProvider.measurementPoint1 != null)
+                        Marker(
+                          point: drawingProvider.measurementPoint1!,
+                          width: 60,
+                          height: 80,
+                          rotate: false,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.yellow.shade700,
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: const Text(
+                                  'Start',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
                                   ),
                                 ),
-                              ],
-                            );
-                          },
-                        ),
-                        // Contact trail polylines (rendered before user trail and markers)
-                        Consumer<MapProvider>(
-                          builder: (context, mapProvider, _) {
-                            // Determine which contacts to show trails for
-                            final contactsToShow =
-                                mapProvider.showAllContactTrails
-                                ? contactsWithLocation // Show all when master toggle is ON
-                                : contactsWithLocation.where(
-                                    (contact) =>
-                                        mapProvider.isContactPathVisible(
-                                          contact.publicKeyHex,
-                                        ),
-                                  ); // Individual toggles
-
-                            return PolylineLayer(
-                              polylines: contactsToShow
-                                  .where(
-                                    (contact) =>
-                                        contact.advertHistory.length >= 2,
-                                  )
-                                  .map((contact) {
-                                    // Use TrailColorService for consistent, emoji-based colors
-                                    final color =
-                                        TrailColorService.getTrailColor(
-                                          contact,
-                                        );
-
-                                    return Polyline(
-                                      points: contact.advertHistory
-                                          .map((advert) => advert.location)
-                                          .toList(),
-                                      color: color.withValues(
-                                        alpha: 0.95,
-                                      ), // More opaque for better visibility
-                                      strokeWidth:
-                                          4.5, // Thicker for better visibility on all map backgrounds
-                                      borderColor: Colors.white.withValues(
-                                        alpha: 0.6,
-                                      ), // Stronger border contrast
-                                      borderStrokeWidth: 2.0, // Wider border
-                                      // DASHED pattern to distinguish from solid user trail
-                                      pattern: StrokePattern.dashed(
-                                        segments: [8, 4],
-                                      ),
-                                    );
-                                  })
-                                  .toList(),
-                            );
-                          },
-                        ),
-                        // Location trail layer (rendered after paths, before drawings)
-                        const LocationTrailLayer(),
-                        // Measurement line layer (rendered before drawings)
-                        if (drawingProvider.measurementPoint1 != null &&
-                            drawingProvider.measurementPoint2 != null)
-                          PolylineLayer(
-                            polylines: [
-                              Polyline(
-                                points: [
-                                  drawingProvider.measurementPoint1!,
-                                  drawingProvider.measurementPoint2!,
-                                ],
-                                color: Colors.yellow.withValues(alpha: 0.8),
-                                strokeWidth: 3.0,
-                                borderColor: Colors.black.withValues(
-                                  alpha: 0.5,
+                              ),
+                              const SizedBox(height: 2),
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.yellow,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: Colors.white,
+                                    width: 2,
+                                  ),
+                                  boxShadow: const [
+                                    BoxShadow(
+                                      color: Colors.black26,
+                                      blurRadius: 4,
+                                      offset: Offset(0, 2),
+                                    ),
+                                  ],
                                 ),
-                                borderStrokeWidth: 1.0,
-                                pattern: StrokePattern.dashed(
-                                  segments: [10, 5],
+                                padding: const EdgeInsets.all(6),
+                                child: const Icon(
+                                  Icons.location_on,
+                                  color: Colors.white,
+                                  size: 18,
                                 ),
                               ),
                             ],
                           ),
-                        // Drawing layer (rendered after paths, before markers)
-                        DrawingLayer(
-                          drawings: drawingProvider.drawings,
-                          previewDrawing: drawingProvider.getPreviewDrawing(),
-                          isSimpleMode: isSimpleMode,
                         ),
-                        MarkerLayer(
-                          markers: [
-                            // Contact markers
-                            ..._markerService.generateContactMarkers(
-                              contacts: contactsWithLocation,
-                              context: context,
-                              mapRotation: _getMapRotation(),
-                              userPosition: _locationService.currentPosition,
-                              onTap: (contact) {
-                                _showDetailedCompassWithContact(
-                                  context,
-                                  contactsProvider.contactsWithLocation,
-                                  messagesProvider.sarMarkers,
-                                  contact,
-                                );
-                              },
-                            ),
-                            // SAR markers
-                            ..._markerService.generateSarMarkers(
-                              sarMarkers: sarMarkers,
-                              context: context,
-                              mapRotation: _getMapRotation(),
-                              onTap: (marker) {
-                                // Navigate to the corresponding message in Messages tab
-                                messagesProvider.navigateToMessage(marker.id);
-                                widget.onNavigateToMessages?.call();
-                              },
-                            ),
-                            // User location marker with directional pointer
-                            if (_markerService.generateUserLocationMarker(
-                                  position: _locationService.currentPosition,
-                                  heading: _currentHeading,
-                                  context: context,
-                                ) !=
-                                null)
-                              _markerService.generateUserLocationMarker(
-                                position: _locationService.currentPosition,
-                                heading: _currentHeading,
-                                context: context,
-                              )!,
-                            // Measurement point 1 marker
-                            if (drawingProvider.measurementPoint1 != null)
-                              Marker(
-                                point: drawingProvider.measurementPoint1!,
-                                width: 60,
-                                height: 80,
-                                rotate: false,
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 6,
-                                        vertical: 2,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: Colors.yellow.shade700,
-                                        borderRadius: BorderRadius.circular(4),
-                                      ),
-                                      child: const Text(
-                                        'Start',
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 2),
-                                    Container(
-                                      decoration: BoxDecoration(
-                                        color: Colors.yellow,
-                                        shape: BoxShape.circle,
-                                        border: Border.all(
-                                          color: Colors.white,
-                                          width: 2,
-                                        ),
-                                        boxShadow: const [
-                                          BoxShadow(
-                                            color: Colors.black26,
-                                            blurRadius: 4,
-                                            offset: Offset(0, 2),
-                                          ),
-                                        ],
-                                      ),
-                                      padding: const EdgeInsets.all(6),
-                                      child: const Icon(
-                                        Icons.location_on,
-                                        color: Colors.white,
-                                        size: 18,
-                                      ),
-                                    ),
-                                  ],
+                      // Measurement point 2 marker
+                      if (drawingProvider.measurementPoint2 != null)
+                        Marker(
+                          point: drawingProvider.measurementPoint2!,
+                          width: 60,
+                          height: 80,
+                          rotate: false,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 2,
                                 ),
-                              ),
-                            // Measurement point 2 marker
-                            if (drawingProvider.measurementPoint2 != null)
-                              Marker(
-                                point: drawingProvider.measurementPoint2!,
-                                width: 60,
-                                height: 80,
-                                rotate: false,
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 6,
-                                        vertical: 2,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: Colors.yellow.shade700,
-                                        borderRadius: BorderRadius.circular(4),
-                                      ),
-                                      child: const Text(
-                                        'End',
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 2),
-                                    Container(
-                                      decoration: BoxDecoration(
-                                        color: Colors.yellow,
-                                        shape: BoxShape.circle,
-                                        border: Border.all(
-                                          color: Colors.white,
-                                          width: 2,
-                                        ),
-                                        boxShadow: const [
-                                          BoxShadow(
-                                            color: Colors.black26,
-                                            blurRadius: 4,
-                                            offset: Offset(0, 2),
-                                          ),
-                                        ],
-                                      ),
-                                      padding: const EdgeInsets.all(6),
-                                      child: const Icon(
-                                        Icons.location_on,
-                                        color: Colors.white,
-                                        size: 18,
-                                      ),
-                                    ),
-                                  ],
+                                decoration: BoxDecoration(
+                                  color: Colors.yellow.shade700,
+                                  borderRadius: BorderRadius.circular(4),
                                 ),
-                              ),
-                            // Dropped pin marker with label
-                            if (_droppedPinLocation != null)
-                              Marker(
-                                key: _pinMarkerKey,
-                                point: _droppedPinLocation!,
-                                width: 200,
-                                height: 100,
-                                rotate: false,
-                                child: GestureDetector(
-                                  onTap: () {
-                                    // Only open dialog if not dragging
-                                    if (!_isDraggingPin) {
-                                      _showSarDialogWithLocation(
-                                        _droppedPinLocation!,
-                                      );
-                                      // Clear the pin after opening dialog
-                                      setState(() {
-                                        _droppedPinLocation = null;
-                                      });
-                                    }
-                                  },
-                                  child: Opacity(
-                                    // Make pin slightly transparent while dragging
-                                    opacity: _isDraggingPin ? 0.7 : 1.0,
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        // Label
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 12,
-                                            vertical: 6,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: _isDraggingPin
-                                                ? Colors.orange
-                                                : Colors.red,
-                                            borderRadius: BorderRadius.circular(
-                                              8,
-                                            ),
-                                            boxShadow: [
-                                              BoxShadow(
-                                                color: Colors.black.withValues(
-                                                  alpha: 0.3,
-                                                ),
-                                                blurRadius: 4,
-                                                offset: const Offset(0, 2),
-                                              ),
-                                            ],
-                                          ),
-                                          child: Text(
-                                            _isDraggingPin
-                                                ? AppLocalizations.of(
-                                                    context,
-                                                  )!.dragToPosition
-                                                : AppLocalizations.of(
-                                                    context,
-                                                  )!.createSarMarker,
-                                            style: const TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                        ),
-                                        const SizedBox(height: 4),
-                                        // Pin icon pointing down
-                                        Icon(
-                                          Icons.location_pin,
-                                          color: _isDraggingPin
-                                              ? Colors.orange
-                                              : Colors.red,
-                                          size: 48,
-                                          shadows: const [
-                                            Shadow(
-                                              color: Colors.black26,
-                                              blurRadius: 4,
-                                              offset: Offset(0, 2),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
+                                child: const Text(
+                                  'End',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
                                   ),
                                 ),
                               ),
-                          ],
+                              const SizedBox(height: 2),
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.yellow,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: Colors.white,
+                                    width: 2,
+                                  ),
+                                  boxShadow: const [
+                                    BoxShadow(
+                                      color: Colors.black26,
+                                      blurRadius: 4,
+                                      offset: Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                padding: const EdgeInsets.all(6),
+                                child: const Icon(
+                                  Icons.location_on,
+                                  color: Colors.white,
+                                  size: 18,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                        // Drawing markers layer (delete buttons on drawings, only shown when in drawing mode)
-                        DrawingMarkersLayer(
-                          drawings: drawingProvider.drawings,
-                          showDeleteButtons: drawingProvider.isDrawing,
-                          isSimpleMode: isSimpleMode,
-                          onDeleteDrawing: (drawingId) {
-                            drawingProvider.removeDrawing(drawingId);
-                          },
-                          onTapDrawing: (drawing) {
-                            // Navigate to the corresponding message in Messages tab
-                            if (drawing.messageId != null) {
-                              messagesProvider.navigateToMessage(
-                                drawing.messageId!,
-                              );
-                              widget.onNavigateToMessages?.call();
-                            }
-                          },
+                      // Dropped pin marker with label
+                      if (_droppedPinLocation != null)
+                        Marker(
+                          key: _pinMarkerKey,
+                          point: _droppedPinLocation!,
+                          width: 200,
+                          height: 100,
+                          rotate: false,
+                          child: GestureDetector(
+                            onTap: () {
+                              // Only open dialog if not dragging
+                              if (!_isDraggingPin) {
+                                _showSarDialogWithLocation(
+                                  _droppedPinLocation!,
+                                );
+                                // Clear the pin after opening dialog
+                                setState(() {
+                                  _droppedPinLocation = null;
+                                });
+                              }
+                            },
+                            child: Opacity(
+                              // Make pin slightly transparent while dragging
+                              opacity: _isDraggingPin ? 0.7 : 1.0,
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  // Label
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 6,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: _isDraggingPin
+                                          ? Colors.orange
+                                          : Colors.red,
+                                      borderRadius: BorderRadius.circular(8),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withValues(
+                                            alpha: 0.3,
+                                          ),
+                                          blurRadius: 4,
+                                          offset: const Offset(0, 2),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Text(
+                                      _isDraggingPin
+                                          ? AppLocalizations.of(
+                                              context,
+                                            )!.dragToPosition
+                                          : AppLocalizations.of(
+                                              context,
+                                            )!.createSarMarker,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  // Pin icon pointing down
+                                  Icon(
+                                    Icons.location_pin,
+                                    color: _isDraggingPin
+                                        ? Colors.orange
+                                        : Colors.red,
+                                    size: 48,
+                                    shadows: const [
+                                      Shadow(
+                                        color: Colors.black26,
+                                        blurRadius: 4,
+                                        offset: Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
                         ),
-                      ],
-                    ),
+                    ],
                   ),
+                  // Drawing markers layer (delete buttons on drawings, only shown when in drawing mode)
+                  DrawingMarkersLayer(
+                    drawings: drawingProvider.drawings,
+                    showDeleteButtons: drawingProvider.isDrawing,
+                    onDeleteDrawing: (drawingId) {
+                      drawingProvider.removeDrawing(drawingId);
+                    },
+                    onTapDrawing: (drawing) {
+                      // Navigate to the corresponding message in Messages tab
+                      if (drawing.messageId != null) {
+                        messagesProvider.navigateToMessage(drawing.messageId!);
+                        widget.onNavigateToMessages?.call();
+                      }
+                    },
+                  ),
+                ],
+              ),
+            ),
             // Exit fullscreen button - top left (only shown in fullscreen mode)
             if (_isFullscreen)
               Positioned(
@@ -2250,15 +2131,6 @@ class _MapTabState extends State<MapTab> with AutomaticKeepAliveClientMixin {
                 right: 16,
                 child: Column(
                   children: [
-                    // Drawing toolbar (hidden in simple mode)
-                    Consumer<AppProvider>(
-                      builder: (context, appProvider, _) {
-                        if (appProvider.isSimpleMode) {
-                          return const SizedBox.shrink();
-                        }
-                        return const DrawingToolbar();
-                      },
-                    ),
                     // Hide other buttons when in drawing mode
                     if (!drawingProvider.isDrawing) ...[
                       // Current Location - always center to GPS
@@ -2351,49 +2223,29 @@ class _MapTabState extends State<MapTab> with AutomaticKeepAliveClientMixin {
                       ),
                       const SizedBox(height: 8),
                     ],
-                    // In simple mode: show ruler FAB directly
-                    Consumer<AppProvider>(
-                      builder: (context, appProvider, _) {
-                        if (!appProvider.isSimpleMode) {
-                          return const SizedBox.shrink();
+                    FloatingActionButton.small(
+                      heroTag: 'ruler_tool',
+                      backgroundColor:
+                          drawingProvider.drawingMode == DrawingMode.measure
+                          ? Theme.of(context).colorScheme.primary
+                          : null,
+                      onPressed: () {
+                        if (drawingProvider.drawingMode ==
+                            DrawingMode.measure) {
+                          drawingProvider.exitDrawingMode();
+                        } else {
+                          drawingProvider.setDrawingMode(DrawingMode.measure);
                         }
-                        // Show ruler button
-                        return Column(
-                          children: [
-                            FloatingActionButton.small(
-                              heroTag: 'ruler_tool',
-                              backgroundColor:
-                                  drawingProvider.drawingMode ==
-                                      DrawingMode.measure
-                                  ? Theme.of(context).colorScheme.primary
-                                  : null,
-                              onPressed: () {
-                                if (drawingProvider.drawingMode ==
-                                    DrawingMode.measure) {
-                                  // Exit measurement mode
-                                  drawingProvider.exitDrawingMode();
-                                } else {
-                                  // Enter measurement mode
-                                  drawingProvider.setDrawingMode(
-                                    DrawingMode.measure,
-                                  );
-                                }
-                              },
-                              child: Icon(
-                                Icons.straighten,
-                                color:
-                                    drawingProvider.drawingMode ==
-                                        DrawingMode.measure
-                                    ? Colors.white
-                                    : null,
-                              ),
-                            ),
-                            if (!drawingProvider.isDrawing)
-                              const SizedBox(height: 8),
-                          ],
-                        );
                       },
+                      child: Icon(
+                        Icons.straighten,
+                        color:
+                            drawingProvider.drawingMode == DrawingMode.measure
+                            ? Colors.white
+                            : null,
+                      ),
                     ),
+                    if (!drawingProvider.isDrawing) const SizedBox(height: 8),
                     // Continue with other buttons when not in drawing mode
                     if (!drawingProvider.isDrawing) ...[
                       // Trail controls button
@@ -2405,30 +2257,21 @@ class _MapTabState extends State<MapTab> with AutomaticKeepAliveClientMixin {
                         child: const Icon(Icons.layers),
                       ),
                       const SizedBox(height: 8),
-                      // In simple mode: show fullscreen button directly
-                      // In normal mode: show options menu (which includes fullscreen)
-                      if (context.watch<AppProvider>().isSimpleMode)
-                        FloatingActionButton.small(
-                          heroTag: 'fullscreen_toggle',
-                          onPressed: () {
-                            setState(() {
-                              _isFullscreen = !_isFullscreen;
-                            });
-                            _saveSettings();
-                            widget.onFullscreenChanged?.call(_isFullscreen);
-                          },
-                          child: Icon(
-                            _isFullscreen
-                                ? Icons.fullscreen_exit
-                                : Icons.fullscreen,
-                          ),
-                        )
-                      else
-                        FloatingActionButton.small(
-                          heroTag: 'options_menu',
-                          onPressed: () => _showOptionsMenu(context),
-                          child: const Icon(Icons.more_vert),
+                      FloatingActionButton.small(
+                        heroTag: 'fullscreen_toggle',
+                        onPressed: () {
+                          setState(() {
+                            _isFullscreen = !_isFullscreen;
+                          });
+                          _saveSettings();
+                          widget.onFullscreenChanged?.call(_isFullscreen);
+                        },
+                        child: Icon(
+                          _isFullscreen
+                              ? Icons.fullscreen_exit
+                              : Icons.fullscreen,
                         ),
+                      ),
                     ],
                   ],
                 ),

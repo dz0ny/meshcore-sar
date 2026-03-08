@@ -43,8 +43,7 @@ class AppProvider with ChangeNotifier {
   bool _isInitialized = false;
   bool get isInitialized => _isInitialized;
 
-  bool _isSimpleMode = true;
-  bool get isSimpleMode => _isSimpleMode;
+  bool get isSimpleMode => true;
 
   bool _isMapEnabled = true;
   bool get isMapEnabled => _isMapEnabled;
@@ -94,7 +93,6 @@ class AppProvider with ChangeNotifier {
   }) {
     _setupCallbacks();
     _initializeLocationTracking();
-    _loadSimpleMode();
     _loadMapEnabled();
     _loadContactsEnabled();
     _loadSensorsEnabled();
@@ -221,29 +219,6 @@ class AppProvider with ChangeNotifier {
           )
         : null;
     return contact?.advName;
-  }
-
-  /// Load simple mode setting from shared preferences
-  Future<void> _loadSimpleMode() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      _isSimpleMode = prefs.getBool('simple_mode') ?? true;
-      notifyListeners();
-    } catch (e) {
-      debugPrint('Error loading simple mode setting: $e');
-    }
-  }
-
-  /// Toggle simple mode on/off
-  Future<void> toggleSimpleMode(bool enabled) async {
-    try {
-      _isSimpleMode = enabled;
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool('simple_mode', enabled);
-      notifyListeners();
-    } catch (e) {
-      debugPrint('Error saving simple mode setting: $e');
-    }
   }
 
   /// Load map enabled setting from shared preferences
@@ -1214,10 +1189,8 @@ class AppProvider with ChangeNotifier {
       // Sync channels to get channel names
       // In simple mode: only sync first 5 channels for faster startup
       // In normal mode: sync all channels (up to device max)
-      final channelsToSync = _isSimpleMode ? 5 : null;
-      debugPrint(
-        '📻 [AppProvider] Syncing channels${_isSimpleMode ? ' (simple mode: max 5)' : ''}...',
-      );
+      const channelsToSync = 5;
+      debugPrint('📻 [AppProvider] Syncing channels (simple mode: max 5)...');
       await connectionProvider.syncChannels(maxChannels: channelsToSync);
       debugPrint('✅ [AppProvider] Channel sync complete');
 
@@ -2220,7 +2193,7 @@ class AppProvider with ChangeNotifier {
       await connectionProvider.getContacts();
 
       // Sync channels (respect simple mode settings)
-      final channelsToSync = _isSimpleMode ? 5 : null;
+      const channelsToSync = 5;
       await connectionProvider.syncChannels(maxChannels: channelsToSync);
 
       // Messages are automatically synced via PUSH_CODE_MSG_WAITING events

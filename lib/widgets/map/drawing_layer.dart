@@ -8,14 +8,8 @@ import '../../l10n/app_localizations.dart';
 class DrawingLayer extends StatelessWidget {
   final List<MapDrawing> drawings;
   final MapDrawing? previewDrawing;
-  final bool isSimpleMode;
 
-  const DrawingLayer({
-    super.key,
-    required this.drawings,
-    this.previewDrawing,
-    this.isSimpleMode = false,
-  });
+  const DrawingLayer({super.key, required this.drawings, this.previewDrawing});
 
   @override
   Widget build(BuildContext context) {
@@ -48,8 +42,7 @@ class DrawingLayer extends StatelessWidget {
       strokeWidth = 4.0;
     } else if (drawing.isReceived) {
       // Received drawing from another node
-      // In simple mode: solid (opacity 1.0), in normal mode: translucent (0.7)
-      opacity = isSimpleMode ? 1.0 : 0.7;
+      opacity = 1.0;
       strokeWidth = 3.0;
     } else {
       // Local drawing (solid line, normal thickness)
@@ -87,7 +80,6 @@ class DrawingMarkersLayer extends StatelessWidget {
   final Function(String drawingId)? onDeleteDrawing;
   final Function(MapDrawing drawing)? onTapDrawing;
   final bool showDeleteButtons;
-  final bool isSimpleMode;
 
   const DrawingMarkersLayer({
     super.key,
@@ -95,7 +87,6 @@ class DrawingMarkersLayer extends StatelessWidget {
     this.onDeleteDrawing,
     this.onTapDrawing,
     this.showDeleteButtons = false,
-    this.isSimpleMode = false,
   });
 
   @override
@@ -132,73 +123,7 @@ class DrawingMarkersLayer extends StatelessWidget {
                       ),
                     ],
                   ),
-                  child: const Icon(
-                    Icons.close,
-                    color: Colors.white,
-                    size: 20,
-                  ),
-                ),
-              ),
-            ),
-          );
-        } else if (drawing.isReceived && drawing.senderName != null && !isSimpleMode) {
-          // Show sender badge for received drawings (when not in drawing mode and not in simple mode)
-          // Make it tappable if message ID is available
-          markers.add(
-            Marker(
-              point: centerPoint,
-              width: 120,
-              height: 30,
-              child: GestureDetector(
-                onTap: drawing.messageId != null && onTapDrawing != null
-                    ? () => onTapDrawing!(drawing)
-                    : null,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: drawing.color.withValues(alpha: 0.9),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.white, width: 1.5),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.3),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(
-                        Icons.person,
-                        color: Colors.white,
-                        size: 14,
-                      ),
-                      const SizedBox(width: 4),
-                      Flexible(
-                        child: Text(
-                          drawing.senderName!,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 1,
-                        ),
-                      ),
-                      // Add indicator that this is tappable
-                      if (drawing.messageId != null && onTapDrawing != null) ...[
-                        const SizedBox(width: 4),
-                        const Icon(
-                          Icons.arrow_forward_ios,
-                          color: Colors.white,
-                          size: 10,
-                        ),
-                      ],
-                    ],
-                  ),
+                  child: const Icon(Icons.close, color: Colors.white, size: 20),
                 ),
               ),
             ),
@@ -236,9 +161,7 @@ class DrawingMarkersLayer extends StatelessWidget {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(AppLocalizations.of(context)!.deleteDrawing),
-        content: Text(
-          'Delete this ${drawing.type.name}?',
-        ),
+        content: Text('Delete this ${drawing.type.name}?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -249,9 +172,7 @@ class DrawingMarkersLayer extends StatelessWidget {
               Navigator.pop(context);
               onDeleteDrawing?.call(drawing.id);
             },
-            style: TextButton.styleFrom(
-              foregroundColor: Colors.red,
-            ),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
             child: Text(AppLocalizations.of(context)!.delete),
           ),
         ],

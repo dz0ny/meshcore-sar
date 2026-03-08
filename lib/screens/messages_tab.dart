@@ -1436,10 +1436,6 @@ class _MessagesTabState extends State<MessagesTab> {
     // Get all recent messages
     final allMessages = messagesProvider.getRecentMessages(count: 100);
 
-    // Get simple mode setting from AppProvider
-    final appProvider = context.read<AppProvider>();
-    final isSimpleMode = appProvider.isSimpleMode;
-
     List<Message> filteredMessages;
 
     // If channel destination is selected, filter by selected channel.
@@ -1492,14 +1488,9 @@ class _MessagesTabState extends State<MessagesTab> {
       filteredMessages = allMessages;
     }
 
-    // In simple mode, filter out system messages (toast logs)
-    if (isSimpleMode) {
-      filteredMessages = filteredMessages
-          .where((message) => !message.isSystemMessage)
-          .toList();
-    }
-
-    return filteredMessages;
+    return filteredMessages
+        .where((message) => !message.isSystemMessage)
+        .toList();
   }
 
   void _handleMessageTap(Message message) {

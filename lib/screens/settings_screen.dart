@@ -866,19 +866,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
           _buildSettingsCard([
             Consumer<AppProvider>(
               builder: (context, appProvider, child) => SwitchListTile(
-                secondary: const Icon(Icons.visibility_off),
-                title: Text(AppLocalizations.of(context)!.simpleMode),
-                subtitle: Text(
-                  AppLocalizations.of(context)!.simpleModeDescription,
-                ),
-                value: appProvider.isSimpleMode,
-                onChanged: (value) async {
-                  await appProvider.toggleSimpleMode(value);
-                },
-              ),
-            ),
-            Consumer<AppProvider>(
-              builder: (context, appProvider, child) => SwitchListTile(
                 secondary: const Icon(Icons.map_outlined),
                 title: Text(AppLocalizations.of(context)!.disableMap),
                 subtitle: Text(

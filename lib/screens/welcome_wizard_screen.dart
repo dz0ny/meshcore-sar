@@ -15,7 +15,7 @@ class WelcomeWizardScreen extends StatefulWidget {
 class _WelcomeWizardScreenState extends State<WelcomeWizardScreen> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
-  static const int _totalPages = 6;
+  static const int _totalPages = 5;
 
   @override
   void dispose() {
@@ -99,7 +99,6 @@ class _WelcomeWizardScreenState extends State<WelcomeWizardScreen> {
                 children: [
                   _buildWelcomePage(context, l10n, colorScheme),
                   _buildConnectingPage(context, l10n, colorScheme),
-                  _buildSimpleModePage(context, l10n, colorScheme),
                   _buildChannelPage(context, l10n, colorScheme),
                   _buildContactsPage(context, l10n, colorScheme),
                   _buildMapPage(context, l10n, colorScheme),
@@ -182,42 +181,9 @@ class _WelcomeWizardScreenState extends State<WelcomeWizardScreen> {
       title: l10n.wizardConnectingTitle,
       description: l10n.wizardConnectingDescription,
       features: [
-        _FeatureItem(
-          icon: Icons.radio,
-          text: l10n.wizardConnectingFeature1,
-        ),
-        _FeatureItem(
-          icon: Icons.link,
-          text: l10n.wizardConnectingFeature2,
-        ),
-        _FeatureItem(
-          icon: Icons.wifi_off,
-          text: l10n.wizardConnectingFeature3,
-        ),
-      ],
-      colorScheme: colorScheme,
-    );
-  }
-
-  Widget _buildSimpleModePage(
-    BuildContext context,
-    AppLocalizations l10n,
-    ColorScheme colorScheme,
-  ) {
-    return _buildPage(
-      icon: Icons.toggle_on,
-      iconColor: Colors.green,
-      title: l10n.wizardSimpleModeTitle,
-      description: l10n.wizardSimpleModeDescription,
-      features: [
-        _FeatureItem(
-          icon: Icons.check_circle_outline,
-          text: l10n.wizardSimpleModeFeature1,
-        ),
-        _FeatureItem(
-          icon: Icons.settings,
-          text: l10n.wizardSimpleModeFeature2,
-        ),
+        _FeatureItem(icon: Icons.radio, text: l10n.wizardConnectingFeature1),
+        _FeatureItem(icon: Icons.link, text: l10n.wizardConnectingFeature2),
+        _FeatureItem(icon: Icons.wifi_off, text: l10n.wizardConnectingFeature3),
       ],
       colorScheme: colorScheme,
     );
@@ -234,18 +200,9 @@ class _WelcomeWizardScreenState extends State<WelcomeWizardScreen> {
       title: l10n.wizardChannelTitle,
       description: l10n.wizardChannelDescription,
       features: [
-        _FeatureItem(
-          icon: Icons.public,
-          text: l10n.wizardChannelFeature1,
-        ),
-        _FeatureItem(
-          icon: Icons.groups,
-          text: l10n.wizardChannelFeature2,
-        ),
-        _FeatureItem(
-          icon: Icons.send,
-          text: l10n.wizardChannelFeature3,
-        ),
+        _FeatureItem(icon: Icons.public, text: l10n.wizardChannelFeature1),
+        _FeatureItem(icon: Icons.groups, text: l10n.wizardChannelFeature2),
+        _FeatureItem(icon: Icons.send, text: l10n.wizardChannelFeature3),
       ],
       colorScheme: colorScheme,
     );
@@ -262,14 +219,8 @@ class _WelcomeWizardScreenState extends State<WelcomeWizardScreen> {
       title: l10n.wizardContactsTitle,
       description: l10n.wizardContactsDescription,
       features: [
-        _FeatureItem(
-          icon: Icons.person_add,
-          text: l10n.wizardContactsFeature1,
-        ),
-        _FeatureItem(
-          icon: Icons.chat,
-          text: l10n.wizardContactsFeature2,
-        ),
+        _FeatureItem(icon: Icons.person_add, text: l10n.wizardContactsFeature1),
+        _FeatureItem(icon: Icons.chat, text: l10n.wizardContactsFeature2),
         _FeatureItem(
           icon: Icons.battery_std,
           text: l10n.wizardContactsFeature3,
@@ -290,22 +241,13 @@ class _WelcomeWizardScreenState extends State<WelcomeWizardScreen> {
       title: l10n.wizardMapTitle,
       description: l10n.wizardMapDescription,
       features: [
-        _FeatureItem(
-          icon: Icons.location_on,
-          text: l10n.wizardMapFeature1,
-        ),
+        _FeatureItem(icon: Icons.location_on, text: l10n.wizardMapFeature1),
         _FeatureItem(
           icon: Icons.person_pin_circle,
           text: l10n.wizardMapFeature2,
         ),
-        _FeatureItem(
-          icon: Icons.offline_pin,
-          text: l10n.wizardMapFeature3,
-        ),
-        _FeatureItem(
-          icon: Icons.draw,
-          text: l10n.wizardMapFeature4,
-        ),
+        _FeatureItem(icon: Icons.offline_pin, text: l10n.wizardMapFeature3),
+        _FeatureItem(icon: Icons.draw, text: l10n.wizardMapFeature4),
       ],
       colorScheme: colorScheme,
     );
@@ -332,20 +274,16 @@ class _WelcomeWizardScreenState extends State<WelcomeWizardScreen> {
               color: iconColor.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
-            child: Icon(
-              icon,
-              size: 80,
-              color: iconColor,
-            ),
+            child: Icon(icon, size: 80, color: iconColor),
           ),
           const SizedBox(height: 32),
           // Title
           Text(
             title,
             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: colorScheme.onSurface,
-                ),
+              fontWeight: FontWeight.bold,
+              color: colorScheme.onSurface,
+            ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 16),
@@ -353,36 +291,33 @@ class _WelcomeWizardScreenState extends State<WelcomeWizardScreen> {
           Text(
             description,
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: colorScheme.onSurface.withValues(alpha: 0.7),
-                  height: 1.5,
-                ),
+              color: colorScheme.onSurface.withValues(alpha: 0.7),
+              height: 1.5,
+            ),
             textAlign: TextAlign.center,
           ),
           if (features != null && features.isNotEmpty) ...[
             const SizedBox(height: 32),
             // Features list
-            ...features.map((feature) => Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8.0),
-                  child: Row(
-                    children: [
-                      Icon(
-                        feature.icon,
-                        color: colorScheme.primary,
-                        size: 24,
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Text(
-                          feature.text,
-                          style:
-                              Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    color: colorScheme.onSurface,
-                                  ),
+            ...features.map(
+              (feature) => Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                child: Row(
+                  children: [
+                    Icon(feature.icon, color: colorScheme.primary, size: 24),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Text(
+                        feature.text,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: colorScheme.onSurface,
                         ),
                       ),
-                    ],
-                  ),
-                )),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ],
           const SizedBox(height: 20),
         ],

@@ -16,7 +16,7 @@
 
 MeshCore SAR helps teams coordinate in low-connectivity or no-connectivity environments with messaging, voice, images, maps, and live location context in one app.
 It uses the MeshCore protocol over LoRa for long-range, infrastructure-free communication.
-`iOS TestFlight:` https://testflight.apple.com/join/HhzerdHp
+`iOS TestFlight:` https://testflight.apple.com/join/nCZYMPPz
 
 ## Highlights
 

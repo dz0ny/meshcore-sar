@@ -52,7 +52,7 @@ void main() {
               contact.publicKeyHex: 3,
             },
             currentDestinationType: 'all',
-            onSelect: (_, __) {},
+            onSelect: (selectedContact, destinationType) {},
           ),
         ),
       ),

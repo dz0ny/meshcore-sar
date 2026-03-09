@@ -796,7 +796,7 @@ packages:
     description:
       path: "."
       ref: main
-      resolved-ref: cea66b5251135c7f9b84f15c0878d4c8af6e88e9
+      resolved-ref: f3e17a5d970416dd56fcb2e114b4e181473bc155
       url: "https://github.com/dz0ny/meshcore_client.git"
     source: git
     version: "0.1.0"
@@ -1265,10 +1265,10 @@ packages:
     dependency: transitive
     description:
       name: sqflite_android
-      sha256: ecd684501ebc2ae9a83536e8b15731642b9570dc8623e0073d227d0ee2bfea88
+      sha256: "881e28efdcc9950fd8e9bb42713dcf1103e62a2e7168f23c9338d82db13dec40"
       url: "https://pub.dev"
     source: hosted
-    version: "2.4.2+2"
+    version: "2.4.2+3"
   sqflite_common:
     dependency: transitive
     description:

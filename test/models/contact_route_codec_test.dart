@@ -104,7 +104,7 @@ void main() {
       expect(contact.routeHashSize, 3);
       expect(contact.routeHopCount, 2);
       expect(contact.routeCanonicalText, 'AABBCC,DDEEFF');
-      expect(contact.routeSupportsLegacyRawTransport, isFalse);
+      expect(contact.routeSupportsLegacyRawTransport, isTrue);
     });
 
     test('treats -1 as unknown route', () {

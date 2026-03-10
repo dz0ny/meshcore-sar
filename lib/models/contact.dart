@@ -240,6 +240,5 @@ extension ContactLocalization on Contact {
     return '$routeHopCount hop${routeHopCount == 1 ? '' : 's'} via $routeHashSize-byte hashes';
   }
 
-  bool get routeSupportsLegacyRawTransport =>
-      routeHasPath && routeSignedPathLen >= 0;
+  bool get routeSupportsLegacyRawTransport => routeHasPath;
 }

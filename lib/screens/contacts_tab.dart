@@ -7,7 +7,10 @@ import '../models/contact.dart';
 import '../providers/contacts_provider.dart';
 import '../providers/app_provider.dart';
 import '../providers/connection_provider.dart';
+import '../providers/messages_provider.dart';
 import '../utils/contact_grouping.dart';
+import '../utils/avatar_label_helper.dart';
+import '../widgets/common/contact_avatar.dart';
 import '../widgets/contacts/contact_tile.dart';
 import '../widgets/contacts/add_channel_dialog.dart';
 
@@ -28,7 +31,11 @@ class ContactsTab extends StatefulWidget {
 class _ContactsTabState extends State<ContactsTab> {
   Position? _currentPosition;
   final Set<String> _resolvingAdvertKeys = <String>{};
-  ContactSortMode _sortMode = ContactSortMode.lastSeen;
+  final Map<ContactSection, ContactSortMode> _sortModes = {
+    ContactSection.teamMembers: ContactSortMode.lastSeen,
+    ContactSection.repeaters: ContactSortMode.lastSeen,
+    ContactSection.rooms: ContactSortMode.lastSeen,
+  };
 
   @override
   void initState() {
@@ -127,11 +134,20 @@ class _ContactsTabState extends State<ContactsTab> {
     return l10n.daysAgo(diff.inDays);
   }
 
-  List<Contact> _sortContacts(List<Contact> contacts) {
+  List<Contact> _sortContacts(List<Contact> contacts, ContactSection section) {
     final sorted = List<Contact>.from(contacts);
+    if (section == ContactSection.channels) {
+      sorted.sort(
+        (a, b) =>
+            a.displayName.toLowerCase().compareTo(b.displayName.toLowerCase()),
+      );
+      return sorted;
+    }
+
+    final sortMode = _sortModes[section] ?? ContactSortMode.lastSeen;
 
     sorted.sort((a, b) {
-      if (_sortMode == ContactSortMode.distance) {
+      if (sortMode == ContactSortMode.distance) {
         final distanceA = _distanceFromCurrentPosition(a);
         final distanceB = _distanceFromCurrentPosition(b);
 
@@ -212,10 +228,23 @@ class _ContactsTabState extends State<ContactsTab> {
     return Scaffold(
       body: Consumer<ContactsProvider>(
         builder: (context, contactsProvider, child) {
-          final chatContacts = _sortContacts(contactsProvider.chatContacts);
-          final repeaters = _sortContacts(contactsProvider.repeaters);
-          final rooms = _sortContacts(contactsProvider.rooms);
-          final channels = _sortContacts(contactsProvider.channels);
+          final messagesProvider = context.watch<MessagesProvider>();
+          final chatContacts = _sortContacts(
+            contactsProvider.chatContacts,
+            ContactSection.teamMembers,
+          );
+          final repeaters = _sortContacts(
+            contactsProvider.repeaters,
+            ContactSection.repeaters,
+          );
+          final rooms = _sortContacts(
+            contactsProvider.rooms,
+            ContactSection.rooms,
+          );
+          final channels = _sortContacts(
+            contactsProvider.channels,
+            ContactSection.channels,
+          );
           final pendingAdverts = contactsProvider.pendingAdverts;
 
           // Check if there are any displayable contacts
@@ -257,17 +286,6 @@ class _ContactsTabState extends State<ContactsTab> {
             child: ListView(
               padding: const EdgeInsets.all(8),
               children: [
-                _SortModeSwitcher(
-                  sortMode: _sortMode,
-                  lastSeenLabel: l10n.lastSeen,
-                  distanceLabel: l10n.distance,
-                  onChanged: (sortMode) {
-                    setState(() {
-                      _sortMode = sortMode;
-                    });
-                  },
-                ),
-
                 // Pending adverts (public key only; quick resolve)
                 if (pendingAdverts.isNotEmpty) ...[
                   _SectionHeader(
@@ -295,6 +313,10 @@ class _ContactsTabState extends State<ContactsTab> {
                     title: l10n.teamMembers,
                     count: chatContacts.length,
                     icon: Icons.people,
+                    trailing: _buildSortMenu(
+                      context,
+                      ContactSection.teamMembers,
+                    ),
                   ),
                   ..._buildContactSectionItems(chatContacts),
                   const Divider(height: 32),
@@ -306,6 +328,7 @@ class _ContactsTabState extends State<ContactsTab> {
                     title: l10n.repeaters,
                     count: repeaters.length,
                     icon: Icons.router,
+                    trailing: _buildSortMenu(context, ContactSection.repeaters),
                   ),
                   ..._buildContactSectionItems(repeaters),
                   const Divider(height: 32),
@@ -317,6 +340,7 @@ class _ContactsTabState extends State<ContactsTab> {
                     title: l10n.rooms,
                     count: rooms.length,
                     icon: Icons.tag,
+                    trailing: _buildSortMenu(context, ContactSection.rooms),
                   ),
                   ..._buildContactSectionItems(rooms),
                   const Divider(height: 32),
@@ -329,7 +353,14 @@ class _ContactsTabState extends State<ContactsTab> {
                   icon: Icons.broadcast_on_personal,
                 ),
                 if (channels.isNotEmpty) ...[
-                  ..._buildContactSectionItems(channels),
+                  ...channels.map(
+                    (channel) => _ChannelActivityCard(
+                      channel: channel,
+                      messagesProvider: messagesProvider,
+                      contactsProvider: contactsProvider,
+                      onNavigateToMessages: widget.onNavigateToMessages,
+                    ),
+                  ),
                 ],
 
                 // Add Channel Button (visible in both simple and advanced mode, only show when connected)
@@ -385,9 +416,69 @@ class _ContactsTabState extends State<ContactsTab> {
       );
     }).toList();
   }
+
+  Widget _buildSortMenu(BuildContext context, ContactSection section) {
+    final l10n = AppLocalizations.of(context)!;
+    final selectedMode = _sortModes[section] ?? ContactSortMode.lastSeen;
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return PopupMenuButton<ContactSortMode>(
+      tooltip: 'Sort',
+      initialValue: selectedMode,
+      onSelected: (sortMode) {
+        setState(() {
+          _sortModes[section] = sortMode;
+        });
+      },
+      itemBuilder: (context) => [
+        PopupMenuItem<ContactSortMode>(
+          value: ContactSortMode.lastSeen,
+          child: Row(
+            children: [
+              Icon(
+                Icons.schedule,
+                size: 18,
+                color: selectedMode == ContactSortMode.lastSeen
+                    ? colorScheme.primary
+                    : null,
+              ),
+              const SizedBox(width: 8),
+              Text(l10n.lastSeen),
+            ],
+          ),
+        ),
+        PopupMenuItem<ContactSortMode>(
+          value: ContactSortMode.distance,
+          child: Row(
+            children: [
+              Icon(
+                Icons.near_me,
+                size: 18,
+                color: selectedMode == ContactSortMode.distance
+                    ? colorScheme.primary
+                    : null,
+              ),
+              const SizedBox(width: 8),
+              Text(l10n.distance),
+            ],
+          ),
+        ),
+      ],
+      child: Padding(
+        padding: const EdgeInsets.all(4),
+        child: Icon(
+          Icons.more_horiz,
+          size: 18,
+          color: colorScheme.onSurfaceVariant,
+        ),
+      ),
+    );
+  }
 }
 
 enum ContactSortMode { lastSeen, distance }
+
+enum ContactSection { teamMembers, repeaters, rooms, channels }
 
 class _PendingAdvertTile extends StatelessWidget {
   final PendingAdvert advert;
@@ -433,11 +524,13 @@ class _SectionHeader extends StatelessWidget {
   final String title;
   final int count;
   final IconData icon;
+  final Widget? trailing;
 
   const _SectionHeader({
     required this.title,
     required this.count,
     required this.icon,
+    this.trailing,
   });
 
   @override
@@ -466,6 +559,7 @@ class _SectionHeader extends StatelessWidget {
               style: Theme.of(context).textTheme.labelSmall,
             ),
           ),
+          if (trailing != null) ...[const Spacer(), trailing!],
         ],
       ),
     );
@@ -504,43 +598,42 @@ class _InferredContactGroupCard extends StatelessWidget {
           color: colorScheme.outlineVariant.withValues(alpha: 0.35),
         ),
       ),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  Icons.folder_copy_outlined,
-                  size: 18,
-                  color: colorScheme.primary,
-                ),
-                const SizedBox(width: 8),
-                Text(
+      child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          tilePadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+          childrenPadding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+          initiallyExpanded: true,
+          leading: Icon(
+            Icons.folder_copy_outlined,
+            size: 18,
+            color: colorScheme.primary,
+          ),
+          title: Row(
+            children: [
+              Expanded(
+                child: Text(
                   label,
                   style: Theme.of(
                     context,
                   ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
                 ),
-                const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: colorScheme.primaryContainer,
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  child: Text(
-                    contacts.length.toString(),
-                    style: Theme.of(context).textTheme.labelSmall,
-                  ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: colorScheme.primaryContainer,
+                  borderRadius: BorderRadius.circular(999),
                 ),
-              ],
-            ),
-            const SizedBox(height: 10),
+                child: Text(
+                  contacts.length.toString(),
+                  style: Theme.of(context).textTheme.labelSmall,
+                ),
+              ),
+            ],
+          ),
+          children: [
             ...contacts.map(
               (contact) => ContactTile(
                 contact: contact,
@@ -558,47 +651,267 @@ class _InferredContactGroupCard extends StatelessWidget {
   }
 }
 
-class _SortModeSwitcher extends StatelessWidget {
-  final ContactSortMode sortMode;
-  final String lastSeenLabel;
-  final String distanceLabel;
-  final ValueChanged<ContactSortMode> onChanged;
+class _ChannelActivityCard extends StatelessWidget {
+  final Contact channel;
+  final MessagesProvider messagesProvider;
+  final ContactsProvider contactsProvider;
+  final VoidCallback? onNavigateToMessages;
 
-  const _SortModeSwitcher({
-    required this.sortMode,
-    required this.lastSeenLabel,
-    required this.distanceLabel,
-    required this.onChanged,
+  const _ChannelActivityCard({
+    required this.channel,
+    required this.messagesProvider,
+    required this.contactsProvider,
+    required this.onNavigateToMessages,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Align(
-        alignment: Alignment.centerLeft,
-        child: SegmentedButton<ContactSortMode>(
-          segments: [
-            ButtonSegment<ContactSortMode>(
-              value: ContactSortMode.lastSeen,
-              label: Text(lastSeenLabel),
-              icon: const Icon(Icons.schedule),
-            ),
-            ButtonSegment<ContactSortMode>(
-              value: ContactSortMode.distance,
-              label: Text(distanceLabel),
-              icon: const Icon(Icons.near_me),
-            ),
+    final colorScheme = Theme.of(context).colorScheme;
+    final channelIdx = channel.publicKey.length > 1 ? channel.publicKey[1] : 0;
+    final channelMessages = messagesProvider.getMessagesForChannel(channelIdx)
+      ..sort((a, b) => b.sentAt.compareTo(a.sentAt));
+    final participantNames = <String>[];
+    for (final message in channelMessages) {
+      final senderName = message.senderName?.trim();
+      if (senderName == null || senderName.isEmpty) continue;
+      if (!participantNames.contains(senderName)) {
+        participantNames.add(senderName);
+      }
+    }
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(18),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            colorScheme.surfaceContainerLow,
+            colorScheme.tertiaryContainer.withValues(alpha: 0.45),
           ],
-          selected: {sortMode},
-          onSelectionChanged: (selection) {
-            final selected = selection.isEmpty ? null : selection.first;
-            if (selected != null) {
-              onChanged(selected);
-            }
-          },
-          showSelectedIcon: false,
         ),
+        border: Border.all(
+          color: colorScheme.outlineVariant.withValues(alpha: 0.35),
+        ),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(18),
+          onTap: () async {
+            messagesProvider.navigateToDestination(
+              'channel',
+              recipientPublicKeyHex: channel.publicKeyHex,
+            );
+            onNavigateToMessages?.call();
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                ContactAvatar(contact: channel, radius: 24),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        channel.displayName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w800),
+                      ),
+                      const SizedBox(height: 10),
+                      if (participantNames.isNotEmpty)
+                        _ExpandableParticipantStack(
+                          names: participantNames,
+                          contactForName: _findParticipantContact,
+                        )
+                      else
+                        Text(
+                          'No recent chatters',
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(color: colorScheme.onSurfaceVariant),
+                        ),
+                      const SizedBox(height: 10),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          _MetricChip(
+                            icon: Icons.forum_outlined,
+                            label: '${channelMessages.length}',
+                            helper: 'messages',
+                          ),
+                          _MetricChip(
+                            icon: Icons.group_outlined,
+                            label: '${participantNames.length}',
+                            helper: 'active',
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Contact? _findParticipantContact(String name) {
+    for (final contact in contactsProvider.contacts) {
+      if (!contact.isChannel && contact.advName == name) {
+        return contact;
+      }
+    }
+    return null;
+  }
+}
+
+class _ExpandableParticipantStack extends StatefulWidget {
+  final List<String> names;
+  final Contact? Function(String name) contactForName;
+
+  const _ExpandableParticipantStack({
+    required this.names,
+    required this.contactForName,
+  });
+
+  @override
+  State<_ExpandableParticipantStack> createState() =>
+      _ExpandableParticipantStackState();
+}
+
+class _ExpandableParticipantStackState
+    extends State<_ExpandableParticipantStack> {
+  bool _expanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final visibleNames = _expanded
+        ? widget.names
+        : widget.names.take(4).toList();
+    final spacing = _expanded ? 24.0 : 18.0;
+    const avatarSize = 28.0;
+    final width = avatarSize + (visibleNames.length - 1) * spacing;
+
+    return GestureDetector(
+      onTap: widget.names.length > 4
+          ? () {
+              setState(() {
+                _expanded = !_expanded;
+              });
+            }
+          : null,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOut,
+        width: width,
+        height: avatarSize,
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            for (var i = 0; i < visibleNames.length; i++)
+              Positioned(
+                left: i * spacing,
+                child: _ParticipantAvatar(
+                  name: visibleNames[i],
+                  contact: widget.contactForName(visibleNames[i]),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ParticipantAvatar extends StatelessWidget {
+  final String name;
+  final Contact? contact;
+
+  const _ParticipantAvatar({required this.name, required this.contact});
+
+  @override
+  Widget build(BuildContext context) {
+    if (contact != null) {
+      return Container(
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: Theme.of(context).colorScheme.surface,
+            width: 2,
+          ),
+        ),
+        child: ContactAvatar(contact: contact!, radius: 14),
+      );
+    }
+
+    final colorScheme = Theme.of(context).colorScheme;
+    return Container(
+      width: 28,
+      height: 28,
+      decoration: BoxDecoration(
+        color: colorScheme.tertiaryContainer,
+        shape: BoxShape.circle,
+        border: Border.all(color: colorScheme.surface, width: 2),
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        AvatarLabelHelper.buildLabel(name),
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+          fontWeight: FontWeight.w700,
+          color: colorScheme.onTertiaryContainer,
+        ),
+      ),
+    );
+  }
+}
+
+class _MetricChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String helper;
+
+  const _MetricChip({
+    required this.icon,
+    required this.label,
+    required this.helper,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+      decoration: BoxDecoration(
+        color: colorScheme.surface.withValues(alpha: 0.72),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: colorScheme.onSurfaceVariant),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: Theme.of(
+              context,
+            ).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(width: 4),
+          Text(
+            helper,
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
       ),
     );
   }

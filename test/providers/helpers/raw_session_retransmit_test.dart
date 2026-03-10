@@ -47,6 +47,63 @@ void main() {
       expect(ok, isFalse);
     });
 
+    test('returns false when requester has no learned path', () async {
+      final ok = await serveCachedSessionFragments<_Fragment>(
+        providerLabel: 'TestProvider',
+        sessionId: 'deadbeef',
+        requester: _buildContact(outPathLen: -1),
+        fragments: [
+          _Fragment(0, Uint8List.fromList([1])),
+        ],
+        maxDirectPayloadHops: 3,
+        indexOf: (f) => f.index,
+        encodeBinary: (f) => f.payload,
+        sendRawPacket:
+            ({
+              required contactPath,
+              required contactPathLen,
+              required payload,
+            }) async {},
+      );
+
+      expect(ok, isFalse);
+    });
+
+    test('returns false when requester path payload is empty', () async {
+      final requester = Contact(
+        publicKey: Uint8List.fromList(List<int>.generate(32, (i) => i)),
+        type: ContactType.chat,
+        flags: 0,
+        outPathLen: 1,
+        outPath: Uint8List(0),
+        advName: 'Requester',
+        lastAdvert: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+        advLat: 0,
+        advLon: 0,
+        lastMod: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+      );
+
+      final ok = await serveCachedSessionFragments<_Fragment>(
+        providerLabel: 'TestProvider',
+        sessionId: 'deadbeef',
+        requester: requester,
+        fragments: [
+          _Fragment(0, Uint8List.fromList([1])),
+        ],
+        maxDirectPayloadHops: 3,
+        indexOf: (f) => f.index,
+        encodeBinary: (f) => f.payload,
+        sendRawPacket:
+            ({
+              required contactPath,
+              required contactPathLen,
+              required payload,
+            }) async {},
+      );
+
+      expect(ok, isFalse);
+    });
+
     test('sends only requested indices', () async {
       final sent = <Uint8List>[];
       final ok = await serveCachedSessionFragments<_Fragment>(

@@ -403,15 +403,6 @@ class _ImageMessageBubbleState extends State<ImageMessageBubble> {
       }
     }
 
-    if (!sender.routeSupportsLegacyRawTransport) {
-      _clearRequestState();
-      await _showBlockingAlert(
-        'Cannot fetch image',
-        'Sender route uses 3-byte hashes. Raw media fetch is not supported in this client yet.',
-      );
-      return;
-    }
-
     if (sender.routeHopCount >= 2) {
       _showToast(
         'Image fetch over ${sender.routeHopCount} hops may take a while.',
@@ -462,7 +453,7 @@ class _ImageMessageBubbleState extends State<ImageMessageBubble> {
       );
       await conn.sendRawVoicePacket(
         contactPath: sender.outPath,
-        contactPathLen: sender.routeSignedPathLen,
+        contactPathLen: sender.routeEncodedPathLen,
         payload: payload,
       );
     } catch (_) {

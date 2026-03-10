@@ -38,12 +38,6 @@ Future<bool> serveCachedSessionFragments<T>({
     );
     return false;
   }
-  if (!requester.routeSupportsLegacyRawTransport) {
-    debugPrint(
-      '⚠️ [$providerLabel] ${requester.advName} route uses unsupported 3-byte raw transport on current client',
-    );
-    return false;
-  }
   if (requester.outPath.isEmpty) {
     debugPrint(
       '⚠️ [$providerLabel] ${requester.advName} has empty outPath payload',
@@ -64,7 +58,7 @@ Future<bool> serveCachedSessionFragments<T>({
     try {
       await sendRawPacket(
         contactPath: requester.outPath,
-        contactPathLen: requester.routeSignedPathLen,
+        contactPathLen: requester.routeEncodedPathLen,
         payload: encodeBinary(fragment),
       );
       servedCount++;

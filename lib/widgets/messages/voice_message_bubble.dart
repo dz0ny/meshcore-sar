@@ -366,15 +366,6 @@ class _VoiceMessageBubbleState extends State<VoiceMessageBubble> {
       }
     }
 
-    if (!sender.routeSupportsLegacyRawTransport) {
-      _clearRequestState();
-      await _showBlockingAlert(
-        'Cannot fetch voice',
-        'Sender route uses 3-byte hashes. Raw media fetch is not supported in this client yet.',
-      );
-      return;
-    }
-
     if (sender.routeHopCount >= 2) {
       _showToast(
         'Voice fetch over ${sender.routeHopCount} hops may take a while.',
@@ -415,10 +406,7 @@ class _VoiceMessageBubbleState extends State<VoiceMessageBubble> {
             missingIndices: missing,
             requesterKey6: requesterKey6,
           )
-        : VoiceFetchRequest(
-            sessionId: sessionId,
-            requesterKey6: requesterKey6,
-          );
+        : VoiceFetchRequest(sessionId: sessionId, requesterKey6: requesterKey6);
 
     try {
       debugPrint(
@@ -426,7 +414,7 @@ class _VoiceMessageBubbleState extends State<VoiceMessageBubble> {
       );
       await connectionProvider.sendRawVoicePacket(
         contactPath: sender.outPath,
-        contactPathLen: sender.routeSignedPathLen,
+        contactPathLen: sender.routeEncodedPathLen,
         payload: request.encodeBinary(),
       );
     } catch (_) {

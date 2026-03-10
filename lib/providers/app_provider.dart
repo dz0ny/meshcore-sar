@@ -1974,14 +1974,13 @@ class AppProvider with ChangeNotifier {
     if (requester == null ||
         !requester.routeHasPath ||
         requester.routeHopCount > _maxDirectPayloadHops ||
-        !requester.routeSupportsLegacyRawTransport ||
         requester.outPath.isEmpty) {
       return;
     }
     unawaited(
       connectionProvider.sendRawVoicePacket(
         contactPath: requester.outPath,
-        contactPathLen: requester.routeSignedPathLen,
+        contactPathLen: requester.routeEncodedPathLen,
         payload: availability.encodeBinary(),
       ),
     );
@@ -2051,7 +2050,7 @@ class AppProvider with ChangeNotifier {
         for (final peer in peers) {
           await connectionProvider.sendRawVoicePacket(
             contactPath: peer.outPath,
-            contactPathLen: peer.routeSignedPathLen,
+            contactPathLen: peer.routeEncodedPathLen,
             payload: request.encodeBinary(),
           );
         }
@@ -2074,7 +2073,6 @@ class AppProvider with ChangeNotifier {
           if (responder == null ||
               !responder.routeHasPath ||
               responder.routeHopCount > _maxDirectPayloadHops ||
-              !responder.routeSupportsLegacyRawTransport ||
               responder.outPath.isEmpty) {
             continue;
           }
@@ -2166,7 +2164,7 @@ class AppProvider with ChangeNotifier {
 
       await connectionProvider.sendRawVoicePacket(
         contactPath: target.outPath,
-        contactPathLen: target.routeSignedPathLen,
+        contactPathLen: target.routeEncodedPathLen,
         payload: payload,
       );
       return true;
@@ -2407,9 +2405,6 @@ class AppProvider with ChangeNotifier {
     if (!target.routeHasPath || target.routeHopCount > _maxDirectPayloadHops) {
       return false;
     }
-    if (!target.routeSupportsLegacyRawTransport) {
-      return false;
-    }
     if (target.outPath.isEmpty) {
       return false;
     }
@@ -2442,7 +2437,7 @@ class AppProvider with ChangeNotifier {
         );
         await connectionProvider.sendRawVoicePacket(
           contactPath: target.outPath,
-          contactPathLen: target.routeSignedPathLen,
+          contactPathLen: target.routeEncodedPathLen,
           payload: RawRouteProbeRequest(
             nonce: nonce,
             requesterKey6: requesterKey6,
@@ -2470,7 +2465,7 @@ class AppProvider with ChangeNotifier {
     if (target.publicKeyHex.isNotEmpty) {
       return 'pk:${target.publicKeyHex}';
     }
-    return 'name:${target.advName}:${target.routeSignedPathLen}:${target.outPath.map((b) => b.toRadixString(16).padLeft(2, '0')).join()}';
+    return 'name:${target.advName}:${target.routeEncodedPathLen}:${target.outPath.map((b) => b.toRadixString(16).padLeft(2, '0')).join()}';
   }
 
   void _handleRawRouteProbeRequest(RawRouteProbeRequest request) {
@@ -2488,9 +2483,6 @@ class AppProvider with ChangeNotifier {
       );
       return;
     }
-    if (!requester.routeSupportsLegacyRawTransport) {
-      return;
-    }
     if (requester.outPath.isEmpty) {
       return;
     }
@@ -2500,7 +2492,7 @@ class AppProvider with ChangeNotifier {
     unawaited(
       connectionProvider.sendRawVoicePacket(
         contactPath: requester.outPath,
-        contactPathLen: requester.routeSignedPathLen,
+        contactPathLen: requester.routeEncodedPathLen,
         payload: RawRouteProbeAck(nonce: request.nonce).encodeBinary(),
       ),
     );

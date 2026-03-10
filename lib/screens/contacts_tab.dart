@@ -8,6 +8,7 @@ import '../providers/contacts_provider.dart';
 import '../providers/app_provider.dart';
 import '../providers/connection_provider.dart';
 import '../providers/messages_provider.dart';
+import '../services/message_destination_preferences.dart';
 import '../utils/contact_grouping.dart';
 import '../utils/avatar_label_helper.dart';
 import '../widgets/common/contact_avatar.dart';
@@ -603,7 +604,7 @@ class _InferredContactGroupCard extends StatelessWidget {
         child: ExpansionTile(
           tilePadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
           childrenPadding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
-          initiallyExpanded: true,
+          initiallyExpanded: false,
           leading: Icon(
             Icons.folder_copy_outlined,
             size: 18,
@@ -699,8 +700,12 @@ class _ChannelActivityCard extends StatelessWidget {
         child: InkWell(
           borderRadius: BorderRadius.circular(18),
           onTap: () async {
+            await MessageDestinationPreferences.setDestination(
+              MessageDestinationPreferences.destinationTypeChannel,
+              recipientPublicKey: channel.publicKeyHex,
+            );
             messagesProvider.navigateToDestination(
-              'channel',
+              MessageDestinationPreferences.destinationTypeChannel,
               recipientPublicKeyHex: channel.publicKeyHex,
             );
             onNavigateToMessages?.call();

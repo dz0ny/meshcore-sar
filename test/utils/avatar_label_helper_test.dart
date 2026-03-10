@@ -22,5 +22,13 @@ void main() {
     test('keeps non-hash labels at two characters', () {
       expect(AvatarLabelHelper.buildLabel('abc'), 'AB');
     });
+
+    test('strips emoji when building fallback initials', () {
+      expect(AvatarLabelHelper.buildLabel('Charlie 🙂 Delta'), 'CD');
+    });
+
+    test('strips leading emoji when building fallback initials', () {
+      expect(AvatarLabelHelper.buildLabel('🙂 Charlie'), 'CH');
+    });
   });
 }

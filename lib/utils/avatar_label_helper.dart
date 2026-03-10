@@ -1,4 +1,6 @@
 class AvatarLabelHelper {
+  static final RegExp _alnumChunks = RegExp(r'[A-Za-z0-9]+');
+
   static String buildLabel(String name) {
     final trimmed = name.trim();
     if (trimmed.isEmpty) return '?';
@@ -11,10 +13,15 @@ class AvatarLabelHelper {
       return '#${_take(hashBody, 2)}'.toUpperCase();
     }
 
-    final parts = trimmed
-        .split(RegExp(r'[\s_-]+'))
+    final parts = _alnumChunks
+        .allMatches(trimmed)
+        .map((match) => match.group(0)!)
         .where((part) => part.isNotEmpty)
         .toList();
+
+    if (parts.isEmpty) {
+      return '?';
+    }
 
     if (parts.length >= 2) {
       final first = _take(parts[0], 1);
@@ -22,7 +29,7 @@ class AvatarLabelHelper {
       return '$first$second'.toUpperCase();
     }
 
-    return _take(trimmed, 2).toUpperCase();
+    return _take(parts.first, 2).toUpperCase();
   }
 
   static String _take(String value, int count) {

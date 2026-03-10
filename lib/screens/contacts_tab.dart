@@ -679,7 +679,7 @@ class _ChannelActivityCard extends StatelessWidget {
       }
     }
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
+      margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(18),
         gradient: LinearGradient(
@@ -706,12 +706,12 @@ class _ChannelActivityCard extends StatelessWidget {
             onNavigateToMessages?.call();
           },
           child: Padding(
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                ContactAvatar(contact: channel, radius: 24),
-                const SizedBox(width: 12),
+                ContactAvatar(contact: channel, radius: 20),
+                const SizedBox(width: 10),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -721,9 +721,13 @@ class _ChannelActivityCard extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: Theme.of(context).textTheme.titleMedium
-                            ?.copyWith(fontWeight: FontWeight.w800),
+                            ?.copyWith(
+                              fontWeight: FontWeight.w800,
+                              fontSize: 15,
+                              height: 1.05,
+                            ),
                       ),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 8),
                       if (participantNames.isNotEmpty)
                         _ExpandableParticipantStack(
                           names: participantNames,
@@ -735,10 +739,10 @@ class _ChannelActivityCard extends StatelessWidget {
                           style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(color: colorScheme.onSurfaceVariant),
                         ),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 8),
                       Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
+                        spacing: 6,
+                        runSpacing: 6,
                         children: [
                           _MetricChip(
                             icon: Icons.forum_outlined,
@@ -790,18 +794,24 @@ class _ExpandableParticipantStack extends StatefulWidget {
 class _ExpandableParticipantStackState
     extends State<_ExpandableParticipantStack> {
   bool _expanded = false;
+  static const int _collapsedVisibleCount = 4;
 
   @override
   Widget build(BuildContext context) {
+    final hasOverflow = widget.names.length > _collapsedVisibleCount;
     final visibleNames = _expanded
         ? widget.names
-        : widget.names.take(4).toList();
-    final spacing = _expanded ? 24.0 : 18.0;
-    const avatarSize = 28.0;
-    final width = avatarSize + (visibleNames.length - 1) * spacing;
+        : widget.names.take(_collapsedVisibleCount).toList();
+    final overflowCount = _expanded
+        ? 0
+        : widget.names.length - visibleNames.length;
+    final spacing = _expanded ? 20.0 : 16.0;
+    const avatarSize = 24.0;
+    final itemCount = visibleNames.length + (overflowCount > 0 ? 1 : 0);
+    final width = itemCount == 0 ? 0.0 : avatarSize + (itemCount - 1) * spacing;
 
     return GestureDetector(
-      onTap: widget.names.length > 4
+      onTap: hasOverflow
           ? () {
               setState(() {
                 _expanded = !_expanded;
@@ -819,12 +829,48 @@ class _ExpandableParticipantStackState
             for (var i = 0; i < visibleNames.length; i++)
               Positioned(
                 left: i * spacing,
+                top: 0,
                 child: _ParticipantAvatar(
                   name: visibleNames[i],
                   contact: widget.contactForName(visibleNames[i]),
                 ),
               ),
+            if (overflowCount > 0)
+              Positioned(
+                left: visibleNames.length * spacing,
+                top: 0,
+                child: _OverflowAvatar(count: overflowCount),
+              ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _OverflowAvatar extends StatelessWidget {
+  final int count;
+
+  const _OverflowAvatar({required this.count});
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Container(
+      width: 24,
+      height: 24,
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerHighest,
+        shape: BoxShape.circle,
+        border: Border.all(color: colorScheme.surface, width: 2),
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        '+$count',
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+          fontWeight: FontWeight.w700,
+          color: colorScheme.onSurface,
+          fontSize: 9,
         ),
       ),
     );
@@ -834,28 +880,34 @@ class _ExpandableParticipantStackState
 class _ParticipantAvatar extends StatelessWidget {
   final String name;
   final Contact? contact;
+  static const double _size = 24;
 
   const _ParticipantAvatar({required this.name, required this.contact});
 
   @override
   Widget build(BuildContext context) {
     if (contact != null) {
-      return Container(
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          border: Border.all(
-            color: Theme.of(context).colorScheme.surface,
-            width: 2,
+      final surfaceColor = Theme.of(context).colorScheme.surface;
+      return SizedBox(
+        width: _size,
+        height: _size,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: surfaceColor, width: 2),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(2),
+            child: ClipOval(child: ContactAvatar(contact: contact!, radius: 8)),
           ),
         ),
-        child: ContactAvatar(contact: contact!, radius: 14),
       );
     }
 
     final colorScheme = Theme.of(context).colorScheme;
     return Container(
-      width: 28,
-      height: 28,
+      width: _size,
+      height: _size,
       decoration: BoxDecoration(
         color: colorScheme.tertiaryContainer,
         shape: BoxShape.circle,
@@ -867,6 +919,7 @@ class _ParticipantAvatar extends StatelessWidget {
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
           fontWeight: FontWeight.w700,
           color: colorScheme.onTertiaryContainer,
+          fontSize: 9,
         ),
       ),
     );
@@ -888,7 +941,7 @@ class _MetricChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
       decoration: BoxDecoration(
         color: colorScheme.surface.withValues(alpha: 0.72),
         borderRadius: BorderRadius.circular(999),
@@ -902,7 +955,7 @@ class _MetricChip extends StatelessWidget {
             label,
             style: Theme.of(
               context,
-            ).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w700),
+            ).textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w700),
           ),
           const SizedBox(width: 4),
           Text(

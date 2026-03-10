@@ -22,7 +22,7 @@ class ContactAvatar extends StatelessWidget {
     final foregroundColor = _getForegroundColor(backgroundColor);
     final emoji = contact.roleEmoji;
 
-    if (emoji != null && emoji.isNotEmpty) {
+    if (_showsLeadingEmoji && emoji != null && emoji.isNotEmpty) {
       return _buildAvatarFrame(
         backgroundColor: backgroundColor,
         child: Text(emoji, style: TextStyle(fontSize: radius * 1.05)),
@@ -86,8 +86,16 @@ class ContactAvatar extends StatelessWidget {
   bool get _usesSquareShape =>
       contact.type == ContactType.channel || contact.type == ContactType.room;
 
+  bool get _showsLeadingEmoji {
+    final emoji = contact.roleEmoji;
+    if (emoji == null || emoji.isEmpty) return false;
+
+    final effectiveName = (displayName ?? contact.displayName).trimLeft();
+    return effectiveName.startsWith(emoji);
+  }
+
   Color _getBackgroundColor(BuildContext context) {
-    if (_shouldUseLabelFallback || (contact.roleEmoji?.isNotEmpty ?? false)) {
+    if (_shouldUseLabelFallback || _showsLeadingEmoji) {
       return TrailColorService.getTrailColor(contact);
     }
 

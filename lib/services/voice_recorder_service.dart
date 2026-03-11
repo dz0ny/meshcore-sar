@@ -4,7 +4,7 @@ import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:record/record.dart';
 
-/// Captures raw PCM audio at 8000 Hz, 16-bit mono.
+/// Captures raw PCM audio at a codec-selected sample rate, 16-bit mono.
 ///
 /// [startCapture] returns a [Stream<Int16List>] that emits chunks of PCM
 /// samples every [chunkDuration].  Call [stopCapture] to end recording.
@@ -27,9 +27,10 @@ class VoiceRecorderService {
   /// [enableBandPassFilter] applies voice-tuned band-pass filtering when true.
   /// [enableCompressor] normalizes speech dynamics before encoding.
   /// [enableLimiter] protects against clipping peaks before encoding.
-  /// The returned stream emits [Int16List] chunks that are ready for Codec2 encoding.
+  /// The returned stream emits [Int16List] chunks that are ready for voice encoding.
   Stream<Int16List> startCapture({
     Duration chunkDuration = const Duration(seconds: 1),
+    int sampleRateHz = 8000,
     bool enableBandPassFilter = true,
     bool enableCompressor = true,
     bool enableLimiter = true,
@@ -43,6 +44,7 @@ class VoiceRecorderService {
 
     _startRecording(
       chunkDuration,
+      sampleRateHz: sampleRateHz,
       enableBandPassFilter: enableBandPassFilter,
       enableCompressor: enableCompressor,
       enableLimiter: enableLimiter,
@@ -52,13 +54,14 @@ class VoiceRecorderService {
 
   Future<void> _startRecording(
     Duration chunkDuration, {
+    required int sampleRateHz,
     required bool enableBandPassFilter,
     required bool enableCompressor,
     required bool enableLimiter,
   }) async {
-    final config = const RecordConfig(
+    final config = RecordConfig(
       encoder: AudioEncoder.pcm16bits,
-      sampleRate: 8000,
+      sampleRate: sampleRateHz,
       numChannels: 1,
       bitRate: 128000, // ignored for PCM, but required by API
     );
@@ -66,16 +69,17 @@ class VoiceRecorderService {
     try {
       final stream = await _recorder.startStream(config);
       final voiceFilter = _VoiceBandPassFilter(
-        sampleRate: 8000,
+        sampleRate: sampleRateHz,
         lowCutHz: 250.0,
         highCutHz: 3400.0,
       );
       final dynamics = _VoiceDynamicsProcessor(
-        sampleRate: 8000,
+        sampleRate: sampleRateHz,
         enableCompressor: enableCompressor,
         enableLimiter: enableLimiter,
       );
-      final chunkBytes = 8000 * 2 * chunkDuration.inMilliseconds ~/ 1000;
+      final chunkBytes =
+          sampleRateHz * 2 * chunkDuration.inMilliseconds ~/ 1000;
       final buffer = <int>[];
 
       _sub = stream.listen(

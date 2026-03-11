@@ -5,7 +5,7 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 
-/// Plays decoded 8000 Hz / 16-bit mono PCM samples by writing a WAV file
+/// Plays decoded mono PCM samples by writing a WAV file
 /// to the system temp directory and using [AudioPlayer].
 class VoicePlayerService {
   final AudioPlayer _player = AudioPlayer();
@@ -49,16 +49,17 @@ class VoicePlayerService {
     });
   }
 
-  /// Play [pcmSamples] (Int16, 8000 Hz, mono).
-  Future<void> play(Int16List pcmSamples) async {
+  Future<void> play(Int16List pcmSamples, {required int sampleRateHz}) async {
     debugPrint('🔊 [VoicePlayer] play() called, ${pcmSamples.length} samples');
     if (_isPlaying) await stop();
     _position = Duration.zero;
-    _duration = Duration(milliseconds: (pcmSamples.length * 1000) ~/ 8000);
+    _duration = Duration(
+      milliseconds: (pcmSamples.length * 1000) ~/ sampleRateHz,
+    );
     _playbackStartedAt = DateTime.now();
     _events.add(null);
 
-    final wavBytes = _buildWav(pcmSamples, sampleRate: 8000);
+    final wavBytes = _buildWav(pcmSamples, sampleRate: sampleRateHz);
     final tmpDir = await getTemporaryDirectory();
     final file = File('${tmpDir.path}/vc_voice.wav');
     await file.writeAsBytes(wavBytes);

@@ -1,7 +1,6 @@
 import 'dart:typed_data';
 import '../utils/voice_message_parser.dart';
 
-/// Web/unsupported platform stub — Codec2 FFI is not available.
 enum Codec2Mode {
   mode3200(0),
   mode2400(1),
@@ -19,13 +18,20 @@ enum Codec2Mode {
 
   int get bytesPerSecond {
     switch (this) {
-      case mode3200: return 400;
-      case mode700c: return 100;
-      case mode1200: return 150;
-      case mode1300: return 175;
-      case mode1400: return 175;
-      case mode1600: return 200;
-      case mode2400: return 300;
+      case mode3200:
+        return 400;
+      case mode700c:
+        return 100;
+      case mode1200:
+        return 150;
+      case mode1300:
+        return 175;
+      case mode1400:
+        return 175;
+      case mode1600:
+        return 200;
+      case mode2400:
+        return 300;
     }
   }
 
@@ -40,13 +46,22 @@ enum Codec2Mode {
 
 Codec2Mode codec2ModeFor(VoicePacketMode pktMode) {
   switch (pktMode) {
-    case VoicePacketMode.mode3200: return Codec2Mode.mode3200;
-    case VoicePacketMode.mode1600: return Codec2Mode.mode1600;
-    case VoicePacketMode.mode1400: return Codec2Mode.mode1400;
-    case VoicePacketMode.mode700c: return Codec2Mode.mode700c;
-    case VoicePacketMode.mode1200: return Codec2Mode.mode1200;
-    case VoicePacketMode.mode1300: return Codec2Mode.mode1300;
-    case VoicePacketMode.mode2400: return Codec2Mode.mode2400;
+    case VoicePacketMode.mode3200:
+      return Codec2Mode.mode3200;
+    case VoicePacketMode.mode1600:
+      return Codec2Mode.mode1600;
+    case VoicePacketMode.mode1400:
+      return Codec2Mode.mode1400;
+    case VoicePacketMode.mode700c:
+      return Codec2Mode.mode700c;
+    case VoicePacketMode.mode1200:
+      return Codec2Mode.mode1200;
+    case VoicePacketMode.mode1300:
+      return Codec2Mode.mode1300;
+    case VoicePacketMode.mode2400:
+      return Codec2Mode.mode2400;
+    case VoicePacketMode.lpcnet1600:
+      throw ArgumentError('LPCNet mode does not map to Codec2');
   }
 }
 
@@ -66,6 +81,5 @@ class VoiceCodecService {
   Future<Int16List> decodePackets(
     List<VoicePacket?> packets,
     VoicePacketMode mode,
-  ) =>
-      Future.error(UnsupportedError('Voice not supported on web'));
+  ) => Future.error(UnsupportedError('Voice not supported on web'));
 }

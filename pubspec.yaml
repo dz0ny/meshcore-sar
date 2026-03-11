@@ -51,6 +51,8 @@ dependencies:
     git:
       url: https://github.com/dz0ny/codec2_flutter.git
       ref: 03998a2
+  lpcnet_flutter:
+    path: ../packages/lpcnet_flutter
   ffi: ^2.1.0
 
   # Voice recording (raw PCM stream at 8000 Hz)

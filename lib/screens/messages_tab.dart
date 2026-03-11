@@ -24,6 +24,7 @@ import '../widgets/messages/messages_content.dart';
 import '../widgets/common/contact_avatar.dart';
 import '../services/message_destination_preferences.dart';
 import '../services/voice_bitrate_preferences.dart';
+import '../services/voice_codec_preferences.dart';
 import '../services/voice_recorder_service.dart';
 import '../services/voice_codec_service.dart';
 import '../utils/toast_logger.dart';
@@ -81,6 +82,7 @@ class _MessagesTabState extends State<MessagesTab> {
   final List<Int16List> _recordedChunks = [];
   VoicePacketMode? _activeVoiceMode;
   int _selectedVoiceBitrate = VoiceBitratePreferences.defaultBitrate;
+  VoiceCodecKind _selectedVoiceCodec = VoiceCodecPreferences.defaultCodec;
 
   @override
   void initState() {
@@ -88,17 +90,19 @@ class _MessagesTabState extends State<MessagesTab> {
     _textController.addListener(_updateCharacterCount);
     // Load saved message destination
     _loadSavedDestination();
-    _loadVoiceBitrate();
+    _loadVoiceSettings();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkForNavigationRequest();
     });
   }
 
-  Future<void> _loadVoiceBitrate() async {
+  Future<void> _loadVoiceSettings() async {
     final bitrate = await VoiceBitratePreferences.getBitrate();
+    final codec = await VoiceCodecPreferences.getCodec();
     if (!mounted) return;
     setState(() {
       _selectedVoiceBitrate = bitrate;
+      _selectedVoiceCodec = codec;
     });
   }
 
@@ -817,14 +821,17 @@ class _MessagesTabState extends State<MessagesTab> {
   Future<void> _startVoiceRecording() async {
     if (_isSendingVoice || _isRecording) return;
     debugPrint('🎙️ [Voice] _startVoiceRecording called');
-    // Read fresh bitrate preference so settings changes apply immediately.
+    // Read fresh voice preferences so settings changes apply immediately.
     final selectedBitrate = await VoiceBitratePreferences.getBitrate();
+    final selectedCodec = await VoiceCodecPreferences.getCodec();
     if (mounted) {
       setState(() {
         _selectedVoiceBitrate = selectedBitrate;
+        _selectedVoiceCodec = selectedCodec;
       });
     } else {
       _selectedVoiceBitrate = selectedBitrate;
+      _selectedVoiceCodec = selectedCodec;
     }
     final hasPermission = await _voiceRecorder.requestPermission();
     debugPrint('🎙️ [Voice] hasPermission=$hasPermission');
@@ -852,11 +859,11 @@ class _MessagesTabState extends State<MessagesTab> {
       (_) => rng.nextInt(256),
     ).map((b) => b.toRadixString(16).padLeft(2, '0')).join();
 
-    _activeVoiceMode = VoiceBitratePreferences.toVoiceMode(
-      _selectedVoiceBitrate,
-    );
+    _activeVoiceMode = _selectedVoiceCodec == VoiceCodecKind.lpcnet
+        ? VoicePacketMode.lpcnet1600
+        : VoiceBitratePreferences.toVoiceMode(_selectedVoiceBitrate);
     final packetDuration = Duration(
-      milliseconds: codec2ModeFor(_activeVoiceMode!).packetDurationMs,
+      milliseconds: _activeVoiceMode!.packetDurationMs,
     );
 
     debugPrint(
@@ -869,6 +876,7 @@ class _MessagesTabState extends State<MessagesTab> {
     try {
       final stream = _voiceRecorder.startCapture(
         chunkDuration: packetDuration,
+        sampleRateHz: _activeVoiceMode!.sampleRateHz,
         enableBandPassFilter: appProvider.isVoiceBandPassFilterEnabled,
         enableCompressor: appProvider.isVoiceCompressorEnabled,
         enableLimiter: appProvider.isVoiceLimiterEnabled,

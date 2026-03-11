@@ -10,6 +10,7 @@ import '../../models/ble_packet_log.dart';
 import '../../models/message.dart';
 import '../../providers/connection_provider.dart';
 import '../../providers/contacts_provider.dart';
+import '../../providers/messages_provider.dart';
 import '../../services/mesh_map_nodes_service.dart';
 import '../../services/route_hash_preferences.dart';
 import '../../utils/log_rx_route_decoder.dart';
@@ -35,11 +36,17 @@ class _MessageTraceSheetState extends State<MessageTraceSheet> {
   Future<_TraceResult> _loadTrace() async {
     final connectionProvider = context.read<ConnectionProvider>();
     final contactsProvider = context.read<ContactsProvider>();
+    final messagesProvider = context.read<MessagesProvider>();
     final preferredHashSize = await RouteHashPreferences.getHashSize();
-    final packetPath = _extractPathFromPacketLogs(
-      logs: connectionProvider.bleService.packetLogs,
-      message: widget.message,
-    );
+    final storedPath =
+        messagesProvider.getMessageReceptionDetails(widget.message.id)?.pathBytes;
+    final packetPath =
+        (storedPath != null && storedPath.isNotEmpty)
+        ? storedPath
+        : _extractPathFromPacketLogs(
+            logs: connectionProvider.bleService.packetLogs,
+            message: widget.message,
+          );
 
     final senderPrefix = _toPrefixHex(widget.message.senderPublicKeyPrefix);
     final recipientPrefix = widget.message.recipientPublicKey != null
@@ -456,7 +463,7 @@ class _MessageTraceSheetState extends State<MessageTraceSheet> {
       final hopHashes = LogRxRouteDecoder.splitHopHashes(
         packetPath,
         hashSize: hashSize,
-      );
+      ).reversed.toList();
       final matched = _matchNodesFromPathHashes(
         nodes: nodes,
         pathHashes: hopHashes,
@@ -567,6 +574,12 @@ class _MessageTraceSheetState extends State<MessageTraceSheet> {
             .where((n) => n.publicKey.startsWith(senderPrefix))
             .toList();
         if (senderMatches.isNotEmpty) filtered = senderMatches;
+      }
+      if (i == pathHashes.length - 1 && recipientPrefix != null) {
+        final recipientMatches = filtered
+            .where((n) => n.publicKey.startsWith(recipientPrefix))
+            .toList();
+        if (recipientMatches.isNotEmpty) filtered = recipientMatches;
       }
 
       filtered.sort((a, b) => b.updatedAtMs.compareTo(a.updatedAtMs));

@@ -303,7 +303,7 @@ class VoiceProvider with ChangeNotifier {
       debugPrint('🎙️ [VoiceProvider] decoded ${pcm.length} PCM samples');
       _playingSessionId = sessionId;
       notifyListeners();
-      await _player.play(pcm);
+      await _player.play(pcm, sampleRateHz: session.mode.sampleRateHz);
     } catch (e, st) {
       debugPrint('❌ [VoiceProvider] Playback error: $e\n$st');
       if (_playingSessionId == sessionId) {

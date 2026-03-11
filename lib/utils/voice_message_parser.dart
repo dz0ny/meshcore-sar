@@ -11,20 +11,43 @@ const int _defaultLoRaCrcEnabled = 1;
 const int _defaultLoRaExplicitHeader = 1;
 const double _defaultAirtimeBudgetFactor = 1.0; // one half duty-cycle
 
-/// Identifies which Codec2 mode was used for a voice packet.
-/// Matches the modeId byte in the text/binary packet header.
-enum VoicePacketMode {
-  mode700c(0, '700C'),
-  mode1200(1, '1200'),
-  mode2400(2, '2400'),
-  mode1300(3, '1300'),
-  mode1400(4, '1400'),
-  mode1600(5, '1600'),
-  mode3200(6, '3200');
+enum VoiceCodecKind {
+  codec2(0, 'Codec2'),
+  lpcnet(1, 'LPCNet');
 
-  const VoicePacketMode(this.id, this.label);
+  const VoiceCodecKind(this.id, this.label);
   final int id;
   final String label;
+}
+
+/// Identifies which voice codec/mode was used for a packet.
+/// Matches the modeId byte in the text/binary packet header.
+enum VoicePacketMode {
+  mode700c(0, '700C', VoiceCodecKind.codec2, 8000, 100, 1600),
+  mode1200(1, '1200', VoiceCodecKind.codec2, 8000, 150, 1040),
+  mode2400(2, '2400', VoiceCodecKind.codec2, 8000, 300, 520),
+  mode1300(3, '1300', VoiceCodecKind.codec2, 8000, 175, 880),
+  mode1400(4, '1400', VoiceCodecKind.codec2, 8000, 175, 880),
+  mode1600(5, '1600', VoiceCodecKind.codec2, 8000, 200, 800),
+  mode3200(6, '3200', VoiceCodecKind.codec2, 8000, 400, 400),
+  lpcnet1600(7, 'LPCNet', VoiceCodecKind.lpcnet, 16000, 200, 40);
+
+  const VoicePacketMode(
+    this.id,
+    this.label,
+    this.codec,
+    this.sampleRateHz,
+    this.bytesPerSecond,
+    this.packetDurationMs,
+  );
+  final int id;
+  final String label;
+  final VoiceCodecKind codec;
+  final int sampleRateHz;
+  final int bytesPerSecond;
+  final int packetDurationMs;
+
+  int get samplesPerPacket => sampleRateHz * packetDurationMs ~/ 1000;
 
   static VoicePacketMode fromId(int id) => VoicePacketMode.values.firstWhere(
     (m) => m.id == id,
@@ -153,23 +176,15 @@ class VoicePacket {
 
   /// Estimated audio duration of this packet in milliseconds.
   int get durationMs {
-    // bytesPerSecond for each mode
-    final bps = switch (mode) {
-      VoicePacketMode.mode700c => 100,
-      VoicePacketMode.mode1200 => 150,
-      VoicePacketMode.mode1300 => 175,
-      VoicePacketMode.mode1400 => 175,
-      VoicePacketMode.mode1600 => 200,
-      VoicePacketMode.mode2400 => 300,
-      VoicePacketMode.mode3200 => 400,
-    };
-    if (bps == 0) return 0;
-    return (codec2Data.length * 1000 ~/ bps).clamp(0, 1500);
+    if (mode.bytesPerSecond == 0) return 0;
+    return (codec2Data.length * 1000 ~/ mode.bytesPerSecond).clamp(0, 1500);
   }
 
   @override
   String toString() {
-    final suffix = total > 0 ? ' ${mode.label} [$index/${total - 1}]' : ' [$index]';
+    final suffix = total > 0
+        ? ' ${mode.label} [$index/${total - 1}]'
+        : ' [$index]';
     return 'VoicePacket($sessionId$suffix ${codec2Data.length}B)';
   }
 }
@@ -242,13 +257,7 @@ class VoiceEnvelope {
 }
 
 int voiceModeBytesPerSecond(VoicePacketMode mode) => switch (mode) {
-  VoicePacketMode.mode700c => 100,
-  VoicePacketMode.mode1200 => 150,
-  VoicePacketMode.mode1300 => 175,
-  VoicePacketMode.mode1400 => 175,
-  VoicePacketMode.mode1600 => 200,
-  VoicePacketMode.mode2400 => 300,
-  VoicePacketMode.mode3200 => 400,
+  _ => mode.bytesPerSecond,
 };
 
 /// Approximate end-to-end transmit time for a voice session over MeshCore LoRa.
@@ -419,8 +428,7 @@ class VoiceFetchRequest {
     this.version = 3,
   });
 
-  static bool isVoiceFetchRequestText(String text) =>
-      text.startsWith(_prefix);
+  static bool isVoiceFetchRequestText(String text) => text.startsWith(_prefix);
   static bool isVoiceFetchRequestBinary(Uint8List payload) =>
       payload.isNotEmpty && payload[0] == _binaryMagic;
 
@@ -473,9 +481,7 @@ class VoiceFetchRequest {
       final requesterKey6 = parts[2];
       final normalizedWant = wantToken == 'a'
           ? 'all'
-          : ((wantToken.startsWith('m'))
-                ? 'missing'
-                : wantToken);
+          : ((wantToken.startsWith('m')) ? 'missing' : wantToken);
 
       if (sid == null) {
         return null;
@@ -602,7 +608,11 @@ String _toBase36(int value) => value.toRadixString(36);
 
 String _encodeSessionId(String sessionIdHex) {
   if (!RegExp(r'^[0-9a-fA-F]{8}$').hasMatch(sessionIdHex)) {
-    throw ArgumentError.value(sessionIdHex, 'sessionIdHex', 'Expected 8 hex chars');
+    throw ArgumentError.value(
+      sessionIdHex,
+      'sessionIdHex',
+      'Expected 8 hex chars',
+    );
   }
   final value = int.parse(sessionIdHex, radix: 16);
   return value.toRadixString(36);
@@ -616,10 +626,7 @@ String? _decodeSessionId(String token) {
 }
 
 String _encodeMissingIndicesCompact(List<int> indices) {
-  final sorted = indices
-      .where((v) => v >= 0 && v <= 254)
-      .toSet()
-      .toList()
+  final sorted = indices.where((v) => v >= 0 && v <= 254).toSet().toList()
     ..sort();
   if (sorted.isEmpty) return '';
   final chunks = <String>[];
@@ -632,7 +639,9 @@ String _encodeMissingIndicesCompact(List<int> indices) {
       continue;
     }
     chunks.add(
-      start == prev ? _toBase36(start) : '${_toBase36(start)}-${_toBase36(prev)}',
+      start == prev
+          ? _toBase36(start)
+          : '${_toBase36(start)}-${_toBase36(prev)}',
     );
     start = curr;
     prev = curr;

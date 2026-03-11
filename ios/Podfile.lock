@@ -57,6 +57,8 @@ PODS:
     - FlutterMacOS
   - image_picker_ios (0.0.1):
     - Flutter
+  - lpcnet_flutter (0.1.0):
+    - Flutter
   - nsd_ios (0.0.1):
     - Flutter
   - package_info_plus (0.4.5):
@@ -98,6 +100,7 @@ DEPENDENCIES:
   - flutter_local_notifications (from `.symlinks/plugins/flutter_local_notifications/ios`)
   - geolocator_apple (from `.symlinks/plugins/geolocator_apple/darwin`)
   - image_picker_ios (from `.symlinks/plugins/image_picker_ios/ios`)
+  - lpcnet_flutter (from `.symlinks/plugins/lpcnet_flutter/ios`)
   - nsd_ios (from `.symlinks/plugins/nsd_ios/ios`)
   - package_info_plus (from `.symlinks/plugins/package_info_plus/ios`)
   - path_provider_foundation (from `.symlinks/plugins/path_provider_foundation/darwin`)
@@ -141,6 +144,8 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/geolocator_apple/darwin"
   image_picker_ios:
     :path: ".symlinks/plugins/image_picker_ios/ios"
+  lpcnet_flutter:
+    :path: ".symlinks/plugins/lpcnet_flutter/ios"
   nsd_ios:
     :path: ".symlinks/plugins/nsd_ios/ios"
   package_info_plus:
@@ -177,6 +182,7 @@ SPEC CHECKSUMS:
   flutter_local_notifications: 643a3eda1ce1c0599413ca31672536d423dee214
   geolocator_apple: ab36aa0e8b7d7a2d7639b3b4e48308394e8cef5e
   image_picker_ios: e0ece4aa2a75771a7de3fa735d26d90817041326
+  lpcnet_flutter: 67a3c72ea4caa511373ee9b028223e33f0e85b97
   nsd_ios: 596ad79109ddd3e52d665f650f36428049e3653e
   package_info_plus: af8e2ca6888548050f16fa2f1938db7b5a5df499
   path_provider_foundation: bb55f6dbba17d0dccd6737fe6f7f34fbd0376880

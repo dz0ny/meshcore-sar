@@ -1,20 +1,27 @@
 import 'dart:typed_data';
 import 'package:codec2_flutter/codec2_flutter.dart';
+import 'package:lpcnet_flutter/lpcnet_flutter.dart';
 import 'package:flutter/foundation.dart';
 import '../utils/voice_message_parser.dart';
 
-export 'package:codec2_flutter/codec2_flutter.dart' show Codec2Mode;
-
-/// Maps [VoicePacketMode] to the [Codec2Mode] enum from the FFI plugin.
 Codec2Mode codec2ModeFor(VoicePacketMode pktMode) {
   switch (pktMode) {
-    case VoicePacketMode.mode3200: return Codec2Mode.mode3200;
-    case VoicePacketMode.mode1600: return Codec2Mode.mode1600;
-    case VoicePacketMode.mode1400: return Codec2Mode.mode1400;
-    case VoicePacketMode.mode700c: return Codec2Mode.mode700c;
-    case VoicePacketMode.mode1200: return Codec2Mode.mode1200;
-    case VoicePacketMode.mode1300: return Codec2Mode.mode1300;
-    case VoicePacketMode.mode2400: return Codec2Mode.mode2400;
+    case VoicePacketMode.mode3200:
+      return Codec2Mode.mode3200;
+    case VoicePacketMode.mode1600:
+      return Codec2Mode.mode1600;
+    case VoicePacketMode.mode1400:
+      return Codec2Mode.mode1400;
+    case VoicePacketMode.mode700c:
+      return Codec2Mode.mode700c;
+    case VoicePacketMode.mode1200:
+      return Codec2Mode.mode1200;
+    case VoicePacketMode.mode1300:
+      return Codec2Mode.mode1300;
+    case VoicePacketMode.mode2400:
+      return Codec2Mode.mode2400;
+    case VoicePacketMode.lpcnet1600:
+      throw ArgumentError('LPCNet mode does not map to Codec2');
   }
 }
 
@@ -39,17 +46,24 @@ class VoiceCodecService {
     }
   }
 
-  /// Encode [pcm] (Int16 samples, 8000 Hz mono) with [mode].
-  /// Returns the raw Codec2-encoded bytes.
   Future<Uint8List> encode(Int16List pcm, VoicePacketMode mode) {
     _ensureCodec2Supported();
-    return Codec2.encodeInIsolate(pcm, codec2ModeFor(mode));
+    switch (mode.codec) {
+      case VoiceCodecKind.codec2:
+        return Codec2.encodeInIsolate(pcm, codec2ModeFor(mode));
+      case VoiceCodecKind.lpcnet:
+        return LpcNet.encodeInIsolate(pcm);
+    }
   }
 
-  /// Decode [codec2Bytes] back to Int16 PCM (8000 Hz mono) with [mode].
   Future<Int16List> decode(Uint8List codec2Bytes, VoicePacketMode mode) {
     _ensureCodec2Supported();
-    return Codec2.decodeInIsolate(codec2Bytes, codec2ModeFor(mode));
+    switch (mode.codec) {
+      case VoiceCodecKind.codec2:
+        return Codec2.decodeInIsolate(codec2Bytes, codec2ModeFor(mode));
+      case VoiceCodecKind.lpcnet:
+        return LpcNet.decodeInIsolate(codec2Bytes);
+    }
   }
 
   /// Decode and concatenate multiple [packets] into a single PCM Int16List.
@@ -59,24 +73,14 @@ class VoiceCodecService {
     VoicePacketMode mode,
   ) async {
     _ensureCodec2Supported();
-    final c2Mode = codec2ModeFor(mode);
-    final c2 = Codec2.create(c2Mode);
-    final spf = c2.samplesPerFrame;
-    c2.destroy();
-
-    // Estimate total samples (use actual data or silence per missing packet)
     final all = <Int16List>[];
     for (final pkt in packets) {
       if (pkt == null || pkt.codec2Data.isEmpty) {
-        // Silence for missing packet — duration approximated by mode
-        final silenceSamples = (codec2ModeFor(mode).framesPerSecond) * spf;
-        all.add(Int16List(silenceSamples));
+        all.add(Int16List(mode.samplesPerPacket));
       } else {
-        final decoded = await Codec2.decodeInIsolate(pkt.codec2Data, c2Mode);
-        all.add(decoded);
+        all.add(await decode(pkt.codec2Data, mode));
       }
     }
-
     final total = all.fold<int>(0, (sum, l) => sum + l.length);
     final result = Int16List(total);
     var offset = 0;

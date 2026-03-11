@@ -524,10 +524,10 @@ void main() {
       );
     });
 
-    test('infers a fallback location 100m from first-hop repeater', () {
+    test('infers a fallback location 100m from last-hop repeater', () {
       final repeaterKey = Uint8List.fromList([
-        0xAA,
-        0xBB,
+        0xCC,
+        0xDD,
         0x10,
         0x11,
         0x12,
@@ -574,6 +574,47 @@ void main() {
         inferred.longitude,
       );
       expect(distanceMeters, closeTo(100.0, 8.0));
+    });
+
+    test('does not infer a fallback location when the contact advertises one', () {
+      final repeaterKey = Uint8List.fromList([
+        0xCC,
+        0xDD,
+        0x10,
+        0x11,
+        0x12,
+        0x13,
+        ...List<int>.generate(26, (index) => index + 20),
+      ]);
+      provider.addOrUpdateContact(
+        createContact(
+          key: repeaterKey,
+          type: ContactType.repeater,
+          name: 'Relay Alpha',
+        ),
+      );
+
+      final targetKey = createPublicKey(121);
+      final route = ContactRouteCodec.parse('AABB,CCDD');
+      provider.addOrUpdateContact(
+        Contact(
+          publicKey: targetKey,
+          type: ContactType.chat,
+          flags: 0,
+          outPathLen: route.signedEncodedPathLen,
+          outPath: route.paddedPathBytes,
+          advName: 'Has Advert',
+          lastAdvert: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+          advLat: (45.1234 * 1e6).toInt(),
+          advLon: (13.8765 * 1e6).toInt(),
+          lastMod: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+        ),
+      );
+
+      final updated = provider.findContactByKey(targetKey)!;
+      expect(updated.displayLocation, isNotNull);
+      expect(updated.displayLocation!.latitude, closeTo(45.1234, 0.000001));
+      expect(updated.displayLocation!.longitude, closeTo(13.8765, 0.000001));
     });
   });
 

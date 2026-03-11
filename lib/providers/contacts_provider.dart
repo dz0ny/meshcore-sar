@@ -516,8 +516,8 @@ class ContactsProvider with ChangeNotifier {
       return null;
     }
 
-    final firstHopHex = routeBytes
-        .sublist(0, routeHashSize)
+    final lastHopHex = routeBytes
+        .sublist(routeBytes.length - routeHashSize)
         .map((byte) => byte.toRadixString(16).padLeft(2, '0'))
         .join();
     final repeaterCandidates = _contacts.values.where((candidate) {
@@ -526,7 +526,7 @@ class ContactsProvider with ChangeNotifier {
         return false;
       }
       final location = candidate.displayLocation;
-      return location != null && candidate.publicKeyHex.startsWith(firstHopHex);
+      return location != null && candidate.publicKeyHex.startsWith(lastHopHex);
     }).toList()..sort((a, b) => b.lastAdvert.compareTo(a.lastAdvert));
     if (repeaterCandidates.isEmpty) {
       return null;

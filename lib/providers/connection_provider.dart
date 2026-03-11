@@ -848,8 +848,19 @@ class ConnectionProvider with ChangeNotifier {
       return true;
     } catch (e) {
       debugPrint('❌ [Provider] Failed to check slot $channelIdx: $e');
+      if (_isEmptyChannelQueryError(e)) {
+        debugPrint(
+          '   ℹ️  Treating slot $channelIdx as empty because the device reported it was not found',
+        );
+        return true;
+      }
       return false;
     }
+  }
+
+  bool _isEmptyChannelQueryError(Object error) {
+    final message = error.toString().toLowerCase();
+    return message.contains('not found');
   }
 
   Future<int?> findNextEmptyChannelSlot() async {

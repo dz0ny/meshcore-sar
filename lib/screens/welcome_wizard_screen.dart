@@ -254,9 +254,9 @@ class _WelcomeWizardScreenState extends State<WelcomeWizardScreen> {
 
     final trimmedName = _deviceNameController.text.trim();
     if (trimmedName.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Enter a device name before continuing.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.wizardEnterDeviceName)));
       return;
     }
 
@@ -277,7 +277,9 @@ class _WelcomeWizardScreenState extends State<WelcomeWizardScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Saved $trimmedName with ${_selectedPreset.label}.'),
+          content: Text(
+            l10n.wizardDeviceSetupSaved(trimmedName, _selectedPreset.label),
+          ),
           backgroundColor: Colors.green,
         ),
       );
@@ -422,24 +424,20 @@ class _WelcomeWizardScreenState extends State<WelcomeWizardScreen> {
     return _buildPage(
       icon: Icons.waving_hand,
       iconColor: Colors.orange,
-      title: 'Welcome to MeshCore SAR',
-      description:
-          'This app combines MeshCore messaging, SAR field updates, mapping, and device tools in one place.',
+      title: l10n.wizardWelcomeTitle,
+      description: l10n.wizardOverviewDescription,
       features: [
         _FeatureItem(
           icon: Icons.chat_bubble_outline,
-          text:
-              'Send direct, room, and channel messages from the main Messages tab.',
+          text: l10n.wizardOverviewFeature1,
         ),
         _FeatureItem(
           icon: Icons.emergency_share,
-          text:
-              'Share SAR markers, map drawings, voice clips, and images over the mesh.',
+          text: l10n.wizardOverviewFeature2,
         ),
         _FeatureItem(
           icon: Icons.settings_input_antenna,
-          text:
-              'Connect over BLE or TCP, then manage the companion radio from inside the app.',
+          text: l10n.wizardOverviewFeature3,
         ),
       ],
       colorScheme: colorScheme,
@@ -454,25 +452,12 @@ class _WelcomeWizardScreenState extends State<WelcomeWizardScreen> {
     return _buildPage(
       icon: Icons.forum_rounded,
       iconColor: Colors.blue,
-      title: 'Messaging and Field Reports',
-      description:
-          'Messages are more than plain text here. The app already supports several operational payloads and transfer workflows.',
+      title: l10n.wizardMessagingTitle,
+      description: l10n.wizardMessagingDescription,
       features: [
-        _FeatureItem(
-          icon: Icons.chat,
-          text:
-              'Send direct messages, room posts, and channel traffic from one composer.',
-        ),
-        _FeatureItem(
-          icon: Icons.campaign,
-          text:
-              'Create SAR updates and reusable SAR templates for common field reports.',
-        ),
-        _FeatureItem(
-          icon: Icons.mic,
-          text:
-              'Transfer voice sessions and images, with progress and airtime estimates in the UI.',
-        ),
+        _FeatureItem(icon: Icons.chat, text: l10n.wizardMessagingFeature1),
+        _FeatureItem(icon: Icons.campaign, text: l10n.wizardMessagingFeature2),
+        _FeatureItem(icon: Icons.mic, text: l10n.wizardMessagingFeature3),
       ],
       colorScheme: colorScheme,
     );
@@ -505,10 +490,9 @@ class _WelcomeWizardScreenState extends State<WelcomeWizardScreen> {
                   colorScheme: colorScheme,
                   icon: Icons.bluetooth_connected,
                   iconColor: Colors.green,
-                  title: 'Connect device',
-                  description:
-                      'Connect your MeshCore radio, choose a name, and apply a radio preset before continuing.',
-                  badge: 'Setup',
+                  title: l10n.wizardConnectDeviceTitle,
+                  description: l10n.wizardConnectDeviceDescription,
+                  badge: l10n.wizardSetupBadge,
                 ),
                 const SizedBox(height: 16),
                 _buildContentCard(
@@ -530,15 +514,19 @@ class _WelcomeWizardScreenState extends State<WelcomeWizardScreen> {
                           Expanded(
                             child: Text(
                               isConnected
-                                  ? 'Connected to ${connectedName ?? "device"}'
-                                  : 'No device connected yet',
+                                  ? l10n.wizardConnectedToDevice(
+                                      connectedName ?? l10n.device,
+                                    )
+                                  : l10n.wizardNoDeviceConnected,
                               style: Theme.of(context).textTheme.bodyMedium
                                   ?.copyWith(fontWeight: FontWeight.w600),
                             ),
                           ),
                           TextButton(
                             onPressed: _openConnectionDialog,
-                            child: Text(isConnected ? 'Change' : l10n.connect),
+                            child: Text(
+                              isConnected ? l10n.change : l10n.connect,
+                            ),
                           ),
                         ],
                       ),
@@ -546,7 +534,7 @@ class _WelcomeWizardScreenState extends State<WelcomeWizardScreen> {
                         alignment: Alignment.centerRight,
                         child: TextButton(
                           onPressed: _skipDeviceSetupStep,
-                          child: const Text('Skip for now'),
+                          child: Text(l10n.wizardSkipForNow),
                         ),
                       ),
                     ],
@@ -561,22 +549,20 @@ class _WelcomeWizardScreenState extends State<WelcomeWizardScreen> {
                       TextField(
                         controller: _deviceNameController,
                         textInputAction: TextInputAction.done,
-                        decoration: const InputDecoration(
-                          labelText: 'Device name',
+                        decoration: InputDecoration(
+                          labelText: l10n.wizardDeviceNameLabel,
                           border: OutlineInputBorder(),
-                          helperText:
-                              'This name is advertised to other MeshCore users.',
+                          helperText: l10n.wizardDeviceNameHelp,
                         ),
                       ),
                       const SizedBox(height: 12),
                       DropdownButtonFormField<_RadioPreset>(
                         initialValue: _selectedPreset,
                         isExpanded: true,
-                        decoration: const InputDecoration(
-                          labelText: 'Config region',
+                        decoration: InputDecoration(
+                          labelText: l10n.wizardConfigRegionLabel,
                           border: OutlineInputBorder(),
-                          helperText:
-                              'Uses the full official MeshCore preset list. Default is EU/UK (Narrow).',
+                          helperText: l10n.wizardConfigRegionHelp,
                         ),
                         items: _radioPresets
                             .map(
@@ -619,18 +605,15 @@ class _WelcomeWizardScreenState extends State<WelcomeWizardScreen> {
                       ...[
                         _FeatureItem(
                           icon: Icons.rule,
-                          text:
-                              'Make sure the selected preset matches your local radio regulations.',
+                          text: l10n.wizardPresetNote1,
                         ),
                         _FeatureItem(
                           icon: Icons.settings_input_antenna,
-                          text:
-                              'The list matches the official MeshCore config tool preset feed.',
+                          text: l10n.wizardPresetNote2,
                         ),
                         _FeatureItem(
                           icon: Icons.public,
-                          text:
-                              'EU/UK (Narrow) stays selected by default for onboarding.',
+                          text: l10n.wizardPresetNote3,
                         ),
                       ].map(
                         (feature) => Padding(
@@ -661,9 +644,12 @@ class _WelcomeWizardScreenState extends State<WelcomeWizardScreen> {
         .deviceInfo
         .isConnected;
     if (_isApplyingDeviceSetup) {
-      return 'Saving...';
+      return AppLocalizations.of(context)!.wizardSaving;
     }
-    return isConnected ? 'Save and continue' : 'Connect device';
+    final l10n = AppLocalizations.of(context)!;
+    return isConnected
+        ? l10n.wizardSaveAndContinue
+        : l10n.wizardConnectDeviceTitle;
   }
 
   Widget _buildChannelPage(
@@ -674,25 +660,15 @@ class _WelcomeWizardScreenState extends State<WelcomeWizardScreen> {
     return _buildPage(
       icon: Icons.groups_rounded,
       iconColor: Colors.purple,
-      title: 'Contacts, Rooms, and Repeaters',
-      description:
-          'The Contacts tab organizes the network you discover and the routes you learn over time.',
+      title: l10n.wizardNetworkTitle,
+      description: l10n.wizardNetworkDescription,
       features: [
         _FeatureItem(
           icon: Icons.person_add_alt_1,
-          text:
-              'Review team members, repeaters, rooms, channels, and pending adverts in one list.',
+          text: l10n.wizardNetworkFeature1,
         ),
-        _FeatureItem(
-          icon: Icons.route,
-          text:
-              'Use smart ping, room login, learned paths, and route reset tools when connectivity gets messy.',
-        ),
-        _FeatureItem(
-          icon: Icons.hub,
-          text:
-              'Create channels and manage network destinations without leaving the app.',
-        ),
+        _FeatureItem(icon: Icons.route, text: l10n.wizardNetworkFeature2),
+        _FeatureItem(icon: Icons.hub, text: l10n.wizardNetworkFeature3),
       ],
       colorScheme: colorScheme,
     );
@@ -706,25 +682,12 @@ class _WelcomeWizardScreenState extends State<WelcomeWizardScreen> {
     return _buildPage(
       icon: Icons.map_rounded,
       iconColor: Colors.teal,
-      title: 'Map, Trails, and Shared Geometry',
-      description:
-          'The app map is tied directly into messaging, tracking, and SAR overlays instead of being a separate viewer.',
+      title: l10n.wizardMapOpsTitle,
+      description: l10n.wizardMapOpsDescription,
       features: [
-        _FeatureItem(
-          icon: Icons.location_on,
-          text:
-              'Track your own position, teammate locations, and movement trails on the map.',
-        ),
-        _FeatureItem(
-          icon: Icons.draw,
-          text:
-              'Open drawings from messages, preview them inline, and remove them from the map when needed.',
-        ),
-        _FeatureItem(
-          icon: Icons.router,
-          text:
-              'Use repeater map views and shared overlays to understand network reach in the field.',
-        ),
+        _FeatureItem(icon: Icons.location_on, text: l10n.wizardMapOpsFeature1),
+        _FeatureItem(icon: Icons.draw, text: l10n.wizardMapOpsFeature2),
+        _FeatureItem(icon: Icons.router, text: l10n.wizardMapOpsFeature3),
       ],
       colorScheme: colorScheme,
     );
@@ -738,24 +701,14 @@ class _WelcomeWizardScreenState extends State<WelcomeWizardScreen> {
     return _buildPage(
       icon: Icons.tune_rounded,
       iconColor: Colors.red,
-      title: 'Tools Beyond Messaging',
-      description:
-          'There is more here than the four main tabs. The app also includes configuration, diagnostics, and optional sensor workflows.',
+      title: l10n.wizardToolsTitle,
+      description: l10n.wizardToolsDescription,
       features: [
-        _FeatureItem(
-          icon: Icons.settings,
-          text:
-              'Open device config to change radio settings, telemetry, TX power, and companion details.',
-        ),
-        _FeatureItem(
-          icon: Icons.sensors,
-          text:
-              'Enable the Sensors tab when you want watched sensor dashboards and quick refresh actions.',
-        ),
+        _FeatureItem(icon: Icons.settings, text: l10n.wizardToolsFeature1),
+        _FeatureItem(icon: Icons.sensors, text: l10n.wizardToolsFeature2),
         _FeatureItem(
           icon: Icons.analytics_outlined,
-          text:
-              'Use packet logs, spectrum scan, and developer diagnostics when troubleshooting the mesh.',
+          text: l10n.wizardToolsFeature3,
         ),
       ],
       colorScheme: colorScheme,
@@ -770,6 +723,7 @@ class _WelcomeWizardScreenState extends State<WelcomeWizardScreen> {
     List<_FeatureItem>? features,
     required ColorScheme colorScheme,
   }) {
+    final l10n = AppLocalizations.of(context)!;
     return LayoutBuilder(
       builder: (context, constraints) => Center(
         child: ConstrainedBox(
@@ -789,7 +743,7 @@ class _WelcomeWizardScreenState extends State<WelcomeWizardScreen> {
                   iconColor: iconColor,
                   title: title,
                   description: description,
-                  badge: 'Overview',
+                  badge: l10n.wizardOverviewBadge,
                 ),
                 if (features != null && features.isNotEmpty) ...[
                   const SizedBox(height: 18),

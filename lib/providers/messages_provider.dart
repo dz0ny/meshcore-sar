@@ -765,9 +765,17 @@ class MessagesProvider with ChangeNotifier {
     final idx = channelIdx ?? 0;
     final resolved = resolveChannelNameCallback?.call(idx).trim();
     if (resolved != null && resolved.isNotEmpty) {
+      if (idx == 0 && resolved == 'Public') {
+        return _localizations?.publicChannel ?? resolved;
+      }
       return resolved;
     }
-    return idx == 0 ? 'Public' : 'Channel $idx';
+    if (idx == 0) {
+      return _localizations?.publicChannel ?? 'Public';
+    }
+    return _localizations != null
+        ? '${_localizations!.channel} $idx'
+        : 'Channel $idx';
   }
 
   String _buildNotificationMessageText(

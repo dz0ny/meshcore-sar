@@ -1656,4 +1656,198 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get requestingVoice => '正在请求语音';
+
+  @override
+  String get device => 'device';
+
+  @override
+  String get change => 'Change';
+
+  @override
+  String get wizardOverviewDescription =>
+      'This app combines MeshCore messaging, SAR field updates, mapping, and device tools in one place.';
+
+  @override
+  String get wizardOverviewFeature1 =>
+      'Send direct, room, and channel messages from the main Messages tab.';
+
+  @override
+  String get wizardOverviewFeature2 =>
+      'Share SAR markers, map drawings, voice clips, and images over the mesh.';
+
+  @override
+  String get wizardOverviewFeature3 =>
+      'Connect over BLE or TCP, then manage the companion radio from inside the app.';
+
+  @override
+  String get wizardMessagingTitle => 'Messaging and Field Reports';
+
+  @override
+  String get wizardMessagingDescription =>
+      'Messages are more than plain text here. The app already supports several operational payloads and transfer workflows.';
+
+  @override
+  String get wizardMessagingFeature1 =>
+      'Send direct messages, room posts, and channel traffic from one composer.';
+
+  @override
+  String get wizardMessagingFeature2 =>
+      'Create SAR updates and reusable SAR templates for common field reports.';
+
+  @override
+  String get wizardMessagingFeature3 =>
+      'Transfer voice sessions and images, with progress and airtime estimates in the UI.';
+
+  @override
+  String get wizardConnectDeviceTitle => 'Connect device';
+
+  @override
+  String get wizardConnectDeviceDescription =>
+      'Connect your MeshCore radio, choose a name, and apply a radio preset before continuing.';
+
+  @override
+  String get wizardSetupBadge => 'Setup';
+
+  @override
+  String get wizardOverviewBadge => 'Overview';
+
+  @override
+  String wizardConnectedToDevice(String deviceName) {
+    return 'Connected to $deviceName';
+  }
+
+  @override
+  String get wizardNoDeviceConnected => 'No device connected yet';
+
+  @override
+  String get wizardSkipForNow => 'Skip for now';
+
+  @override
+  String get wizardDeviceNameLabel => 'Device name';
+
+  @override
+  String get wizardDeviceNameHelp =>
+      'This name is advertised to other MeshCore users.';
+
+  @override
+  String get wizardConfigRegionLabel => 'Config region';
+
+  @override
+  String get wizardConfigRegionHelp =>
+      'Uses the full official MeshCore preset list. Default is EU/UK (Narrow).';
+
+  @override
+  String get wizardPresetNote1 =>
+      'Make sure the selected preset matches your local radio regulations.';
+
+  @override
+  String get wizardPresetNote2 =>
+      'The list matches the official MeshCore config tool preset feed.';
+
+  @override
+  String get wizardPresetNote3 =>
+      'EU/UK (Narrow) stays selected by default for onboarding.';
+
+  @override
+  String get wizardSaving => 'Saving...';
+
+  @override
+  String get wizardSaveAndContinue => 'Save and continue';
+
+  @override
+  String get wizardEnterDeviceName => 'Enter a device name before continuing.';
+
+  @override
+  String wizardDeviceSetupSaved(String deviceName, String presetName) {
+    return 'Saved $deviceName with $presetName.';
+  }
+
+  @override
+  String get wizardNetworkTitle => 'Contacts, Rooms, and Repeaters';
+
+  @override
+  String get wizardNetworkDescription =>
+      'The Contacts tab organizes the network you discover and the routes you learn over time.';
+
+  @override
+  String get wizardNetworkFeature1 =>
+      'Review team members, repeaters, rooms, channels, and pending adverts in one list.';
+
+  @override
+  String get wizardNetworkFeature2 =>
+      'Use smart ping, room login, learned paths, and route reset tools when connectivity gets messy.';
+
+  @override
+  String get wizardNetworkFeature3 =>
+      'Create channels and manage network destinations without leaving the app.';
+
+  @override
+  String get wizardMapOpsTitle => 'Map, Trails, and Shared Geometry';
+
+  @override
+  String get wizardMapOpsDescription =>
+      'The app map is tied directly into messaging, tracking, and SAR overlays instead of being a separate viewer.';
+
+  @override
+  String get wizardMapOpsFeature1 =>
+      'Track your own position, teammate locations, and movement trails on the map.';
+
+  @override
+  String get wizardMapOpsFeature2 =>
+      'Open drawings from messages, preview them inline, and remove them from the map when needed.';
+
+  @override
+  String get wizardMapOpsFeature3 =>
+      'Use repeater map views and shared overlays to understand network reach in the field.';
+
+  @override
+  String get wizardToolsTitle => 'Tools Beyond Messaging';
+
+  @override
+  String get wizardToolsDescription =>
+      'There is more here than the four main tabs. The app also includes configuration, diagnostics, and optional sensor workflows.';
+
+  @override
+  String get wizardToolsFeature1 =>
+      'Open device config to change radio settings, telemetry, TX power, and companion details.';
+
+  @override
+  String get wizardToolsFeature2 =>
+      'Enable the Sensors tab when you want watched sensor dashboards and quick refresh actions.';
+
+  @override
+  String get wizardToolsFeature3 =>
+      'Use packet logs, spectrum scan, and developer diagnostics when troubleshooting the mesh.';
+
+  @override
+  String get contactInSensors => 'In Sensors';
+
+  @override
+  String get contactAddToSensors => 'Add to Sensors';
+
+  @override
+  String get contactSetPath => 'Set path';
+
+  @override
+  String contactAddedToSensors(String contactName) {
+    return '$contactName added to Sensors';
+  }
+
+  @override
+  String contactFailedToClearRoute(String error) {
+    return 'Failed to clear route: $error';
+  }
+
+  @override
+  String get contactRouteCleared => 'Route cleared';
+
+  @override
+  String contactRouteSet(String route) {
+    return 'Route set: $route';
+  }
+
+  @override
+  String contactFailedToSetRoute(String error) {
+    return 'Failed to set route: $error';
+  }
 }

@@ -341,7 +341,11 @@ class ContactTile extends StatelessWidget {
                 leading: Icon(
                   isInSensors ? Icons.sensors : Icons.sensors_outlined,
                 ),
-                title: Text(isInSensors ? 'In Sensors' : 'Add to Sensors'),
+                title: Text(
+                  isInSensors
+                      ? l10n.contactInSensors
+                      : l10n.contactAddToSensors,
+                ),
                 enabled: !isInSensors,
                 onTap: isInSensors
                     ? null
@@ -353,7 +357,7 @@ class ContactTile extends StatelessWidget {
             if (canSetPath)
               ListTile(
                 leading: const Icon(Icons.alt_route),
-                title: const Text('Set path'),
+                title: Text(l10n.contactSetPath),
                 onTap: () {
                   Navigator.pop(sheetContext);
                   _showSetRouteDialog(context, contact);
@@ -408,7 +412,13 @@ class ContactTile extends StatelessWidget {
     }
 
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('${contact.displayName} added to Sensors')),
+      SnackBar(
+        content: Text(
+          AppLocalizations.of(
+            context,
+          )!.contactAddedToSensors(contact.displayName),
+        ),
+      ),
     );
   }
 
@@ -534,15 +544,22 @@ class ContactTile extends StatelessWidget {
           paddedPathBytes: previousPathBytes,
         );
         if (context.mounted) {
-          ToastLogger.error(context, 'Failed to clear route: $error');
+          ToastLogger.error(
+            context,
+            AppLocalizations.of(
+              context,
+            )!.contactFailedToClearRoute(error.toString()),
+          );
         }
         return;
       }
 
       if (context.mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Route cleared')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.contactRouteCleared),
+          ),
+        );
       }
       return;
     }
@@ -562,7 +579,13 @@ class ContactTile extends StatelessWidget {
       );
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Route set: ${parsedRoute.canonicalText}')),
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(
+                context,
+              )!.contactRouteSet(parsedRoute.canonicalText),
+            ),
+          ),
         );
       }
     } catch (error) {
@@ -572,7 +595,12 @@ class ContactTile extends StatelessWidget {
         paddedPathBytes: previousPathBytes,
       );
       if (context.mounted) {
-        ToastLogger.error(context, 'Failed to set route: $error');
+        ToastLogger.error(
+          context,
+          AppLocalizations.of(
+            context,
+          )!.contactFailedToSetRoute(error.toString()),
+        );
       }
     }
   }

@@ -402,10 +402,13 @@ class NotificationService {
           (DateTime.now().millisecondsSinceEpoch % 1000);
 
       // Build notification title and body
+      final resolvedChannelName = channelName?.trim().isNotEmpty == true
+          ? channelName!.trim()
+          : (localizations?.publicChannel ?? 'Public');
       final title = isChannelMessage
           ? (localizations != null
-                ? '${localizations.channel}: ${channelName ?? "Public"}'
-                : 'Channel: ${channelName ?? "Public"}')
+                ? '${localizations.channel}: $resolvedChannelName'
+                : 'Channel: $resolvedChannelName')
           : (localizations != null
                 ? '${localizations.newMessage} ${localizations.from} $senderName'
                 : 'New message from $senderName');
@@ -550,7 +553,7 @@ class NotificationService {
       final title = localizations?.updateAvailable ?? 'App Update Available';
       final body = localizations != null
           ? '${localizations.currentVersion}: $currentVersion\n'
-              '${localizations.latestVersion}: $latestVersion'
+                '${localizations.latestVersion}: $latestVersion'
           : 'Current: $currentVersion\nLatest: $latestVersion';
 
       // Android notification details

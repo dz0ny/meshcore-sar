@@ -2301,5 +2301,246 @@
   },
   "requestingVoice": "Requesting voice",
   "@requestingVoice": {
+  },
+  "device": "device",
+  "@device": {
+    "description": "Generic device label"
+  },
+  "change": "Change",
+  "@change": {
+    "description": "Generic change action"
+  },
+  "wizardOverviewDescription": "This app combines MeshCore messaging, SAR field updates, mapping, and device tools in one place.",
+  "@wizardOverviewDescription": {
+    "description": "Updated onboarding overview description"
+  },
+  "wizardOverviewFeature1": "Send direct, room, and channel messages from the main Messages tab.",
+  "@wizardOverviewFeature1": {
+    "description": "Updated onboarding overview feature 1"
+  },
+  "wizardOverviewFeature2": "Share SAR markers, map drawings, voice clips, and images over the mesh.",
+  "@wizardOverviewFeature2": {
+    "description": "Updated onboarding overview feature 2"
+  },
+  "wizardOverviewFeature3": "Connect over BLE or TCP, then manage the companion radio from inside the app.",
+  "@wizardOverviewFeature3": {
+    "description": "Updated onboarding overview feature 3"
+  },
+  "wizardMessagingTitle": "Messaging and Field Reports",
+  "@wizardMessagingTitle": {
+    "description": "Updated onboarding messaging page title"
+  },
+  "wizardMessagingDescription": "Messages are more than plain text here. The app already supports several operational payloads and transfer workflows.",
+  "@wizardMessagingDescription": {
+    "description": "Updated onboarding messaging page description"
+  },
+  "wizardMessagingFeature1": "Send direct messages, room posts, and channel traffic from one composer.",
+  "@wizardMessagingFeature1": {
+    "description": "Updated onboarding messaging feature 1"
+  },
+  "wizardMessagingFeature2": "Create SAR updates and reusable SAR templates for common field reports.",
+  "@wizardMessagingFeature2": {
+    "description": "Updated onboarding messaging feature 2"
+  },
+  "wizardMessagingFeature3": "Transfer voice sessions and images, with progress and airtime estimates in the UI.",
+  "@wizardMessagingFeature3": {
+    "description": "Updated onboarding messaging feature 3"
+  },
+  "wizardConnectDeviceTitle": "Connect device",
+  "@wizardConnectDeviceTitle": {
+    "description": "Onboarding connect device page title"
+  },
+  "wizardConnectDeviceDescription": "Connect your MeshCore radio, choose a name, and apply a radio preset before continuing.",
+  "@wizardConnectDeviceDescription": {
+    "description": "Onboarding connect device page description"
+  },
+  "wizardSetupBadge": "Setup",
+  "@wizardSetupBadge": {
+    "description": "Onboarding setup badge label"
+  },
+  "wizardOverviewBadge": "Overview",
+  "@wizardOverviewBadge": {
+    "description": "Onboarding overview badge label"
+  },
+  "wizardConnectedToDevice": "Connected to {deviceName}",
+  "@wizardConnectedToDevice": {
+    "description": "Onboarding connection status when connected",
+    "placeholders": {
+      "deviceName": {
+        "type": "String"
+      }
+    }
+  },
+  "wizardNoDeviceConnected": "No device connected yet",
+  "@wizardNoDeviceConnected": {
+    "description": "Onboarding connection status when disconnected"
+  },
+  "wizardSkipForNow": "Skip for now",
+  "@wizardSkipForNow": {
+    "description": "Onboarding skip current setup step action"
+  },
+  "wizardDeviceNameLabel": "Device name",
+  "@wizardDeviceNameLabel": {
+    "description": "Onboarding device name field label"
+  },
+  "wizardDeviceNameHelp": "This name is advertised to other MeshCore users.",
+  "@wizardDeviceNameHelp": {
+    "description": "Onboarding device name field helper text"
+  },
+  "wizardConfigRegionLabel": "Config region",
+  "@wizardConfigRegionLabel": {
+    "description": "Onboarding config region field label"
+  },
+  "wizardConfigRegionHelp": "Uses the full official MeshCore preset list. Default is EU/UK (Narrow).",
+  "@wizardConfigRegionHelp": {
+    "description": "Onboarding config region helper text"
+  },
+  "wizardPresetNote1": "Make sure the selected preset matches your local radio regulations.",
+  "@wizardPresetNote1": {
+    "description": "Onboarding preset note 1"
+  },
+  "wizardPresetNote2": "The list matches the official MeshCore config tool preset feed.",
+  "@wizardPresetNote2": {
+    "description": "Onboarding preset note 2"
+  },
+  "wizardPresetNote3": "EU/UK (Narrow) stays selected by default for onboarding.",
+  "@wizardPresetNote3": {
+    "description": "Onboarding preset note 3"
+  },
+  "wizardSaving": "Saving...",
+  "@wizardSaving": {
+    "description": "Onboarding saving button label"
+  },
+  "wizardSaveAndContinue": "Save and continue",
+  "@wizardSaveAndContinue": {
+    "description": "Onboarding save and continue button label"
+  },
+  "wizardEnterDeviceName": "Enter a device name before continuing.",
+  "@wizardEnterDeviceName": {
+    "description": "Onboarding validation when device name is missing"
+  },
+  "wizardDeviceSetupSaved": "Saved {deviceName} with {presetName}.",
+  "@wizardDeviceSetupSaved": {
+    "description": "Onboarding success message after saving device setup",
+    "placeholders": {
+      "deviceName": {
+        "type": "String"
+      },
+      "presetName": {
+        "type": "String"
+      }
+    }
+  },
+  "wizardNetworkTitle": "Contacts, Rooms, and Repeaters",
+  "@wizardNetworkTitle": {
+    "description": "Updated onboarding network page title"
+  },
+  "wizardNetworkDescription": "The Contacts tab organizes the network you discover and the routes you learn over time.",
+  "@wizardNetworkDescription": {
+    "description": "Updated onboarding network page description"
+  },
+  "wizardNetworkFeature1": "Review team members, repeaters, rooms, channels, and pending adverts in one list.",
+  "@wizardNetworkFeature1": {
+    "description": "Updated onboarding network feature 1"
+  },
+  "wizardNetworkFeature2": "Use smart ping, room login, learned paths, and route reset tools when connectivity gets messy.",
+  "@wizardNetworkFeature2": {
+    "description": "Updated onboarding network feature 2"
+  },
+  "wizardNetworkFeature3": "Create channels and manage network destinations without leaving the app.",
+  "@wizardNetworkFeature3": {
+    "description": "Updated onboarding network feature 3"
+  },
+  "wizardMapOpsTitle": "Map, Trails, and Shared Geometry",
+  "@wizardMapOpsTitle": {
+    "description": "Updated onboarding map page title"
+  },
+  "wizardMapOpsDescription": "The app map is tied directly into messaging, tracking, and SAR overlays instead of being a separate viewer.",
+  "@wizardMapOpsDescription": {
+    "description": "Updated onboarding map page description"
+  },
+  "wizardMapOpsFeature1": "Track your own position, teammate locations, and movement trails on the map.",
+  "@wizardMapOpsFeature1": {
+    "description": "Updated onboarding map feature 1"
+  },
+  "wizardMapOpsFeature2": "Open drawings from messages, preview them inline, and remove them from the map when needed.",
+  "@wizardMapOpsFeature2": {
+    "description": "Updated onboarding map feature 2"
+  },
+  "wizardMapOpsFeature3": "Use repeater map views and shared overlays to understand network reach in the field.",
+  "@wizardMapOpsFeature3": {
+    "description": "Updated onboarding map feature 3"
+  },
+  "wizardToolsTitle": "Tools Beyond Messaging",
+  "@wizardToolsTitle": {
+    "description": "Updated onboarding tools page title"
+  },
+  "wizardToolsDescription": "There is more here than the four main tabs. The app also includes configuration, diagnostics, and optional sensor workflows.",
+  "@wizardToolsDescription": {
+    "description": "Updated onboarding tools page description"
+  },
+  "wizardToolsFeature1": "Open device config to change radio settings, telemetry, TX power, and companion details.",
+  "@wizardToolsFeature1": {
+    "description": "Updated onboarding tools feature 1"
+  },
+  "wizardToolsFeature2": "Enable the Sensors tab when you want watched sensor dashboards and quick refresh actions.",
+  "@wizardToolsFeature2": {
+    "description": "Updated onboarding tools feature 2"
+  },
+  "wizardToolsFeature3": "Use packet logs, spectrum scan, and developer diagnostics when troubleshooting the mesh.",
+  "@wizardToolsFeature3": {
+    "description": "Updated onboarding tools feature 3"
+  },
+  "contactInSensors": "In Sensors",
+  "@contactInSensors": {
+    "description": "Contact actions label when already in sensors"
+  },
+  "contactAddToSensors": "Add to Sensors",
+  "@contactAddToSensors": {
+    "description": "Contact actions label to add to sensors"
+  },
+  "contactSetPath": "Set path",
+  "@contactSetPath": {
+    "description": "Contact actions label to set route path"
+  },
+  "contactAddedToSensors": "{contactName} added to Sensors",
+  "@contactAddedToSensors": {
+    "description": "Snackbar after adding contact to sensors",
+    "placeholders": {
+      "contactName": {
+        "type": "String"
+      }
+    }
+  },
+  "contactFailedToClearRoute": "Failed to clear route: {error}",
+  "@contactFailedToClearRoute": {
+    "description": "Error when clearing a contact route fails",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "contactRouteCleared": "Route cleared",
+  "@contactRouteCleared": {
+    "description": "Snackbar after route is cleared"
+  },
+  "contactRouteSet": "Route set: {route}",
+  "@contactRouteSet": {
+    "description": "Snackbar after route is set",
+    "placeholders": {
+      "route": {
+        "type": "String"
+      }
+    }
+  },
+  "contactFailedToSetRoute": "Failed to set route: {error}",
+  "@contactFailedToSetRoute": {
+    "description": "Error when setting a contact route fails",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
   }
 }

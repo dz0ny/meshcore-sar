@@ -1718,4 +1718,198 @@ class AppLocalizationsSl extends AppLocalizations {
 
   @override
   String get requestingVoice => 'Zahteva za glasom';
+
+  @override
+  String get device => 'naprava';
+
+  @override
+  String get change => 'Spremeni';
+
+  @override
+  String get wizardOverviewDescription =>
+      'Ta aplikacija združuje sporočanje MeshCore, terenske SAR posodobitve, zemljevide in orodja za napravo na enem mestu.';
+
+  @override
+  String get wizardOverviewFeature1 =>
+      'Pošiljajte neposredna sporočila, objave v sobah in sporočila na kanalih iz glavnega zavihka Sporočila.';
+
+  @override
+  String get wizardOverviewFeature2 =>
+      'Delite SAR označevalce, risbe zemljevida, glasovne posnetke in slike prek mesh omrežja.';
+
+  @override
+  String get wizardOverviewFeature3 =>
+      'Povežite se prek BLE ali TCP in nato upravljajte spremljevalni radio kar iz aplikacije.';
+
+  @override
+  String get wizardMessagingTitle => 'Sporočanje in terenska poročila';
+
+  @override
+  String get wizardMessagingDescription =>
+      'Sporočila tukaj niso le navadno besedilo. Aplikacija že podpira več operativnih vrst vsebin in prenosnih tokov.';
+
+  @override
+  String get wizardMessagingFeature1 =>
+      'Pošiljajte neposredna sporočila, objave v sobah in promet na kanalih iz enega urejevalnika.';
+
+  @override
+  String get wizardMessagingFeature2 =>
+      'Ustvarjajte SAR posodobitve in večkrat uporabne SAR predloge za pogosta terenska poročila.';
+
+  @override
+  String get wizardMessagingFeature3 =>
+      'Prenašajte glasovne seje in slike, vmesnik pa prikazuje napredek in oceno časa prenosa.';
+
+  @override
+  String get wizardConnectDeviceTitle => 'Poveži napravo';
+
+  @override
+  String get wizardConnectDeviceDescription =>
+      'Povežite svoj MeshCore radio, izberite ime in uporabite radijski prednastavljeni profil, preden nadaljujete.';
+
+  @override
+  String get wizardSetupBadge => 'Nastavitev';
+
+  @override
+  String get wizardOverviewBadge => 'Pregled';
+
+  @override
+  String wizardConnectedToDevice(String deviceName) {
+    return 'Povezano z: $deviceName';
+  }
+
+  @override
+  String get wizardNoDeviceConnected => 'Nobena naprava še ni povezana';
+
+  @override
+  String get wizardSkipForNow => 'Za zdaj preskoči';
+
+  @override
+  String get wizardDeviceNameLabel => 'Ime naprave';
+
+  @override
+  String get wizardDeviceNameHelp =>
+      'To ime se oglašuje drugim uporabnikom MeshCore.';
+
+  @override
+  String get wizardConfigRegionLabel => 'Konfiguracijska regija';
+
+  @override
+  String get wizardConfigRegionHelp =>
+      'Uporabi celoten uradni seznam prednastavitev MeshCore. Privzeto je izbran EU/UK (Narrow).';
+
+  @override
+  String get wizardPresetNote1 =>
+      'Prepričajte se, da izbrana prednastavitev ustreza lokalnim radijskim predpisom.';
+
+  @override
+  String get wizardPresetNote2 =>
+      'Seznam ustreza uradnemu viru prednastavitev orodja MeshCore config.';
+
+  @override
+  String get wizardPresetNote3 =>
+      'Za uvajanje ostane privzeto izbran EU/UK (Narrow).';
+
+  @override
+  String get wizardSaving => 'Shranjujem...';
+
+  @override
+  String get wizardSaveAndContinue => 'Shrani in nadaljuj';
+
+  @override
+  String get wizardEnterDeviceName => 'Pred nadaljevanjem vnesite ime naprave.';
+
+  @override
+  String wizardDeviceSetupSaved(String deviceName, String presetName) {
+    return 'Shranjeno $deviceName z nastavitvijo $presetName.';
+  }
+
+  @override
+  String get wizardNetworkTitle => 'Stiki, sobe in repetitorji';
+
+  @override
+  String get wizardNetworkDescription =>
+      'Zavihek Stiki organizira omrežje, ki ga odkrijete, in poti, ki se jih aplikacija nauči skozi čas.';
+
+  @override
+  String get wizardNetworkFeature1 =>
+      'Na enem seznamu preglejte člane ekipe, repetitorje, sobe, kanale in čakajoče oglase.';
+
+  @override
+  String get wizardNetworkFeature2 =>
+      'Uporabite smart ping, prijavo v sobe, naučene poti in ponastavitev poti, ko povezljivost postane neurejena.';
+
+  @override
+  String get wizardNetworkFeature3 =>
+      'Ustvarjajte kanale in upravljajte omrežne cilje, ne da bi zapustili aplikacijo.';
+
+  @override
+  String get wizardMapOpsTitle => 'Zemljevid, sledi in deljena geometrija';
+
+  @override
+  String get wizardMapOpsDescription =>
+      'Zemljevid v aplikaciji je neposredno povezan s sporočanjem, sledenjem in SAR prekrivanji, namesto da bi bil le ločen pregledovalnik.';
+
+  @override
+  String get wizardMapOpsFeature1 =>
+      'Spremljajte svoj položaj, lokacije sotekmovalcev in gibanje sledi na zemljevidu.';
+
+  @override
+  String get wizardMapOpsFeature2 =>
+      'Odprite risbe iz sporočil, jih predoglejte v vrstici in jih po potrebi odstranite z zemljevida.';
+
+  @override
+  String get wizardMapOpsFeature3 =>
+      'Uporabite poglede repetitorjev in deljena prekrivanja za razumevanje dosega omrežja na terenu.';
+
+  @override
+  String get wizardToolsTitle => 'Orodja onkraj sporočanja';
+
+  @override
+  String get wizardToolsDescription =>
+      'Tu je več kot le štirje glavni zavihki. Aplikacija vključuje tudi konfiguracijo, diagnostiko in neobvezne senzorske poteke.';
+
+  @override
+  String get wizardToolsFeature1 =>
+      'Odprite nastavitve naprave za spremembo radijskih nastavitev, telemetrije, oddajne moči in podatkov spremljevalne naprave.';
+
+  @override
+  String get wizardToolsFeature2 =>
+      'Omogočite zavihek Senzorji, kadar želite nadzorne plošče in hitra osveževanja spremljanih senzorjev.';
+
+  @override
+  String get wizardToolsFeature3 =>
+      'Uporabite dnevnik paketov, pregled spektra in razvojno diagnostiko pri odpravljanju težav v mesh omrežju.';
+
+  @override
+  String get contactInSensors => 'V senzorjih';
+
+  @override
+  String get contactAddToSensors => 'Dodaj v senzorje';
+
+  @override
+  String get contactSetPath => 'Nastavi pot';
+
+  @override
+  String contactAddedToSensors(String contactName) {
+    return '$contactName dodan v senzorje';
+  }
+
+  @override
+  String contactFailedToClearRoute(String error) {
+    return 'Brisanje poti ni uspelo: $error';
+  }
+
+  @override
+  String get contactRouteCleared => 'Pot izbrisana';
+
+  @override
+  String contactRouteSet(String route) {
+    return 'Pot nastavljena: $route';
+  }
+
+  @override
+  String contactFailedToSetRoute(String error) {
+    return 'Nastavitev poti ni uspela: $error';
+  }
 }

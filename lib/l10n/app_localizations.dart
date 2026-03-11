@@ -3203,6 +3203,318 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Requesting voice'**
   String get requestingVoice;
+
+  /// Generic device label
+  ///
+  /// In en, this message translates to:
+  /// **'device'**
+  String get device;
+
+  /// Generic change action
+  ///
+  /// In en, this message translates to:
+  /// **'Change'**
+  String get change;
+
+  /// Updated onboarding overview description
+  ///
+  /// In en, this message translates to:
+  /// **'This app combines MeshCore messaging, SAR field updates, mapping, and device tools in one place.'**
+  String get wizardOverviewDescription;
+
+  /// Updated onboarding overview feature 1
+  ///
+  /// In en, this message translates to:
+  /// **'Send direct, room, and channel messages from the main Messages tab.'**
+  String get wizardOverviewFeature1;
+
+  /// Updated onboarding overview feature 2
+  ///
+  /// In en, this message translates to:
+  /// **'Share SAR markers, map drawings, voice clips, and images over the mesh.'**
+  String get wizardOverviewFeature2;
+
+  /// Updated onboarding overview feature 3
+  ///
+  /// In en, this message translates to:
+  /// **'Connect over BLE or TCP, then manage the companion radio from inside the app.'**
+  String get wizardOverviewFeature3;
+
+  /// Updated onboarding messaging page title
+  ///
+  /// In en, this message translates to:
+  /// **'Messaging and Field Reports'**
+  String get wizardMessagingTitle;
+
+  /// Updated onboarding messaging page description
+  ///
+  /// In en, this message translates to:
+  /// **'Messages are more than plain text here. The app already supports several operational payloads and transfer workflows.'**
+  String get wizardMessagingDescription;
+
+  /// Updated onboarding messaging feature 1
+  ///
+  /// In en, this message translates to:
+  /// **'Send direct messages, room posts, and channel traffic from one composer.'**
+  String get wizardMessagingFeature1;
+
+  /// Updated onboarding messaging feature 2
+  ///
+  /// In en, this message translates to:
+  /// **'Create SAR updates and reusable SAR templates for common field reports.'**
+  String get wizardMessagingFeature2;
+
+  /// Updated onboarding messaging feature 3
+  ///
+  /// In en, this message translates to:
+  /// **'Transfer voice sessions and images, with progress and airtime estimates in the UI.'**
+  String get wizardMessagingFeature3;
+
+  /// Onboarding connect device page title
+  ///
+  /// In en, this message translates to:
+  /// **'Connect device'**
+  String get wizardConnectDeviceTitle;
+
+  /// Onboarding connect device page description
+  ///
+  /// In en, this message translates to:
+  /// **'Connect your MeshCore radio, choose a name, and apply a radio preset before continuing.'**
+  String get wizardConnectDeviceDescription;
+
+  /// Onboarding setup badge label
+  ///
+  /// In en, this message translates to:
+  /// **'Setup'**
+  String get wizardSetupBadge;
+
+  /// Onboarding overview badge label
+  ///
+  /// In en, this message translates to:
+  /// **'Overview'**
+  String get wizardOverviewBadge;
+
+  /// Onboarding connection status when connected
+  ///
+  /// In en, this message translates to:
+  /// **'Connected to {deviceName}'**
+  String wizardConnectedToDevice(String deviceName);
+
+  /// Onboarding connection status when disconnected
+  ///
+  /// In en, this message translates to:
+  /// **'No device connected yet'**
+  String get wizardNoDeviceConnected;
+
+  /// Onboarding skip current setup step action
+  ///
+  /// In en, this message translates to:
+  /// **'Skip for now'**
+  String get wizardSkipForNow;
+
+  /// Onboarding device name field label
+  ///
+  /// In en, this message translates to:
+  /// **'Device name'**
+  String get wizardDeviceNameLabel;
+
+  /// Onboarding device name field helper text
+  ///
+  /// In en, this message translates to:
+  /// **'This name is advertised to other MeshCore users.'**
+  String get wizardDeviceNameHelp;
+
+  /// Onboarding config region field label
+  ///
+  /// In en, this message translates to:
+  /// **'Config region'**
+  String get wizardConfigRegionLabel;
+
+  /// Onboarding config region helper text
+  ///
+  /// In en, this message translates to:
+  /// **'Uses the full official MeshCore preset list. Default is EU/UK (Narrow).'**
+  String get wizardConfigRegionHelp;
+
+  /// Onboarding preset note 1
+  ///
+  /// In en, this message translates to:
+  /// **'Make sure the selected preset matches your local radio regulations.'**
+  String get wizardPresetNote1;
+
+  /// Onboarding preset note 2
+  ///
+  /// In en, this message translates to:
+  /// **'The list matches the official MeshCore config tool preset feed.'**
+  String get wizardPresetNote2;
+
+  /// Onboarding preset note 3
+  ///
+  /// In en, this message translates to:
+  /// **'EU/UK (Narrow) stays selected by default for onboarding.'**
+  String get wizardPresetNote3;
+
+  /// Onboarding saving button label
+  ///
+  /// In en, this message translates to:
+  /// **'Saving...'**
+  String get wizardSaving;
+
+  /// Onboarding save and continue button label
+  ///
+  /// In en, this message translates to:
+  /// **'Save and continue'**
+  String get wizardSaveAndContinue;
+
+  /// Onboarding validation when device name is missing
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a device name before continuing.'**
+  String get wizardEnterDeviceName;
+
+  /// Onboarding success message after saving device setup
+  ///
+  /// In en, this message translates to:
+  /// **'Saved {deviceName} with {presetName}.'**
+  String wizardDeviceSetupSaved(String deviceName, String presetName);
+
+  /// Updated onboarding network page title
+  ///
+  /// In en, this message translates to:
+  /// **'Contacts, Rooms, and Repeaters'**
+  String get wizardNetworkTitle;
+
+  /// Updated onboarding network page description
+  ///
+  /// In en, this message translates to:
+  /// **'The Contacts tab organizes the network you discover and the routes you learn over time.'**
+  String get wizardNetworkDescription;
+
+  /// Updated onboarding network feature 1
+  ///
+  /// In en, this message translates to:
+  /// **'Review team members, repeaters, rooms, channels, and pending adverts in one list.'**
+  String get wizardNetworkFeature1;
+
+  /// Updated onboarding network feature 2
+  ///
+  /// In en, this message translates to:
+  /// **'Use smart ping, room login, learned paths, and route reset tools when connectivity gets messy.'**
+  String get wizardNetworkFeature2;
+
+  /// Updated onboarding network feature 3
+  ///
+  /// In en, this message translates to:
+  /// **'Create channels and manage network destinations without leaving the app.'**
+  String get wizardNetworkFeature3;
+
+  /// Updated onboarding map page title
+  ///
+  /// In en, this message translates to:
+  /// **'Map, Trails, and Shared Geometry'**
+  String get wizardMapOpsTitle;
+
+  /// Updated onboarding map page description
+  ///
+  /// In en, this message translates to:
+  /// **'The app map is tied directly into messaging, tracking, and SAR overlays instead of being a separate viewer.'**
+  String get wizardMapOpsDescription;
+
+  /// Updated onboarding map feature 1
+  ///
+  /// In en, this message translates to:
+  /// **'Track your own position, teammate locations, and movement trails on the map.'**
+  String get wizardMapOpsFeature1;
+
+  /// Updated onboarding map feature 2
+  ///
+  /// In en, this message translates to:
+  /// **'Open drawings from messages, preview them inline, and remove them from the map when needed.'**
+  String get wizardMapOpsFeature2;
+
+  /// Updated onboarding map feature 3
+  ///
+  /// In en, this message translates to:
+  /// **'Use repeater map views and shared overlays to understand network reach in the field.'**
+  String get wizardMapOpsFeature3;
+
+  /// Updated onboarding tools page title
+  ///
+  /// In en, this message translates to:
+  /// **'Tools Beyond Messaging'**
+  String get wizardToolsTitle;
+
+  /// Updated onboarding tools page description
+  ///
+  /// In en, this message translates to:
+  /// **'There is more here than the four main tabs. The app also includes configuration, diagnostics, and optional sensor workflows.'**
+  String get wizardToolsDescription;
+
+  /// Updated onboarding tools feature 1
+  ///
+  /// In en, this message translates to:
+  /// **'Open device config to change radio settings, telemetry, TX power, and companion details.'**
+  String get wizardToolsFeature1;
+
+  /// Updated onboarding tools feature 2
+  ///
+  /// In en, this message translates to:
+  /// **'Enable the Sensors tab when you want watched sensor dashboards and quick refresh actions.'**
+  String get wizardToolsFeature2;
+
+  /// Updated onboarding tools feature 3
+  ///
+  /// In en, this message translates to:
+  /// **'Use packet logs, spectrum scan, and developer diagnostics when troubleshooting the mesh.'**
+  String get wizardToolsFeature3;
+
+  /// Contact actions label when already in sensors
+  ///
+  /// In en, this message translates to:
+  /// **'In Sensors'**
+  String get contactInSensors;
+
+  /// Contact actions label to add to sensors
+  ///
+  /// In en, this message translates to:
+  /// **'Add to Sensors'**
+  String get contactAddToSensors;
+
+  /// Contact actions label to set route path
+  ///
+  /// In en, this message translates to:
+  /// **'Set path'**
+  String get contactSetPath;
+
+  /// Snackbar after adding contact to sensors
+  ///
+  /// In en, this message translates to:
+  /// **'{contactName} added to Sensors'**
+  String contactAddedToSensors(String contactName);
+
+  /// Error when clearing a contact route fails
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to clear route: {error}'**
+  String contactFailedToClearRoute(String error);
+
+  /// Snackbar after route is cleared
+  ///
+  /// In en, this message translates to:
+  /// **'Route cleared'**
+  String get contactRouteCleared;
+
+  /// Snackbar after route is set
+  ///
+  /// In en, this message translates to:
+  /// **'Route set: {route}'**
+  String contactRouteSet(String route);
+
+  /// Error when setting a contact route fails
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to set route: {error}'**
+  String contactFailedToSetRoute(String error);
 }
 
 class _AppLocalizationsDelegate

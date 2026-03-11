@@ -574,8 +574,20 @@ class AppProvider with ChangeNotifier {
     connectionProvider.addListener(_handleConnectionStateChange);
     messagesProvider.resolveContactNameCallback =
         _resolveContactNameForNotification;
-    messagesProvider.resolveChannelNameCallback =
-        channelsProvider.getChannelDisplayName;
+    messagesProvider.resolveChannelNameCallback = (channelIdx) {
+      if (channelIdx == 0) {
+        return 'Public';
+      }
+
+      for (final channel in contactsProvider.channels) {
+        if (channel.publicKey.length > 1 &&
+            channel.publicKey[1] == channelIdx) {
+          return channel.displayName;
+        }
+      }
+
+      return channelsProvider.getChannelDisplayName(channelIdx);
+    };
 
     voiceProvider.sendRawPacketCallback =
         ({

@@ -21,6 +21,7 @@ import '../../l10n/app_localizations.dart';
 
 class ContactTile extends StatelessWidget {
   final Contact contact;
+  final String? groupLabel;
   final Position? currentPosition;
   final double Function(double, double, double, double)? calculateDistance;
   final String Function(double)? formatDistance;
@@ -30,6 +31,7 @@ class ContactTile extends StatelessWidget {
   const ContactTile({
     super.key,
     required this.contact,
+    this.groupLabel,
     this.currentPosition,
     this.calculateDistance,
     this.formatDistance,
@@ -133,11 +135,12 @@ class ContactTile extends StatelessWidget {
           spacing: 6,
           runSpacing: 6,
           children: [
-            _buildMetaPill(
-              context,
-              icon: _contactTypeIcon(contact),
-              label: contact.type.displayName,
-            ),
+            if (groupLabel case final label?)
+              _buildMetaPill(
+                context,
+                icon: Icons.folder_copy_outlined,
+                label: label,
+              ),
             _buildMetaPill(
               context,
               icon: Icons.key_outlined,
@@ -720,21 +723,6 @@ class ContactTile extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  IconData _contactTypeIcon(Contact contact) {
-    switch (contact.type) {
-      case ContactType.chat:
-        return Icons.person_outline;
-      case ContactType.repeater:
-        return Icons.router_outlined;
-      case ContactType.room:
-        return Icons.meeting_room_outlined;
-      case ContactType.channel:
-        return Icons.campaign_outlined;
-      case ContactType.none:
-        return Icons.help_outline;
-    }
   }
 
   Widget _buildLocationLine(

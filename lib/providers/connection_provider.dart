@@ -186,9 +186,11 @@ class ConnectionProvider with ChangeNotifier {
   Function(Uint8List publicKeyPrefix, Uint8List statusData)? onStatusResponse;
   Function(Uint8List payload, int snrRaw, int rssiDbm)? onRawDataReceived;
   Contact? Function(Uint8List contactPublicKey)? resolveContactForDmCallback;
+  bool Function()? canStartAutomaticMessageSyncCallback;
 
   // Track pending send operations for auto-recovery
   final Map<String, _PendingSendOperation> _pendingSendOperations = {};
+  bool _pendingAutomaticMessageSync = false;
 
   ConnectionProvider() {
     _wireServiceCallbacks(_bleService);
@@ -331,6 +333,13 @@ class ConnectionProvider with ChangeNotifier {
     service.onMessageWaiting = () {
       if (_isSpectrumScanActive) {
         debugPrint('📥 [Provider] MSG_WAITING ignored during spectrum scan');
+        return;
+      }
+      if (!(canStartAutomaticMessageSyncCallback?.call() ?? true)) {
+        _pendingAutomaticMessageSync = true;
+        debugPrint(
+          '📥 [Provider] MSG_WAITING deferred until connection bootstrap completes',
+        );
         return;
       }
       debugPrint('📥 [Provider] MSG_WAITING - auto-syncing');
@@ -1894,9 +1903,16 @@ class ConnectionProvider with ChangeNotifier {
   }
 
   /// Sync all waiting messages from device
-  Future<int> syncAllMessages() async {
+  Future<int> syncAllMessages({bool force = false}) async {
     if (_isSpectrumScanActive) {
       debugPrint('⏸️ [Provider] Message sync skipped during spectrum scan');
+      return 0;
+    }
+    if (!force && !(canStartAutomaticMessageSyncCallback?.call() ?? true)) {
+      _pendingAutomaticMessageSync = true;
+      debugPrint(
+        '⏸️ [Provider] Message sync deferred until connection bootstrap completes',
+      );
       return 0;
     }
     if (_isSyncingMessages) {
@@ -1914,6 +1930,7 @@ class ConnectionProvider with ChangeNotifier {
     int totalCount = 0;
 
     try {
+      _pendingAutomaticMessageSync = false;
       _isSyncingMessages = true;
       do {
         _syncRequestedWhileBusy = false;
@@ -2003,6 +2020,12 @@ class ConnectionProvider with ChangeNotifier {
       _isSyncingMessages = false;
       _syncResponseCompleter = null;
     }
+  }
+
+  bool get hasPendingAutomaticMessageSync => _pendingAutomaticMessageSync;
+
+  void clearPendingAutomaticMessageSync() {
+    _pendingAutomaticMessageSync = false;
   }
 
   /// Login to a room or repeater

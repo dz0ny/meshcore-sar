@@ -91,6 +91,12 @@ class AppProvider with ChangeNotifier {
   bool get isVoiceCompressorEnabled => _isVoiceCompressorEnabled;
   bool _isVoiceLimiterEnabled = true;
   bool get isVoiceLimiterEnabled => _isVoiceLimiterEnabled;
+  bool _isVoiceAutoGainEnabled = false;
+  bool get isVoiceAutoGainEnabled => _isVoiceAutoGainEnabled;
+  bool _isVoiceEchoCancellationEnabled = false;
+  bool get isVoiceEchoCancellationEnabled => _isVoiceEchoCancellationEnabled;
+  bool _isVoiceNoiseSuppressionEnabled = false;
+  bool get isVoiceNoiseSuppressionEnabled => _isVoiceNoiseSuppressionEnabled;
   double _messageFontScale = 1.0;
   double get messageFontScale => _messageFontScale;
   bool _autoAddDiscoveredContacts = false;
@@ -142,6 +148,8 @@ class AppProvider with ChangeNotifier {
     required this.imageProvider,
   }) {
     _setupCallbacks();
+    connectionProvider.canStartAutomaticMessageSyncCallback =
+        _canStartAutomaticMessageSync;
     _wasDeviceConnected = connectionProvider.deviceInfo.isConnected;
     _initializeLocationTracking();
     _loadMapEnabled();
@@ -151,6 +159,9 @@ class AppProvider with ChangeNotifier {
     _loadVoiceBandPassFilterEnabled();
     _loadVoiceCompressorEnabled();
     _loadVoiceLimiterEnabled();
+    _loadVoiceAutoGainEnabled();
+    _loadVoiceEchoCancellationEnabled();
+    _loadVoiceNoiseSuppressionEnabled();
     _loadMessageFontScale();
     _loadAutoAddDiscoveredContacts();
     _loadMessagingRouteSettings();
@@ -436,6 +447,72 @@ class AppProvider with ChangeNotifier {
       notifyListeners();
     } catch (e) {
       debugPrint('Error saving voice limiter setting: $e');
+    }
+  }
+
+  Future<void> _loadVoiceAutoGainEnabled() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      _isVoiceAutoGainEnabled =
+          prefs.getBool('voice_auto_gain_enabled') ?? false;
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error loading voice auto gain setting: $e');
+    }
+  }
+
+  Future<void> toggleVoiceAutoGainEnabled(bool enabled) async {
+    try {
+      _isVoiceAutoGainEnabled = enabled;
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('voice_auto_gain_enabled', enabled);
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error saving voice auto gain setting: $e');
+    }
+  }
+
+  Future<void> _loadVoiceEchoCancellationEnabled() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      _isVoiceEchoCancellationEnabled =
+          prefs.getBool('voice_echo_cancellation_enabled') ?? false;
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error loading voice echo cancellation setting: $e');
+    }
+  }
+
+  Future<void> toggleVoiceEchoCancellationEnabled(bool enabled) async {
+    try {
+      _isVoiceEchoCancellationEnabled = enabled;
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('voice_echo_cancellation_enabled', enabled);
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error saving voice echo cancellation setting: $e');
+    }
+  }
+
+  Future<void> _loadVoiceNoiseSuppressionEnabled() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      _isVoiceNoiseSuppressionEnabled =
+          prefs.getBool('voice_noise_suppression_enabled') ?? false;
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error loading voice noise suppression setting: $e');
+    }
+  }
+
+  Future<void> toggleVoiceNoiseSuppressionEnabled(bool enabled) async {
+    try {
+      _isVoiceNoiseSuppressionEnabled = enabled;
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('voice_noise_suppression_enabled', enabled);
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error saving voice noise suppression setting: $e');
     }
   }
 
@@ -1642,6 +1719,8 @@ class AppProvider with ChangeNotifier {
     if (!connectionProvider.deviceInfo.isConnected) return;
 
     try {
+      _isReconnectSyncInProgress = true;
+      _hasCompletedConnectionBootstrap = false;
       // Initialize contacts provider with device public key to exclude self
       // If already initialized (from early load), this will just filter out self-contact
       // This must happen before getContacts to ensure proper filtering
@@ -1693,7 +1772,9 @@ class AppProvider with ChangeNotifier {
       debugPrint(
         '🔄 [AppProvider] Performing initial message sync (fallback for missed pushes)',
       );
-      final initialMessageCount = await connectionProvider.syncAllMessages();
+      final initialMessageCount = await connectionProvider.syncAllMessages(
+        force: true,
+      );
       debugPrint(
         '📥 [AppProvider] Initial sync retrieved $initialMessageCount message(s)',
       );
@@ -1715,19 +1796,26 @@ class AppProvider with ChangeNotifier {
 
       _hasCompletedConnectionBootstrap = true;
       _wasDeviceConnected = connectionProvider.deviceInfo.isConnected;
+      await _flushDeferredAutomaticMessageSync();
       notifyListeners();
     } catch (e) {
       debugPrint('Initialization error: $e');
+    } finally {
+      _isReconnectSyncInProgress = false;
     }
   }
 
-  Future<void> _syncAfterReconnect() async {
-    if (_isReconnectSyncInProgress ||
-        !connectionProvider.deviceInfo.isConnected) {
+  Future<void> _syncAfterReconnect({bool started = false}) async {
+    if (!connectionProvider.deviceInfo.isConnected) {
       return;
     }
 
-    _isReconnectSyncInProgress = true;
+    if (!started) {
+      if (_isReconnectSyncInProgress) {
+        return;
+      }
+      _isReconnectSyncInProgress = true;
+    }
     try {
       debugPrint(
         '🔄 [AppProvider] Device reconnected - syncing contacts and missed messages',
@@ -1738,14 +1826,19 @@ class AppProvider with ChangeNotifier {
       );
       await connectionProvider.getContacts();
 
-      final messageCount = await connectionProvider.syncAllMessages();
+      final messageCount = await connectionProvider.syncAllMessages(
+        force: true,
+      );
       debugPrint(
         '📥 [AppProvider] Reconnect sync retrieved $messageCount message(s)',
       );
     } catch (e) {
       debugPrint('❌ [AppProvider] Reconnect sync error: $e');
     } finally {
+      _hasCompletedConnectionBootstrap =
+          connectionProvider.deviceInfo.isConnected;
       _isReconnectSyncInProgress = false;
+      await _flushDeferredAutomaticMessageSync();
     }
   }
 
@@ -2737,7 +2830,9 @@ class AppProvider with ChangeNotifier {
       debugPrint(
         '🔄 [AppProvider] Manual message sync requested (user initiated)',
       );
-      final messageCount = await connectionProvider.syncAllMessages();
+      final messageCount = await connectionProvider.syncAllMessages(
+        force: true,
+      );
       debugPrint(
         '✅ [AppProvider] Manual sync completed: $messageCount messages',
       );
@@ -2766,9 +2861,32 @@ class AppProvider with ChangeNotifier {
       _stopLocationTracking();
     }
 
-    if (isConnected && !wasConnected && _hasCompletedConnectionBootstrap) {
-      unawaited(_syncAfterReconnect());
+    if (!isConnected) {
+      connectionProvider.clearPendingAutomaticMessageSync();
     }
+
+    if (isConnected && !wasConnected && _hasCompletedConnectionBootstrap) {
+      _isReconnectSyncInProgress = true;
+      unawaited(_syncAfterReconnect(started: true));
+    }
+  }
+
+  bool _canStartAutomaticMessageSync() {
+    return connectionProvider.deviceInfo.isConnected &&
+        _hasCompletedConnectionBootstrap &&
+        !_isReconnectSyncInProgress;
+  }
+
+  Future<void> _flushDeferredAutomaticMessageSync() async {
+    if (!connectionProvider.hasPendingAutomaticMessageSync ||
+        !_canStartAutomaticMessageSync()) {
+      return;
+    }
+
+    debugPrint(
+      '🔄 [AppProvider] Running deferred automatic message sync after bootstrap',
+    );
+    await connectionProvider.syncAllMessages(force: true);
   }
 
   /// Start location tracking

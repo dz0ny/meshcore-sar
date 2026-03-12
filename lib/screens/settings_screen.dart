@@ -1185,6 +1185,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   bandPassEnabled: appProvider.isVoiceBandPassFilterEnabled,
                   compressorEnabled: appProvider.isVoiceCompressorEnabled,
                   limiterEnabled: appProvider.isVoiceLimiterEnabled,
+                  autoGainEnabled: appProvider.isVoiceAutoGainEnabled,
+                  echoCancellationEnabled:
+                      appProvider.isVoiceEchoCancellationEnabled,
+                  noiseSuppressionEnabled:
+                      appProvider.isVoiceNoiseSuppressionEnabled,
                   silenceTrimEnabled: appProvider.isVoiceSilenceTrimmingEnabled,
                 ),
           ),
@@ -1238,6 +1243,43 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 value: appProvider.isVoiceLimiterEnabled,
                 onChanged: (value) async {
                   await appProvider.toggleVoiceLimiterEnabled(value);
+                },
+              ),
+            ),
+            Consumer<AppProvider>(
+              builder: (context, appProvider, child) => SwitchListTile(
+                secondary: const Icon(Icons.auto_fix_high),
+                title: const Text('Mic auto gain'),
+                subtitle: const Text('Lets the recorder adjust input level'),
+                value: appProvider.isVoiceAutoGainEnabled,
+                onChanged: (value) async {
+                  await appProvider.toggleVoiceAutoGainEnabled(value);
+                },
+              ),
+            ),
+            Consumer<AppProvider>(
+              builder: (context, appProvider, child) => SwitchListTile(
+                secondary: const Icon(Icons.hearing_disabled),
+                title: const Text('Echo cancellation'),
+                subtitle: const Text(
+                  'Uses recorder echo cancellation if available',
+                ),
+                value: appProvider.isVoiceEchoCancellationEnabled,
+                onChanged: (value) async {
+                  await appProvider.toggleVoiceEchoCancellationEnabled(value);
+                },
+              ),
+            ),
+            Consumer<AppProvider>(
+              builder: (context, appProvider, child) => SwitchListTile(
+                secondary: const Icon(Icons.noise_control_off),
+                title: const Text('Noise suppression'),
+                subtitle: const Text(
+                  'Uses recorder noise suppression if available',
+                ),
+                value: appProvider.isVoiceNoiseSuppressionEnabled,
+                onChanged: (value) async {
+                  await appProvider.toggleVoiceNoiseSuppressionEnabled(value);
                 },
               ),
             ),
@@ -1761,6 +1803,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     required bool bandPassEnabled,
     required bool compressorEnabled,
     required bool limiterEnabled,
+    required bool autoGainEnabled,
+    required bool echoCancellationEnabled,
+    required bool noiseSuppressionEnabled,
     required bool silenceTrimEnabled,
   }) {
     final supported = VoiceBitratePreferences.supportedBitrates;
@@ -1773,6 +1818,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
         (bandPassEnabled ? 1 : 0) +
         (compressorEnabled ? 1 : 0) +
         (limiterEnabled ? 1 : 0) +
+        (autoGainEnabled ? 1 : 0) +
+        (echoCancellationEnabled ? 1 : 0) +
+        (noiseSuppressionEnabled ? 1 : 0) +
         (silenceTrimEnabled ? 1 : 0);
     final radioBw = connectionProvider.deviceInfo.radioBw;
     final radioSf = connectionProvider.deviceInfo.radioSf;
@@ -1868,6 +1916,31 @@ class _SettingsScreenState extends State<SettingsScreen> {
               children: [
                 Expanded(
                   child: _voiceStatChip(
+                    label: 'Auto gain',
+                    enabled: autoGainEnabled,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _voiceStatChip(
+                    label: 'Echo cancel',
+                    enabled: echoCancellationEnabled,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _voiceStatChip(
+                    label: 'Noise suppress',
+                    enabled: noiseSuppressionEnabled,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: _voiceStatChip(
                     label: 'Silence trim',
                     enabled: silenceTrimEnabled,
                   ),
@@ -1876,7 +1949,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Processing enabled: $enabledCount/4',
+              'Processing enabled: $enabledCount/7',
               style: Theme.of(context).textTheme.bodySmall,
             ),
           ],

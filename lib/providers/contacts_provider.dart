@@ -416,7 +416,7 @@ class ContactsProvider with ChangeNotifier {
     final existingAdvertLocation = existingContact.advertLocation;
 
     var updatedContact = incomingContact.copyWith(
-      isNew: existingContact.isNew,
+      isNew: false,
       advertHistory: existingContact.advertHistory,
       telemetry: mergedTelemetry,
       outPathLen:

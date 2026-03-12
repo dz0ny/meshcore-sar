@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/contact.dart';
@@ -299,7 +300,11 @@ class VoiceProvider with ChangeNotifier {
     );
 
     try {
-      final pcm = await _codec.decodePackets(session.packets, session.mode);
+      final decodedPcm = await _codec.decodePackets(
+        session.packets,
+        session.mode,
+      );
+      final pcm = _preparePlaybackPcm(decodedPcm, session.mode);
       debugPrint('🎙️ [VoiceProvider] decoded ${pcm.length} PCM samples');
       _playingSessionId = sessionId;
       notifyListeners();
@@ -317,6 +322,28 @@ class VoiceProvider with ChangeNotifier {
     await _player.stop();
     _playingSessionId = null;
     notifyListeners();
+  }
+
+  Int16List _preparePlaybackPcm(Int16List pcm, VoicePacketMode mode) {
+    if (pcm.isEmpty) {
+      return pcm;
+    }
+
+    if (mode.codec != VoiceCodecKind.lpcnet) {
+      return pcm;
+    }
+
+    final output = Int16List(pcm.length);
+    var dc = 0.0;
+    const dcAlpha = 0.995;
+
+    for (var i = 0; i < pcm.length; i++) {
+      final sample = pcm[i].toDouble();
+      dc = (dcAlpha * dc) + ((1.0 - dcAlpha) * sample);
+      final filtered = sample - dc;
+      output[i] = filtered.clamp(-32768.0, 32767.0).round();
+    }
+    return output;
   }
 
   Future<void> clearStoredVoiceData() async {

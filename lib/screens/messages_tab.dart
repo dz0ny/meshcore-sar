@@ -72,7 +72,7 @@ class _MessagesTabState extends State<MessagesTab> {
   final VoiceRecorderService _voiceRecorder = VoiceRecorderService();
   bool _isRecording = false;
   bool _isSendingVoice = false;
-  static const int _maxVoicePackets = 10;
+  static const Duration _maxVoiceRecordingDuration = Duration(seconds: 4);
   static const double _silenceRmsThreshold = 500.0;
   static const double _silencePeakThreshold = 1400.0;
   static const int _maxInteriorSilentChunks = 2;
@@ -865,9 +865,10 @@ class _MessagesTabState extends State<MessagesTab> {
     final packetDuration = Duration(
       milliseconds: _activeVoiceMode!.packetDurationMs,
     );
+    final maxVoicePackets = _maxVoicePacketsForMode(_activeVoiceMode!);
 
     debugPrint(
-      '🎙️ [Voice] session=$_currentVoiceSessionId mode=$_activeVoiceMode chunkDuration=${packetDuration.inMilliseconds}ms',
+      '🎙️ [Voice] session=$_currentVoiceSessionId mode=$_activeVoiceMode chunkDuration=${packetDuration.inMilliseconds}ms maxPackets=$maxVoicePackets',
     );
 
     _recordedChunks.clear();
@@ -877,9 +878,13 @@ class _MessagesTabState extends State<MessagesTab> {
       final stream = _voiceRecorder.startCapture(
         chunkDuration: packetDuration,
         sampleRateHz: _activeVoiceMode!.sampleRateHz,
+        codecKind: _activeVoiceMode!.codec,
         enableBandPassFilter: appProvider.isVoiceBandPassFilterEnabled,
         enableCompressor: appProvider.isVoiceCompressorEnabled,
         enableLimiter: appProvider.isVoiceLimiterEnabled,
+        enableAutoGain: appProvider.isVoiceAutoGainEnabled,
+        enableEchoCancellation: appProvider.isVoiceEchoCancellationEnabled,
+        enableNoiseSuppression: appProvider.isVoiceNoiseSuppressionEnabled,
       );
       debugPrint('🎙️ [Voice] capture started, listening for chunks...');
       _voiceStreamSub = stream.listen(
@@ -890,7 +895,7 @@ class _MessagesTabState extends State<MessagesTab> {
             '🎙️ [Voice] chunk #${_recordedChunks.length} received: ${pcmChunk.length} samples',
           );
           setState(() {});
-          if (_recordedChunks.length >= _maxVoicePackets) {
+          if (_recordedChunks.length >= maxVoicePackets) {
             debugPrint('🎙️ [Voice] max packets reached, stopping');
             _stopAndSendVoice();
           }
@@ -907,6 +912,12 @@ class _MessagesTabState extends State<MessagesTab> {
     }
   }
 
+  int _maxVoicePacketsForMode(VoicePacketMode mode) {
+    final packets =
+        _maxVoiceRecordingDuration.inMilliseconds ~/ mode.packetDurationMs;
+    return packets < 1 ? 1 : packets;
+  }
+
   Future<void> _stopAndSendVoice() async {
     if (!_isRecording) return;
     final trimSilenceEnabled = context
@@ -921,9 +932,14 @@ class _MessagesTabState extends State<MessagesTab> {
     await _voiceRecorder.stopCapture();
 
     final rawChunks = List<Int16List>.from(_recordedChunks);
-    final chunks = trimSilenceEnabled ? _trimSilence(rawChunks) : rawChunks;
+    final trimmedChunks = trimSilenceEnabled
+        ? _trimSilence(rawChunks)
+        : rawChunks;
     final sessionId = _currentVoiceSessionId;
     final mode = _activeVoiceMode;
+    final chunks = mode == null
+        ? trimmedChunks
+        : _prepareChunksForSending(trimmedChunks, mode);
     _recordedChunks.clear();
 
     debugPrint(
@@ -1005,10 +1021,15 @@ class _MessagesTabState extends State<MessagesTab> {
     debugPrint(
       '🎙️ [Voice] encoding $total packets for deferred voice fetch, mode=${mode.label}, session=$sessionId',
     );
+    final encodedChunks = mode.codec == VoiceCodecKind.lpcnet
+        ? await _encodeLpcNetChunks(codec, chunks, mode)
+        : <Uint8List>[];
     for (var i = 0; i < total; i++) {
       if (!mounted) return;
       try {
-        final codec2Data = await codec.encode(chunks[i], mode);
+        final codec2Data = mode.codec == VoiceCodecKind.lpcnet
+            ? encodedChunks[i]
+            : await codec.encode(chunks[i], mode);
         debugPrint(
           '🎙️ [Voice] packet $i/$total encoded: ${codec2Data.length} bytes',
         );
@@ -1112,6 +1133,43 @@ class _MessagesTabState extends State<MessagesTab> {
     messagesProvider.markMessageSent(msgId, 0, 0);
   }
 
+  Future<List<Uint8List>> _encodeLpcNetChunks(
+    VoiceCodecService codec,
+    List<Int16List> chunks,
+    VoicePacketMode mode,
+  ) async {
+    final totalSamples = chunks.fold<int>(
+      0,
+      (sum, chunk) => sum + chunk.length,
+    );
+    final merged = Int16List(totalSamples);
+    final encodedByteLengths = <int>[];
+    var sampleOffset = 0;
+    for (final chunk in chunks) {
+      merged.setRange(sampleOffset, sampleOffset + chunk.length, chunk);
+      sampleOffset += chunk.length;
+      encodedByteLengths.add((chunk.length ~/ 640) * 8);
+    }
+
+    final encoded = await codec.encode(merged, mode);
+    final encodedChunks = <Uint8List>[];
+    var byteOffset = 0;
+    for (final length in encodedByteLengths) {
+      encodedChunks.add(
+        Uint8List.sublistView(encoded, byteOffset, byteOffset + length),
+      );
+      byteOffset += length;
+    }
+    return encodedChunks;
+  }
+
+  List<Int16List> _prepareChunksForSending(
+    List<Int16List> chunks,
+    VoicePacketMode mode,
+  ) {
+    return chunks;
+  }
+
   List<Int16List> _trimSilence(List<Int16List> chunks) {
     if (chunks.isEmpty) return chunks;
 
@@ -1141,16 +1199,28 @@ class _MessagesTabState extends State<MessagesTab> {
   bool _isSilentChunk(Int16List chunk) {
     if (chunk.isEmpty) return true;
 
+    final rms = _chunkRms(chunk);
+    final peak = _chunkPeak(chunk);
+    return rms < _silenceRmsThreshold && peak < _silencePeakThreshold;
+  }
+
+  double _chunkRms(Int16List chunk) {
     var sumSquares = 0.0;
+    for (final sample in chunk) {
+      sumSquares += sample * sample;
+    }
+    return math.sqrt(sumSquares / chunk.length);
+  }
+
+  int _chunkPeak(Int16List chunk) {
     var peak = 0;
     for (final sample in chunk) {
       final absSample = sample.abs();
-      if (absSample > peak) peak = absSample;
-      sumSquares += sample * sample;
+      if (absSample > peak) {
+        peak = absSample;
+      }
     }
-
-    final rms = math.sqrt(sumSquares / chunk.length);
-    return rms < _silenceRmsThreshold && peak < _silencePeakThreshold;
+    return peak;
   }
 
   bool _isPublicChannelSelected() {

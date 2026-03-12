@@ -134,13 +134,20 @@ Widget buildChannelHeaderPill(
   BuildContext context, {
   required String label,
   IconData icon = Icons.campaign_outlined,
+  EdgeInsetsGeometry padding = const EdgeInsets.symmetric(
+    horizontal: 8,
+    vertical: 3,
+  ),
+  double iconSize = 11,
+  double iconSpacing = 5,
+  TextStyle? textStyle,
 }) {
   final labelColor = Theme.of(
     context,
   ).textTheme.labelSmall?.color?.withValues(alpha: 0.82);
 
   return Container(
-    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+    padding: padding,
     decoration: BoxDecoration(
       color: Theme.of(
         context,
@@ -152,19 +159,21 @@ Widget buildChannelHeaderPill(
       children: [
         Icon(
           icon,
-          size: 11,
+          size: iconSize,
           color: Theme.of(
             context,
           ).textTheme.labelSmall?.color?.withValues(alpha: 0.7),
         ),
-        const SizedBox(width: 5),
+        SizedBox(width: iconSpacing),
         Flexible(
           child: Text(
             label,
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: labelColor,
-              fontWeight: FontWeight.w600,
-            ),
+            style:
+                textStyle ??
+                Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: labelColor,
+                  fontWeight: FontWeight.w600,
+                ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
@@ -182,5 +191,16 @@ Widget buildDirectHeaderCounterpart(
     context,
     label: label,
     icon: Icons.alternate_email,
+    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+    iconSize: 10,
+    iconSpacing: 4,
+    textStyle: Theme.of(context).textTheme.labelSmall?.copyWith(
+      fontSize: 10,
+      height: 1.0,
+      color: Theme.of(
+        context,
+      ).textTheme.labelSmall?.color?.withValues(alpha: 0.82),
+      fontWeight: FontWeight.w600,
+    ),
   );
 }

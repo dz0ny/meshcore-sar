@@ -73,6 +73,9 @@ class VoiceCodecService {
     VoicePacketMode mode,
   ) async {
     _ensureCodec2Supported();
+    if (mode.codec == VoiceCodecKind.lpcnet) {
+      return _decodeLpcNetPackets(packets, mode);
+    }
     final all = <Int16List>[];
     for (final pkt in packets) {
       if (pkt == null || pkt.codec2Data.isEmpty) {
@@ -85,6 +88,40 @@ class VoiceCodecService {
     final result = Int16List(total);
     var offset = 0;
     for (final chunk in all) {
+      result.setRange(offset, offset + chunk.length, chunk);
+      offset += chunk.length;
+    }
+    return result;
+  }
+
+  Future<Int16List> _decodeLpcNetPackets(
+    List<VoicePacket?> packets,
+    VoicePacketMode mode,
+  ) async {
+    final segments = <Int16List>[];
+    final run = <int>[];
+
+    Future<void> flushRun() async {
+      if (run.isEmpty) return;
+      final decoded = await LpcNet.decodeInIsolate(Uint8List.fromList(run));
+      segments.add(decoded);
+      run.clear();
+    }
+
+    for (final pkt in packets) {
+      if (pkt == null || pkt.codec2Data.isEmpty) {
+        await flushRun();
+        segments.add(Int16List(mode.samplesPerPacket));
+        continue;
+      }
+      run.addAll(pkt.codec2Data);
+    }
+    await flushRun();
+
+    final total = segments.fold<int>(0, (sum, chunk) => sum + chunk.length);
+    final result = Int16List(total);
+    var offset = 0;
+    for (final chunk in segments) {
       result.setRange(offset, offset + chunk.length, chunk);
       offset += chunk.length;
     }

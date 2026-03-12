@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:record/record.dart';
+import '../utils/voice_message_parser.dart';
 
 /// Captures raw PCM audio at a codec-selected sample rate, 16-bit mono.
 ///
@@ -31,9 +32,13 @@ class VoiceRecorderService {
   Stream<Int16List> startCapture({
     Duration chunkDuration = const Duration(seconds: 1),
     int sampleRateHz = 8000,
+    VoiceCodecKind codecKind = VoiceCodecKind.codec2,
     bool enableBandPassFilter = true,
     bool enableCompressor = true,
     bool enableLimiter = true,
+    bool enableAutoGain = false,
+    bool enableEchoCancellation = false,
+    bool enableNoiseSuppression = false,
   }) {
     if (_isRecording) {
       throw StateError('VoiceRecorderService: already recording');
@@ -45,9 +50,13 @@ class VoiceRecorderService {
     _startRecording(
       chunkDuration,
       sampleRateHz: sampleRateHz,
+      codecKind: codecKind,
       enableBandPassFilter: enableBandPassFilter,
       enableCompressor: enableCompressor,
       enableLimiter: enableLimiter,
+      enableAutoGain: enableAutoGain,
+      enableEchoCancellation: enableEchoCancellation,
+      enableNoiseSuppression: enableNoiseSuppression,
     );
     return _controller!.stream;
   }
@@ -55,29 +64,49 @@ class VoiceRecorderService {
   Future<void> _startRecording(
     Duration chunkDuration, {
     required int sampleRateHz,
+    required VoiceCodecKind codecKind,
     required bool enableBandPassFilter,
     required bool enableCompressor,
     required bool enableLimiter,
+    required bool enableAutoGain,
+    required bool enableEchoCancellation,
+    required bool enableNoiseSuppression,
   }) async {
+    final bypassProcessing = codecKind == VoiceCodecKind.lpcnet;
+    final useBandPassFilter = !bypassProcessing && enableBandPassFilter;
+    final useCompressor = !bypassProcessing && enableCompressor;
+    final useLimiter = !bypassProcessing && enableLimiter;
     final config = RecordConfig(
       encoder: AudioEncoder.pcm16bits,
       sampleRate: sampleRateHz,
       numChannels: 1,
       bitRate: 128000, // ignored for PCM, but required by API
+      autoGain: enableAutoGain,
+      echoCancel: enableEchoCancellation,
+      noiseSuppress: enableNoiseSuppression,
     );
 
     try {
       final stream = await _recorder.startStream(config);
-      final voiceFilter = _VoiceBandPassFilter(
-        sampleRate: sampleRateHz,
-        lowCutHz: 250.0,
-        highCutHz: 3400.0,
-      );
-      final dynamics = _VoiceDynamicsProcessor(
-        sampleRate: sampleRateHz,
-        enableCompressor: enableCompressor,
-        enableLimiter: enableLimiter,
-      );
+      final voiceFilter = bypassProcessing
+          ? null
+          : _VoiceBandPassFilter(
+              sampleRate: sampleRateHz,
+              lowCutHz: 250.0,
+              highCutHz: 3400.0,
+            );
+      final dynamics = bypassProcessing
+          ? null
+          : _VoiceDynamicsProcessor(
+              sampleRate: sampleRateHz,
+              thresholdDb: -18.0,
+              ratio: 2.5,
+              attackMs: 8.0,
+              releaseMs: 120.0,
+              makeupGainDb: 4.0,
+              enableCompressor: useCompressor,
+              enableLimiter: useLimiter,
+            );
       final chunkBytes =
           sampleRateHz * 2 * chunkDuration.inMilliseconds ~/ 1000;
       final buffer = <int>[];
@@ -89,20 +118,28 @@ class VoiceRecorderService {
             final chunk = buffer.sublist(0, chunkBytes);
             buffer.removeRange(0, chunkBytes);
             final pcm = _bytesToInt16(Uint8List.fromList(chunk));
-            final filtered = enableBandPassFilter
-                ? voiceFilter.process(pcm)
-                : pcm;
-            _controller?.add(dynamics.process(filtered));
+            if (bypassProcessing) {
+              _controller?.add(pcm);
+            } else {
+              final filtered = useBandPassFilter
+                  ? voiceFilter!.process(pcm)
+                  : pcm;
+              _controller?.add(dynamics!.process(filtered));
+            }
           }
         },
         onDone: () {
           if (buffer.isNotEmpty) {
             final padded = _padToEven(buffer);
             final pcm = _bytesToInt16(Uint8List.fromList(padded));
-            final filtered = enableBandPassFilter
-                ? voiceFilter.process(pcm)
-                : pcm;
-            _controller?.add(dynamics.process(filtered));
+            if (bypassProcessing) {
+              _controller?.add(pcm);
+            } else {
+              final filtered = useBandPassFilter
+                  ? voiceFilter!.process(pcm)
+                  : pcm;
+              _controller?.add(dynamics!.process(filtered));
+            }
           }
           _controller?.close();
         },
@@ -167,17 +204,22 @@ class _VoiceDynamicsProcessor {
 
   _VoiceDynamicsProcessor({
     required int sampleRate,
+    required double thresholdDb,
+    required double ratio,
+    required double attackMs,
+    required double releaseMs,
+    required double makeupGainDb,
     required bool enableCompressor,
     required bool enableLimiter,
   }) : _enableCompressor = enableCompressor,
        _enableLimiter = enableLimiter,
        _compressor = _SimpleCompressor(
          sampleRate: sampleRate.toDouble(),
-         thresholdDb: -18.0,
-         ratio: 2.5,
-         attackMs: 8.0,
-         releaseMs: 120.0,
-         makeupGainDb: 4.0,
+         thresholdDb: thresholdDb,
+         ratio: ratio,
+         attackMs: attackMs,
+         releaseMs: releaseMs,
+         makeupGainDb: makeupGainDb,
        ),
        _limiter = _PeakLimiter(ceilingDb: -1.0);
 

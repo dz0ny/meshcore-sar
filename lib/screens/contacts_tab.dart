@@ -39,6 +39,7 @@ class _ContactsTabState extends State<ContactsTab> {
     ContactSection.rooms: '',
     ContactSection.channels: '',
   };
+  late final Map<ContactSection, TextEditingController> _filterControllers;
   final Map<ContactSection, ContactSortMode> _sortModes = {
     ContactSection.teamMembers: ContactSortMode.lastSeen,
     ContactSection.repeaters: ContactSortMode.lastSeen,
@@ -48,11 +49,23 @@ class _ContactsTabState extends State<ContactsTab> {
   @override
   void initState() {
     super.initState();
+    _filterControllers = {
+      for (final section in ContactSection.values)
+        section: TextEditingController(text: _sectionFilters[section] ?? ''),
+    };
     _getCurrentLocation();
     // Mark all contacts as viewed when tab is opened
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<ContactsProvider>().markAllAsViewed();
     });
+  }
+
+  @override
+  void dispose() {
+    for (final controller in _filterControllers.values) {
+      controller.dispose();
+    }
+    super.dispose();
   }
 
   Future<void> _getCurrentLocation() async {
@@ -513,6 +526,7 @@ class _ContactsTabState extends State<ContactsTab> {
   ) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final controller = _filterControllers[section]!;
     final hasFilter = (_sectionFilters[section] ?? '').isNotEmpty;
 
     return Padding(
@@ -555,10 +569,7 @@ class _ContactsTabState extends State<ContactsTab> {
                   ),
                   Expanded(
                     child: TextFormField(
-                      key: ValueKey(
-                        '${section.name}:${_sectionFilters[section] ?? ''}',
-                      ),
-                      initialValue: _sectionFilters[section] ?? '',
+                      controller: controller,
                       onChanged: (value) {
                         setState(() {
                           _sectionFilters[section] = value;
@@ -598,6 +609,7 @@ class _ContactsTabState extends State<ContactsTab> {
                         child: InkWell(
                           customBorder: const CircleBorder(),
                           onTap: () {
+                            controller.clear();
                             setState(() {
                               _sectionFilters[section] = '';
                             });
@@ -856,6 +868,7 @@ class _InferredContactGroupCard extends StatelessWidget {
             ...contacts.map(
               (contact) => ContactTile(
                 contact: contact,
+                groupLabel: label,
                 currentPosition: currentPosition,
                 calculateDistance: calculateDistance,
                 formatDistance: formatDistance,

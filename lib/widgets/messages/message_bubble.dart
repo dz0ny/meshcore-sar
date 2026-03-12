@@ -104,6 +104,7 @@ class _MessageBubbleState extends State<MessageBubble> {
 
     final textColor =
         baseBodyStyle?.color ?? Theme.of(context).colorScheme.onSurface;
+    final mentionFontSize = (baseBodyStyle?.fontSize ?? 14) - 1;
     final backgroundColor = Theme.of(
       context,
     ).colorScheme.primary.withValues(alpha: 0.12);
@@ -130,8 +131,8 @@ class _MessageBubbleState extends State<MessageBubble> {
           WidgetSpan(
             alignment: PlaceholderAlignment.middle,
             child: Container(
-              margin: const EdgeInsets.symmetric(horizontal: 1, vertical: 1),
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              margin: const EdgeInsets.symmetric(horizontal: 1),
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
               decoration: BoxDecoration(
                 color: backgroundColor,
                 borderRadius: BorderRadius.circular(999),
@@ -141,8 +142,9 @@ class _MessageBubbleState extends State<MessageBubble> {
                 '@$mentionName',
                 style: baseBodyStyle?.copyWith(
                   color: textColor,
-                  fontWeight: FontWeight.w700,
-                  height: 1.1,
+                  fontSize: mentionFontSize,
+                  fontWeight: FontWeight.w600,
+                  height: 1.0,
                 ),
               ),
             ),
@@ -2072,9 +2074,11 @@ class _MessageBubbleState extends State<MessageBubble> {
                         Expanded(
                           child: Text(
                             displayName,
-                            style: Theme.of(context).textTheme.labelMedium
+                            style: Theme.of(context).textTheme.bodySmall
                                 ?.copyWith(
+                                  fontSize: 12,
                                   fontWeight: FontWeight.bold,
+                                  height: 1.1,
                                   color: isOwnMessage
                                       ? Theme.of(context).colorScheme.primary
                                       : null,

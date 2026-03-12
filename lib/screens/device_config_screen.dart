@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
+import '../models/device_info.dart';
 import '../providers/connection_provider.dart';
 import '../services/validation_service.dart';
 import '../l10n/app_localizations.dart';
@@ -97,6 +98,10 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
         context.read<ConnectionProvider>().getAllowedRepeatFreq();
       });
     }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<ConnectionProvider>().getBatteryAndStorage();
+    });
   }
 
   @override
@@ -432,6 +437,13 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
                   icon: Icons.key,
                   label: 'FW v${deviceInfo.firmwareVersion?.toString() ?? "?"}',
                 ),
+                if (deviceInfo.storageUsedKb != null &&
+                    deviceInfo.storageTotalKb != null)
+                  _StatusChipData(
+                    icon: Icons.storage_rounded,
+                    label:
+                        '${_formatStorage(deviceInfo.storageUsedKb!)} / ${_formatStorage(deviceInfo.storageTotalKb!)}',
+                  ),
               ],
             ),
             const SizedBox(height: 20),
@@ -485,6 +497,19 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
                     deviceInfo.maxChannels?.toString() ??
                         AppLocalizations.of(context)!.unknown,
                   ),
+                  _InfoRow(
+                    'Storage used',
+                    _formatStorageValue(deviceInfo.storageUsedKb),
+                  ),
+                  _InfoRow(
+                    'Storage limit',
+                    _formatStorageValue(deviceInfo.storageTotalKb),
+                  ),
+                  _InfoRow('Storage status', _formatStorageStatus(deviceInfo)),
+                  if (deviceInfo.storageUsedPercent != null) ...[
+                    const SizedBox(height: 10),
+                    _StorageUsageMeter(deviceInfo: deviceInfo),
+                  ],
                   _CopyableInfoRow(
                     AppLocalizations.of(context)!.publicKey,
                     _getPublicKeyHex(deviceInfo.publicKey),
@@ -792,6 +817,35 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
   String _getPublicKeyHex(List<int>? publicKey) {
     if (publicKey == null || publicKey.isEmpty) return 'N/A';
     return publicKey.map((b) => b.toRadixString(16).padLeft(2, '0')).join('');
+  }
+
+  String _formatStorageValue(int? storageKb) {
+    if (storageKb == null) {
+      return AppLocalizations.of(context)!.unknown;
+    }
+    return _formatStorage(storageKb);
+  }
+
+  String _formatStorageStatus(DeviceInfo deviceInfo) {
+    final used = deviceInfo.storageUsedKb;
+    final total = deviceInfo.storageTotalKb;
+    final percent = deviceInfo.storageUsedPercent;
+
+    if (used == null || total == null || percent == null) {
+      return AppLocalizations.of(context)!.unknown;
+    }
+
+    return '${percent.toStringAsFixed(0)}% full (${_formatStorage(total - used)} free)';
+  }
+
+  String _formatStorage(int storageKb) {
+    if (storageKb >= 1024 * 1024) {
+      return '${(storageKb / (1024 * 1024)).toStringAsFixed(2)} GB';
+    }
+    if (storageKb >= 1024) {
+      return '${(storageKb / 1024).toStringAsFixed(1)} MB';
+    }
+    return '$storageKb KB';
   }
 }
 
@@ -1155,6 +1209,63 @@ class _CopyableInfoRow extends StatelessWidget {
                   const Icon(Icons.copy, size: 16, color: Colors.grey),
                 ],
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StorageUsageMeter extends StatelessWidget {
+  final DeviceInfo deviceInfo;
+
+  const _StorageUsageMeter({required this.deviceInfo});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final percent = ((deviceInfo.storageUsedPercent ?? 0) / 100).clamp(
+      0.0,
+      1.0,
+    );
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.45),
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.storage_rounded, color: colorScheme.primary, size: 18),
+              const SizedBox(width: 8),
+              Text(
+                'Device storage',
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(999),
+            child: LinearProgressIndicator(
+              value: percent,
+              minHeight: 10,
+              backgroundColor: colorScheme.surface,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            '${(deviceInfo.storageUsedPercent ?? 0).toStringAsFixed(0)}% used',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.w700,
             ),
           ),
         ],

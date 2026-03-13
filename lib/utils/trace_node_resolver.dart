@@ -108,6 +108,87 @@ class TraceNodeResolver {
     );
   }
 
+  static List<ResolvedTraceNode> alignPathSelections({
+    required List<ResolvedTraceNode> nodes,
+    MeshMapNode? startNode,
+    MeshMapNode? endNode,
+  }) {
+    if (nodes.isEmpty || nodes.any((node) => node.candidates.isEmpty)) {
+      return nodes;
+    }
+
+    final candidateCosts = List.generate(
+      nodes.length,
+      (_) => <double>[],
+      growable: false,
+    );
+    final previousChoice = List.generate(
+      nodes.length,
+      (_) => <int>[],
+      growable: false,
+    );
+
+    for (var i = 0; i < nodes.length; i++) {
+      final currentCandidates = nodes[i].candidates;
+      candidateCosts[i] = List<double>.filled(
+        currentCandidates.length,
+        double.infinity,
+      );
+      previousChoice[i] = List<int>.filled(currentCandidates.length, -1);
+
+      for (var j = 0; j < currentCandidates.length; j++) {
+        final current = currentCandidates[j];
+        if (i == 0) {
+          candidateCosts[i][j] = startNode == null
+              ? 0
+              : _distanceBetweenNodes(startNode, current);
+          continue;
+        }
+
+        final previousCandidates = nodes[i - 1].candidates;
+        for (var k = 0; k < previousCandidates.length; k++) {
+          final candidateCost =
+              candidateCosts[i - 1][k] +
+              _distanceBetweenNodes(previousCandidates[k], current);
+          if (candidateCost < candidateCosts[i][j]) {
+            candidateCosts[i][j] = candidateCost;
+            previousChoice[i][j] = k;
+          }
+        }
+      }
+    }
+
+    var bestLastIndex = 0;
+    var bestLastCost = double.infinity;
+    final lastCandidates = nodes.last.candidates;
+    for (var i = 0; i < lastCandidates.length; i++) {
+      final endCost = endNode == null
+          ? 0
+          : _distanceBetweenNodes(lastCandidates[i], endNode);
+      final totalCost = candidateCosts.last[i] + endCost;
+      if (totalCost < bestLastCost) {
+        bestLastCost = totalCost;
+        bestLastIndex = i;
+      }
+    }
+
+    final selectedIndices = List<int>.filled(nodes.length, 0);
+    selectedIndices[nodes.length - 1] = bestLastIndex;
+    for (var i = nodes.length - 1; i > 0; i--) {
+      selectedIndices[i - 1] = previousChoice[i][selectedIndices[i]];
+    }
+
+    return List<ResolvedTraceNode>.generate(nodes.length, (index) {
+      final resolved = nodes[index];
+      return ResolvedTraceNode(
+        candidates: resolved.candidates,
+        matchCount: resolved.matchCount,
+        usedOnlineFallback: resolved.usedOnlineFallback,
+        selectedIndex: selectedIndices[index],
+      );
+    }, growable: false);
+  }
+
   static double _scoreNode(
     MeshMapNode node, {
     LatLng? referenceA,
@@ -124,6 +205,14 @@ class TraceNodeResolver {
       return _distance.as(LengthUnit.Meter, point, referenceB);
     }
     return double.maxFinite;
+  }
+
+  static double _distanceBetweenNodes(MeshMapNode a, MeshMapNode b) {
+    return _distance.as(
+      LengthUnit.Meter,
+      LatLng(a.latitude, a.longitude),
+      LatLng(b.latitude, b.longitude),
+    );
   }
 
   static double _distanceToSegmentMeters(LatLng p, LatLng a, LatLng b) {

@@ -420,12 +420,17 @@ class _ContactTraceSheetState extends State<ContactTraceSheet> {
           ),
         )
         .toList();
+    final alignedRelayNodes = TraceNodeResolver.alignPathSelections(
+      nodes: matchedRelayNodes,
+      startNode: senderNode.node,
+      endNode: recipientNode.node,
+    );
 
     return _ContactTraceResult(
       sender: senderNode,
       recipient: recipientNode,
       routeHashes: routeHashes,
-      matchedRelayNodes: matchedRelayNodes,
+      matchedRelayNodes: alignedRelayNodes,
     );
   }
 

@@ -88,6 +88,65 @@ void main() {
     expect(resolved.cycle().node?.name, 'First Match');
     expect(resolved.cycle().cycle().node?.name, 'Second Match');
   });
+
+  test('aligns ambiguous hops to the closest continuous path', () {
+    final start = _node(
+      name: 'Start',
+      publicKey: 'start00',
+      latitude: 46.000,
+      longitude: 14.000,
+    );
+    final end = _node(
+      name: 'End',
+      publicKey: 'end000',
+      latitude: 46.300,
+      longitude: 14.300,
+    );
+    final hop1Near = _node(
+      name: 'Hop 1 Near',
+      publicKey: 'aa1100',
+      latitude: 46.100,
+      longitude: 14.100,
+    );
+    final hop1Far = _node(
+      name: 'Hop 1 Far',
+      publicKey: 'aa11ff',
+      latitude: 46.250,
+      longitude: 14.000,
+    );
+    final hop2Near = _node(
+      name: 'Hop 2 Near',
+      publicKey: 'bb2200',
+      latitude: 46.200,
+      longitude: 14.200,
+    );
+    final hop2Far = _node(
+      name: 'Hop 2 Far',
+      publicKey: 'bb22ff',
+      latitude: 46.050,
+      longitude: 14.280,
+    );
+
+    final aligned = TraceNodeResolver.alignPathSelections(
+      nodes: [
+        TraceNodeResolver.resolveBest(
+          nodes: [hop1Far, hop1Near],
+          localPublicKeys: {hop1Near.publicKey, hop1Far.publicKey},
+          prefixHex: 'aa11',
+        ),
+        TraceNodeResolver.resolveBest(
+          nodes: [hop2Far, hop2Near],
+          localPublicKeys: {hop2Near.publicKey, hop2Far.publicKey},
+          prefixHex: 'bb22',
+        ),
+      ],
+      startNode: start,
+      endNode: end,
+    );
+
+    expect(aligned[0].node?.name, 'Hop 1 Near');
+    expect(aligned[1].node?.name, 'Hop 2 Near');
+  });
 }
 
 MeshMapNode _node({

@@ -531,12 +531,17 @@ class _MessageTraceSheetState extends State<MessageTraceSheet> {
         senderLatLng: senderLatLng,
         recipientLatLng: recipientLatLng,
       );
+      final alignedMatched = TraceNodeResolver.alignPathSelections(
+        nodes: matched,
+        startNode: senderNode.node,
+        endNode: recipientNode.node,
+      );
       return _TraceResult(
         mode: TraceMode.packetPath,
         sender: senderNode,
         recipient: recipientNode,
         pathHashes: hopHashes,
-        matchedPathNodes: matched,
+        matchedPathNodes: alignedMatched,
       );
     }
 

@@ -825,6 +825,20 @@ class ConnectionProvider with ChangeNotifier {
   /// This should be set by AppProvider to query ChannelsProvider
   Function(int channelIdx)? getChannelInfo;
 
+  @visibleForTesting
+  static bool channelHasConfiguredSecret(Uint8List secret) {
+    return secret.any((byte) => byte != 0);
+  }
+
+  bool _channelSlotIsOccupied(Object channel) {
+    final channelName = (channel as dynamic).name as String?;
+    final secret = (channel as dynamic).secret;
+    final hasConfiguredSecret =
+        secret is Uint8List && channelHasConfiguredSecret(secret);
+    return (channelName != null && channelName.isNotEmpty) ||
+        hasConfiguredSecret;
+  }
+
   /// Check if a specific channel slot is empty
   Future<bool> isChannelSlotEmpty(int channelIdx) async {
     if (!_activeService.isConnected) {
@@ -836,8 +850,7 @@ class ConnectionProvider with ChangeNotifier {
       if (getChannelInfo != null) {
         final channel = getChannelInfo!(channelIdx);
         if (channel != null) {
-          final channelName = (channel as dynamic).name as String?;
-          return channelName == null || channelName.isEmpty;
+          return !_channelSlotIsOccupied(channel);
         }
       }
 
@@ -849,8 +862,7 @@ class ConnectionProvider with ChangeNotifier {
       if (getChannelInfo != null) {
         final channel = getChannelInfo!(channelIdx);
         if (channel != null) {
-          final channelName = (channel as dynamic).name as String?;
-          return channelName == null || channelName.isEmpty;
+          return !_channelSlotIsOccupied(channel);
         }
       }
 
@@ -900,8 +912,7 @@ class ConnectionProvider with ChangeNotifier {
             continue;
           }
 
-          final channelName = (channel as dynamic).name as String?;
-          if (channelName != null && channelName.isNotEmpty) {
+          if (_channelSlotIsOccupied(channel)) {
             usedIndices.add(i);
           }
         }
@@ -923,12 +934,13 @@ class ConnectionProvider with ChangeNotifier {
         // First check cache
         if (getChannelInfo != null) {
           final channel = getChannelInfo!(i);
-          if (channel != null) {
+          if (channel != null && _channelSlotIsOccupied(channel)) {
             final channelName = (channel as dynamic).name as String?;
-            if (channelName != null && channelName.isNotEmpty) {
-              debugPrint('   ⏭️  Slot $i occupied: "$channelName"');
-              continue; // Skip occupied slots
-            }
+            final label = (channelName != null && channelName.isNotEmpty)
+                ? channelName
+                : 'Channel $i';
+            debugPrint('   ⏭️  Slot $i occupied: "$label"');
+            continue; // Skip occupied slots
           }
         }
 

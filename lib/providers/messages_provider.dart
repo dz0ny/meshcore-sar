@@ -636,7 +636,23 @@ class MessagesProvider with ChangeNotifier {
       }
       final existingSender = existing.senderKeyShort ?? existing.senderName;
       final incomingSender = message.senderKeyShort ?? message.senderName;
-      return existingSender == incomingSender;
+      if (existingSender == incomingSender) {
+        return true;
+      }
+
+      // When we send to a channel we add a local "sent" bubble immediately,
+      // then firmware may later sync back the same message as a received
+      // channel item with only the public sender handle. Only fold that replay
+      // into the original bubble after LOG_RX_DATA has already confirmed it as
+      // our own transmitted packet.
+      if (existing.isSentMessage &&
+          existing.echoCount > 0 &&
+          !message.isSentMessage &&
+          existing.senderTimestamp == message.senderTimestamp) {
+        return true;
+      }
+
+      return false;
     }
 
     return true;

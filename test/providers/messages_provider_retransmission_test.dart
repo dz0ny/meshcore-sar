@@ -39,6 +39,46 @@ Message _buildDirectMessage(String id) {
   );
 }
 
+Message _buildSentChannelMessage({
+  required String id,
+  required int senderTimestamp,
+  String text = 'broadcast',
+  int channelIdx = 0,
+}) {
+  return Message(
+    id: id,
+    messageType: MessageType.channel,
+    senderPublicKeyPrefix: Uint8List.fromList([0, 1, 2, 3, 4, 5]),
+    channelIdx: channelIdx,
+    pathLen: 0,
+    textType: MessageTextType.plain,
+    senderTimestamp: senderTimestamp,
+    text: text,
+    receivedAt: DateTime.now(),
+    deliveryStatus: MessageDeliveryStatus.sending,
+  );
+}
+
+Message _buildReceivedChannelReplay({
+  required String id,
+  required int senderTimestamp,
+  String text = 'broadcast',
+  int channelIdx = 0,
+  String senderName = 'Radio Alpha',
+}) {
+  return Message(
+    id: id,
+    messageType: MessageType.channel,
+    channelIdx: channelIdx,
+    pathLen: 1,
+    textType: MessageTextType.plain,
+    senderTimestamp: senderTimestamp,
+    text: text,
+    senderName: senderName,
+    receivedAt: DateTime.now(),
+  );
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -124,18 +164,7 @@ void main() {
     test('channel messages are marked sent immediately', () {
       final provider = MessagesProvider();
       provider.addSentMessage(
-        Message(
-          id: 'c1',
-          messageType: MessageType.channel,
-          senderPublicKeyPrefix: Uint8List.fromList([0, 1, 2, 3, 4, 5]),
-          channelIdx: 0,
-          pathLen: 0,
-          textType: MessageTextType.plain,
-          senderTimestamp: 1700000000,
-          text: 'broadcast',
-          receivedAt: DateTime.now(),
-          deliveryStatus: MessageDeliveryStatus.sending,
-        ),
+        _buildSentChannelMessage(id: 'c1', senderTimestamp: 1700000000),
       );
 
       provider.markMessageSent('c1', 0, 0);
@@ -145,6 +174,51 @@ void main() {
         MessageDeliveryStatus.sent,
       );
     });
+
+    test(
+      'channel replay is deduped after raw echo detection confirms our send',
+      () {
+        final provider = MessagesProvider();
+        provider.addSentMessage(
+          _buildSentChannelMessage(id: 'c-echo', senderTimestamp: 1700000100),
+        );
+        provider.markMessageSent('c-echo', 0, 0);
+        provider.handleMessageEcho('c-echo', 1, 12, -90);
+
+        provider.addMessage(
+          _buildReceivedChannelReplay(
+            id: 'c-echo-incoming',
+            senderTimestamp: 1700000100,
+          ),
+        );
+
+        expect(provider.messages, hasLength(1));
+        expect(provider.messages.single.id, equals('c-echo'));
+      },
+    );
+
+    test(
+      'channel replay is not deduped before raw echo detection confirms it',
+      () {
+        final provider = MessagesProvider();
+        provider.addSentMessage(
+          _buildSentChannelMessage(
+            id: 'c-no-echo',
+            senderTimestamp: 1700000200,
+          ),
+        );
+        provider.markMessageSent('c-no-echo', 0, 0);
+
+        provider.addMessage(
+          _buildReceivedChannelReplay(
+            id: 'c-no-echo-incoming',
+            senderTimestamp: 1700000200,
+          ),
+        );
+
+        expect(provider.messages, hasLength(2));
+      },
+    );
 
     test('missing ACK schedules a delayed retransmission', () {
       fakeAsync((async) {

@@ -81,14 +81,13 @@ class _BidirectionalRefreshState extends State<BidirectionalRefresh> {
     try {
       await widget.onRefresh();
     } finally {
-      if (!mounted) {
-        return;
+      if (mounted) {
+        setState(() {
+          _isRefreshing = false;
+          _topPullDistance = 0;
+          _bottomPullDistance = 0;
+        });
       }
-      setState(() {
-        _isRefreshing = false;
-        _topPullDistance = 0;
-        _bottomPullDistance = 0;
-      });
     }
   }
 

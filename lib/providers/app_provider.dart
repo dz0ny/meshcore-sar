@@ -59,6 +59,24 @@ class _DirectMessageRouteSession {
 /// Main App Provider - coordinates all other providers
 class AppProvider with ChangeNotifier {
   static const int _maxDirectPayloadHops = 3;
+  @visibleForTesting
+  static bool isDeletedChannelInfo(
+    int channelIdx,
+    String channelName,
+    Uint8List secret,
+  ) {
+    return channelIdx != 0 &&
+        channelName.isEmpty &&
+        secret.every((byte) => byte == 0);
+  }
+
+  @visibleForTesting
+  static String channelContactName(int channelIdx, String channelName) {
+    return channelName.isEmpty && channelIdx != 0
+        ? 'Channel $channelIdx'
+        : channelName;
+  }
+
   final ConnectionProvider connectionProvider;
   final ContactsProvider contactsProvider;
   final MessagesProvider messagesProvider;
@@ -736,8 +754,20 @@ class AppProvider with ChangeNotifier {
               '🔔 [AppProvider] onChannelInfoReceived called: idx=$channelIdx, name="$channelName"',
             );
 
-            // Check if this is a channel deletion (empty name)
-            if (channelName.isEmpty && channelIdx != 0) {
+            final isDeletedChannel = AppProvider.isDeletedChannelInfo(
+              channelIdx,
+              channelName,
+              secret,
+            );
+            final contactChannelName = AppProvider.channelContactName(
+              channelIdx,
+              channelName,
+            );
+
+            // Only treat the slot as deleted when firmware returns an empty
+            // name and a zeroed secret. Protected channels may still have an
+            // empty display name but remain fully configured.
+            if (isDeletedChannel) {
               debugPrint(
                 '   🗑️  Channel $channelIdx deleted - removing from providers',
               );
@@ -772,10 +802,10 @@ class AppProvider with ChangeNotifier {
             // Also add as Contact to ContactsProvider (for UI display)
             // Skip if it's public channel (already exists)
             debugPrint(
-              '📻 [AppProvider] Channel $channelIdx: "$channelName" (isEmpty: ${channelName.isEmpty}, isHashChannel: ${channelName.startsWith('#')})',
+              '📻 [AppProvider] Channel $channelIdx: "$contactChannelName" (rawNameEmpty: ${channelName.isEmpty}, isHashChannel: ${channelName.startsWith('#')})',
             );
 
-            if (channelName.isNotEmpty && channelIdx != 0) {
+            if (channelIdx != 0) {
               debugPrint(
                 '   ✅ Adding channel $channelIdx to ContactsProvider as Contact',
               );
@@ -795,7 +825,7 @@ class AppProvider with ChangeNotifier {
                   flags: flags ?? 0,
                   outPathLen: -1, // Flood mode for channels
                   outPath: Uint8List(0), // Empty path for channels
-                  advName: channelName,
+                  advName: contactChannelName,
                   lastAdvert: now,
                   advLat: 0, // Channels don't have location
                   advLon: 0,
@@ -809,7 +839,7 @@ class AppProvider with ChangeNotifier {
               );
             } else {
               debugPrint(
-                '   ⏭️  Skipping channel $channelIdx (empty: ${channelName.isEmpty}, isPublic: ${channelIdx == 0})',
+                '   ⏭️  Skipping channel $channelIdx (isPublic: ${channelIdx == 0})',
               );
             }
           } catch (e, stackTrace) {

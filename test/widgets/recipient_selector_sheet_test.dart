@@ -89,7 +89,7 @@ void main() {
             unreadCount: 0,
             unreadCountsByPublicKey: const {},
             showAllOption: false,
-            onSelect: (_, __) {},
+            onSelect: (selectedRecipient, draftMessage) {},
           ),
         ),
       ),

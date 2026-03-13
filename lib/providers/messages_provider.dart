@@ -930,7 +930,10 @@ class MessagesProvider with ChangeNotifier {
   /// Remove all messages associated with a specific channel.
   void clearChannelMessages(int channelIdx) {
     final messageIdsToRemove = _messages
-        .where((message) => message.isChannelMessage && message.channelIdx == channelIdx)
+        .where(
+          (message) =>
+              message.isChannelMessage && message.channelIdx == channelIdx,
+        )
         .map((message) => message.id)
         .toList();
 
@@ -954,7 +957,8 @@ class MessagesProvider with ChangeNotifier {
     }
 
     _pendingSentMessages.removeWhere(
-      (_, message) => message.isChannelMessage && message.channelIdx == channelIdx,
+      (_, message) =>
+          message.isChannelMessage && message.channelIdx == channelIdx,
     );
     _messageAckHistory.removeWhere(
       (messageId, _) => messageIdsToRemove.contains(messageId),

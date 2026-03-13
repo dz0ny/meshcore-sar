@@ -95,4 +95,13 @@ void main() {
     expect(find.text('Rescue One'), findsOneWidget);
     expect(find.text('John Smith'), findsNothing);
   });
+
+  testWidgets('hides public key in contact tile', (tester) async {
+    final contact = buildContact(name: 'John Smith', type: ContactType.chat);
+
+    await pumpTile(tester, contact);
+
+    expect(find.text(contact.publicKeyShort), findsNothing);
+    expect(find.byIcon(Icons.key_outlined), findsNothing);
+  });
 }

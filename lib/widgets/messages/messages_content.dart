@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../../models/message.dart';
+import '../common/bidirectional_refresh.dart';
 import '../../widgets/messages/message_bubble.dart';
 
 class MessagesContent extends StatelessWidget {
@@ -30,14 +31,18 @@ class MessagesContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return RefreshIndicator(
+    const scrollPhysics = BouncingScrollPhysics(
+      parent: AlwaysScrollableScrollPhysics(),
+    );
+
+    return BidirectionalRefresh(
       onRefresh: onRefresh,
       child: messages.isEmpty
           ? LayoutBuilder(
               builder: (context, constraints) => SingleChildScrollView(
                 keyboardDismissBehavior:
                     ScrollViewKeyboardDismissBehavior.onDrag,
-                physics: const AlwaysScrollableScrollPhysics(),
+                physics: scrollPhysics,
                 child: ConstrainedBox(
                   constraints: BoxConstraints(minHeight: constraints.maxHeight),
                   child: Center(
@@ -69,6 +74,7 @@ class MessagesContent extends StatelessWidget {
           : ListView.builder(
               controller: scrollController,
               keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+              physics: scrollPhysics,
               reverse: true,
               padding: EdgeInsets.fromLTRB(
                 defaultPadding,

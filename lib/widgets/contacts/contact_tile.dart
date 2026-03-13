@@ -145,12 +145,6 @@ class ContactTile extends StatelessWidget {
                       icon: Icons.folder_copy_outlined,
                       label: label,
                     ),
-                  _buildMetaPill(
-                    context,
-                    icon: Icons.key_outlined,
-                    label: contact.publicKeyShort,
-                    monospace: true,
-                  ),
                 ],
               ),
               if (location != null) ...[
@@ -303,12 +297,6 @@ class ContactTile extends StatelessWidget {
     final compactPills = <Widget>[
       if (groupLabel case final label?)
         _buildMetaPill(context, icon: Icons.folder_copy_outlined, label: label),
-      _buildMetaPill(
-        context,
-        icon: Icons.key_outlined,
-        label: contact.publicKeyShort,
-        monospace: true,
-      ),
       if (distanceText != null) _buildDistancePill(context, distanceText),
       if (contact.routeHasPath && contact.routeHopCount > 0)
         _buildRoutePill(context, contact),

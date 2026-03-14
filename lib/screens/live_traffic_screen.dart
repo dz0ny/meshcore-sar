@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
@@ -1006,15 +1007,12 @@ class _LiveTrafficPacketDetails {
   }
 
   static String _packetHash(List<int> bytes) {
-    const fnvOffset = 0xcbf29ce484222325;
-    const fnvPrime = 0x100000001b3;
-    const mask = 0xFFFFFFFFFFFFFFFF;
-    var hash = fnvOffset;
-    for (final byte in bytes) {
-      hash ^= byte & 0xFF;
-      hash = (hash * fnvPrime) & mask;
-    }
-    return hash.toRadixString(16).padLeft(16, '0').toUpperCase();
+    final digest = md5.convert(bytes).bytes;
+    return digest
+        .take(8)
+        .map((byte) => byte.toRadixString(16).padLeft(2, '0'))
+        .join()
+        .toUpperCase();
   }
 }
 

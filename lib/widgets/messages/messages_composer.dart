@@ -60,7 +60,7 @@ class MessagesComposer extends StatelessWidget {
         children: [
           if (mentionSuggestions.isNotEmpty)
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+              padding: const EdgeInsets.fromLTRB(10, 0, 10, 6),
               child: _MentionSuggestionsCard(
                 suggestions: mentionSuggestions,
                 query: mentionQuery,
@@ -89,7 +89,7 @@ class MessagesComposer extends StatelessWidget {
                   ],
                 ),
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(10, 10, 10, 8),
+                  padding: const EdgeInsets.fromLTRB(8, 8, 8, 6),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -112,7 +112,7 @@ class MessagesComposer extends StatelessWidget {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 6),
                       ListenableBuilder(
                         listenable: Listenable.merge([
                           textController,
@@ -183,17 +183,18 @@ class _MentionSuggestionsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final title = query.isEmpty ? '@' : '@$query';
+    final visibleCount = suggestions.length.clamp(1, 4);
+    final maxHeight = visibleCount * 54.0;
 
     return Material(
-      elevation: 10,
+      elevation: 8,
       color: Theme.of(context).colorScheme.surface,
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(18),
       child: Container(
-        constraints: const BoxConstraints(maxHeight: 360),
+        constraints: BoxConstraints(maxHeight: maxHeight),
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(18),
           border: Border.all(
             color: Theme.of(context).dividerColor.withValues(alpha: 0.30),
           ),
@@ -202,45 +203,35 @@ class _MentionSuggestionsCard extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(18, 14, 18, 8),
-              child: Text(
-                title,
-                style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
             Flexible(
               child: ListView.separated(
                 shrinkWrap: true,
-                padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 itemCount: suggestions.length,
-                separatorBuilder: (_, _) => const SizedBox(height: 4),
+                separatorBuilder: (_, _) => const SizedBox(height: 2),
                 itemBuilder: (context, index) {
                   final contact = suggestions[index];
                   return Material(
                     color: Colors.transparent,
                     child: InkWell(
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(14),
                       onTap: () => onSelected(contact),
                       child: Padding(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 8,
-                          vertical: 10,
+                          vertical: 8,
                         ),
                         child: Row(
                           children: [
-                            ContactAvatar(contact: contact, radius: 19),
-                            const SizedBox(width: 12),
+                            ContactAvatar(contact: contact, radius: 16),
+                            const SizedBox(width: 10),
                             Expanded(
                               child: Text(
                                 contact.displayName,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
-                                  fontSize: 16,
+                                  fontSize: 15,
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
@@ -272,8 +263,8 @@ class _ComposerActionButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 42,
-      height: 42,
+      width: 40,
+      height: 40,
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
         shape: BoxShape.circle,
@@ -282,7 +273,7 @@ class _ComposerActionButton extends StatelessWidget {
         ),
       ),
       child: IconButton(
-        icon: Icon(isRecording ? Icons.stop : Icons.add, size: 22),
+        icon: Icon(isRecording ? Icons.stop : Icons.add, size: 20),
         tooltip: isRecording ? 'Stop recording' : 'More actions',
         onPressed: onPressed,
         color: isRecording ? Colors.red : Theme.of(context).colorScheme.primary,
@@ -310,7 +301,7 @@ class _DestinationSelector extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         onTap: onTap,
         child: Ink(
-          height: 42,
+          height: 40,
           decoration: BoxDecoration(
             color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(20),
@@ -319,17 +310,17 @@ class _DestinationSelector extends StatelessWidget {
             ),
           ),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14),
+            padding: const EdgeInsets.symmetric(horizontal: 12),
             child: Row(
               children: [
                 destinationAvatar,
-                const SizedBox(width: 10),
+                const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     destinationLabel,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontSize: 15,
+                      fontSize: 14,
                       fontWeight: FontWeight.w600,
                       color: Theme.of(context).colorScheme.onSurface,
                     ),
@@ -337,7 +328,7 @@ class _DestinationSelector extends StatelessWidget {
                 ),
                 Icon(
                   Icons.expand_more_rounded,
-                  size: 20,
+                  size: 18,
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
               ],
@@ -368,7 +359,7 @@ class _MessageInput extends StatelessWidget {
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 180),
-      constraints: const BoxConstraints(minHeight: 46, maxHeight: 132),
+      constraints: const BoxConstraints(minHeight: 42, maxHeight: 116),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(24),
@@ -391,7 +382,7 @@ class _MessageInput extends StatelessWidget {
             : null,
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         child: TextField(
           controller: textController,
           focusNode: focusNode,
@@ -482,8 +473,8 @@ class _SendButton extends StatelessWidget {
             children: [
               AnimatedContainer(
                 duration: const Duration(milliseconds: 180),
-                width: 46,
-                height: 46,
+                width: 42,
+                height: 42,
                 decoration: BoxDecoration(
                   color: canSendText || isRecording
                       ? Theme.of(context).colorScheme.primary
@@ -517,7 +508,7 @@ class _SendButton extends StatelessWidget {
                       )
                     : Icon(
                         isRecording ? Icons.mic_rounded : Icons.send_rounded,
-                        size: 22,
+                        size: 20,
                         color: canSendText || isRecording
                             ? Theme.of(context).colorScheme.onPrimary
                             : Theme.of(context).colorScheme.onSurfaceVariant,

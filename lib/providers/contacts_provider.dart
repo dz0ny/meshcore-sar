@@ -13,14 +13,40 @@ import '../utils/key_comparison.dart';
 class PendingAdvert {
   final Uint8List publicKey;
   final DateTime receivedAt;
+  final String? advName;
+  final int? typeValue;
+  final int? flags;
+  final int? lastAdvert;
+  final int? advLat;
+  final int? advLon;
   final int? signedEncodedPathLen;
   final Uint8List? paddedPathBytes;
+  final int? rxRssiDbm;
+  final int? rxSnrRaw;
+  final int? repeaterBatteryMv;
+  final int? repeaterQueueLen;
+  final int? repeaterLastRssi;
+  final int? repeaterLastSnrRaw;
+  final int? repeaterUptimeSecs;
 
   const PendingAdvert({
     required this.publicKey,
     required this.receivedAt,
+    this.advName,
+    this.typeValue,
+    this.flags,
+    this.lastAdvert,
+    this.advLat,
+    this.advLon,
     this.signedEncodedPathLen,
     this.paddedPathBytes,
+    this.rxRssiDbm,
+    this.rxSnrRaw,
+    this.repeaterBatteryMv,
+    this.repeaterQueueLen,
+    this.repeaterLastRssi,
+    this.repeaterLastSnrRaw,
+    this.repeaterUptimeSecs,
   });
 
   String get publicKeyHex =>
@@ -34,16 +60,55 @@ class PendingAdvert {
   PendingAdvert copyWith({
     Uint8List? publicKey,
     DateTime? receivedAt,
+    String? advName,
+    int? typeValue,
+    int? flags,
+    int? lastAdvert,
+    int? advLat,
+    int? advLon,
     int? signedEncodedPathLen,
     Uint8List? paddedPathBytes,
+    int? rxRssiDbm,
+    int? rxSnrRaw,
+    int? repeaterBatteryMv,
+    int? repeaterQueueLen,
+    int? repeaterLastRssi,
+    int? repeaterLastSnrRaw,
+    int? repeaterUptimeSecs,
   }) {
     return PendingAdvert(
       publicKey: publicKey ?? this.publicKey,
       receivedAt: receivedAt ?? this.receivedAt,
+      advName: advName ?? this.advName,
+      typeValue: typeValue ?? this.typeValue,
+      flags: flags ?? this.flags,
+      lastAdvert: lastAdvert ?? this.lastAdvert,
+      advLat: advLat ?? this.advLat,
+      advLon: advLon ?? this.advLon,
       signedEncodedPathLen: signedEncodedPathLen ?? this.signedEncodedPathLen,
       paddedPathBytes: paddedPathBytes ?? this.paddedPathBytes,
+      rxRssiDbm: rxRssiDbm ?? this.rxRssiDbm,
+      rxSnrRaw: rxSnrRaw ?? this.rxSnrRaw,
+      repeaterBatteryMv: repeaterBatteryMv ?? this.repeaterBatteryMv,
+      repeaterQueueLen: repeaterQueueLen ?? this.repeaterQueueLen,
+      repeaterLastRssi: repeaterLastRssi ?? this.repeaterLastRssi,
+      repeaterLastSnrRaw: repeaterLastSnrRaw ?? this.repeaterLastSnrRaw,
+      repeaterUptimeSecs: repeaterUptimeSecs ?? this.repeaterUptimeSecs,
     );
   }
+
+  double? get repeaterBatteryPercent {
+    if (repeaterBatteryMv == null) return null;
+    final voltage = repeaterBatteryMv! / 1000.0;
+    if (voltage <= 3.0) return 0.0;
+    if (voltage >= 4.2) return 100.0;
+    return ((voltage - 3.0) / 1.2) * 100.0;
+  }
+
+  double? get repeaterLastSnr =>
+      repeaterLastSnrRaw == null ? null : repeaterLastSnrRaw! / 4.0;
+
+  double? get rxSnr => rxSnrRaw == null ? null : rxSnrRaw! / 4.0;
 }
 
 class _RetainedRoute {
@@ -257,6 +322,28 @@ class ContactsProvider with ChangeNotifier {
       _pendingAdverts.values.toList()
         ..sort((a, b) => b.receivedAt.compareTo(a.receivedAt));
 
+  PendingAdvert? pendingAdvertByKey(Uint8List publicKey) {
+    final keyHex = publicKey
+        .map((b) => b.toRadixString(16).padLeft(2, '0'))
+        .join('');
+    return _pendingAdverts[keyHex];
+  }
+
+  bool shouldEnrichPendingAdvert(Uint8List publicKey) {
+    final advert = pendingAdvertByKey(publicKey);
+    if (advert == null) {
+      return false;
+    }
+
+    final hasName = advert.advName?.trim().isNotEmpty ?? false;
+    final hasType = advert.typeValue != null && advert.typeValue != 0;
+    final hasLocation =
+        advert.advLat != null &&
+        advert.advLon != null &&
+        (advert.advLat != 0 || advert.advLon != 0);
+    return !(hasName && hasType && hasLocation);
+  }
+
   List<SavedContactGroup> savedGroupsForSection(String sectionKey) {
     return savedContactGroups
         .where((group) => group.sectionKey == sectionKey)
@@ -466,7 +553,6 @@ class ContactsProvider with ChangeNotifier {
     );
 
     _contacts[contact.publicKeyHex] = updatedContact;
-    _pendingAdverts.remove(contact.publicKeyHex);
     debugPrint(
       '   ✅ Contact added/updated. Total contacts: ${_contacts.length}, channels: ${channels.length}',
     );
@@ -495,7 +581,6 @@ class ContactsProvider with ChangeNotifier {
         incomingContact: contact,
         existingContact: existingContact,
       );
-      _pendingAdverts.remove(contact.publicKeyHex);
     }
     if (excluded > 0) {
       debugPrint(
@@ -1095,7 +1180,7 @@ class ContactsProvider with ChangeNotifier {
   }
 
   /// Add or refresh a pending advert entry from PUSH_CODE_ADVERT (0x80).
-  /// Excludes self key and existing contacts.
+  /// Excludes only self key; known contacts still keep a discovery entry.
   bool addPendingAdvert(Uint8List publicKey, {Uint8List? devicePublicKey}) {
     if (devicePublicKey != null && publicKey.matches(devicePublicKey)) {
       return false;
@@ -1104,12 +1189,6 @@ class ContactsProvider with ChangeNotifier {
     final keyHex = publicKey
         .map((b) => b.toRadixString(16).padLeft(2, '0'))
         .join('');
-    if (_contacts.containsKey(keyHex)) {
-      _pendingAdverts.remove(keyHex);
-      _persistPendingAdverts();
-      return false;
-    }
-
     final existing = _pendingAdverts[keyHex];
     final now = DateTime.now();
     if (existing != null) {
@@ -1126,6 +1205,99 @@ class ContactsProvider with ChangeNotifier {
       notifyListeners();
       return true;
     }
+  }
+
+  bool addOrUpdatePendingAdvertContact(
+    Contact contact, {
+    Uint8List? devicePublicKey,
+  }) {
+    if (devicePublicKey != null && contact.publicKey.matches(devicePublicKey)) {
+      return false;
+    }
+
+    final keyHex = contact.publicKeyHex;
+    final route = ContactRouteCodec.fromContact(contact);
+    final existing = _pendingAdverts[keyHex];
+    final now = DateTime.now();
+    final updated =
+        (existing ??
+                PendingAdvert(
+                  publicKey: Uint8List.fromList(contact.publicKey),
+                  receivedAt: now,
+                ))
+            .copyWith(
+              receivedAt: now,
+              advName: contact.advName.trim().isEmpty ? null : contact.advName,
+              typeValue: contact.type.value,
+              flags: contact.flags,
+              lastAdvert: contact.lastAdvert,
+              advLat: contact.advLat,
+              advLon: contact.advLon,
+              signedEncodedPathLen:
+                  route?.signedEncodedPathLen ?? existing?.signedEncodedPathLen,
+              paddedPathBytes: route?.paddedPathBytes == null
+                  ? existing?.paddedPathBytes
+                  : Uint8List.fromList(route!.paddedPathBytes),
+            );
+
+    _pendingAdverts[keyHex] = updated;
+    _persistPendingAdverts();
+    notifyListeners();
+    return existing == null;
+  }
+
+  bool addOrUpdatePendingAdvertMetadata({
+    required Uint8List publicKey,
+    required int typeValue,
+    Uint8List? devicePublicKey,
+    int? flags,
+    String? advName,
+    int? lastAdvert,
+    int? advLat,
+    int? advLon,
+    int? signedEncodedPathLen,
+    Uint8List? paddedPathBytes,
+    int? rxRssiDbm,
+    int? rxSnrRaw,
+    DateTime? receivedAt,
+  }) {
+    if (devicePublicKey != null && publicKey.matches(devicePublicKey)) {
+      return false;
+    }
+
+    final keyHex = publicKey
+        .map((b) => b.toRadixString(16).padLeft(2, '0'))
+        .join('');
+    final existing = _pendingAdverts[keyHex];
+    final nextReceivedAt = receivedAt ?? DateTime.now();
+    _pendingAdverts[keyHex] =
+        (existing ??
+                PendingAdvert(
+                  publicKey: Uint8List.fromList(publicKey),
+                  receivedAt: nextReceivedAt,
+                ))
+            .copyWith(
+              receivedAt: nextReceivedAt,
+              typeValue: typeValue,
+              advName: advName?.trim().isNotEmpty == true
+                  ? advName!.trim()
+                  : existing?.advName,
+              flags: flags ?? existing?.flags,
+              lastAdvert: lastAdvert ?? existing?.lastAdvert,
+              advLat: advLat ?? existing?.advLat,
+              advLon: advLon ?? existing?.advLon,
+              signedEncodedPathLen:
+                  signedEncodedPathLen ?? existing?.signedEncodedPathLen,
+              paddedPathBytes: paddedPathBytes == null
+                  ? existing?.paddedPathBytes
+                  : Uint8List.fromList(paddedPathBytes),
+              rxRssiDbm: rxRssiDbm ?? existing?.rxRssiDbm,
+              rxSnrRaw: rxSnrRaw ?? existing?.rxSnrRaw,
+            );
+
+    _persistPendingAdverts();
+    notifyListeners();
+    return existing == null;
   }
 
   /// Find contact by name
@@ -1220,6 +1392,45 @@ class ContactsProvider with ChangeNotifier {
     await _storageService.saveContacts(_contactsForStorage());
   }
 
+  Future<void> clearPendingAdverts() async {
+    if (_pendingAdverts.isEmpty) {
+      return;
+    }
+    _pendingAdverts.clear();
+    await _storageService.clearPendingAdverts();
+    notifyListeners();
+  }
+
+  void updatePendingAdvertStatusByPrefix(
+    Uint8List publicKeyPrefix, {
+    int? batteryMv,
+    int? queueLen,
+    int? lastRssi,
+    int? lastSnrRaw,
+    int? uptimeSecs,
+  }) {
+    final prefixHex = publicKeyPrefix
+        .map((b) => b.toRadixString(16).padLeft(2, '0'))
+        .join('');
+    final match = _pendingAdverts.entries.where(
+      (entry) => entry.key.startsWith(prefixHex),
+    );
+    if (match.isEmpty) {
+      return;
+    }
+    final key = match.first.key;
+    final existing = _pendingAdverts[key]!;
+    _pendingAdverts[key] = existing.copyWith(
+      repeaterBatteryMv: batteryMv,
+      repeaterQueueLen: queueLen,
+      repeaterLastRssi: lastRssi,
+      repeaterLastSnrRaw: lastSnrRaw,
+      repeaterUptimeSecs: uptimeSecs,
+    );
+    _persistPendingAdverts();
+    notifyListeners();
+  }
+
   List<Contact> _contactsForStorage() {
     // Don't persist the public channel pseudo-contact (all zeros key)
     const publicChannelKey =
@@ -1253,10 +1464,23 @@ class ContactsProvider with ChangeNotifier {
     return {
       'publicKey': base64Encode(advert.publicKey),
       'receivedAtMillis': advert.receivedAt.millisecondsSinceEpoch,
+      'advName': advert.advName,
+      'typeValue': advert.typeValue,
+      'flags': advert.flags,
+      'lastAdvert': advert.lastAdvert,
+      'advLat': advert.advLat,
+      'advLon': advert.advLon,
       'signedEncodedPathLen': advert.signedEncodedPathLen,
       'paddedPathBytes': advert.paddedPathBytes == null
           ? null
           : base64Encode(advert.paddedPathBytes!),
+      'rxRssiDbm': advert.rxRssiDbm,
+      'rxSnrRaw': advert.rxSnrRaw,
+      'repeaterBatteryMv': advert.repeaterBatteryMv,
+      'repeaterQueueLen': advert.repeaterQueueLen,
+      'repeaterLastRssi': advert.repeaterLastRssi,
+      'repeaterLastSnrRaw': advert.repeaterLastSnrRaw,
+      'repeaterUptimeSecs': advert.repeaterUptimeSecs,
     };
   }
 
@@ -1269,12 +1493,25 @@ class ContactsProvider with ChangeNotifier {
         receivedAt: DateTime.fromMillisecondsSinceEpoch(
           json['receivedAtMillis'] as int,
         ),
+        advName: json['advName'] as String?,
+        typeValue: json['typeValue'] as int?,
+        flags: json['flags'] as int?,
+        lastAdvert: json['lastAdvert'] as int?,
+        advLat: json['advLat'] as int?,
+        advLon: json['advLon'] as int?,
         signedEncodedPathLen: json['signedEncodedPathLen'] as int?,
         paddedPathBytes: json['paddedPathBytes'] == null
             ? null
             : Uint8List.fromList(
                 base64Decode(json['paddedPathBytes'] as String),
               ),
+        rxRssiDbm: json['rxRssiDbm'] as int?,
+        rxSnrRaw: json['rxSnrRaw'] as int?,
+        repeaterBatteryMv: json['repeaterBatteryMv'] as int?,
+        repeaterQueueLen: json['repeaterQueueLen'] as int?,
+        repeaterLastRssi: json['repeaterLastRssi'] as int?,
+        repeaterLastSnrRaw: json['repeaterLastSnrRaw'] as int?,
+        repeaterUptimeSecs: json['repeaterUptimeSecs'] as int?,
       );
     } catch (e) {
       debugPrint(

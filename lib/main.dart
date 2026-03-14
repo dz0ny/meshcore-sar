@@ -25,6 +25,7 @@ import 'services/locale_preferences.dart';
 import 'services/mesh_map_nodes_service.dart';
 import 'services/update_checker_service.dart';
 import 'services/wizard_preferences.dart';
+import 'screens/discovery_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/welcome_wizard_screen.dart';
 import 'theme/app_theme.dart';
@@ -42,11 +43,13 @@ class MeshCoreSarApp extends StatefulWidget {
 }
 
 class _MeshCoreSarAppState extends State<MeshCoreSarApp> {
+  final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
   AppThemeMode _themeMode = AppThemeMode.system;
   Locale? _locale;
   bool _isInitialized = false;
   bool _shouldShowPermissionDialog = false;
   bool _wizardCompleted = true; // Will be updated in _initializeApp()
+  String? _pendingNotificationPayload;
 
   @override
   void initState() {
@@ -66,6 +69,7 @@ class _MeshCoreSarAppState extends State<MeshCoreSarApp> {
 
     // Set up notification tap handler for update notifications
     NotificationService().onNotificationTapped = _handleNotificationTap;
+    _pendingNotificationPayload = NotificationService().consumeLaunchPayload();
 
     // Check if we need to request location permissions
     await _checkLocationPermissions();
@@ -81,6 +85,14 @@ class _MeshCoreSarAppState extends State<MeshCoreSarApp> {
       _wizardCompleted = wizardCompleted;
       _isInitialized = true;
     });
+
+    if (_pendingNotificationPayload != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final payload = _pendingNotificationPayload;
+        _pendingNotificationPayload = null;
+        _handleNotificationTap(payload);
+      });
+    }
   }
 
   /// Handle notification tap
@@ -89,10 +101,27 @@ class _MeshCoreSarAppState extends State<MeshCoreSarApp> {
 
     debugPrint('[Main] Notification tapped: $payload');
 
+    if (!_wizardCompleted) {
+      _pendingNotificationPayload = payload;
+      return;
+    }
+
     // Handle update notification tap
     if (payload.startsWith('update:')) {
       final downloadUrl = payload.substring(7); // Remove 'update:' prefix
       _launchUpdateDownload(downloadUrl);
+      return;
+    }
+
+    if (payload.startsWith('discovery:')) {
+      final navigator = _navigatorKey.currentState;
+      if (navigator == null) {
+        _pendingNotificationPayload = payload;
+        return;
+      }
+      navigator.push(
+        MaterialPageRoute(builder: (context) => const DiscoveryScreen()),
+      );
     }
     // SAR and message notifications handled by their respective providers
   }
@@ -304,6 +333,7 @@ class _MeshCoreSarAppState extends State<MeshCoreSarApp> {
       builder: (context) {
         final systemBrightness = MediaQuery.platformBrightnessOf(context);
         final materialApp = MaterialApp(
+          navigatorKey: _navigatorKey,
           key: ValueKey<String?>(
             '${_locale?.languageCode ?? 'system'}_${_themeMode.name}',
           ),

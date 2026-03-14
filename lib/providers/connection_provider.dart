@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math';
+import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
@@ -55,8 +57,21 @@ class ScannedDevice {
   ScannedDevice({required this.device, required this.rssi});
 }
 
+enum ContactReceiveSource { sync, requestedSingle, preview, advert }
+
+class _PendingContactRequest {
+  final ContactReceiveSource source;
+  final DateTime requestedAt;
+
+  const _PendingContactRequest({
+    required this.source,
+    required this.requestedAt,
+  });
+}
+
 /// Connection Provider - manages MeshCore device connection (BLE or TCP/WiFi)
 class ConnectionProvider with ChangeNotifier {
+  static const int _controlTypeNodeDiscoverReq = 0x80;
   final MeshCoreBleService _bleService = MeshCoreBleService();
   final SseServerService _sseServer = SseServerService();
   MeshCoreTcpService? _tcpService;
@@ -145,6 +160,13 @@ class ConnectionProvider with ChangeNotifier {
   bool _isAdvertInProgress = false;
   DateTime? _lastAdvertRequestedAt;
   static const Duration _minAdvertInterval = Duration(milliseconds: 500);
+  bool _isContactsSyncInProgress = false;
+  final Map<String, _PendingContactRequest> _pendingSingleContactRequests = {};
+  final Map<String, DateTime> _previewContactMisses = {};
+  static const Duration _singleContactRequestWindow = Duration(seconds: 10);
+  static const Duration _previewContactMissTtl = Duration(minutes: 10);
+  bool _suppressNextPreviewNotFoundError = false;
+  bool? _supportsAutoaddConfig;
 
   // Helper instances
   final RoomLoginManager _roomLoginManager = RoomLoginManager();
@@ -162,6 +184,7 @@ class ConnectionProvider with ChangeNotifier {
 
   // Callbacks for other providers
   Function(Contact)? onContactReceived;
+  Function(Contact, ContactReceiveSource)? onContactReceivedDetailed;
   Function(List<Contact>)? onContactsComplete;
   Function(Message)? onMessageReceived;
   Function(Uint8List publicKey, Uint8List lppData)? onTelemetryReceived;
@@ -189,6 +212,8 @@ class ConnectionProvider with ChangeNotifier {
   onMessageEchoDetected;
   Function(Uint8List publicKeyPrefix, Uint8List statusData)? onStatusResponse;
   Function(Uint8List payload, int snrRaw, int rssiDbm)? onRawDataReceived;
+  Function(Uint8List payload, int snrRaw, int rssiDbm, int pathLen)?
+  onControlDataReceived;
   Contact? Function(Uint8List contactPublicKey)? resolveContactForDmCallback;
   bool Function()? canStartAutomaticMessageSyncCallback;
 
@@ -241,6 +266,10 @@ class ConnectionProvider with ChangeNotifier {
     };
 
     service.onError = (error, {int? errorCode}) {
+      if (errorCode == 2 && _suppressNextPreviewNotFoundError) {
+        _suppressNextPreviewNotFoundError = false;
+        return;
+      }
       debugPrint('⚠️ [Provider] Error received: $error');
       _error = error;
       if (_deviceInfo.connectionState != ConnectionState.connected) {
@@ -252,8 +281,20 @@ class ConnectionProvider with ChangeNotifier {
     };
 
     service.onContactNotFound = (contactPublicKey) async {
-      debugPrint('🔧 [Provider] Contact not found - initiating auto-recovery');
       if (contactPublicKey == null) return;
+
+      final keyHex = _publicKeyToHex(contactPublicKey);
+      final request = _pendingSingleContactRequests.remove(keyHex);
+      if (request?.source == ContactReceiveSource.preview) {
+        _previewContactMisses[keyHex] = DateTime.now();
+        _suppressNextPreviewNotFoundError = true;
+        debugPrint(
+          '🔧 [Provider] Preview contact not found, suppressing retries for $keyHex',
+        );
+        return;
+      }
+
+      debugPrint('🔧 [Provider] Contact not found - initiating auto-recovery');
 
       final operationId = contactPublicKey
           .sublist(0, 6)
@@ -288,11 +329,14 @@ class ConnectionProvider with ChangeNotifier {
 
     service.onContactReceived = (contact) {
       debugPrint('📥 [Provider] Contact received: "${contact.advName}"');
+      final source = _classifyContactReceiveSource(contact.publicKey);
+      onContactReceivedDetailed?.call(contact, source);
       onContactReceived?.call(contact);
     };
 
     service.onContactsComplete = (contacts) {
       debugPrint('📥 [Provider] Contacts sync complete: ${contacts.length}');
+      _isContactsSyncInProgress = false;
       if (_contactsSyncCompleter != null &&
           !_contactsSyncCompleter!.isCompleted) {
         _contactsSyncCompleter!.complete();
@@ -408,6 +452,8 @@ class ConnectionProvider with ChangeNotifier {
 
     service.onRawDataReceived = (payload, snrRaw, rssiDbm) =>
         onRawDataReceived?.call(payload, snrRaw, rssiDbm);
+    service.onControlDataReceived = (payload, snrRaw, rssiDbm, pathLen) =>
+        onControlDataReceived?.call(payload, snrRaw, rssiDbm, pathLen);
 
     service.onDeviceInfoReceived = (deviceInfo) {
       debugPrint('📥 [Provider] DeviceInfo received');
@@ -478,6 +524,17 @@ class ConnectionProvider with ChangeNotifier {
 
     service.onAllowedRepeatFreqReceived = (ranges) {
       _deviceInfo = _deviceInfo.copyWith(allowedRepeatFreqRanges: ranges);
+      notifyListeners();
+    };
+
+    service.onAutoaddConfigReceived = (config) {
+      _deviceInfo = _deviceInfo.copyWith(
+        autoAddUsers: config['autoAddUsers'] as bool?,
+        autoAddRepeaters: config['autoAddRepeaters'] as bool?,
+        autoAddRoomServers: config['autoAddRoomServers'] as bool?,
+        autoAddSensors: config['autoAddSensors'] as bool?,
+        autoAddOverwriteOldest: config['autoAddOverwriteOldest'] as bool?,
+      );
       notifyListeners();
     };
 
@@ -600,6 +657,7 @@ class ConnectionProvider with ChangeNotifier {
       connectionState: ConnectionState.connecting,
     );
     _error = null;
+    _supportsAutoaddConfig = null;
     _resetSyncState();
     debugPrint('✅ [Provider] Device info updated to connecting state');
     notifyListeners();
@@ -630,6 +688,7 @@ class ConnectionProvider with ChangeNotifier {
       connectionState: ConnectionState.connecting,
     );
     _error = null;
+    _supportsAutoaddConfig = null;
     notifyListeners();
 
     // Create fresh TCP service and wire its callbacks
@@ -658,6 +717,7 @@ class ConnectionProvider with ChangeNotifier {
     }
     _tcpHost = null;
     _connectionMode = ConnectionMode.ble;
+    _supportsAutoaddConfig = null;
     _resetSyncState();
     _deviceInfo = DeviceInfo(connectionState: ConnectionState.disconnected);
     _roomLoginManager.clearRoomLoginStates();
@@ -681,6 +741,7 @@ class ConnectionProvider with ChangeNotifier {
 
     await _bleService.disconnect();
 
+    _supportsAutoaddConfig = null;
     _resetSyncState();
     _deviceInfo = DeviceInfo(connectionState: ConnectionState.disconnected);
     _roomLoginManager.clearRoomLoginStates();
@@ -761,6 +822,7 @@ class ConnectionProvider with ChangeNotifier {
     }
 
     try {
+      _isContactsSyncInProgress = true;
       _contactsSyncCompleter = Completer<void>();
       await _activeService.getContacts();
       await _contactsSyncCompleter!.future.timeout(
@@ -772,9 +834,11 @@ class ConnectionProvider with ChangeNotifier {
         },
       );
     } catch (e) {
+      _isContactsSyncInProgress = false;
       _error = 'Failed to get contacts: $e';
       notifyListeners();
     } finally {
+      _isContactsSyncInProgress = false;
       _contactsSyncCompleter = null;
     }
   }
@@ -793,6 +857,10 @@ class ConnectionProvider with ChangeNotifier {
     }
 
     try {
+      _markSingleContactRequested(
+        publicKey,
+        source: ContactReceiveSource.requestedSingle,
+      );
       await _activeService.getContactByKey(publicKey);
     } catch (e) {
       _error = 'Failed to get contact: $e';
@@ -800,9 +868,79 @@ class ConnectionProvider with ChangeNotifier {
         '⚠️ [Provider] Failed to get contact by key, falling back to full contact sync',
       );
       // Fallback to full contact sync if command not supported
+      _isContactsSyncInProgress = true;
       await _activeService.getContacts();
       notifyListeners();
     }
+  }
+
+  Future<void> previewContact(Uint8List publicKey) async {
+    if (!_activeService.isConnected) {
+      return;
+    }
+    _prunePreviewContactMisses();
+    final keyHex = _publicKeyToHex(publicKey);
+    if (_previewContactMisses.containsKey(keyHex)) {
+      return;
+    }
+
+    try {
+      _markSingleContactRequested(
+        publicKey,
+        source: ContactReceiveSource.preview,
+      );
+      await _activeService.getContactByKey(publicKey);
+    } catch (e) {
+      debugPrint(
+        '⚠️ [Provider] Preview contact fetch failed for ${_publicKeyToHex(publicKey)}: $e',
+      );
+    }
+  }
+
+  ContactReceiveSource _classifyContactReceiveSource(Uint8List publicKey) {
+    _prunePendingSingleContactRequests();
+    final keyHex = _publicKeyToHex(publicKey);
+    if (_isContactsSyncInProgress) {
+      return ContactReceiveSource.sync;
+    }
+    final request = _pendingSingleContactRequests.remove(keyHex);
+    if (request != null &&
+        DateTime.now().difference(request.requestedAt) <=
+            _singleContactRequestWindow) {
+      return request.source;
+    }
+    return ContactReceiveSource.advert;
+  }
+
+  void _markSingleContactRequested(
+    Uint8List publicKey, {
+    required ContactReceiveSource source,
+  }) {
+    _prunePendingSingleContactRequests();
+    _pendingSingleContactRequests[_publicKeyToHex(publicKey)] =
+        _PendingContactRequest(source: source, requestedAt: DateTime.now());
+  }
+
+  void _prunePendingSingleContactRequests() {
+    if (_pendingSingleContactRequests.isEmpty) {
+      return;
+    }
+
+    final now = DateTime.now();
+    _pendingSingleContactRequests.removeWhere(
+      (_, request) =>
+          now.difference(request.requestedAt) > _singleContactRequestWindow,
+    );
+  }
+
+  void _prunePreviewContactMisses() {
+    if (_previewContactMisses.isEmpty) {
+      return;
+    }
+    final now = DateTime.now();
+    _previewContactMisses.removeWhere(
+      (_, timestamp) => now.difference(timestamp) > _previewContactMissTtl,
+    );
   }
 
   /// Sync all channels from device
@@ -1656,6 +1794,40 @@ class ConnectionProvider with ChangeNotifier {
     }
   }
 
+  Future<void> discoverNodeType({
+    required int advertType,
+    bool prefixOnly = false,
+    int since = 0,
+  }) async {
+    if (!_activeService.isConnected) {
+      _error = 'Not connected to device';
+      notifyListeners();
+      return;
+    }
+
+    final random = Random.secure();
+    final tagBytes = Uint8List.fromList(
+      List<int>.generate(4, (_) => random.nextInt(256)),
+    );
+    final payload = BytesBuilder(copy: false)
+      ..addByte(_controlTypeNodeDiscoverReq | (prefixOnly ? 0x01 : 0x00))
+      ..addByte(1 << advertType)
+      ..add(tagBytes)
+      ..add([
+        since & 0xFF,
+        (since >> 8) & 0xFF,
+        (since >> 16) & 0xFF,
+        (since >> 24) & 0xFF,
+      ]);
+
+    try {
+      await _activeService.sendControlData(payload.toBytes());
+    } catch (e) {
+      _error = 'Failed to send node discovery request: $e';
+      notifyListeners();
+    }
+  }
+
   /// Get device time from companion radio to detect clock drift
   Future<void> getDeviceTime() async {
     if (!_activeService.isConnected) {
@@ -1892,6 +2064,80 @@ class ConnectionProvider with ChangeNotifier {
     }
   }
 
+  Future<void> getAutoaddConfig() async {
+    if (_supportsAutoaddConfig == false) {
+      return;
+    }
+    if (!_activeService.isConnected) {
+      _error = 'Not connected to device';
+      notifyListeners();
+      return;
+    }
+
+    try {
+      final config = await _activeService.getAutoaddConfig();
+      _supportsAutoaddConfig = true;
+      _deviceInfo = _deviceInfo.copyWith(
+        autoAddUsers: config['autoAddUsers'] as bool?,
+        autoAddRepeaters: config['autoAddRepeaters'] as bool?,
+        autoAddRoomServers: config['autoAddRoomServers'] as bool?,
+        autoAddSensors: config['autoAddSensors'] as bool?,
+        autoAddOverwriteOldest: config['autoAddOverwriteOldest'] as bool?,
+      );
+      notifyListeners();
+    } catch (e) {
+      if (_isUnsupportedAutoaddConfigError(e)) {
+        _supportsAutoaddConfig = false;
+        _deviceInfo = _deviceInfo.copyWith(
+          autoAddUsers: null,
+          autoAddRepeaters: null,
+          autoAddRoomServers: null,
+          autoAddSensors: null,
+          autoAddOverwriteOldest: null,
+        );
+        notifyListeners();
+        return;
+      }
+      _error = 'Failed to get auto-add config: $e';
+      notifyListeners();
+    }
+  }
+
+  Future<void> setAutoaddConfig({
+    required bool autoAddUsers,
+    required bool autoAddRepeaters,
+    required bool autoAddRoomServers,
+    required bool autoAddSensors,
+    required bool overwriteOldest,
+  }) async {
+    if (!_activeService.isConnected) {
+      _error = 'Not connected to device';
+      notifyListeners();
+      return;
+    }
+
+    try {
+      await _activeService.setAutoaddConfig(
+        autoAddUsers: autoAddUsers,
+        autoAddRepeaters: autoAddRepeaters,
+        autoAddRoomServers: autoAddRoomServers,
+        autoAddSensors: autoAddSensors,
+        overwriteOldest: overwriteOldest,
+      );
+      _deviceInfo = _deviceInfo.copyWith(
+        autoAddUsers: autoAddUsers,
+        autoAddRepeaters: autoAddRepeaters,
+        autoAddRoomServers: autoAddRoomServers,
+        autoAddSensors: autoAddSensors,
+        autoAddOverwriteOldest: overwriteOldest,
+      );
+      notifyListeners();
+    } catch (e) {
+      _error = 'Failed to set auto-add config: $e';
+      notifyListeners();
+    }
+  }
+
   /// Request fresh device info (triggers SelfInfo response)
   Future<void> refreshDeviceInfo() async {
     if (_isSpectrumScanActive) return;
@@ -1904,12 +2150,33 @@ class ConnectionProvider with ChangeNotifier {
     try {
       // The device query command triggers a SelfInfo response
       await _activeService.refreshDeviceInfo();
-      // Also request allowed repeat frequencies (firmware v9+, no-op on older firmware)
-      await _activeService.getAllowedRepeatFreq();
+      if (_supportsAutoaddConfig != false) {
+        try {
+          await _activeService.getAutoaddConfig();
+          _supportsAutoaddConfig = true;
+        } catch (e) {
+          if (_isUnsupportedAutoaddConfigError(e)) {
+            _supportsAutoaddConfig = false;
+          } else {
+            rethrow;
+          }
+        }
+      }
+      try {
+        await _activeService.getAllowedRepeatFreq();
+      } catch (_) {
+        // Older firmware may not expose repeat frequency ranges.
+      }
     } catch (e) {
       _error = 'Failed to refresh device info: $e';
       notifyListeners();
     }
+  }
+
+  bool _isUnsupportedAutoaddConfigError(Object error) {
+    final message = error.toString().toLowerCase();
+    return message.contains('illegal argument') ||
+        message.contains('unsupported');
   }
 
   /// Request battery and storage information
@@ -2192,6 +2459,28 @@ class ConnectionProvider with ChangeNotifier {
       notifyListeners();
     } finally {
       _isStatusRequestInProgress = false;
+    }
+  }
+
+  Future<({int tag, int suggestedTimeoutMs})?> sendAnonRequest({
+    required Uint8List contactPublicKey,
+    required Uint8List requestData,
+  }) async {
+    if (!_activeService.isConnected) {
+      _error = 'Not connected to device';
+      notifyListeners();
+      return null;
+    }
+
+    try {
+      return await _activeService.sendAnonRequest(
+        contactPublicKey: contactPublicKey,
+        requestData: requestData,
+      );
+    } catch (e) {
+      _error = 'Failed to send anonymous request: $e';
+      notifyListeners();
+      return null;
     }
   }
 

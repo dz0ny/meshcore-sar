@@ -17,9 +17,24 @@ import '../../utils/log_rx_route_decoder.dart';
 import '../../utils/trace_node_resolver.dart';
 
 class MessageTraceSheet extends StatefulWidget {
-  final Message message;
+  final Message? message;
+  final List<int>? packetPathOverride;
+  final String? descriptionOverride;
+  final String? noRelayMatchTextOverride;
 
-  const MessageTraceSheet({super.key, required this.message});
+  const MessageTraceSheet({super.key, required this.message})
+    : assert(message != null),
+      packetPathOverride = null,
+      descriptionOverride = null,
+      noRelayMatchTextOverride = null;
+
+  const MessageTraceSheet.packetPath({
+    super.key,
+    required List<int> packetPath,
+    this.descriptionOverride,
+    this.noRelayMatchTextOverride,
+  }) : message = null,
+       packetPathOverride = packetPath;
 
   @override
   State<MessageTraceSheet> createState() => _MessageTraceSheetState();
@@ -40,20 +55,27 @@ class _MessageTraceSheetState extends State<MessageTraceSheet> {
     final contactsProvider = context.read<ContactsProvider>();
     final messagesProvider = context.read<MessagesProvider>();
     final preferredHashSize = await RouteHashPreferences.getHashSize();
-    final storedPath = messagesProvider
-        .getMessageReceptionDetails(widget.message.id)
-        ?.pathBytes;
-    final packetPath = (storedPath != null && storedPath.isNotEmpty)
-        ? storedPath
-        : _extractPathFromPacketLogs(
-            logs: connectionProvider.bleService.packetLogs,
-            message: widget.message,
-          );
+    List<int>? packetPath = widget.packetPathOverride;
+    String? senderPrefix;
+    String? recipientPrefix;
 
-    final senderPrefix = _toPrefixHex(widget.message.senderPublicKeyPrefix);
-    final recipientPrefix = widget.message.recipientPublicKey != null
-        ? _toPrefixHex(widget.message.recipientPublicKey)
-        : _toPrefixHex(connectionProvider.deviceInfo.publicKey);
+    if (widget.message case final message?) {
+      final storedPath = messagesProvider
+          .getMessageReceptionDetails(message.id)
+          ?.pathBytes;
+      packetPath = (storedPath != null && storedPath.isNotEmpty)
+          ? storedPath
+          : _extractPathFromPacketLogs(
+              logs: connectionProvider.bleService.packetLogs,
+              message: message,
+            );
+
+      senderPrefix = _toPrefixHex(message.senderPublicKeyPrefix);
+      recipientPrefix = message.recipientPublicKey != null
+          ? _toPrefixHex(message.recipientPublicKey)
+          : _toPrefixHex(connectionProvider.deviceInfo.publicKey);
+    }
+
     final localNodes = _localNodesFromContacts(contactsProvider);
     final localPublicKeys = localNodes.map((node) => node.publicKey).toSet();
     var trace = _buildTraceResult(
@@ -66,7 +88,9 @@ class _MessageTraceSheetState extends State<MessageTraceSheet> {
     );
     if (_isCompleteTrace(
       trace,
-      expectedRelayCount: math.max(0, widget.message.pathLen),
+      expectedRelayCount: widget.message == null
+          ? 0
+          : math.max(0, widget.message!.pathLen),
     )) {
       return trace;
     }
@@ -153,9 +177,10 @@ class _MessageTraceSheetState extends State<MessageTraceSheet> {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Text(
-                    trace.mode == TraceMode.packetPath
-                        ? 'Relay path from packet path bytes'
-                        : 'Relay path inferred from hop count (${widget.message.pathLen})',
+                    widget.descriptionOverride ??
+                        (trace.mode == TraceMode.packetPath
+                            ? 'Relay path from packet path bytes'
+                            : 'Relay path inferred from hop count (${widget.message!.pathLen})'),
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                 ),
@@ -257,13 +282,14 @@ class _MessageTraceSheetState extends State<MessageTraceSheet> {
                         ),
                       ),
                       if (routeEntries.isEmpty)
-                        const Padding(
-                          padding: EdgeInsets.symmetric(
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
                             horizontal: 16,
                             vertical: 8,
                           ),
                           child: Text(
-                            'No named nodes could be matched for this trace.',
+                            widget.noRelayMatchTextOverride ??
+                                'No named nodes could be matched for this trace.',
                           ),
                         ),
                       ...routeEntries.asMap().entries.map(
@@ -345,6 +371,9 @@ class _MessageTraceSheetState extends State<MessageTraceSheet> {
     if (concrete.isEmpty) return const [];
 
     if (trace.mode == TraceMode.packetPath) {
+      if (widget.message == null) {
+        return concrete;
+      }
       if (concrete.length <= 1) return const [];
       return concrete.sublist(1);
     }
@@ -488,7 +517,7 @@ class _MessageTraceSheetState extends State<MessageTraceSheet> {
       nodes: nodes,
       sender: senderNode.node,
       recipient: recipientNode.node,
-      relayCount: math.max(0, widget.message.pathLen),
+      relayCount: math.max(0, widget.message!.pathLen),
     );
     final matchedPathNodes = <ResolvedTraceNode>[
       if (senderNode.node != null) senderNode,

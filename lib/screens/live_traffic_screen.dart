@@ -11,6 +11,8 @@ import '../services/live_traffic_summary.dart';
 import '../services/location_tracking_service.dart';
 import '../services/route_hash_preferences.dart';
 import '../utils/log_rx_route_decoder.dart';
+import '../widgets/compact_signal_indicator.dart';
+import '../widgets/messages/message_trace_sheet.dart';
 import 'packet_log_screen.dart';
 
 T? _maybeProvider<T>(BuildContext context) {
@@ -650,110 +652,101 @@ class _LiveTrafficCard extends StatelessWidget {
     final rxInfo = log.logRxDataInfo;
     final originDistance = _originDistanceLabel(context, entry);
     final packetDetails = _LiveTrafficPacketDetails.fromEntry(entry);
-    final signalMetric = _SignalMetric.fromRxInfo(rxInfo);
+    final signalMetric = SignalMetric.fromRxInfo(rxInfo);
 
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerLow,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => _showPacketBytesSheet(context, log.rawData),
+        onLongPress: () => _showTraceSheet(context, entry),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: accent.withValues(alpha: 0.25)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+        child: Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surfaceContainerLow,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: accent.withValues(alpha: 0.25)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: accent.withValues(alpha: 0.14),
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: Text(
-                  isRx ? 'RX' : 'TX',
-                  style: TextStyle(
-                    color: accent,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 12,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      packetDetails.title,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: accent.withValues(alpha: 0.14),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      isRx ? 'RX' : 'TX',
+                      style: TextStyle(
+                        color: accent,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 12,
                       ),
                     ),
-                    if (entry.payloadMeaning != null)
-                      Text(
-                        entry.payloadMeaning!,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-              if (signalMetric != null) ...[
-                const SizedBox(width: 12),
-                _CompactSignalIndicator(metric: signalMetric),
-              ] else
-                Text(
-                  _timeAgo(log.timestamp, now),
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
-                ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          _PacketInfoLine(
-            text:
-                '${_formatClock(log.timestamp)} • Size: ${log.rawData.length} bytes',
-          ),
-          _PacketInfoLine(text: 'Hash: ${packetDetails.packetHashHex}'),
-          if (packetDetails.pathLine != null)
-            _PacketInfoLine(text: packetDetails.pathLine!),
-          if (packetDetails.pathHashLine != null)
-            _PacketInfoLine(text: packetDetails.pathHashLine!),
-          if (packetDetails.endpointLine != null)
-            _PacketInfoLine(text: packetDetails.endpointLine!),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              _PacketMetaChip(
-                label: '${log.rawData.length} bytes',
-                onTap: () => _showPacketBytesSheet(context, log.rawData),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          packetDetails.title,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        if (entry.payloadMeaning != null)
+                          Text(
+                            entry.payloadMeaning!,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                  if (signalMetric != null) ...[
+                    const SizedBox(width: 12),
+                    CompactSignalIndicator(metric: signalMetric),
+                  ] else
+                    Text(
+                      _timeAgo(log.timestamp, now),
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                ],
               ),
-              if (entry.isMultiHop)
-                const _PacketMetaChip(label: 'MULTI-HOP', emphasized: true),
+              const SizedBox(height: 10),
+              _PacketInfoLine(
+                text:
+                    '${_formatClock(log.timestamp)} • Size: ${log.rawData.length} bytes',
+              ),
+              _PacketInfoLine(text: 'Hash: ${packetDetails.packetHashHex}'),
+              if (packetDetails.pathLine != null)
+                _PacketInfoLine(text: packetDetails.pathLine!),
+              if (packetDetails.pathHashLine != null)
+                _PacketInfoLine(text: packetDetails.pathHashLine!),
+              if (packetDetails.endpointLine != null)
+                _PacketInfoLine(text: packetDetails.endpointLine!),
               if (originDistance != null)
-                _PacketMetaChip(label: 'Origin $originDistance'),
-              if (rxInfo?.rssiDbm != null)
-                _PacketMetaChip(label: 'RSSI ${rxInfo!.rssiDbm} dBm'),
-              if (rxInfo?.snrDb != null)
-                _PacketMetaChip(
-                  label: 'SNR ${rxInfo!.snrDb!.toStringAsFixed(1)} dB',
-                ),
+                _PacketInfoLine(text: 'Origin: $originDistance'),
             ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -769,38 +762,6 @@ class _LiveTrafficCard extends StatelessWidget {
     final minute = timestamp.minute.toString().padLeft(2, '0');
     final second = timestamp.second.toString().padLeft(2, '0');
     return '$hour:$minute:$second';
-  }
-
-  static String _resolvedRoutePreview(
-    BuildContext context,
-    LiveTrafficEntry entry,
-  ) {
-    final route = entry.route;
-    if (route == null || route.hopHashes.isEmpty) {
-      return entry.routePreview;
-    }
-
-    final contactsProvider = _maybeProvider<ContactsProvider>(context);
-    final connectionProvider = _maybeProvider<ConnectionProvider>(context);
-    if (contactsProvider == null && connectionProvider == null) {
-      return entry.routePreview;
-    }
-    final ownLatLng = _ownLatLng(connectionProvider);
-
-    final resolvedLabels = route.hopHashes.map((hashHex) {
-      final resolved = LogRxRouteDecoder.resolveHash(
-        hashHex,
-        contacts: contactsProvider?.contacts ?? const <Contact>[],
-        ownPublicKey: connectionProvider?.deviceInfo.publicKey,
-        ownName:
-            connectionProvider?.deviceInfo.selfName ??
-            connectionProvider?.deviceInfo.displayName,
-        ownLatitude: ownLatLng?.latitude,
-        ownLongitude: ownLatLng?.longitude,
-      );
-      return _compactNodeLabel(resolved);
-    }).toList();
-    return resolvedLabels.join(' -> ');
   }
 
   static String? _originDistanceLabel(
@@ -962,15 +923,31 @@ class _LiveTrafficCard extends StatelessWidget {
     );
   }
 
-  static String _compactNodeLabel(ResolvedNodeHash node) {
-    if (node.isOwnNode) {
-      return node.label;
+  static Future<void> _showTraceSheet(
+    BuildContext context,
+    LiveTrafficEntry entry,
+  ) {
+    final route = entry.route;
+    if (route == null || route.pathBytes.isEmpty) {
+      return Future.value();
     }
-    if (node.matchCount > 0) {
-      return node.label;
-    }
-    return node.hexLabel;
+    return showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) => MessageTraceSheet.packetPath(
+        packetPath: route.pathBytes,
+        descriptionOverride:
+            'Relay path from packet path bytes (${route.hopHashes.length} hop${route.hopHashes.length == 1 ? '' : 's'})',
+        noRelayMatchTextOverride:
+            'No named nodes could be matched for this packet path.',
+      ),
+    );
   }
+
 }
 
 class _LiveTrafficPacketDetails {
@@ -1129,140 +1106,12 @@ class _PacketInfoLine extends StatelessWidget {
   }
 }
 
-class _SignalMetric {
-  final String valueLabel;
-  final Color color;
-  final int activeBars;
-
-  const _SignalMetric({
-    required this.valueLabel,
-    required this.color,
-    required this.activeBars,
-  });
-
-  static _SignalMetric? fromRxInfo(LogRxDataInfo? rxInfo) {
-    if (rxInfo == null) return null;
-    if (rxInfo?.snrDb != null) {
-      final snr = rxInfo.snrDb!;
-      return _SignalMetric(
-        valueLabel: '${snr.toStringAsFixed(1)}dB',
-        color: snr >= 10
-            ? Colors.green
-            : snr >= 0
-            ? Colors.amber
-            : Colors.redAccent,
-        activeBars: snr >= 10
-            ? 3
-            : snr >= 0
-            ? 2
-            : 1,
-      );
-    }
-    if (rxInfo?.rssiDbm != null) {
-      final rssi = rxInfo.rssiDbm!;
-      return _SignalMetric(
-        valueLabel: '$rssi dBm',
-        color: rssi >= -80
-            ? Colors.green
-            : rssi >= -95
-            ? Colors.amber
-            : Colors.redAccent,
-        activeBars: rssi >= -80
-            ? 3
-            : rssi >= -95
-            ? 2
-            : 1,
-      );
-    }
-    return null;
-  }
-}
-
-class _CompactSignalIndicator extends StatelessWidget {
-  final _SignalMetric metric;
-
-  const _CompactSignalIndicator({required this.metric});
-
-  @override
-  Widget build(BuildContext context) {
-    final inactive = Theme.of(context).colorScheme.outlineVariant;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            for (var index = 0; index < 3; index++) ...[
-              if (index > 0) const SizedBox(width: 3),
-              Container(
-                width: 5,
-                height: 10.0 + (index * 8),
-                decoration: BoxDecoration(
-                  color: index < metric.activeBars ? metric.color : inactive,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ],
-          ],
-        ),
-        const SizedBox(height: 6),
-        Text(
-          metric.valueLabel,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-            color: Theme.of(context).colorScheme.onSurface,
-          ),
-        ),
-      ],
-    );
-  }
-}
 
 class _GeoPoint {
   final double latitude;
   final double longitude;
 
   const _GeoPoint(this.latitude, this.longitude);
-}
-
-class _PacketMetaChip extends StatelessWidget {
-  final String label;
-  final bool emphasized;
-  final VoidCallback? onTap;
-
-  const _PacketMetaChip({
-    required this.label,
-    this.emphasized = false,
-    this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final color = emphasized ? scheme.primary : scheme.outline;
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(999),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: emphasized ? 0.12 : 0.08),
-          borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: color.withValues(alpha: 0.22)),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: color,
-          ),
-        ),
-      ),
-    );
-  }
 }
 
 void openLiveTrafficScreen(BuildContext context, ConnectionProvider provider) {

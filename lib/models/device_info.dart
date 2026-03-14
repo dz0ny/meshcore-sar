@@ -66,6 +66,11 @@ class DeviceInfo {
   final int? advLat;
   final int? advLon;
   final bool? manualAddContacts;
+  final bool? autoAddUsers;
+  final bool? autoAddRepeaters;
+  final bool? autoAddRoomServers;
+  final bool? autoAddSensors;
+  final bool? autoAddOverwriteOldest;
   final int? radioFreq;
   final int? radioBw;
   final int? radioSf;
@@ -113,6 +118,11 @@ class DeviceInfo {
     this.advLat,
     this.advLon,
     this.manualAddContacts,
+    this.autoAddUsers,
+    this.autoAddRepeaters,
+    this.autoAddRoomServers,
+    this.autoAddSensors,
+    this.autoAddOverwriteOldest,
     this.radioFreq,
     this.radioBw,
     this.radioSf,
@@ -239,6 +249,11 @@ class DeviceInfo {
     int? advLat,
     int? advLon,
     bool? manualAddContacts,
+    bool? autoAddUsers,
+    bool? autoAddRepeaters,
+    bool? autoAddRoomServers,
+    bool? autoAddSensors,
+    bool? autoAddOverwriteOldest,
     int? radioFreq,
     int? radioBw,
     int? radioSf,
@@ -278,6 +293,12 @@ class DeviceInfo {
       advLat: advLat ?? this.advLat,
       advLon: advLon ?? this.advLon,
       manualAddContacts: manualAddContacts ?? this.manualAddContacts,
+      autoAddUsers: autoAddUsers ?? this.autoAddUsers,
+      autoAddRepeaters: autoAddRepeaters ?? this.autoAddRepeaters,
+      autoAddRoomServers: autoAddRoomServers ?? this.autoAddRoomServers,
+      autoAddSensors: autoAddSensors ?? this.autoAddSensors,
+      autoAddOverwriteOldest:
+          autoAddOverwriteOldest ?? this.autoAddOverwriteOldest,
       radioFreq: radioFreq ?? this.radioFreq,
       radioBw: radioBw ?? this.radioBw,
       radioSf: radioSf ?? this.radioSf,

@@ -180,15 +180,23 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
   bool _telemetryEnabled = false;
   bool _repeatEnabled = false;
   bool _autoAddDiscoveredContactsEnabled = true;
+  bool _autoAddUsersEnabled = true;
+  bool _autoAddRepeatersEnabled = true;
+  bool _autoAddRoomServersEnabled = true;
+  bool _autoAddSensorsEnabled = true;
+  bool _overwriteOldestAutoAddEnabled = false;
   bool _showCustomRadioSettings = false;
   bool _isSavingPublicInfo = false;
   bool _isSavingRadioSettings = false;
+  bool _isSavingAutoDiscoverySettings = false;
   bool _isClearingContacts = false;
   bool _isClearingChannels = false;
   bool _publicInfoSaved = false;
   bool _radioSettingsSaved = false;
+  bool _autoDiscoverySettingsSaved = false;
   String? _publicInfoError;
   String? _radioSettingsError;
+  String? _autoDiscoverySettingsError;
   String _selectedBandwidth = '62.5 kHz';
   int _selectedSpreadingFactor = 8;
   int _selectedCodingRate = 8;
@@ -267,6 +275,12 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
     _repeatEnabled = deviceInfo.clientRepeat ?? false;
     _autoAddDiscoveredContactsEnabled =
         !(deviceInfo.manualAddContacts ?? false);
+    _autoAddUsersEnabled = deviceInfo.autoAddUsers ?? true;
+    _autoAddRepeatersEnabled = deviceInfo.autoAddRepeaters ?? true;
+    _autoAddRoomServersEnabled = deviceInfo.autoAddRoomServers ?? true;
+    _autoAddSensorsEnabled = deviceInfo.autoAddSensors ?? true;
+    _overwriteOldestAutoAddEnabled =
+        deviceInfo.autoAddOverwriteOldest ?? false;
 
     // Fetch allowed repeat frequencies on open if device supports repeat mode
     if (deviceInfo.clientRepeat != null &&
@@ -278,6 +292,7 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<ConnectionProvider>().getBatteryAndStorage();
+      context.read<ConnectionProvider>().getAutoaddConfig();
     });
   }
 
@@ -390,6 +405,15 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
     }
   }
 
+  void _markAutoDiscoverySettingsDirty() {
+    if (_autoDiscoverySettingsSaved || _autoDiscoverySettingsError != null) {
+      setState(() {
+        _autoDiscoverySettingsSaved = false;
+        _autoDiscoverySettingsError = null;
+      });
+    }
+  }
+
   Future<void> _savePublicInfo() async {
     final connectionProvider = context.read<ConnectionProvider>();
     final validator = ValidationService();
@@ -401,7 +425,8 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
     });
 
     try {
-      final manualAddContacts = _autoAddDiscoveredContactsEnabled ? 0 : 1;
+      final manualAddContacts =
+          (connectionProvider.deviceInfo.manualAddContacts ?? false) ? 1 : 0;
 
       // Save name
       if (_nameController.text.isNotEmpty) {
@@ -546,6 +571,49 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
         setState(() {
           _isSavingRadioSettings = false;
           _radioSettingsError = AppLocalizations.of(
+            context,
+          )!.failedToSave(e.toString());
+        });
+      }
+    }
+  }
+
+  Future<void> _saveAutoDiscoverySettings() async {
+    final connectionProvider = context.read<ConnectionProvider>();
+
+    setState(() {
+      _isSavingAutoDiscoverySettings = true;
+      _autoDiscoverySettingsSaved = false;
+      _autoDiscoverySettingsError = null;
+    });
+
+    try {
+      await connectionProvider.setOtherParams(
+        manualAddContacts: _autoAddDiscoveredContactsEnabled ? 0 : 1,
+        telemetryModes: connectionProvider.deviceInfo.telemetryModes ?? 0,
+        advertLocationPolicy: connectionProvider.deviceInfo.advertLocPolicy ?? 0,
+        multiAcks: connectionProvider.deviceInfo.multiAcks ?? 0,
+      );
+      await connectionProvider.setAutoaddConfig(
+        autoAddUsers: _autoAddUsersEnabled,
+        autoAddRepeaters: _autoAddRepeatersEnabled,
+        autoAddRoomServers: _autoAddRoomServersEnabled,
+        autoAddSensors: _autoAddSensorsEnabled,
+        overwriteOldest: _overwriteOldestAutoAddEnabled,
+      );
+      await connectionProvider.refreshDeviceInfo();
+
+      if (mounted) {
+        setState(() {
+          _isSavingAutoDiscoverySettings = false;
+          _autoDiscoverySettingsSaved = true;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isSavingAutoDiscoverySettings = false;
+          _autoDiscoverySettingsError = AppLocalizations.of(
             context,
           )!.failedToSave(e.toString());
         });
@@ -997,9 +1065,10 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
               ),
               const SizedBox(height: 20),
               _ConfigSectionCard(
-                title: AppLocalizations.of(context)!.publicInfo,
-                subtitle: 'Choose the name and location this device shares.',
-                icon: Icons.public_rounded,
+                title: 'Auto discovery',
+                subtitle:
+                    'Control how the radio auto-adds discovered nodes to its contacts table.',
+                icon: Icons.person_search_rounded,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -1007,9 +1076,9 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
                       icon: _autoAddDiscoveredContactsEnabled
                           ? Icons.person_add_alt_1
                           : Icons.person_add_disabled,
-                      title: 'Auto-add discovered contacts',
+                      title: 'Enable automatic adding',
                       description:
-                          'Control whether the device automatically stores newly discovered contacts.',
+                          'Turn this off to keep discoveries manual-only on the radio.',
                       accentColor: _autoAddDiscoveredContactsEnabled
                           ? colorScheme.primary
                           : colorScheme.onSurfaceVariant,
@@ -1018,13 +1087,148 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
                         onChanged: (value) {
                           setState(() {
                             _autoAddDiscoveredContactsEnabled = value;
-                            _publicInfoSaved = false;
-                            _publicInfoError = null;
+                            _markAutoDiscoverySettingsDirty();
                           });
                         },
                       ),
                     ),
                     const SizedBox(height: 18),
+                    _SettingHighlightCard(
+                      icon: Icons.person_outline_rounded,
+                      title: 'Auto-add users',
+                      description:
+                          'Automatically store discovered user/chat nodes.',
+                      accentColor: _autoAddUsersEnabled
+                          ? colorScheme.primary
+                          : colorScheme.onSurfaceVariant,
+                      trailing: Switch(
+                        value: _autoAddUsersEnabled,
+                        onChanged: _autoAddDiscoveredContactsEnabled
+                            ? (value) {
+                                setState(() {
+                                  _autoAddUsersEnabled = value;
+                                  _markAutoDiscoverySettingsDirty();
+                                });
+                              }
+                            : null,
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    _SettingHighlightCard(
+                      icon: Icons.router_outlined,
+                      title: 'Auto-add repeaters',
+                      description:
+                          'Automatically store discovered repeater nodes.',
+                      accentColor: _autoAddRepeatersEnabled
+                          ? colorScheme.primary
+                          : colorScheme.onSurfaceVariant,
+                      trailing: Switch(
+                        value: _autoAddRepeatersEnabled,
+                        onChanged: _autoAddDiscoveredContactsEnabled
+                            ? (value) {
+                                setState(() {
+                                  _autoAddRepeatersEnabled = value;
+                                  _markAutoDiscoverySettingsDirty();
+                                });
+                              }
+                            : null,
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    _SettingHighlightCard(
+                      icon: Icons.meeting_room_outlined,
+                      title: 'Auto-add room servers',
+                      description:
+                          'Automatically store discovered room/server nodes.',
+                      accentColor: _autoAddRoomServersEnabled
+                          ? colorScheme.primary
+                          : colorScheme.onSurfaceVariant,
+                      trailing: Switch(
+                        value: _autoAddRoomServersEnabled,
+                        onChanged: _autoAddDiscoveredContactsEnabled
+                            ? (value) {
+                                setState(() {
+                                  _autoAddRoomServersEnabled = value;
+                                  _markAutoDiscoverySettingsDirty();
+                                });
+                              }
+                            : null,
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    _SettingHighlightCard(
+                      icon: Icons.sensors_outlined,
+                      title: 'Auto-add sensors',
+                      description:
+                          'Automatically store discovered sensor nodes.',
+                      accentColor: _autoAddSensorsEnabled
+                          ? colorScheme.primary
+                          : colorScheme.onSurfaceVariant,
+                      trailing: Switch(
+                        value: _autoAddSensorsEnabled,
+                        onChanged: _autoAddDiscoveredContactsEnabled
+                            ? (value) {
+                                setState(() {
+                                  _autoAddSensorsEnabled = value;
+                                  _markAutoDiscoverySettingsDirty();
+                                });
+                              }
+                            : null,
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    _SettingHighlightCard(
+                      icon: Icons.history_toggle_off_rounded,
+                      title: 'Overwrite oldest when full',
+                      description:
+                          'Allow the radio to replace the oldest contact when storage is full.',
+                      accentColor: _overwriteOldestAutoAddEnabled
+                          ? colorScheme.primary
+                          : colorScheme.onSurfaceVariant,
+                      trailing: Switch(
+                        value: _overwriteOldestAutoAddEnabled,
+                        onChanged: _autoAddDiscoveredContactsEnabled
+                            ? (value) {
+                                setState(() {
+                                  _overwriteOldestAutoAddEnabled = value;
+                                  _markAutoDiscoverySettingsDirty();
+                                });
+                              }
+                            : null,
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    if (_autoDiscoverySettingsError != null) ...[
+                      Text(
+                        _autoDiscoverySettingsError!,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: colorScheme.error,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                    ],
+                    SizedBox(
+                      width: double.infinity,
+                      child: _SaveActionButton(
+                        onPressed: _isSavingAutoDiscoverySettings
+                            ? null
+                            : _saveAutoDiscoverySettings,
+                        isSaving: _isSavingAutoDiscoverySettings,
+                        isSaved: _autoDiscoverySettingsSaved,
+                        label: 'Save discovery settings',
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+              _ConfigSectionCard(
+                title: AppLocalizations.of(context)!.publicInfo,
+                subtitle: 'Choose the name and location this device shares.',
+                icon: Icons.public_rounded,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                     _SettingHighlightCard(
                       icon: _telemetryEnabled
                           ? Icons.travel_explore

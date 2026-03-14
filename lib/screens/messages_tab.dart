@@ -519,6 +519,7 @@ class _MessagesTabState extends State<MessagesTab> {
     final l10n = AppLocalizations.of(context)!;
     final contactsProvider = context.read<ContactsProvider>();
     Contact? senderContact;
+    String? senderDisplayName;
 
     String destinationType;
     Contact? recipient;
@@ -543,28 +544,48 @@ class _MessagesTabState extends State<MessagesTab> {
       if (senderPrefix != null && senderPrefix.length >= 6) {
         senderContact = contactsProvider.findContactByPrefix(senderPrefix);
       }
+      senderDisplayName =
+          senderContact?.displayName ?? message.senderName?.trim();
     } else {
-      final senderPrefix = message.senderPublicKeyPrefix;
-      if (senderPrefix == null || senderPrefix.length < 6) {
-        ToastLogger.error(context, l10n.cannotReplySenderMissing);
-        return;
-      }
+      final roomRecipient = message.recipientPublicKey == null
+          ? null
+          : contactsProvider.findContactByKey(message.recipientPublicKey!);
 
-      recipient = contactsProvider.findContactByPrefix(senderPrefix);
-      if (recipient == null) {
-        ToastLogger.error(context, l10n.cannotReplyContactNotFound);
-        return;
-      }
+      if (roomRecipient?.isRoom == true) {
+        destinationType = MessageDestinationPreferences.destinationTypeRoom;
+        recipient = roomRecipient;
 
-      destinationType = recipient.isRoom
-          ? MessageDestinationPreferences.destinationTypeRoom
-          : MessageDestinationPreferences.destinationTypeContact;
+        final senderPrefix = message.senderPublicKeyPrefix;
+        if (senderPrefix != null && senderPrefix.length >= 6) {
+          senderContact = contactsProvider.findContactByPrefix(senderPrefix);
+        }
+        senderDisplayName =
+            senderContact?.displayName ?? message.senderName?.trim();
+      } else {
+        final senderPrefix = message.senderPublicKeyPrefix;
+        if (senderPrefix == null || senderPrefix.length < 6) {
+          ToastLogger.error(context, l10n.cannotReplySenderMissing);
+          return;
+        }
+
+        recipient = contactsProvider.findContactByPrefix(senderPrefix);
+        if (recipient == null) {
+          ToastLogger.error(context, l10n.cannotReplyContactNotFound);
+          return;
+        }
+
+        destinationType = recipient.isRoom
+            ? MessageDestinationPreferences.destinationTypeRoom
+            : MessageDestinationPreferences.destinationTypeContact;
+      }
     }
 
     await _onRecipientSelected(destinationType, recipient);
     if (!mounted) return;
-    if (message.isChannelMessage && senderContact != null) {
-      _insertReplyMention(senderContact.displayName);
+    if ((message.isChannelMessage || recipient?.isRoom == true) &&
+        senderDisplayName != null &&
+        senderDisplayName.isNotEmpty) {
+      _insertReplyMention(senderDisplayName);
     }
     _focusNode.requestFocus();
   }

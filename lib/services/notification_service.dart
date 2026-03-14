@@ -26,6 +26,7 @@ class NotificationService {
   bool _updateNotificationsEnabled = true;
   bool _muteForegroundNotifications = true;
   AppLifecycleState _lifecycleState = AppLifecycleState.resumed;
+  String? _launchPayload;
 
   // Notification IDs
   static const int _sarNotificationId = 1000;
@@ -102,6 +103,12 @@ class NotificationService {
         settings: initSettings,
         onDidReceiveNotificationResponse: _onNotificationResponse,
       );
+
+      final launchDetails = await _notificationsPlugin
+          .getNotificationAppLaunchDetails();
+      if (launchDetails?.didNotificationLaunchApp ?? false) {
+        _launchPayload = launchDetails?.notificationResponse?.payload;
+      }
 
       // Request permissions
       await _requestPermissions();
@@ -293,6 +300,12 @@ class NotificationService {
     if (onNotificationTapped != null) {
       onNotificationTapped!(response.payload);
     }
+  }
+
+  String? consumeLaunchPayload() {
+    final payload = _launchPayload;
+    _launchPayload = null;
+    return payload;
   }
 
   /// Show urgent notification for SAR marker
@@ -837,6 +850,7 @@ class NotificationService {
 
   Future<bool> showContactDiscoveredNotification({
     required String contactKey,
+    String? contactName,
   }) async {
     if (!_isInitialized) return false;
     if (!_permissionGranted) return false;
@@ -847,7 +861,10 @@ class NotificationService {
         ? contactKey.substring(0, 12).toUpperCase()
         : contactKey.toUpperCase();
     final title = 'New contact discovered';
-    final body = 'New contact $shortKey is available in Discovery.';
+    final resolvedName = contactName?.trim();
+    final body = resolvedName != null && resolvedName.isNotEmpty
+        ? '$resolvedName is available in Discovery.'
+        : 'New contact $shortKey is available in Discovery.';
     final notificationId =
         _discoveryNotificationId + ((contactKey.hashCode & 0x7fffffff) % 1000);
 

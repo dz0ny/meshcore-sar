@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
+import 'package:meshcore_client/meshcore_client.dart' show BufferReader;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'connection_provider.dart';
 import 'contacts_provider.dart';
@@ -57,12 +59,65 @@ class _DirectMessageRouteSession {
   }
 }
 
+class _ParsedRawAdvert {
+  final Uint8List publicKey;
+  final String? advName;
+  final int typeValue;
+  final int flags;
+  final int lastAdvert;
+  final int? advLat;
+  final int? advLon;
+  final int? signedEncodedPathLen;
+  final Uint8List? paddedPathBytes;
+
+  const _ParsedRawAdvert({
+    required this.publicKey,
+    required this.advName,
+    required this.typeValue,
+    required this.flags,
+    required this.lastAdvert,
+    required this.advLat,
+    required this.advLon,
+    required this.signedEncodedPathLen,
+    required this.paddedPathBytes,
+  });
+}
+
+class _ParsedRepeaterStatus {
+  final int batteryMv;
+  final int queueLen;
+  final int lastRssi;
+  final int lastSnrRaw;
+  final int uptimeSecs;
+
+  const _ParsedRepeaterStatus({
+    required this.batteryMv,
+    required this.queueLen,
+    required this.lastRssi,
+    required this.lastSnrRaw,
+    required this.uptimeSecs,
+  });
+}
+
+class _PendingRepeaterOwnerRequest {
+  final Uint8List publicKey;
+
+  const _PendingRepeaterOwnerRequest({required this.publicKey});
+}
+
 /// Main App Provider - coordinates all other providers
 class AppProvider with ChangeNotifier {
   static const int _maxDirectPayloadHops = 3;
+  static const int _rawPayloadTypeAdvert = 0x04;
+  static const int _routeTransportFlood = 0x00;
+  static const int _routeTransportDirect = 0x03;
+  static const int _anonReqTypeOwner = 0x02;
   static const double _lowBatteryThresholdPercent = 30.0;
   static const double _lowBatteryResetThresholdPercent = 35.0;
   static const Duration _lowBatteryCheckInterval = Duration(minutes: 5);
+  static const Duration _repeaterOwnerInfoRequestCooldown = Duration(
+    minutes: 10,
+  );
   @visibleForTesting
   static bool isDeletedChannelInfo(
     int channelIdx,
@@ -151,6 +206,10 @@ class AppProvider with ChangeNotifier {
   final Map<String, Future<bool>> _pendingMediaSwarmFetches = {};
   final Map<String, Map<String, MediaSwarmAvailability>>
   _pendingMediaSwarmResponses = {};
+  final Map<String, DateTime> _recentRepeaterStatusRequests = {};
+  final Map<String, DateTime> _recentRepeaterOwnerInfoRequests = {};
+  final Map<int, _PendingRepeaterOwnerRequest> _pendingRepeaterOwnerRequests =
+      {};
   bool _fastLocationScreenActive = false;
   Timer? _packetCaptureFlushTimer;
   Timer? _lowBatteryCheckTimer;
@@ -864,11 +923,47 @@ class AppProvider with ChangeNotifier {
           );
         };
     // When a contact is received from BLE
-    connectionProvider.onContactReceived = (contact) {
+    connectionProvider.onContactReceivedDetailed = (contact, source) {
+      final devicePublicKey = connectionProvider.deviceInfo.publicKey;
+      final existingContact = contactsProvider.findContactByKey(
+        contact.publicKey,
+      );
+      final isAdvertSource =
+          source == ContactReceiveSource.advert ||
+          source == ContactReceiveSource.preview;
+
+      if (isAdvertSource) {
+        final isNewPendingAdvert = contactsProvider
+            .addOrUpdatePendingAdvertContact(
+              contact,
+              devicePublicKey: devicePublicKey,
+            );
+        if (isNewPendingAdvert) {
+          unawaited(
+            _notificationService.showContactDiscoveredNotification(
+              contactKey: contact.publicKey
+                  .take(6)
+                  .map((b) => b.toRadixString(16).padLeft(2, '0'))
+                  .join(),
+              contactName: contact.advName.trim().isEmpty
+                  ? null
+                  : contact.advName,
+                ),
+          );
+        }
+        if (contact.type == ContactType.repeater &&
+            contact.advName.trim().isEmpty) {
+          unawaited(_maybeRequestRepeaterOwnerInfo(contact.publicKey));
+        }
+        if (existingContact == null) {
+          return;
+        }
+      }
+
       // Pass device public key to filter out our own contact
       contactsProvider.addOrUpdateContact(
         contact,
-        devicePublicKey: connectionProvider.deviceInfo.publicKey,
+        devicePublicKey: devicePublicKey,
       );
       unawaited(_pathHistoryService.recordLearnedPath(contact));
 
@@ -1240,6 +1335,9 @@ class AppProvider with ChangeNotifier {
     // Used by newer firmware versions for telemetry and other binary data
     // BOTH callbacks (0x8B and 0x8C) must be handled for device compatibility
     connectionProvider.onBinaryResponse = (publicKeyPrefix, tag, responseData) {
+      if (_handlePendingRepeaterOwnerResponse(tag, responseData)) {
+        return;
+      }
       debugPrint(
         '📊 [AppProvider] Binary response (0x8C) received - updating contact telemetry',
       );
@@ -1253,6 +1351,43 @@ class AppProvider with ChangeNotifier {
     // Magic 0x69 'i' = image fetch request; 0x56 'V' = voice packet.
     // Magic 0x49 'I' = image packet.
     connectionProvider.onRawDataReceived = (payload, snrRaw, rssiDbm) {
+      final parsedAdvert = _tryParseRawAdvert(payload);
+      if (parsedAdvert != null) {
+        final isNewPendingAdvert = contactsProvider.addOrUpdatePendingAdvertMetadata(
+          publicKey: parsedAdvert.publicKey,
+          typeValue: parsedAdvert.typeValue,
+          devicePublicKey: connectionProvider.deviceInfo.publicKey,
+          flags: parsedAdvert.flags,
+          advName: parsedAdvert.advName,
+          lastAdvert: parsedAdvert.lastAdvert,
+          advLat: parsedAdvert.advLat,
+          advLon: parsedAdvert.advLon,
+          signedEncodedPathLen: parsedAdvert.signedEncodedPathLen,
+          paddedPathBytes: parsedAdvert.paddedPathBytes,
+          rxRssiDbm: rssiDbm,
+          rxSnrRaw: snrRaw,
+        );
+        if (isNewPendingAdvert) {
+          final contactKey = parsedAdvert.publicKey
+              .map((b) => b.toRadixString(16).padLeft(2, '0'))
+              .join();
+          unawaited(
+            _notificationService.showContactDiscoveredNotification(
+              contactKey: contactKey,
+              contactName: parsedAdvert.advName,
+            ),
+          );
+        }
+        if (parsedAdvert.typeValue == ContactType.repeater.value) {
+          unawaited(_requestRepeaterStatus(parsedAdvert.publicKey));
+          unawaited(_maybeRequestRepeaterOwnerInfo(parsedAdvert.publicKey));
+        }
+        if (contactsProvider.shouldEnrichPendingAdvert(parsedAdvert.publicKey)) {
+          unawaited(connectionProvider.previewContact(parsedAdvert.publicKey));
+        }
+        return;
+      }
+
       final fastGpsPacket = FastGpsPacket.tryParseBinary(payload);
       if (fastGpsPacket != null) {
         final sender = _resolveContactByPrefixHex(fastGpsPacket.senderKey6);
@@ -1458,6 +1593,31 @@ class AppProvider with ChangeNotifier {
       _handleIncomingVoicePacket(pkt, justComplete: justComplete);
     };
 
+    connectionProvider.onControlDataReceived =
+        (payload, snrRaw, rssiDbm, pathLen) {
+          _handleControlDataDiscovery(
+            payload: payload,
+            snrRaw: snrRaw,
+            rssiDbm: rssiDbm,
+            pathLen: pathLen,
+          );
+        };
+
+    connectionProvider.onStatusResponse = (publicKeyPrefix, statusData) {
+      final parsed = _tryParseRepeaterStatus(statusData);
+      if (parsed == null) {
+        return;
+      }
+      contactsProvider.updatePendingAdvertStatusByPrefix(
+        publicKeyPrefix,
+        batteryMv: parsed.batteryMv,
+        queueLen: parsed.queueLen,
+        lastRssi: parsed.lastRssi,
+        lastSnrRaw: parsed.lastSnrRaw,
+        uptimeSecs: parsed.uptimeSecs,
+      );
+    };
+
     // When a contact's routing path is updated in the mesh network
     connectionProvider.onPathUpdated = (publicKey) {
       debugPrint(
@@ -1509,8 +1669,12 @@ class AppProvider with ChangeNotifier {
           unawaited(
             _notificationService.showContactDiscoveredNotification(
               contactKey: keyHex,
+              contactName: contactsProvider.pendingAdvertByKey(publicKey)?.advName,
             ),
           );
+        }
+        if (contactsProvider.shouldEnrichPendingAdvert(publicKey)) {
+          unawaited(connectionProvider.previewContact(publicKey));
         }
       }
     };
@@ -1921,6 +2085,314 @@ class AppProvider with ChangeNotifier {
       decoded.pathBytes,
       decoded.hashSize,
     );
+  }
+
+  Future<void> _requestRepeaterStatus(Uint8List publicKey) async {
+    if (!connectionProvider.deviceInfo.isConnected) {
+      return;
+    }
+    final keyHex = publicKey
+        .map((byte) => byte.toRadixString(16).padLeft(2, '0'))
+        .join();
+    final now = DateTime.now();
+    final lastRequestAt = _recentRepeaterStatusRequests[keyHex];
+    if (lastRequestAt != null &&
+        now.difference(lastRequestAt) < const Duration(minutes: 2)) {
+      return;
+    }
+    _recentRepeaterStatusRequests[keyHex] = now;
+    try {
+      await connectionProvider.requestStatus(publicKey);
+    } catch (_) {
+      // Ignore unsupported or unreachable repeaters.
+    }
+  }
+
+  Future<void> _maybeRequestRepeaterOwnerInfo(Uint8List publicKey) async {
+    final pendingAdvert = contactsProvider.pendingAdvertByKey(publicKey);
+    if (pendingAdvert == null ||
+        pendingAdvert.typeValue != ContactType.repeater.value ||
+        pendingAdvert.advName?.trim().isNotEmpty == true ||
+        !connectionProvider.deviceInfo.isConnected) {
+      return;
+    }
+
+    final keyHex = pendingAdvert.publicKeyHex;
+    final now = DateTime.now();
+    final lastRequestAt = _recentRepeaterOwnerInfoRequests[keyHex];
+    if (lastRequestAt != null &&
+        now.difference(lastRequestAt) < _repeaterOwnerInfoRequestCooldown) {
+      return;
+    }
+
+    Contact? existingContact;
+    for (final contact in contactsProvider.contacts) {
+      if (contact.publicKeyHex == keyHex) {
+        existingContact = contact;
+        break;
+      }
+    }
+
+    var temporaryContactAdded = false;
+    final requestContact =
+        existingContact ?? _temporaryRepeaterContactForOwnerInfo(pendingAdvert);
+    if (requestContact == null || !requestContact.routeHasPath) {
+      return;
+    }
+
+    _recentRepeaterOwnerInfoRequests[keyHex] = now;
+
+    if (existingContact == null) {
+      connectionProvider.clearError();
+      await connectionProvider.addOrUpdateContact(requestContact);
+      if (connectionProvider.error != null) {
+        return;
+      }
+      connectionProvider.clearError();
+      temporaryContactAdded = true;
+    }
+
+    try {
+      final ticket = await connectionProvider.sendAnonRequest(
+        contactPublicKey: publicKey,
+        requestData: _buildRepeaterOwnerRequest(requestContact),
+      );
+      if (ticket == null) {
+        return;
+      }
+      _pendingRepeaterOwnerRequests[ticket.tag] = _PendingRepeaterOwnerRequest(
+        publicKey: Uint8List.fromList(publicKey),
+      );
+      Future.delayed(
+        Duration(milliseconds: ticket.suggestedTimeoutMs + 1500),
+        () => _pendingRepeaterOwnerRequests.remove(ticket.tag),
+      );
+    } catch (_) {
+      // Ignore unsupported or unreachable repeaters.
+    } finally {
+      if (temporaryContactAdded) {
+        Future.delayed(const Duration(milliseconds: 250), () async {
+          await connectionProvider.removeContact(publicKey);
+          connectionProvider.clearError();
+        });
+      }
+    }
+  }
+
+  Contact? _temporaryRepeaterContactForOwnerInfo(PendingAdvert advert) {
+    final signedEncodedPathLen = advert.signedEncodedPathLen;
+    if (signedEncodedPathLen == null) {
+      return null;
+    }
+
+    final advName = advert.advName?.trim();
+    final lastAdvert =
+        advert.lastAdvert ?? (advert.receivedAt.millisecondsSinceEpoch ~/ 1000);
+    return Contact(
+      publicKey: Uint8List.fromList(advert.publicKey),
+      type: ContactType.repeater,
+      flags: advert.flags ?? 0,
+      outPathLen: signedEncodedPathLen,
+      outPath: advert.paddedPathBytes == null
+          ? Uint8List(ContactRouteCodec.maxPathBytes)
+          : Uint8List.fromList(advert.paddedPathBytes!),
+      advName: advName?.isNotEmpty == true ? advName! : advert.shortDisplayKey,
+      lastAdvert: lastAdvert,
+      advLat: advert.advLat ?? 0,
+      advLon: advert.advLon ?? 0,
+      lastMod: lastAdvert,
+    );
+  }
+
+  Uint8List _buildRepeaterOwnerRequest(Contact contact) {
+    final replyPathDescriptor = contact.routeEncodedPathLen;
+    final replyPathBytes = contact.routeHopCount > 0
+        ? Uint8List.fromList(
+            LogRxRouteDecoder.reverseHopBytes(
+              contact.routePathBytes,
+              hashSize: contact.routeHashSize,
+            ),
+          )
+        : Uint8List(0);
+    return Uint8List.fromList([
+      _anonReqTypeOwner,
+      replyPathDescriptor,
+      ...replyPathBytes,
+    ]);
+  }
+
+  bool _handlePendingRepeaterOwnerResponse(int tag, Uint8List responseData) {
+    final request = _pendingRepeaterOwnerRequests.remove(tag);
+    if (request == null) {
+      return false;
+    }
+
+    final ownerName = _tryParseRepeaterOwnerName(responseData);
+    if (ownerName == null || ownerName.isEmpty) {
+      return true;
+    }
+
+    final existing = contactsProvider.pendingAdvertByKey(request.publicKey);
+    contactsProvider.addOrUpdatePendingAdvertMetadata(
+      publicKey: request.publicKey,
+      typeValue: existing?.typeValue ?? ContactType.repeater.value,
+      devicePublicKey: connectionProvider.deviceInfo.publicKey,
+      advName: ownerName,
+    );
+    return true;
+  }
+
+  String? _tryParseRepeaterOwnerName(Uint8List responseData) {
+    if (responseData.length <= 4) {
+      return null;
+    }
+
+    try {
+      final payload = utf8.decode(
+        responseData.sublist(4),
+        allowMalformed: true,
+      ).trim();
+      if (payload.isEmpty) {
+        return null;
+      }
+      final firstLine = payload.split(RegExp(r'[\r\n]+')).first.trim();
+      return firstLine.isEmpty ? null : firstLine;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  _ParsedRepeaterStatus? _tryParseRepeaterStatus(Uint8List statusData) {
+    if (statusData.length < 52) {
+      return null;
+    }
+
+    try {
+      final data = ByteData.sublistView(statusData);
+      var offset = 0;
+      final batteryMv = data.getUint16(offset, Endian.little);
+      offset += 2;
+      final queueLen = data.getUint16(offset, Endian.little);
+      offset += 2;
+      offset += 2; // noiseFloor
+      final lastRssi = data.getInt16(offset, Endian.little);
+      offset += 2;
+      offset += 4; // packetsRecv
+      offset += 4; // packetsSent
+      offset += 4; // txAirSecs
+      final uptimeSecs = data.getUint32(offset, Endian.little);
+      offset += 4;
+      offset += 4; // floodTx
+      offset += 4; // directTx
+      offset += 4; // floodRx
+      offset += 4; // directRx
+      offset += 2; // errEvents
+      final lastSnrRaw = data.getInt16(offset, Endian.little);
+
+      return _ParsedRepeaterStatus(
+        batteryMv: batteryMv,
+        queueLen: queueLen,
+        lastRssi: lastRssi,
+        lastSnrRaw: lastSnrRaw,
+        uptimeSecs: uptimeSecs,
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+
+  _ParsedRawAdvert? _tryParseRawAdvert(Uint8List rawPayload) {
+    if (rawPayload.length < 103) {
+      return null;
+    }
+
+    try {
+      final reader = BufferReader(rawPayload);
+      final header = reader.readByte();
+      final routeType = header & 0x03;
+      final payloadType = (header >> 2) & 0x0F;
+      if (payloadType != _rawPayloadTypeAdvert) {
+        return null;
+      }
+
+      if (routeType == _routeTransportFlood ||
+          routeType == _routeTransportDirect) {
+        if (reader.remainingBytesCount < 4) {
+          return null;
+        }
+        reader.skip(4);
+      }
+
+      if (reader.remainingBytesCount < 1) {
+        return null;
+      }
+      final pathByteLen = reader.readByte();
+      if (reader.remainingBytesCount < pathByteLen + 101) {
+        return null;
+      }
+      final pathBytes = reader.readBytes(pathByteLen);
+      final publicKey = reader.readBytes(32);
+      final timestamp = reader.readInt32LE();
+      reader.skip(64);
+      final flags = reader.readByte();
+      final typeValue = flags & 0x0F;
+      final hasLocation = (flags & 0x10) != 0;
+      final hasName = (flags & 0x80) != 0;
+
+      int? advLat;
+      int? advLon;
+      if (hasLocation) {
+        if (reader.remainingBytesCount < 8) {
+          return null;
+        }
+        advLat = reader.readInt32LE();
+        advLon = reader.readInt32LE();
+      }
+
+      String? advName;
+      if (hasName && reader.remainingBytesCount > 0) {
+        final decodedName = utf8.decode(
+          reader.readRemainingBytes(),
+          allowMalformed: true,
+        ).trim();
+        if (decodedName.isNotEmpty) {
+          advName = decodedName;
+        }
+      }
+
+      int? signedEncodedPathLen;
+      Uint8List? paddedPathBytes;
+      if (pathBytes.isNotEmpty) {
+        final hashSize = LogRxRouteDecoder.inferHashSize(pathBytes);
+        final reversedPathBytes = LogRxRouteDecoder.reverseHopBytes(
+          pathBytes,
+          hashSize: hashSize,
+        );
+        final padded = Uint8List(ContactRouteCodec.maxPathBytes)
+          ..setRange(0, reversedPathBytes.length, reversedPathBytes);
+        final encodedPathLen =
+            ((hashSize - 1) << 6) |
+            ((reversedPathBytes.length ~/ hashSize) & 0x3F);
+        signedEncodedPathLen = ContactRouteCodec.toSignedDescriptor(
+          encodedPathLen,
+        );
+        paddedPathBytes = padded;
+      }
+
+      return _ParsedRawAdvert(
+        publicKey: publicKey,
+        advName: advName,
+        typeValue: typeValue,
+        flags: flags,
+        lastAdvert: timestamp,
+        advLat: advLat,
+        advLon: advLon,
+        signedEncodedPathLen: signedEncodedPathLen,
+        paddedPathBytes: paddedPathBytes,
+      );
+    } catch (_) {
+      return null;
+    }
   }
 
   int _inferReceivedPathHashSize(
@@ -3140,6 +3612,68 @@ class AppProvider with ChangeNotifier {
     _imageSessionSenderKey6.clear();
     _lowBatteryNotifiedNodeIds.clear();
     notifyListeners();
+  }
+
+  void _handleControlDataDiscovery({
+    required Uint8List payload,
+    required int snrRaw,
+    required int rssiDbm,
+    required int pathLen,
+  }) {
+    const int controlTypeMask = 0xF0;
+    const int controlTypeNodeDiscoverResp = 0x90;
+    const int minFullDiscoverResponseLength = 6 + 32;
+
+    if (payload.length < minFullDiscoverResponseLength) {
+      return;
+    }
+
+    final controlType = payload[0] & controlTypeMask;
+    if (controlType != controlTypeNodeDiscoverResp) {
+      return;
+    }
+
+    final nodeType = payload[0] & 0x0F;
+    final publicKey = Uint8List.fromList(payload.sublist(6, 38));
+    final isNewPendingAdvert = contactsProvider
+        .addOrUpdatePendingAdvertMetadata(
+          publicKey: publicKey,
+          typeValue: nodeType,
+          devicePublicKey: connectionProvider.deviceInfo.publicKey,
+          rxRssiDbm: rssiDbm,
+          rxSnrRaw: snrRaw,
+          signedEncodedPathLen: pathLen == 0 ? 0 : null,
+          paddedPathBytes: pathLen == 0
+              ? Uint8List(ContactRouteCodec.maxPathBytes)
+              : null,
+        );
+
+    debugPrint(
+      '🛰️ [AppProvider] Control discovery response: type=$nodeType '
+      'pathLen=$pathLen snr=$snrRaw rssi=$rssiDbm new=$isNewPendingAdvert',
+    );
+
+    if (isNewPendingAdvert) {
+      final keyHex = publicKey
+          .take(6)
+          .map((b) => b.toRadixString(16).padLeft(2, '0'))
+          .join();
+      unawaited(
+        _notificationService.showContactDiscoveredNotification(
+          contactKey: keyHex,
+          contactName: contactsProvider.pendingAdvertByKey(publicKey)?.advName,
+        ),
+      );
+    }
+
+    if (nodeType == ContactType.repeater.value) {
+      unawaited(_requestRepeaterStatus(publicKey));
+      unawaited(_maybeRequestRepeaterOwnerInfo(publicKey));
+    }
+
+    if (contactsProvider.shouldEnrichPendingAdvert(publicKey)) {
+      unawaited(connectionProvider.previewContact(publicKey));
+    }
   }
 
   /// Get app statistics

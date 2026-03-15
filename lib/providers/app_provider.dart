@@ -270,25 +270,10 @@ class AppProvider with ChangeNotifier {
   }
 
   Future<void> _checkLowBatteryAlerts() async {
-    final recoveredIds = <String>{};
-
     final deviceBattery = connectionProvider.deviceInfo.batteryPercent;
     if (deviceBattery != null &&
         deviceBattery > _lowBatteryResetThresholdPercent) {
-      recoveredIds.add('device');
-    }
-
-    for (final contact in contactsProvider.contacts) {
-      if (contact.isChannel) continue;
-      final battery = contact.displayBattery;
-      if (battery == null) continue;
-      if (battery > _lowBatteryResetThresholdPercent) {
-        recoveredIds.add(contact.publicKeyHex);
-      }
-    }
-
-    if (recoveredIds.isNotEmpty) {
-      _lowBatteryNotifiedNodeIds.removeAll(recoveredIds);
+      _lowBatteryNotifiedNodeIds.remove('device');
     }
 
     if (connectionProvider.deviceInfo.isConnected && deviceBattery != null) {
@@ -300,19 +285,6 @@ class AppProvider with ChangeNotifier {
             : (connectionProvider.deviceInfo.displayName ?? 'Connected device'),
         batteryPercent: deviceBattery,
         isCurrentDevice: true,
-      );
-    }
-
-    for (final contact in contactsProvider.contacts) {
-      if (contact.isChannel) continue;
-      final battery = contact.displayBattery;
-      if (battery == null) continue;
-
-      await _notifyLowBatteryIfNeeded(
-        nodeId: contact.publicKeyHex,
-        nodeName: contact.displayName,
-        batteryPercent: battery,
-        isCurrentDevice: false,
       );
     }
   }

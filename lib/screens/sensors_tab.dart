@@ -252,151 +252,48 @@ class _SensorsTabState extends State<SensorsTab> {
                     publicKeyHex,
                     option.key,
                   );
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: FilterChip(
-                                selected: visible,
-                                label: Text(option.label),
-                                onSelected: (value) {
-                                  sensorsProvider.toggleMetric(
-                                    publicKeyHex,
-                                    option.key,
-                                    value,
-                                  );
-                                },
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            IconButton(
-                              tooltip: 'Rename',
-                              onPressed: () => _showMetricRenameDialog(
-                                context,
-                                publicKeyHex: publicKeyHex,
-                                option: option,
-                                sensorsProvider: sensorsProvider,
-                              ),
-                              icon: const Icon(Icons.edit_outlined),
-                            ),
-                          ],
-                        ),
-                        if (option.valuePreview != null ||
-                            option.channel != null)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 8),
-                            child: Wrap(
-                              crossAxisAlignment: WrapCrossAlignment.center,
-                              spacing: 8,
-                              runSpacing: 6,
-                              children: [
-                                if (option.valuePreview != null)
-                                  Text(
-                                    option.valuePreview!,
-                                    key: ValueKey(
-                                      'sensor_selector_value_${option.key}',
-                                    ),
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodyMedium
-                                        ?.copyWith(
-                                          color: Theme.of(
-                                            context,
-                                          ).colorScheme.onSurfaceVariant,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                  ),
-                                if (option.channel != null)
-                                  Container(
-                                    key: ValueKey(
-                                      'sensor_selector_channel_${option.key}',
-                                    ),
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                      vertical: 3,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.surfaceContainerHighest,
-                                      borderRadius: BorderRadius.circular(999),
-                                    ),
-                                    child: Text(
-                                      'ch${option.channel}',
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .labelSmall
-                                          ?.copyWith(
-                                            color: Theme.of(
-                                              context,
-                                            ).colorScheme.onSurfaceVariant,
-                                            fontWeight: FontWeight.w800,
-                                          ),
-                                    ),
-                                  ),
-                              ],
-                            ),
-                          ),
-                        const SizedBox(height: 8),
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: Wrap(
-                            crossAxisAlignment: WrapCrossAlignment.center,
-                            spacing: 8,
-                            children: [
-                              IconButton(
-                                tooltip: 'Move up',
-                                onPressed: index > 0
-                                    ? () => sensorsProvider.moveMetric(
-                                        publicKeyHex,
-                                        availableFieldKeys: orderedFieldKeys,
-                                        oldIndex: index,
-                                        newIndex: index - 1,
-                                      )
-                                    : null,
-                                icon: const Icon(Icons.arrow_upward),
-                              ),
-                              IconButton(
-                                tooltip: 'Move down',
-                                onPressed: index < orderedOptions.length - 1
-                                    ? () => sensorsProvider.moveMetric(
-                                        publicKeyHex,
-                                        availableFieldKeys: orderedFieldKeys,
-                                        oldIndex: index,
-                                        newIndex: index + 1,
-                                      )
-                                    : null,
-                                icon: const Icon(Icons.arrow_downward),
-                              ),
-                              SegmentedButton<int>(
-                                segments: const [
-                                  ButtonSegment<int>(
-                                    value: 1,
-                                    label: Text('1x'),
-                                  ),
-                                  ButtonSegment<int>(
-                                    value: 2,
-                                    label: Text('2x'),
-                                  ),
-                                ],
-                                selected: <int>{span},
-                                onSelectionChanged: (selection) {
-                                  sensorsProvider.setFieldSpan(
-                                    publicKeyHex,
-                                    option.key,
-                                    selection.first,
-                                  );
-                                },
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
+                  return SensorMetricSelectorItem(
+                    option: option,
+                    visible: visible,
+                    span: span,
+                    canMoveUp: index > 0,
+                    canMoveDown: index < orderedOptions.length - 1,
+                    onToggle: (value) {
+                      sensorsProvider.toggleMetric(
+                        publicKeyHex,
+                        option.key,
+                        value,
+                      );
+                    },
+                    onRename: () => _showMetricRenameDialog(
+                      context,
+                      publicKeyHex: publicKeyHex,
+                      option: option,
+                      sensorsProvider: sensorsProvider,
                     ),
+                    onMoveUp: index > 0
+                        ? () => sensorsProvider.moveMetric(
+                            publicKeyHex,
+                            availableFieldKeys: orderedFieldKeys,
+                            oldIndex: index,
+                            newIndex: index - 1,
+                          )
+                        : null,
+                    onMoveDown: index < orderedOptions.length - 1
+                        ? () => sensorsProvider.moveMetric(
+                            publicKeyHex,
+                            availableFieldKeys: orderedFieldKeys,
+                            oldIndex: index,
+                            newIndex: index + 1,
+                          )
+                        : null,
+                    onSpanChanged: (selection) {
+                      sensorsProvider.setFieldSpan(
+                        publicKeyHex,
+                        option.key,
+                        selection,
+                      );
+                    },
                   );
                 }),
               ],
@@ -537,6 +434,132 @@ class _SensorsTabState extends State<SensorsTab> {
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+class SensorMetricSelectorItem extends StatelessWidget {
+  final SensorMetricOption option;
+  final bool visible;
+  final int span;
+  final bool canMoveUp;
+  final bool canMoveDown;
+  final ValueChanged<bool> onToggle;
+  final VoidCallback onRename;
+  final VoidCallback? onMoveUp;
+  final VoidCallback? onMoveDown;
+  final ValueChanged<int> onSpanChanged;
+
+  const SensorMetricSelectorItem({
+    super.key,
+    required this.option,
+    required this.visible,
+    required this.span,
+    required this.canMoveUp,
+    required this.canMoveDown,
+    required this.onToggle,
+    required this.onRename,
+    this.onMoveUp,
+    this.onMoveDown,
+    required this.onSpanChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: FilterChip(
+                  selected: visible,
+                  label: Text(option.label),
+                  onSelected: onToggle,
+                ),
+              ),
+              const SizedBox(width: 8),
+              IconButton(
+                tooltip: 'Rename',
+                onPressed: onRename,
+                icon: const Icon(Icons.edit_outlined),
+              ),
+            ],
+          ),
+          if (option.valuePreview != null || option.channel != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Wrap(
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 8,
+                runSpacing: 6,
+                children: [
+                  if (option.valuePreview != null)
+                    Text(
+                      option.valuePreview!,
+                      key: ValueKey('sensor_selector_value_${option.key}'),
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  if (option.channel != null)
+                    Container(
+                      key: ValueKey('sensor_selector_channel_${option.key}'),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.surfaceContainerHighest,
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Text(
+                        'ch${option.channel}',
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          const SizedBox(height: 8),
+          Align(
+            alignment: Alignment.centerRight,
+            child: Wrap(
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 8,
+              children: [
+                IconButton(
+                  tooltip: 'Move up',
+                  onPressed: canMoveUp ? onMoveUp : null,
+                  icon: const Icon(Icons.arrow_upward),
+                ),
+                IconButton(
+                  tooltip: 'Move down',
+                  onPressed: canMoveDown ? onMoveDown : null,
+                  icon: const Icon(Icons.arrow_downward),
+                ),
+                SegmentedButton<int>(
+                  segments: const [
+                    ButtonSegment<int>(value: 1, label: Text('1x')),
+                    ButtonSegment<int>(value: 2, label: Text('2x')),
+                  ],
+                  selected: <int>{span},
+                  onSelectionChanged: (selection) {
+                    onSpanChanged(selection.first);
+                  },
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -864,6 +864,23 @@ class ConnectionProvider with ChangeNotifier {
     }
   }
 
+  /// Import a received advert by public key, then fetch the full contact.
+  ///
+  /// This tells the firmware to store the advert it received, making the
+  /// contact available for [getContact]/[previewContact] with full details
+  /// (name, type, location, etc.).
+  Future<void> importReceivedAdvert(Uint8List publicKey) async {
+    if (!_activeService.isConnected) return;
+
+    try {
+      await _activeService.importReceivedAdvert(publicKey);
+    } catch (e) {
+      debugPrint(
+        '⚠️ [Provider] importReceivedAdvert failed for ${_publicKeyToHex(publicKey)}: $e',
+      );
+    }
+  }
+
   Future<void> previewContact(Uint8List publicKey) async {
     if (!_activeService.isConnected) {
       return;

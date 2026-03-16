@@ -928,6 +928,14 @@ class AppProvider with ChangeNotifier {
           source == ContactReceiveSource.preview;
 
       if (isAdvertSource) {
+        // For pushNewAdvert (0x8A): contact data is already in the push, but
+        // we also import into firmware so subsequent getContact calls work.
+        // Matches the official app which calls cmdGetAdvertPath for all adverts.
+        if (source == ContactReceiveSource.advert) {
+          unawaited(
+            connectionProvider.importReceivedAdvert(contact.publicKey),
+          );
+        }
         final isNewPendingAdvert = contactsProvider
             .addOrUpdatePendingAdvertContact(
               contact,
@@ -1616,51 +1624,20 @@ class AppProvider with ChangeNotifier {
     };
 
     // When an advertisement is received (PUSH_CODE_ADVERT 0x80)
-    // This may be sent by the radio for existing contacts instead of PUSH_CODE_NEW_ADVERT (0x8A)
+    //
+    // Official app flow:
+    // 1. importReceivedAdvert(key) — import advert into firmware contact table
+    // 2. getContact(key) — check if contact existed before (for new-notification)
+    // 3. syncContact(key) — fetch from device + upsert into DB
+    // 4. getContact(key) — get fresh contact with name/type
+    // 5. upsert into discovered_contacts
+    // 6. if was new → notify with name + type
     connectionProvider.onAdvertReceived = (publicKey) {
       debugPrint(
         '📡 [AppProvider] Advertisement received: ${publicKey.sublist(0, 6).map((b) => b.toRadixString(16).padLeft(2, '0')).join(':')}...',
       );
       unawaited(_retainAdvertRxPath(publicKey));
-      // Check if this is an existing contact that might have updated location
-      final contact = contactsProvider.findContactByKey(publicKey);
-      if (contact != null) {
-        debugPrint(
-          '   Existing contact "${contact.advName}" - fetching updated contact info (optimized)',
-        );
-        // Trigger a single contact fetch to get the updated contact information
-        // This is much more efficient than fetching all contacts
-        Future.delayed(const Duration(milliseconds: 100), () {
-          if (connectionProvider.deviceInfo.isConnected) {
-            connectionProvider.getContact(publicKey);
-          }
-        });
-      } else {
-        final isNewPendingAdvert = contactsProvider.addPendingAdvert(
-          publicKey,
-          devicePublicKey: connectionProvider.deviceInfo.publicKey,
-        );
-        debugPrint(
-          '   Unknown contact - added to pending adverts list and waiting for manual resolution',
-        );
-        if (isNewPendingAdvert) {
-          final keyHex = publicKey
-              .take(6)
-              .map((b) => b.toRadixString(16).padLeft(2, '0'))
-              .join();
-          unawaited(
-            _notificationService.showContactDiscoveredNotification(
-              contactKey: keyHex,
-              contactName: contactsProvider
-                  .pendingAdvertByKey(publicKey)
-                  ?.advName,
-            ),
-          );
-        }
-        if (contactsProvider.shouldEnrichPendingAdvert(publicKey)) {
-          unawaited(connectionProvider.previewContact(publicKey));
-        }
-      }
+      unawaited(_handlePushAdvert(publicKey));
     };
 
     // When firmware deletes a contact due to contacts table overflow (PUSH_CODE_CONTACT_DELETED 0x8F)
@@ -2069,6 +2046,40 @@ class AppProvider with ChangeNotifier {
       decoded.pathBytes,
       decoded.hashSize,
     );
+  }
+
+  /// Handle pushAdvert (0x80) — matches the official MeshCore app flow:
+  ///
+  /// 1. importReceivedAdvert(key) — import advert into firmware contact table
+  /// 2. Check if contact was already known locally (for new-notification)
+  /// 3. getContact(key) — fetch full contact from device (now stored after import)
+  ///    → flows through onContactReceivedDetailed which upserts + notifies
+  Future<void> _handlePushAdvert(Uint8List publicKey) async {
+    // Step 1: Import the advert into firmware's contact table.
+    // This tells the firmware to store the contact from its received-advert
+    // buffer, making subsequent getContact return name/type/location.
+    await connectionProvider.importReceivedAdvert(publicKey);
+
+    // Step 2: Check if this was an already-known contact before sync
+    final wasKnown = contactsProvider.findContactByKey(publicKey) != null;
+
+    // Step 3: Fetch the full contact from device (import made it available).
+    // This flows through onContactReceivedDetailed, which handles:
+    // - upserting into contacts or pending adverts
+    // - showing discovery notification for new contacts
+    if (connectionProvider.deviceInfo.isConnected) {
+      await connectionProvider.getContact(publicKey);
+    }
+
+    // For existing contacts, the getContact above already updated them.
+    // For new contacts from adverts, onContactReceivedDetailed (source=advert)
+    // already added to pending adverts and showed notification.
+    // Nothing else to do — the callback pipeline handles everything.
+    if (wasKnown) {
+      debugPrint(
+        '   [pushAdvert] Existing contact refreshed',
+      );
+    }
   }
 
   Future<void> _requestRepeaterStatus(Uint8List publicKey) async {
@@ -3653,6 +3664,12 @@ class AppProvider with ChangeNotifier {
       'pathLen=$pathLen snr=$snrRaw rssi=$rssiDbm new=$isNewPendingAdvert',
     );
 
+    // Official app flow for controlData discovery:
+    // - Try getContact from firmware. If not found → skip.
+    // - If found → update path, request region names for repeaters.
+    // - Discovery list shows generic labels ("Repeater XX:YY") for unknown nodes.
+    // - Names appear later when the node's advert arrives via pushAdvert/pushNewAdvert.
+
     if (isNewPendingAdvert) {
       final keyHex = publicKey
           .take(6)
@@ -3671,6 +3688,8 @@ class AppProvider with ChangeNotifier {
       unawaited(_maybeRequestRepeaterOwnerInfo(publicKey));
     }
 
+    // Try to enrich from firmware's existing contacts (no import — the
+    // controlData discovery response doesn't store an advert in firmware).
     if (contactsProvider.shouldEnrichPendingAdvert(publicKey)) {
       unawaited(connectionProvider.previewContact(publicKey));
     }

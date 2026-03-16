@@ -108,6 +108,8 @@ class _MapTabState extends State<MapTab> with AutomaticKeepAliveClientMixin {
     14.5058,
   ); // Ljubljana, Slovenia
   static const double _defaultZoom = 13.0;
+  static const double _customMapMinZoom = -4.0;
+  static const double _customMapMaxZoom = 40.0;
 
   @override
   bool get wantKeepAlive => true;
@@ -404,7 +406,9 @@ class _MapTabState extends State<MapTab> with AutomaticKeepAliveClientMixin {
             : mapProvider.targetLocation!;
         final zoom =
             mapProvider.targetCoordinateSpace == MapCoordinateSpace.customMap
-            ? (mapProvider.targetZoom ?? 2.0).clamp(-4.0, 8.0).toDouble()
+            ? (mapProvider.targetZoom ?? 2.0)
+                  .clamp(_customMapMinZoom, _customMapMaxZoom)
+                  .toDouble()
             : mapProvider.targetZoom ?? _defaultZoom;
 
         _mapController.move(location, zoom);
@@ -482,6 +486,25 @@ class _MapTabState extends State<MapTab> with AutomaticKeepAliveClientMixin {
     );
   }
 
+  Future<void> _selectMapLayer(MapProvider mapProvider, MapLayer layer) async {
+    await mapProvider.exitCustomMapMode();
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _currentLayer = layer;
+      if (_isMapReady && _mapController.camera.zoom > layer.maxZoom) {
+        _mapController.move(
+          _mapController.camera.center,
+          layer.isWms ? 11.0 : layer.maxZoom,
+        );
+      }
+    });
+
+    await _saveSettings();
+  }
+
   void _showLayerSelector(BuildContext context) {
     final rootContext = this.context;
     showModalBottomSheet(
@@ -513,6 +536,53 @@ class _MapTabState extends State<MapTab> with AutomaticKeepAliveClientMixin {
               child: ListView(
                 shrinkWrap: true,
                 children: [
+                  Consumer<MapProvider>(
+                    builder: (context, mapProvider, _) {
+                      final customMapConfig = mapProvider.customMapConfig;
+                      if (customMapConfig == null) {
+                        return const SizedBox.shrink();
+                      }
+
+                      return Column(
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
+                            child: Align(
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                'Saved maps',
+                                style: Theme.of(context).textTheme.labelLarge
+                                    ?.copyWith(color: Colors.grey[600]),
+                              ),
+                            ),
+                          ),
+                          ListTile(
+                            leading: mapProvider.isUsingCustomMap
+                                ? const Icon(
+                                    Icons.check_circle,
+                                    color: Colors.green,
+                                  )
+                                : const Icon(Icons.radio_button_unchecked),
+                            title: Text(customMapConfig.displayName),
+                            subtitle: Text(
+                              'Custom picture map • Map ID ${customMapConfig.mapId}',
+                            ),
+                            onTap: () async {
+                              await mapProvider.enterCustomMapMode();
+                              if (!context.mounted) {
+                                return;
+                              }
+                              Navigator.pop(context);
+                            },
+                          ),
+                          const Divider(),
+                        ],
+                      );
+                    },
+                  ),
                   // Online layers section
                   Padding(
                     padding: const EdgeInsets.symmetric(
@@ -528,24 +598,21 @@ class _MapTabState extends State<MapTab> with AutomaticKeepAliveClientMixin {
                   ),
                   ...MapLayer.allLayers.map(
                     (layer) => ListTile(
-                      leading: _currentLayer == layer
+                      leading:
+                          !rootContext.read<MapProvider>().isUsingCustomMap &&
+                              _currentLayer == layer
                           ? const Icon(Icons.check_circle, color: Colors.green)
                           : const Icon(Icons.radio_button_unchecked),
                       title: Text(layer.getLocalizedName(context)),
                       subtitle: Text(layer.attribution),
                       onTap: () async {
-                        setState(() {
-                          _currentLayer = layer;
-                          // Clamp zoom level if current zoom exceeds new layer's max
-                          if (_isMapReady &&
-                              _mapController.camera.zoom > layer.maxZoom) {
-                            _mapController.move(
-                              _mapController.camera.center,
-                              layer.maxZoom,
-                            );
-                          }
-                        });
-                        _saveSettings();
+                        await _selectMapLayer(
+                          rootContext.read<MapProvider>(),
+                          layer,
+                        );
+                        if (!context.mounted) {
+                          return;
+                        }
                         Navigator.pop(context);
                       },
                     ),
@@ -554,50 +621,40 @@ class _MapTabState extends State<MapTab> with AutomaticKeepAliveClientMixin {
                   if (AppLocalizations.of(context)!.localeName == 'sl' ||
                       AppLocalizations.of(context)!.localeName == 'hr') ...[
                     ListTile(
-                      leading: _currentLayer == _slovenianAerialLayer
+                      leading:
+                          !rootContext.read<MapProvider>().isUsingCustomMap &&
+                              _currentLayer == _slovenianAerialLayer
                           ? const Icon(Icons.check_circle, color: Colors.green)
                           : const Icon(Icons.radio_button_unchecked),
                       title: Text(_slovenianAerialLayer.name),
                       subtitle: Text(_slovenianAerialLayer.attribution),
                       onTap: () async {
-                        setState(() {
-                          _currentLayer = _slovenianAerialLayer;
-                          // Clamp zoom level if current zoom exceeds new layer's max
-                          // For WMS layers, use a middle zoom (11) instead of max zoom to avoid extreme close-up
-                          if (_isMapReady &&
-                              _mapController.camera.zoom >
-                                  _slovenianAerialLayer.maxZoom) {
-                            _mapController.move(
-                              _mapController.camera.center,
-                              11.0, // Middle zoom for WMS
-                            );
-                          }
-                        });
-                        _saveSettings();
+                        await _selectMapLayer(
+                          rootContext.read<MapProvider>(),
+                          _slovenianAerialLayer,
+                        );
+                        if (!context.mounted) {
+                          return;
+                        }
                         Navigator.pop(context);
                       },
                     ),
                     ListTile(
-                      leading: _currentLayer == _dtk25Layer
+                      leading:
+                          !rootContext.read<MapProvider>().isUsingCustomMap &&
+                              _currentLayer == _dtk25Layer
                           ? const Icon(Icons.check_circle, color: Colors.green)
                           : const Icon(Icons.radio_button_unchecked),
                       title: Text(AppLocalizations.of(context)!.topographicMap),
                       subtitle: Text(_dtk25Layer.attribution),
                       onTap: () async {
-                        setState(() {
-                          _currentLayer = _dtk25Layer;
-                          // Clamp zoom level if current zoom exceeds new layer's max
-                          // For WMS layers, use a middle zoom (11) instead of max zoom to avoid extreme close-up
-                          if (_isMapReady &&
-                              _mapController.camera.zoom >
-                                  _dtk25Layer.maxZoom) {
-                            _mapController.move(
-                              _mapController.camera.center,
-                              11.0, // Middle zoom for WMS
-                            );
-                          }
-                        });
-                        _saveSettings();
+                        await _selectMapLayer(
+                          rootContext.read<MapProvider>(),
+                          _dtk25Layer,
+                        );
+                        if (!context.mounted) {
+                          return;
+                        }
                         Navigator.pop(context);
                       },
                     ),
@@ -605,6 +662,7 @@ class _MapTabState extends State<MapTab> with AutomaticKeepAliveClientMixin {
                   // WMS Overlays section (only for Slovenian/Croatian regions and when WMS base layer is selected)
                   if ((AppLocalizations.of(context)!.localeName == 'sl' ||
                           AppLocalizations.of(context)!.localeName == 'hr') &&
+                      !rootContext.read<MapProvider>().isUsingCustomMap &&
                       _currentLayer.isWms) ...[
                     const Divider(),
                     Padding(
@@ -844,23 +902,6 @@ class _MapTabState extends State<MapTab> with AutomaticKeepAliveClientMixin {
                               subtitle: Text(
                                 'Map ID ${customMapConfig.mapId}${customMapConfig.isCalibrated ? ' • Scale set' : ' • Not calibrated'}',
                               ),
-                            ),
-                            SwitchListTile(
-                              secondary: const Icon(Icons.map_outlined),
-                              title: const Text('Use custom map'),
-                              subtitle: const Text(
-                                'Hide GPS-based layers and work in image space',
-                              ),
-                              value: mapProvider.isUsingCustomMap,
-                              onChanged: (value) async {
-                                if (value) {
-                                  await mapProvider.enterCustomMapMode();
-                                } else {
-                                  await mapProvider.exitCustomMapMode();
-                                }
-                                if (!context.mounted) return;
-                                Navigator.pop(context);
-                              },
                             ),
                             ListTile(
                               leading: const Icon(Icons.swap_horizontal_circle),
@@ -1919,8 +1960,10 @@ class _MapTabState extends State<MapTab> with AutomaticKeepAliveClientMixin {
                           padding: const EdgeInsets.all(24),
                         )
                       : null,
-                  minZoom: isCustomMapMode ? -4 : 0,
-                  maxZoom: isCustomMapMode ? 8 : _currentLayer.maxZoom,
+                  minZoom: isCustomMapMode ? _customMapMinZoom : 0,
+                  maxZoom: isCustomMapMode
+                      ? _customMapMaxZoom
+                      : _currentLayer.maxZoom,
                   cameraConstraint: isCustomMapMode
                       ? CameraConstraint.contain(
                           bounds: customMapConfig.displayBounds,
@@ -2099,6 +2142,7 @@ class _MapTabState extends State<MapTab> with AutomaticKeepAliveClientMixin {
                           imageProvider: FileImage(
                             File(customMapConfig.filePath),
                           ),
+                          filterQuality: FilterQuality.none,
                         ),
                       ],
                     )

@@ -746,49 +746,33 @@ class MessagesProvider with ChangeNotifier {
         return false;
       }
 
+      // Primary dedup: same senderTimestamp = same message from mesh repeats.
+      // Matches official app's DB uniqueness: (channelSecret, senderTimestamp, text).
+      if (existing.senderTimestamp == message.senderTimestamp) {
+        return true;
+      }
+
+      // Secondary: catch near-duplicate repeats within a 30s window
+      // (clock drift between nodes).
       final withinChannelRepeatWindow =
           (existing.senderTimestamp - message.senderTimestamp).abs() <= 30;
+      if (!withinChannelRepeatWindow) {
+        return false;
+      }
 
       final existingSenderKey = existing.senderKeyShort;
       final incomingSenderKey = message.senderKeyShort;
       if (existingSenderKey != null &&
           incomingSenderKey != null &&
-          existingSenderKey == incomingSenderKey &&
-          withinChannelRepeatWindow) {
+          existingSenderKey == incomingSenderKey) {
         return true;
       }
 
       final existingSenderName = _normalizedResolvedSenderName(existing);
       final incomingSenderName = _normalizedResolvedSenderName(message);
-      if (existing.isChannelMessage && message.isChannelMessage) {
-        debugPrint(
-          '🧪 [MessagesProvider] Channel dedupe check: '
-          'existing(id=${existing.id}, sent=${existing.isSentMessage}, senderName=${existing.senderName ?? "-"}, resolvedSender=${existingSenderName ?? "-"}, senderKey=${existing.senderKeyShort ?? "-"}, ts=${existing.senderTimestamp}, pathLen=${existing.pathLen}) '
-          'incoming(id=${message.id}, sent=${message.isSentMessage}, senderName=${message.senderName ?? "-"}, resolvedSender=${incomingSenderName ?? "-"}, senderKey=${message.senderKeyShort ?? "-"}, ts=${message.senderTimestamp}, pathLen=${message.pathLen}) '
-          'withinWindow=$withinChannelRepeatWindow',
-        );
-      }
       if (existingSenderName != null &&
           incomingSenderName != null &&
           existingSenderName == incomingSenderName) {
-        if (!existing.isSentMessage && !message.isSentMessage) {
-          return withinChannelRepeatWindow;
-        }
-
-        if (!withinChannelRepeatWindow) {
-          return false;
-        }
-
-        // Mirror meshcore-open behavior for self-authored channel messages:
-        // zero-hop self replays are dropped earlier in AppProvider, while
-        // routed self replays should fold into the local sent bubble when the
-        // public sender name matches within a short window.
-        if (existing.isSentMessage &&
-            !message.isSentMessage &&
-            existingSenderName == incomingSenderName) {
-          return true;
-        }
-
         return true;
       }
 

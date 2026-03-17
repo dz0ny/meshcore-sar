@@ -483,6 +483,15 @@ class ContactTile extends StatelessWidget {
                     _showTraceSheet(context, contact);
                   },
                 ),
+              if (contact.type == ContactType.repeater)
+                ListTile(
+                  leading: const Icon(Icons.hub_outlined),
+                  title: const Text('View Neighbours'),
+                  onTap: () {
+                    Navigator.pop(sheetContext);
+                    _showNeighbours(context, contact);
+                  },
+                ),
               if (!contact.isPublicChannel)
                 ListTile(
                   leading: const Icon(Icons.edit_outlined),
@@ -592,6 +601,14 @@ class ContactTile extends StatelessWidget {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => RoomLoginSheet(contact: contact),
+    );
+  }
+
+  void _showNeighbours(BuildContext context, Contact contact) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => _NeighboursDialog(contact: contact),
     );
   }
 
@@ -1214,4 +1231,197 @@ class _ContactNameOverrideSheetState extends State<_ContactNameOverrideSheet> {
       ),
     );
   }
+}
+
+/// Dialog that sends "neighbors" text command to a repeater and shows results.
+class _NeighboursDialog extends StatefulWidget {
+  final Contact contact;
+
+  const _NeighboursDialog({required this.contact});
+
+  @override
+  State<_NeighboursDialog> createState() => _NeighboursDialogState();
+}
+
+class _NeighboursDialogState extends State<_NeighboursDialog> {
+  bool _loading = true;
+  String? _error;
+  List<_Neighbour> _neighbours = const [];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchNeighbours();
+  }
+
+  Future<void> _fetchNeighbours() async {
+    final connectionProvider = context.read<ConnectionProvider>();
+
+    // Listen for the response message
+    String? responseText;
+    void onMessage(message) {
+      // The neighbours response comes as a text message from the repeater
+      if (message.senderPublicKeyPrefix != null &&
+          widget.contact.publicKey
+              .sublist(0, 6)
+              .every((b) => message.senderPublicKeyPrefix!.contains(b))) {
+        responseText = message.text;
+      }
+    }
+
+    connectionProvider.onMessageReceived = (message) {
+      onMessage(message);
+      // Keep the original callback chain
+    };
+
+    try {
+      await connectionProvider.sendTextMessage(
+        contactPublicKey: widget.contact.publicKey,
+        text: 'neighbors',
+      );
+
+      // Wait for response (up to 15s)
+      for (int i = 0; i < 30; i++) {
+        await Future.delayed(const Duration(milliseconds: 500));
+        if (responseText != null) break;
+      }
+
+      if (!mounted) return;
+
+      if (responseText == null) {
+        setState(() {
+          _loading = false;
+          _error = 'No response from repeater (timeout)';
+        });
+        return;
+      }
+
+      final text = responseText!;
+      if (text.toLowerCase().contains('unknown')) {
+        setState(() {
+          _loading = false;
+          _error = 'Neighbours feature not supported by this firmware';
+        });
+        return;
+      }
+      if (text.toLowerCase().contains('-none-') || text.trim().isEmpty) {
+        setState(() {
+          _loading = false;
+          _neighbours = const [];
+        });
+        return;
+      }
+
+      final parsed = <_Neighbour>[];
+      for (final line in text.split('\n')) {
+        final trimmed = line.trim();
+        if (trimmed.isEmpty) continue;
+        final parts = trimmed.split(':');
+        if (parts.length >= 3) {
+          final keyHex = parts[0];
+          final timestampOrMs = int.tryParse(parts[1]);
+          final snrRaw = int.tryParse(parts[2]);
+          final isMs = timestampOrMs != null && timestampOrMs < 1e9;
+          parsed.add(_Neighbour(
+            publicKeyHex: keyHex,
+            lastSeenAt: !isMs && timestampOrMs != null
+                ? DateTime.fromMillisecondsSinceEpoch(timestampOrMs * 1000)
+                : null,
+            lastSeenMs: isMs ? timestampOrMs : null,
+            snrDb: snrRaw != null ? snrRaw / 4.0 : null,
+          ));
+        }
+      }
+
+      setState(() {
+        _loading = false;
+        _neighbours = parsed;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _error = 'Failed: $e';
+      });
+    }
+  }
+
+  String _resolveNeighbourName(String keyHex) {
+    final contactsProvider = context.read<ContactsProvider>();
+    for (final contact in contactsProvider.contacts) {
+      if (contact.publicKeyHex.toLowerCase().startsWith(keyHex.toLowerCase())) {
+        return contact.displayName;
+      }
+    }
+    return keyHex.length > 12 ? '${keyHex.substring(0, 12)}...' : keyHex;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text('Neighbours of ${widget.contact.displayName}'),
+      content: SizedBox(
+        width: double.maxFinite,
+        child: _loading
+            ? const SizedBox(
+                height: 100,
+                child: Center(child: CircularProgressIndicator()),
+              )
+            : _error != null
+                ? Text(_error!)
+                : _neighbours.isEmpty
+                    ? const Text('No neighbours found')
+                    : ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: _neighbours.length,
+                        itemBuilder: (context, index) {
+                          final n = _neighbours[index];
+                          final name = _resolveNeighbourName(n.publicKeyHex);
+                          final subtitle = <String>[
+                            if (n.snrDb != null)
+                              'SNR ${n.snrDb!.toStringAsFixed(1)} dB',
+                            if (n.lastSeenAt != null)
+                              _formatAge(n.lastSeenAt!),
+                            if (n.lastSeenMs != null)
+                              '${n.lastSeenMs}ms ago',
+                          ].join(' • ');
+                          return ListTile(
+                            dense: true,
+                            leading: const Icon(Icons.router_outlined, size: 20),
+                            title: Text(name),
+                            subtitle: subtitle.isNotEmpty ? Text(subtitle) : null,
+                          );
+                        },
+                      ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Close'),
+        ),
+      ],
+    );
+  }
+
+  String _formatAge(DateTime when) {
+    final diff = DateTime.now().difference(when);
+    if (diff.inMinutes < 1) return 'just now';
+    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
+    if (diff.inHours < 24) return '${diff.inHours}h ago';
+    return '${diff.inDays}d ago';
+  }
+}
+
+class _Neighbour {
+  final String publicKeyHex;
+  final DateTime? lastSeenAt;
+  final int? lastSeenMs;
+  final double? snrDb;
+
+  const _Neighbour({
+    required this.publicKeyHex,
+    this.lastSeenAt,
+    this.lastSeenMs,
+    this.snrDb,
+  });
 }

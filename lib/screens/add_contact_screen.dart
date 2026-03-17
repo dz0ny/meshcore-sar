@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/connection_provider.dart';
+import '../l10n/app_localizations.dart';
 
 class AddContactScreen extends StatefulWidget {
   const AddContactScreen({super.key});
@@ -80,7 +81,7 @@ class _AddContactScreenState extends State<AddContactScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Clipboard is empty')));
+      ).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.clipboardIsEmpty)));
       return;
     }
 
@@ -141,7 +142,7 @@ class _AddContactScreenState extends State<AddContactScreen> {
 
     ScaffoldMessenger.of(
       context,
-    ).showSnackBar(const SnackBar(content: Text('Contact imported')));
+    ).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.contactImported)));
     setState(() {
       _importSucceeded = true;
     });
@@ -154,7 +155,7 @@ class _AddContactScreenState extends State<AddContactScreen> {
     final colorScheme = theme.colorScheme;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Add Contact')),
+      appBar: AppBar(title: Text(AppLocalizations.of(context)!.addContact)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -205,18 +206,18 @@ class _AddContactScreenState extends State<AddContactScreen> {
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
-                  children: const [
+                  children: [
                     _ImportHintChip(
                       icon: Icons.link_outlined,
-                      label: 'Accepts share links',
+                      label: AppLocalizations.of(context)!.acceptsShareLinks,
                     ),
                     _ImportHintChip(
                       icon: Icons.code_outlined,
-                      label: 'Supports raw hex',
+                      label: AppLocalizations.of(context)!.supportsRawHex,
                     ),
                     _ImportHintChip(
                       icon: Icons.content_paste_go_outlined,
-                      label: 'Clipboard-friendly',
+                      label: AppLocalizations.of(context)!.clipboardfriendly,
                     ),
                   ],
                 ),
@@ -285,8 +286,8 @@ class _AddContactScreenState extends State<AddContactScreen> {
                     ),
                     TextButton.icon(
                       onPressed: _isImporting ? null : _pasteFromClipboard,
-                      icon: const Icon(Icons.content_paste_go_outlined),
-                      label: const Text('Paste'),
+                      icon: Icon(Icons.content_paste_go_outlined),
+                      label: Text(AppLocalizations.of(context)!.paste),
                     ),
                   ],
                 ),

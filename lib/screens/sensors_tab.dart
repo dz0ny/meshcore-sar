@@ -8,6 +8,7 @@ import '../providers/connection_provider.dart';
 import '../providers/contacts_provider.dart';
 import '../providers/sensors_provider.dart';
 import '../widgets/sensors/sensor_telemetry_card.dart';
+import '../l10n/app_localizations.dart';
 
 class SensorsTab extends StatefulWidget {
   final bool isActive;
@@ -121,12 +122,12 @@ class _SensorsTabState extends State<SensorsTab> {
             shrinkWrap: true,
             padding: const EdgeInsets.only(bottom: 20),
             children: [
-              const ListTile(
-                title: Text(
+              ListTile(
+                title: const Text(
                   'Add sensor node',
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
-                subtitle: Text('Pick a relay or node to watch in Sensors.'),
+                subtitle: Text(AppLocalizations.of(context)!.pickARelayOrNodeToWatchInSensors),
               ),
               ...candidates.map(
                 (contact) => ListTile(
@@ -209,7 +210,7 @@ class _SensorsTabState extends State<SensorsTab> {
     final didSave = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Rename value'),
+        title: Text(AppLocalizations.of(context)!.renameValue),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -388,10 +389,10 @@ class _SensorCustomizeView extends StatelessWidget {
             title: Text('Customize ${contact?.displayName ?? 'Sensor'}'),
           ),
           body: ListView(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+            padding: EdgeInsets.fromLTRB(16, 16, 16, 24),
             children: [
               _SensorCustomizeSectionCard(
-                title: 'Live preview',
+                title: AppLocalizations.of(context)!.livePreview,
                 subtitle:
                     'Changes apply immediately. This card matches the current dashboard layout for this sensor.',
                 child: SensorTelemetryCard(
@@ -414,7 +415,7 @@ class _SensorCustomizeView extends StatelessWidget {
                 ),
               ),
               _SensorCustomizeSectionCard(
-                title: 'Refresh schedule',
+                title: AppLocalizations.of(context)!.refreshSchedule,
                 subtitle:
                     'Choose how often this sensor should refresh while your device stays connected.',
                 child: SensorAutoRefreshOptions(
@@ -702,8 +703,8 @@ class SensorMetricSelectorItem extends StatelessWidget {
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
-                            icon: const Icon(Icons.edit_outlined, size: 18),
-                            label: const Text('Rename'),
+                            icon: Icon(Icons.edit_outlined, size: 18),
+                            label: Text(AppLocalizations.of(context)!.rename),
                           ),
                           if (showChannelChip)
                             Container(
@@ -911,7 +912,7 @@ class _EmptySensorsStateState extends State<_EmptySensorsState> {
       await connectionProvider.discoverNodeType(advertType: 4);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Sensor discovery sent')),
+          SnackBar(content: Text(AppLocalizations.of(context)!.sensorDiscoverySent)),
         );
       }
     } finally {

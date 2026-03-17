@@ -331,7 +331,7 @@ class _WelcomeWizardScreenState extends State<WelcomeWizardScreen> {
                   if (_currentPage > 0)
                     TextButton.icon(
                       onPressed: _previousPage,
-                      icon: const Icon(Icons.arrow_back),
+                      icon: Icon(Icons.arrow_back),
                       label: Text(l10n.wizardBack),
                     )
                   else
@@ -510,7 +510,7 @@ class _WelcomeWizardScreenState extends State<WelcomeWizardScreen> {
                                 ? colorScheme.primary
                                 : colorScheme.onSurfaceVariant,
                           ),
-                          const SizedBox(width: 12),
+                          SizedBox(width: 12),
                           Expanded(
                             child: Text(
                               isConnected
@@ -601,7 +601,7 @@ class _WelcomeWizardScreenState extends State<WelcomeWizardScreen> {
                         _selectedPreset.summary,
                         style: Theme.of(context).textTheme.bodyMedium,
                       ),
-                      const SizedBox(height: 14),
+                      SizedBox(height: 14),
                       ...[
                         _FeatureItem(
                           icon: Icons.rule,

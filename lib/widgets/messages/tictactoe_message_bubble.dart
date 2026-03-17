@@ -9,6 +9,7 @@ import '../../providers/contacts_provider.dart';
 import '../../providers/messages_provider.dart';
 import '../../utils/tictactoe_message_parser.dart';
 import '../../utils/toast_logger.dart';
+import '../../l10n/app_localizations.dart';
 
 class TicTacToeMessageBubble extends StatelessWidget {
   final Message message;
@@ -33,7 +34,7 @@ class TicTacToeMessageBubble extends StatelessWidget {
     final messages = context.watch<MessagesProvider>().messages;
     final selfKey = conn.deviceInfo.publicKey;
     if (selfKey == null || selfKey.length < 6) {
-      return const Text('Tic-Tac-Toe unavailable');
+      return Text(AppLocalizations.of(context)!.tictactoeUnavailable);
     }
 
     final selfKey6 = _key6Hex(selfKey);
@@ -43,7 +44,7 @@ class TicTacToeMessageBubble extends StatelessWidget {
       isSentByMe: isSentByMe,
     );
     if (opponent == null) {
-      return const Text('Tic-Tac-Toe: opponent unknown');
+      return Text(AppLocalizations.of(context)!.tictactoeOpponentUnknown);
     }
     final opponentKey6 = _key6Hex(opponent.publicKey);
 
@@ -69,7 +70,7 @@ class TicTacToeMessageBubble extends StatelessWidget {
 
     start ??= event.type == TicTacToeEventType.start ? event : null;
     if (start == null) {
-      return const Text('Tic-Tac-Toe: waiting for start');
+      return Text(AppLocalizations.of(context)!.tictactoeWaitingForStart);
     }
 
     final xPlayer = start.playerKey6;

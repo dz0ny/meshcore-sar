@@ -221,7 +221,7 @@ class _ConnectionDialogState extends State<ConnectionDialog>
                 Icons.info_outline,
                 color: Theme.of(context).colorScheme.onPrimaryContainer,
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: 12),
               Expanded(
                 child: Text(
                   AppLocalizations.of(context)!.defaultPinInfo,
@@ -260,7 +260,7 @@ class _ConnectionDialogState extends State<ConnectionDialog>
                           context,
                         ).colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
                       ),
-                      const SizedBox(height: 16),
+                      SizedBox(height: 16),
                       Text(
                         AppLocalizations.of(context)!.noDevicesFound,
                         style: TextStyle(
@@ -271,7 +271,7 @@ class _ConnectionDialogState extends State<ConnectionDialog>
                       const SizedBox(height: 8),
                       TextButton.icon(
                         onPressed: _refreshBleDevices,
-                        icon: const Icon(Icons.refresh),
+                        icon: Icon(Icons.refresh),
                         label: Text(AppLocalizations.of(context)!.scanAgain),
                       ),
                     ],

@@ -381,7 +381,7 @@ class _SarUpdateSheetState extends State<SarUpdateSheet> {
                         ),
                       );
                     }),
-                    const SizedBox(height: 16),
+                    SizedBox(height: 16),
 
                     // Destination selection (compact dropdown with rooms, channels, and all contacts)
                     Text(
@@ -505,7 +505,7 @@ class _SarUpdateSheetState extends State<SarUpdateSheet> {
                                           size: 18,
                                           color: colorScheme.onSurface,
                                         ),
-                                        const SizedBox(width: 12),
+                                        SizedBox(width: 12),
                                         Expanded(
                                           child: Text(
                                             AppLocalizations.of(context)!.allTeamContacts,
@@ -593,7 +593,7 @@ class _SarUpdateSheetState extends State<SarUpdateSheet> {
                                   color: Colors.green,
                                   size: 20,
                                 ),
-                                const SizedBox(width: 8),
+                                SizedBox(width: 8),
                                 Expanded(
                                   child: Text(
                                     AppLocalizations.of(context)!.directMessagesInfo(chatContactsCount),
@@ -718,7 +718,7 @@ class _SarUpdateSheetState extends State<SarUpdateSheet> {
                                 ),
                               ),
                             ),
-                            const SizedBox(width: 16),
+                            SizedBox(width: 16),
                             Text(
                               AppLocalizations.of(context)!.gettingLocation,
                               style: TextStyle(color: colorScheme.onSurface),
@@ -979,7 +979,7 @@ class _SarUpdateSheetState extends State<SarUpdateSheet> {
                               size: 16,
                               color: Colors.blue,
                             ),
-                            const SizedBox(width: 8),
+                            SizedBox(width: 8),
                             Expanded(
                               child: Text(
                                 AppLocalizations.of(context)!.exampleCoordinates,
@@ -994,7 +994,7 @@ class _SarUpdateSheetState extends State<SarUpdateSheet> {
                       ),
                     ],
 
-                    const SizedBox(height: 24),
+                    SizedBox(height: 24),
 
                     // Optional notes
                     Text(
@@ -1193,7 +1193,7 @@ class _SarUpdateSheetState extends State<SarUpdateSheet> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
-                    icon: const Icon(Icons.send, size: 20),
+                    icon: Icon(Icons.send, size: 20),
                     label: Text(
                       AppLocalizations.of(context)!.sendSarMarker,
                       style: const TextStyle(

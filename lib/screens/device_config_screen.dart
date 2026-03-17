@@ -827,7 +827,7 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Wipe device data'),
+        title: Text(AppLocalizations.of(context)!.wipeDeviceData),
         content: const Text(
           'This will erase all data on the connected device, including contacts, keys, and saved settings. This cannot be undone.',
         ),
@@ -842,7 +842,7 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
               foregroundColor: Theme.of(context).colorScheme.onError,
             ),
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('Wipe device'),
+            child: Text(AppLocalizations.of(context)!.wipeDevice),
           ),
         ],
       ),
@@ -893,7 +893,7 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
         .toList();
     if (contacts.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No device contacts to clear.')),
+        SnackBar(content: Text(AppLocalizations.of(context)!.noDeviceContactsToClear)),
       );
       return;
     }
@@ -901,7 +901,7 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Clear all contacts'),
+        title: Text(AppLocalizations.of(context)!.clearAllContacts),
         content: Text(
           'This will remove ${contacts.length} contact${contacts.length == 1 ? '' : 's'} from the connected device. Channels and radio settings will not be changed.',
         ),
@@ -916,7 +916,7 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
               foregroundColor: Theme.of(context).colorScheme.onError,
             ),
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('Clear contacts'),
+            child: Text(AppLocalizations.of(context)!.clearContacts),
           ),
         ],
       ),
@@ -988,7 +988,7 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
         .toList();
     if (channels.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No custom channels to clear.')),
+        SnackBar(content: Text(AppLocalizations.of(context)!.noCustomChannelsToClear)),
       );
       return;
     }
@@ -996,7 +996,7 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Clear all channels'),
+        title: Text(AppLocalizations.of(context)!.clearAllChannels),
         content: Text(
           'This will remove ${channels.length} custom channel${channels.length == 1 ? '' : 's'} from the connected device. Contacts and radio settings will not be changed.',
         ),
@@ -1011,7 +1011,7 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
               foregroundColor: Theme.of(context).colorScheme.onError,
             ),
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('Clear channels'),
+            child: Text(AppLocalizations.of(context)!.clearChannels),
           ),
         ],
       ),
@@ -1119,23 +1119,23 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
                     '${_getDeviceTypeString(context, deviceInfo.deviceType)} • ${deviceInfo.semanticVersion ?? deviceInfo.manufacturerModel ?? AppLocalizations.of(context)!.unknown}',
                 stats: [
                   _HeroStatData(
-                    label: 'Location',
+                    label: AppLocalizations.of(context)!.location,
                     value: locationSet ? 'Shared' : 'Hidden',
                     icon: Icons.my_location_rounded,
                     emphasized: locationSet,
                   ),
                   _HeroStatData(
-                    label: 'Frequency',
+                    label: AppLocalizations.of(context)!.frequency,
                     value: '${_freqController.text} MHz',
                     icon: Icons.settings_input_antenna_rounded,
                   ),
                   _HeroStatData(
-                    label: 'Bandwidth',
+                    label: AppLocalizations.of(context)!.bandwidth,
                     value: _selectedBandwidth,
                     icon: Icons.width_normal_rounded,
                   ),
                   _HeroStatData(
-                    label: 'Model',
+                    label: AppLocalizations.of(context)!.model,
                     value:
                         deviceInfo.manufacturerModel ??
                         AppLocalizations.of(context)!.unknown,
@@ -1143,10 +1143,10 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
                   ),
                 ],
               ),
-              const SizedBox(height: 20),
+              SizedBox(height: 20),
               _ConfigSectionCard(
-                title: 'Storage',
-                subtitle: 'Available space on this device.',
+                title: AppLocalizations.of(context)!.storage,
+                subtitle: AppLocalizations.of(context)!.availableSpaceOnThisDevice,
                 icon: Icons.storage_rounded,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -1155,16 +1155,16 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
                       children: [
                         Expanded(
                           child: _StorageStat(
-                            label: 'Used',
+                            label: AppLocalizations.of(context)!.used,
                             value: _formatStorage(
                               deviceInfo.storageUsedKb ?? 0,
                             ),
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        SizedBox(width: 12),
                         Expanded(
                           child: _StorageStat(
-                            label: 'Total',
+                            label: AppLocalizations.of(context)!.total,
                             value: deviceInfo.storageTotalKb != null
                                 ? _formatStorage(deviceInfo.storageTotalKb!)
                                 : AppLocalizations.of(context)!.unknown,
@@ -1177,9 +1177,9 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
                   ],
                 ),
               ),
-              const SizedBox(height: 20),
+              SizedBox(height: 20),
               _ConfigSectionCard(
-                title: 'Auto discovery',
+                title: AppLocalizations.of(context)!.autoDiscovery,
                 subtitle:
                     'Control how the radio auto-adds discovered nodes to its contacts table.',
                 icon: Icons.person_search_rounded,
@@ -1190,7 +1190,7 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
                       icon: _autoAddDiscoveredContactsEnabled
                           ? Icons.person_add_alt_1
                           : Icons.person_add_disabled,
-                      title: 'Enable automatic adding',
+                      title: AppLocalizations.of(context)!.enableAutomaticAdding,
                       description:
                           'Turn this off to keep discoveries manual-only on the radio.',
                       accentColor: _autoAddDiscoveredContactsEnabled
@@ -1206,10 +1206,10 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
                         },
                       ),
                     ),
-                    const SizedBox(height: 18),
+                    SizedBox(height: 18),
                     _SettingHighlightCard(
                       icon: Icons.person_outline_rounded,
-                      title: 'Auto-add users',
+                      title: AppLocalizations.of(context)!.autoaddUsers,
                       description:
                           'Automatically store discovered user/chat nodes.',
                       accentColor: _autoAddUsersEnabled
@@ -1227,10 +1227,10 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
                             : null,
                       ),
                     ),
-                    const SizedBox(height: 14),
+                    SizedBox(height: 14),
                     _SettingHighlightCard(
                       icon: Icons.router_outlined,
-                      title: 'Auto-add repeaters',
+                      title: AppLocalizations.of(context)!.autoaddRepeaters,
                       description:
                           'Automatically store discovered repeater nodes.',
                       accentColor: _autoAddRepeatersEnabled
@@ -1248,10 +1248,10 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
                             : null,
                       ),
                     ),
-                    const SizedBox(height: 14),
+                    SizedBox(height: 14),
                     _SettingHighlightCard(
                       icon: Icons.meeting_room_outlined,
-                      title: 'Auto-add room servers',
+                      title: AppLocalizations.of(context)!.autoaddRoomServers,
                       description:
                           'Automatically store discovered room/server nodes.',
                       accentColor: _autoAddRoomServersEnabled
@@ -1269,10 +1269,10 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
                             : null,
                       ),
                     ),
-                    const SizedBox(height: 14),
+                    SizedBox(height: 14),
                     _SettingHighlightCard(
                       icon: Icons.sensors_outlined,
-                      title: 'Auto-add sensors',
+                      title: AppLocalizations.of(context)!.autoaddSensors,
                       description:
                           'Automatically store discovered sensor nodes.',
                       accentColor: _autoAddSensorsEnabled
@@ -1290,10 +1290,10 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
                             : null,
                       ),
                     ),
-                    const SizedBox(height: 14),
+                    SizedBox(height: 14),
                     _SettingHighlightCard(
                       icon: Icons.history_toggle_off_rounded,
-                      title: 'Overwrite oldest when full',
+                      title: AppLocalizations.of(context)!.overwriteOldestWhenFull,
                       description:
                           'Allow the radio to replace the oldest contact when storage is full.',
                       accentColor: _overwriteOldestAutoAddEnabled
@@ -1329,16 +1329,16 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
                             : _saveAutoDiscoverySettings,
                         isSaving: _isSavingAutoDiscoverySettings,
                         isSaved: _autoDiscoverySettingsSaved,
-                        label: 'Save discovery settings',
+                        label: AppLocalizations.of(context)!.saveDiscoverySettings,
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 20),
+              SizedBox(height: 20),
               _ConfigSectionCard(
                 title: AppLocalizations.of(context)!.publicInfo,
-                subtitle: 'Choose the name and location this device shares.',
+                subtitle: AppLocalizations.of(context)!.chooseTheNameAndLocationThisDeviceShares,
                 icon: Icons.public_rounded,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -1371,7 +1371,7 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
                         icon: _gpsEnabled!
                             ? Icons.gps_fixed
                             : Icons.gps_off,
-                        title: 'GPS Module',
+                        title: AppLocalizations.of(context)!.gpsModule,
                         description:
                             'Enable or disable the onboard GPS hardware.',
                         accentColor: _gpsEnabled!
@@ -1483,16 +1483,16 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
                         onPressed: _isSavingPublicInfo ? null : _savePublicInfo,
                         isSaving: _isSavingPublicInfo,
                         isSaved: _publicInfoSaved,
-                        label: 'Save public info',
+                        label: AppLocalizations.of(context)!.savePublicInfo,
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 20),
+              SizedBox(height: 20),
               _ConfigSectionCard(
                 title: AppLocalizations.of(context)!.radioSettings,
-                subtitle: 'Choose a preset or fine-tune custom radio settings.',
+                subtitle: AppLocalizations.of(context)!.chooseAPresetOrFinetuneCustomRadioSettings,
                 icon: Icons.settings_input_antenna_rounded,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -1512,9 +1512,9 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
                       ),
                       isExpanded: true,
                       items: [
-                        const DropdownMenuItem<_RadioPreset?>(
+                        DropdownMenuItem<_RadioPreset?>(
                           value: null,
-                          child: Text('Custom'),
+                          child: Text(AppLocalizations.of(context)!.custom),
                         ),
                         ..._radioPresets.map(
                           (preset) => DropdownMenuItem<_RadioPreset?>(
@@ -1713,10 +1713,10 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
                       ),
                     ),
                     if (deviceInfo.clientRepeat != null) ...[
-                      const SizedBox(height: 16),
+                      SizedBox(height: 16),
                       _SettingHighlightCard(
                         icon: Icons.repeat_rounded,
-                        title: 'Repeat nearby traffic',
+                        title: AppLocalizations.of(context)!.repeatNearbyTraffic,
                         description:
                             deviceInfo.allowedRepeatFreqRanges != null &&
                                 deviceInfo.allowedRepeatFreqRanges!.isNotEmpty
@@ -1753,16 +1753,16 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
                             : _saveRadioSettings,
                         isSaving: _isSavingRadioSettings,
                         isSaved: _radioSettingsSaved,
-                        label: 'Save radio settings',
+                        label: AppLocalizations.of(context)!.saveRadioSettings,
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 20),
+              SizedBox(height: 20),
               _ConfigSectionCard(
-                title: 'Danger zone',
-                subtitle: 'Destructive device actions.',
+                title: AppLocalizations.of(context)!.dangerZone,
+                subtitle: AppLocalizations.of(context)!.destructiveDeviceActions,
                 icon: Icons.warning_amber_rounded,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -1830,8 +1830,8 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
                                   strokeWidth: 2,
                                 ),
                               )
-                            : const Icon(Icons.people_alt_outlined),
-                        label: const Text('Clear all contacts'),
+                            : Icon(Icons.people_alt_outlined),
+                        label: Text(AppLocalizations.of(context)!.clearAllContacts),
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -1854,8 +1854,8 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
                                   strokeWidth: 2,
                                 ),
                               )
-                            : const Icon(Icons.forum_outlined),
-                        label: const Text('Clear all channels'),
+                            : Icon(Icons.forum_outlined),
+                        label: Text(AppLocalizations.of(context)!.clearAllChannels),
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -1870,8 +1870,8 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
                           foregroundColor: colorScheme.onError,
                           minimumSize: const Size.fromHeight(52),
                         ),
-                        icon: const Icon(Icons.delete_forever_rounded),
-                        label: const Text('Wipe device data'),
+                        icon: Icon(Icons.delete_forever_rounded),
+                        label: Text(AppLocalizations.of(context)!.wipeDeviceData),
                       ),
                     ),
                   ],

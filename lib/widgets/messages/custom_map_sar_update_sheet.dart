@@ -200,7 +200,7 @@ class _CustomMapSarUpdateSheetState extends State<CustomMapSarUpdateSheet> {
                         ),
                       );
                     }),
-                    const SizedBox(height: 24),
+                    SizedBox(height: 24),
                     Text(
                       AppLocalizations.of(context)!.sendTo,
                       style: TextStyle(
@@ -231,7 +231,7 @@ class _CustomMapSarUpdateSheetState extends State<CustomMapSarUpdateSheet> {
                                 color: Colors.red.withValues(alpha: 0.3),
                               ),
                             ),
-                            child: const Text('No destinations available'),
+                            child: Text(AppLocalizations.of(context)!.noDestinationsAvailableLabel),
                           );
                         }
 
@@ -426,7 +426,7 @@ class _CustomMapSarUpdateSheetState extends State<CustomMapSarUpdateSheet> {
                         (!_sendToAllContacts && _selectedContact == null)) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text('Select marker type and destination'),
+                          content: Text(AppLocalizations.of(context)!.selectMarkerTypeAndDestination),
                         ),
                       );
                       return;
@@ -449,8 +449,8 @@ class _CustomMapSarUpdateSheetState extends State<CustomMapSarUpdateSheet> {
                       Navigator.pop(context);
                     }
                   },
-                  icon: const Icon(Icons.send),
-                  label: const Text('Send'),
+                  icon: Icon(Icons.send),
+                  label: Text(AppLocalizations.of(context)!.send),
                 ),
               ),
             ),

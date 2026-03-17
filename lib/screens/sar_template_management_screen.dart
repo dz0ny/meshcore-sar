@@ -240,7 +240,7 @@ class _SarTemplateManagementScreenState extends State<SarTemplateManagementScree
               PopupMenuItem(
                 value: 'import',
                 child: ListTile(
-                  leading: const Icon(Icons.download),
+                  leading: Icon(Icons.download),
                   title: Text(l10n.importFromClipboard),
                   contentPadding: EdgeInsets.zero,
                 ),
@@ -248,7 +248,7 @@ class _SarTemplateManagementScreenState extends State<SarTemplateManagementScree
               PopupMenuItem(
                 value: 'export',
                 child: ListTile(
-                  leading: const Icon(Icons.upload),
+                  leading: Icon(Icons.upload),
                   title: Text(l10n.exportToClipboard),
                   contentPadding: EdgeInsets.zero,
                 ),
@@ -257,7 +257,7 @@ class _SarTemplateManagementScreenState extends State<SarTemplateManagementScree
               PopupMenuItem(
                 value: 'reset',
                 child: ListTile(
-                  leading: const Icon(Icons.restart_alt),
+                  leading: Icon(Icons.restart_alt),
                   title: Text(l10n.resetToDefaults),
                   contentPadding: EdgeInsets.zero,
                 ),
@@ -283,14 +283,14 @@ class _SarTemplateManagementScreenState extends State<SarTemplateManagementScree
                           size: 64,
                           color: colorScheme.onSurface.withValues(alpha: 0.3),
                         ),
-                        const SizedBox(height: 16),
+                        SizedBox(height: 16),
                         Text(
                           l10n.noTemplates,
                           style: theme.textTheme.titleMedium?.copyWith(
                             color: colorScheme.onSurface.withValues(alpha: 0.6),
                           ),
                         ),
-                        const SizedBox(height: 8),
+                        SizedBox(height: 8),
                         Text(
                           l10n.tapAddToCreate,
                           style: theme.textTheme.bodyMedium?.copyWith(
@@ -317,7 +317,7 @@ class _SarTemplateManagementScreenState extends State<SarTemplateManagementScree
             ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _addTemplate,
-        icon: const Icon(Icons.add),
+        icon: Icon(Icons.add),
         label: Text(l10n.addTemplate),
       ),
     );

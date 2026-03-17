@@ -1827,4 +1827,745 @@ class AppLocalizationsZh extends AppLocalizations {
   String contactFailedToSetRoute(String error) {
     return '设置路由失败：$error';
   }
+
+  @override
+  String get rssi => 'RSSI';
+
+  @override
+  String get snr => 'SNR';
+
+  @override
+  String get ackTimeout => 'ACK 超时';
+
+  @override
+  String get opcode => '操作码';
+
+  @override
+  String get payload => '有效载荷';
+
+  @override
+  String get hops => '跳数';
+
+  @override
+  String get hashSize => '哈希大小';
+
+  @override
+  String get pathBytes => '路径字节';
+
+  @override
+  String get selectedPath => '选定路径';
+
+  @override
+  String get estimatedTx => '预计传输';
+
+  @override
+  String get senderToReceipt => '发送到接收';
+
+  @override
+  String get receivedCopies => '收到的副本';
+
+  @override
+  String get retryCause => '重试原因';
+
+  @override
+  String get retryMode => '重试模式';
+
+  @override
+  String get retryResult => '重试结果';
+
+  @override
+  String get lastRetry => '最后重试';
+
+  @override
+  String get rxPackets => 'RX 数据包';
+
+  @override
+  String get mesh => 'Mesh';
+
+  @override
+  String get rate => '速率';
+
+  @override
+  String get window => '窗口';
+
+  @override
+  String get posttxDelay => '发送后延迟';
+
+  @override
+  String get bandpass => '带通';
+
+  @override
+  String get bandpassFilterVoice => '带通语音滤波';
+
+  @override
+  String get frequency => '频率';
+
+  @override
+  String get australia => '澳大利亚';
+
+  @override
+  String get australiaNarrow => '澳大利亚（窄带）';
+
+  @override
+  String get australiaQld => '澳大利亚：QLD';
+
+  @override
+  String get australiaSaWa => '澳大利亚：SA, WA';
+
+  @override
+  String get newZealand => '新西兰';
+
+  @override
+  String get newZealandNarrow => '新西兰（窄带）';
+
+  @override
+  String get switzerland => '瑞士';
+
+  @override
+  String get portugal433 => '葡萄牙 433';
+
+  @override
+  String get portugal868 => '葡萄牙 868';
+
+  @override
+  String get czechRepublicNarrow => '捷克（窄带）';
+
+  @override
+  String get eu433mhzLongRange => '欧盟 433MHz（远距离）';
+
+  @override
+  String get euukDeprecated => '欧盟/英国（已弃用）';
+
+  @override
+  String get euukNarrow => '欧盟/英国（窄带）';
+
+  @override
+  String get usacanadaRecommended => '美国/加拿大（推荐）';
+
+  @override
+  String get vietnamDeprecated => '越南（已弃用）';
+
+  @override
+  String get vietnamNarrow => '越南（窄带）';
+
+  @override
+  String get active => '活动';
+
+  @override
+  String get addContact => '添加联系人';
+
+  @override
+  String get all => '全部';
+
+  @override
+  String get autoResolve => '自动解析';
+
+  @override
+  String get clearAllLabel => '清除全部';
+
+  @override
+  String get clearRelays => '清除中继';
+
+  @override
+  String get clearFilters => '清除过滤器';
+
+  @override
+  String get clearRoute => '清除路由';
+
+  @override
+  String get clearMessages => '清除消息';
+
+  @override
+  String get clearScale => '清除比例';
+
+  @override
+  String get clearDiscoveries => '清除发现';
+
+  @override
+  String get clearOnlineTraceDatabase => '清除在线追踪数据库';
+
+  @override
+  String get clearAllChannels => '清除所有频道';
+
+  @override
+  String get clearAllContacts => '清除所有联系人';
+
+  @override
+  String get clearChannels => '清除频道';
+
+  @override
+  String get clearContacts => '清除联系人';
+
+  @override
+  String get clearPathOnMaxRetry => '最大重试时清除路径';
+
+  @override
+  String get create => '创建';
+
+  @override
+  String get custom => '自定义';
+
+  @override
+  String get defaultValue => '默认';
+
+  @override
+  String get duplicate => '复制';
+
+  @override
+  String get editName => '编辑名称';
+
+  @override
+  String get open => '打开';
+
+  @override
+  String get paste => '粘贴';
+
+  @override
+  String get preview => '预览';
+
+  @override
+  String get remove => '移除';
+
+  @override
+  String get rename => '重命名';
+
+  @override
+  String get resolveAll => '解析全部';
+
+  @override
+  String get send => '发送';
+
+  @override
+  String get sendAnyway => '仍然发送';
+
+  @override
+  String get share => '分享';
+
+  @override
+  String get shareContact => '分享联系人';
+
+  @override
+  String get trace => '追踪';
+
+  @override
+  String get use => '使用';
+
+  @override
+  String get useSelectedFrequency => '使用选定频率';
+
+  @override
+  String get discovery => '发现';
+
+  @override
+  String get discoverRepeaters => '发现中继器';
+
+  @override
+  String get discoverSensors => '发现传感器';
+
+  @override
+  String get repeaterDiscoverySent => '中继器发现已发送';
+
+  @override
+  String get sensorDiscoverySent => '传感器发现已发送';
+
+  @override
+  String get clearedPendingDiscoveries => '已清除待处理的发现。';
+
+  @override
+  String get autoDiscovery => '自动发现';
+
+  @override
+  String get enableAutomaticAdding => '启用自动添加';
+
+  @override
+  String get autoaddRepeaters => '自动添加中继器';
+
+  @override
+  String get autoaddRoomServers => '自动添加房间服务器';
+
+  @override
+  String get autoaddSensors => '自动添加传感器';
+
+  @override
+  String get autoaddUsers => '自动添加用户';
+
+  @override
+  String get overwriteOldestWhenFull => '满时覆盖最旧的';
+
+  @override
+  String get storage => '存储';
+
+  @override
+  String get dangerZone => '危险区域';
+
+  @override
+  String get profiles => '配置文件';
+
+  @override
+  String get favourites => '收藏夹';
+
+  @override
+  String get sensors => '传感器';
+
+  @override
+  String get others => '其他';
+
+  @override
+  String get gpsModule => 'GPS 模块';
+
+  @override
+  String get liveTraffic => '实时流量';
+
+  @override
+  String get repeatersMap => '中继器地图';
+
+  @override
+  String get spectrumScan => '频谱扫描';
+
+  @override
+  String get blePacketLogs => 'BLE 数据包日志';
+
+  @override
+  String get onlineTraceDatabase => '在线追踪数据库';
+
+  @override
+  String get routePathByteSize => '路由路径字节大小';
+
+  @override
+  String get messageNotifications => '消息通知';
+
+  @override
+  String get sarAlerts => 'SAR 警报';
+
+  @override
+  String get discoveryNotifications => '发现通知';
+
+  @override
+  String get updateNotifications => '更新通知';
+
+  @override
+  String get muteWhileAppIsOpen => '应用打开时静音';
+
+  @override
+  String get disableContacts => '禁用联系人';
+
+  @override
+  String get enableSensorsTab => '启用传感器标签';
+
+  @override
+  String get enableProfiles => '启用配置文件';
+
+  @override
+  String get autoRouteRotation => '自动路由轮换';
+
+  @override
+  String get nearestRepeaterFallback => '最近中继器回退';
+
+  @override
+  String get deleteAllStoredMessageHistory => '删除所有存储的消息历史';
+
+  @override
+  String get messageFontSize => '消息字体大小';
+
+  @override
+  String get rotateMapWithHeading => '随航向旋转地图';
+
+  @override
+  String get showMapDebugInfo => '显示地图调试信息';
+
+  @override
+  String get openMapInFullscreen => '全屏打开地图';
+
+  @override
+  String get showSarMarkersLabel => '显示 SAR 标记';
+
+  @override
+  String get displaySarMarkersOnTheMainMap => '在主地图上显示 SAR 标记';
+
+  @override
+  String get showAllContactTrailsLabel => '显示所有联系人轨迹';
+
+  @override
+  String get hideRepeatersOnMap => '在地图上隐藏中继器';
+
+  @override
+  String get setMapScale => '设置地图比例';
+
+  @override
+  String get customMapScaleSaved => '自定义地图比例已保存';
+
+  @override
+  String get voiceBitrate => '语音比特率';
+
+  @override
+  String get voiceCompressor => '语音压缩器';
+
+  @override
+  String get balancesQuietAndLoudSpeechLevels => '平衡安静和响亮的语音级别';
+
+  @override
+  String get voiceLimiter => '语音限制器';
+
+  @override
+  String get preventsClippingPeaksBeforeEncoding => '防止编码前的削波';
+
+  @override
+  String get micAutoGain => '麦克风自动增益';
+
+  @override
+  String get letsTheRecorderAdjustInputLevel => '让录音器调整输入级别';
+
+  @override
+  String get echoCancellation => '回声消除';
+
+  @override
+  String get noiseSuppression => '噪音抑制';
+
+  @override
+  String get trimSilenceInVoiceMessages => '修剪语音消息中的静音';
+
+  @override
+  String get compressor => '压缩器';
+
+  @override
+  String get limiter => '限制器';
+
+  @override
+  String get autoGain => '自动增益';
+
+  @override
+  String get echoCancel => '回声';
+
+  @override
+  String get noiseSuppress => '噪声';
+
+  @override
+  String get silenceTrim => '静音';
+
+  @override
+  String get maxImageSize => '最大图片大小';
+
+  @override
+  String get imageCompression => '图片压缩';
+
+  @override
+  String get grayscale => '灰度';
+
+  @override
+  String get ultraMode => '超级模式';
+
+  @override
+  String get fastPrivateGpsUpdates => '快速私有 GPS 更新';
+
+  @override
+  String get movementThreshold => '移动阈值';
+
+  @override
+  String get fastGpsMovementThreshold => '快速 GPS 移动阈值';
+
+  @override
+  String get fastGpsActiveuseInterval => '快速 GPS 活动使用间隔';
+
+  @override
+  String get activeuseUpdateInterval => '活动使用更新间隔';
+
+  @override
+  String get repeatNearbyTraffic => '转发附近流量';
+
+  @override
+  String get relayThroughRepeatersAcrossTheMesh => '通过网格中的中继器转发';
+
+  @override
+  String get nearbyOnlyWithoutRepeaterFlooding => '仅附近，无中继器泛洪';
+
+  @override
+  String get multihop => '多跳';
+
+  @override
+  String get createProfile => '创建配置文件';
+
+  @override
+  String get renameProfile => '重命名配置文件';
+
+  @override
+  String get newProfile => '新配置文件';
+
+  @override
+  String get manageProfiles => '管理配置文件';
+
+  @override
+  String get enableProfilesToStartManagingThem => '启用配置文件以开始管理它们。';
+
+  @override
+  String get openMessage => '打开消息';
+
+  @override
+  String get jumpToTheRelatedSarMessage => '跳转到相关的 SAR 消息';
+
+  @override
+  String get removeSarMarker => '移除 SAR 标记';
+
+  @override
+  String get pleaseSelectADestinationToSendSarMarker => '请选择目标以发送 SAR 标记';
+
+  @override
+  String get sarMarkerBroadcastToPublicChannel => 'SAR 标记已广播到公共频道';
+
+  @override
+  String get sarMarkerSentToRoom => 'SAR 标记已发送到房间';
+
+  @override
+  String get loadFromGallery => '从图库加载';
+
+  @override
+  String get replaceImage => '替换图片';
+
+  @override
+  String get selectFromGallery => '从图库选择';
+
+  @override
+  String get team => '团队';
+
+  @override
+  String get found => '已找到';
+
+  @override
+  String get staging => '集结区';
+
+  @override
+  String get object => '物体';
+
+  @override
+  String get quiet => '安静';
+
+  @override
+  String get moderate => '中等';
+
+  @override
+  String get busy => '繁忙';
+
+  @override
+  String get spectrumScanReturnedNoCandidateFrequencies => '频谱扫描未找到候选频率';
+
+  @override
+  String get searchMessages => '搜索消息';
+
+  @override
+  String get sendImageFromGallery => '从图库发送图片';
+
+  @override
+  String get takePhoto => '拍照';
+
+  @override
+  String get dmOnly => '仅私信';
+
+  @override
+  String get allMessages => '所有消息';
+
+  @override
+  String get sendToPublicChannel => '发送到公共频道？';
+
+  @override
+  String get selectMarkerTypeAndDestination => '选择标记类型和目标';
+
+  @override
+  String get noDestinationsAvailableLabel => '没有可用的目标';
+
+  @override
+  String get image => '图片';
+
+  @override
+  String get format => '格式';
+
+  @override
+  String get dimensions => '尺寸';
+
+  @override
+  String get segments => '分段';
+
+  @override
+  String get transfers => '传输';
+
+  @override
+  String get downloadedBy => '已下载';
+
+  @override
+  String get saveDiscoverySettings => '保存发现设置';
+
+  @override
+  String get savePublicInfo => '保存公共信息';
+
+  @override
+  String get saveRadioSettings => '保存无线电设置';
+
+  @override
+  String get savePath => '保存路径';
+
+  @override
+  String get wipeDeviceData => '擦除设备数据';
+
+  @override
+  String get wipeDevice => '擦除设备';
+
+  @override
+  String get destructiveDeviceActions => '破坏性设备操作。';
+
+  @override
+  String get chooseAPresetOrFinetuneCustomRadioSettings => '选择预设或微调自定义无线电设置。';
+
+  @override
+  String get chooseTheNameAndLocationThisDeviceShares => '选择此设备共享的名称和位置。';
+
+  @override
+  String get availableSpaceOnThisDevice => '此设备上的可用空间。';
+
+  @override
+  String get used => '已使用';
+
+  @override
+  String get total => '总计';
+
+  @override
+  String get renameValue => '重命名值';
+
+  @override
+  String get customizeFields => '自定义字段';
+
+  @override
+  String get livePreview => '实时预览';
+
+  @override
+  String get refreshSchedule => '刷新计划';
+
+  @override
+  String get noResponse => '无响应';
+
+  @override
+  String get refreshing => '刷新中';
+
+  @override
+  String get unavailable => '不可用';
+
+  @override
+  String get pickARelayOrNodeToWatchInSensors => '选择要在传感器中监视的中继或节点。';
+
+  @override
+  String get publicKeyLabel => '公钥';
+
+  @override
+  String get alreadyInContacts => '已在联系人中';
+
+  @override
+  String get connectToADeviceBeforeAddingContacts => '添加联系人前请连接到设备';
+
+  @override
+  String get fromContacts => '来自联系人';
+
+  @override
+  String get onlineOnly => '仅在线';
+
+  @override
+  String get inBoth => '两者中';
+
+  @override
+  String get source => '来源';
+
+  @override
+  String get manualRouteEdit => '手动路由编辑';
+
+  @override
+  String get observedMeshRoute => '观察到的网格路由';
+
+  @override
+  String get allMessagesCleared => '所有消息已清除';
+
+  @override
+  String get onlineTraceDatabaseCleared => '在线追踪数据库已清除';
+
+  @override
+  String get packetLogsCleared => '数据包日志已清除';
+
+  @override
+  String get hexDataCopiedToClipboard => '十六进制数据已复制到剪贴板';
+
+  @override
+  String get developerModeEnabled => '开发者模式已启用';
+
+  @override
+  String get developerModeDisabled => '开发者模式已禁用';
+
+  @override
+  String get clipboardIsEmpty => '剪贴板为空';
+
+  @override
+  String get contactImported => '联系人已导入';
+
+  @override
+  String get contactLinkCopiedToClipboard => '联系人链接已复制到剪贴板';
+
+  @override
+  String get failedToExportContact => '导出联系人失败';
+
+  @override
+  String get noLogsToExport => '没有日志可导出';
+
+  @override
+  String get exportAsCsv => '导出为 CSV';
+
+  @override
+  String get exportAsText => '导出为文本';
+
+  @override
+  String get receivedRfc3339 => '收到 (RFC3339)';
+
+  @override
+  String get buildTime => '构建时间';
+
+  @override
+  String get downloadUrlNotAvailable => '下载链接不可用';
+
+  @override
+  String get cannotOpenDownloadUrl => '无法打开下载链接';
+
+  @override
+  String get updateCheckIsOnlyAvailableOnAndroid => '更新检查仅在 Android 上可用';
+
+  @override
+  String get youAreRunningTheLatestVersion => '您正在使用最新版本';
+
+  @override
+  String get updateAvailableButDownloadUrlNotFound => '有更新可用但未找到下载链接';
+
+  @override
+  String get startTictactoe => '开始井字棋';
+
+  @override
+  String get tictactoeUnavailable => '井字棋不可用';
+
+  @override
+  String get tictactoeOpponentUnknown => '井字棋：对手未知';
+
+  @override
+  String get tictactoeWaitingForStart => '井字棋：等待开始';
+
+  @override
+  String get acceptsShareLinks => '接受分享链接';
+
+  @override
+  String get supportsRawHex => '支持原始十六进制';
+
+  @override
+  String get clipboardfriendly => '剪贴板友好';
+
+  @override
+  String get captured => '已捕获';
+
+  @override
+  String get size => '大小';
+
+  @override
+  String get noCustomChannelsToClear => '没有自定义频道可清除。';
+
+  @override
+  String get noDeviceContactsToClear => '没有设备联系人可清除。';
 }

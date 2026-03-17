@@ -519,7 +519,7 @@ class _MapTabState extends State<MapTab> with AutomaticKeepAliveClientMixin {
               child: Row(
                 children: [
                   const Icon(Icons.layers),
-                  const SizedBox(width: 12),
+                  SizedBox(width: 12),
                   Expanded(
                     child: Text(
                       AppLocalizations.of(context)!.selectMapLayer,
@@ -644,7 +644,7 @@ class _MapTabState extends State<MapTab> with AutomaticKeepAliveClientMixin {
                           !rootContext.read<MapProvider>().isUsingCustomMap &&
                               _currentLayer == _dtk25Layer
                           ? const Icon(Icons.check_circle, color: Colors.green)
-                          : const Icon(Icons.radio_button_unchecked),
+                          : Icon(Icons.radio_button_unchecked),
                       title: Text(AppLocalizations.of(context)!.topographicMap),
                       subtitle: Text(_dtk25Layer.attribution),
                       onTap: () async {
@@ -872,8 +872,8 @@ class _MapTabState extends State<MapTab> with AutomaticKeepAliveClientMixin {
                           ),
                           if (!hasCustomMap)
                             ListTile(
-                              leading: const Icon(Icons.add_photo_alternate),
-                              title: const Text('Load from gallery'),
+                              leading: Icon(Icons.add_photo_alternate),
+                              title: Text(AppLocalizations.of(context)!.loadFromGallery),
                               subtitle: const Text(
                                 'Use a cave map image instead of GPS tiles',
                               ),
@@ -904,8 +904,8 @@ class _MapTabState extends State<MapTab> with AutomaticKeepAliveClientMixin {
                               ),
                             ),
                             ListTile(
-                              leading: const Icon(Icons.swap_horizontal_circle),
-                              title: const Text('Replace image'),
+                              leading: Icon(Icons.swap_horizontal_circle),
+                              title: Text(AppLocalizations.of(context)!.replaceImage),
                               subtitle: const Text(
                                 'Pick a different map from the gallery',
                               ),
@@ -940,8 +940,8 @@ class _MapTabState extends State<MapTab> with AutomaticKeepAliveClientMixin {
                             ),
                             if (customMapConfig.isCalibrated)
                               ListTile(
-                                leading: const Icon(Icons.clear),
-                                title: const Text('Clear scale'),
+                                leading: Icon(Icons.clear),
+                                title: Text(AppLocalizations.of(context)!.clearScale),
                                 onTap: () async {
                                   await mapProvider.clearCustomMapCalibration();
                                   if (!context.mounted) return;
@@ -1218,7 +1218,7 @@ class _MapTabState extends State<MapTab> with AutomaticKeepAliveClientMixin {
         context: context,
         builder: (dialogContext) {
           return AlertDialog(
-            title: const Text('Set map scale'),
+            title: Text(AppLocalizations.of(context)!.setMapScale),
             content: TextField(
               controller: controller,
               keyboardType: const TextInputType.numberWithOptions(
@@ -1279,7 +1279,7 @@ class _MapTabState extends State<MapTab> with AutomaticKeepAliveClientMixin {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Custom map scale saved')));
+      ).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.customMapScaleSaved)));
     }
   }
 
@@ -1417,9 +1417,9 @@ class _MapTabState extends State<MapTab> with AutomaticKeepAliveClientMixin {
                 if (message != null)
                   ListTile(
                     contentPadding: EdgeInsets.zero,
-                    leading: const Icon(Icons.chat_bubble_outline),
-                    title: const Text('Open message'),
-                    subtitle: const Text('Jump to the related SAR message'),
+                    leading: Icon(Icons.chat_bubble_outline),
+                    title: Text(AppLocalizations.of(context)!.openMessage),
+                    subtitle: Text(AppLocalizations.of(context)!.jumpToTheRelatedSarMessage),
                     onTap: () async {
                       Navigator.pop(sheetContext);
                       await _openSarMarkerMessage(
@@ -1468,7 +1468,7 @@ class _MapTabState extends State<MapTab> with AutomaticKeepAliveClientMixin {
     return showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Remove SAR marker'),
+        title: Text(AppLocalizations.of(context)!.removeSarMarker),
         content: Text(
           hasMessage
               ? 'This will remove the marker and its linked chat message.'
@@ -1654,8 +1654,8 @@ class _MapTabState extends State<MapTab> with AutomaticKeepAliveClientMixin {
     if (!sendToChannel && !sendToAllContacts && roomPublicKey == null) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select a destination to send SAR marker'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.pleaseSelectADestinationToSendSarMarker),
           backgroundColor: Colors.red,
         ),
       );
@@ -1784,8 +1784,8 @@ class _MapTabState extends State<MapTab> with AutomaticKeepAliveClientMixin {
 
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('SAR marker broadcast to public channel'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.sarMarkerBroadcastToPublicChannel),
             backgroundColor: Colors.orange,
             duration: Duration(seconds: 2),
           ),
@@ -1832,8 +1832,8 @@ class _MapTabState extends State<MapTab> with AutomaticKeepAliveClientMixin {
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('SAR marker sent to room'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.sarMarkerSentToRoom),
           backgroundColor: Colors.green,
           duration: Duration(seconds: 2),
         ),
@@ -3026,7 +3026,7 @@ class _MapTabState extends State<MapTab> with AutomaticKeepAliveClientMixin {
                             color: Colors.white,
                             size: 20,
                           ),
-                          const SizedBox(width: 8),
+                          SizedBox(width: 8),
                           Text(
                             AppLocalizations.of(context)!.measureDistance,
                             style: const TextStyle(

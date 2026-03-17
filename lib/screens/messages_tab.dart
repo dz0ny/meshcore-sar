@@ -535,7 +535,7 @@ class _MessagesTabState extends State<MessagesTab> {
         }).firstOrNull;
 
         if (recipient == null) {
-          ToastLogger.error(context, l10n.cannotReplyContactNotFound);
+          ToastLogger.error(context, AppLocalizations.of(context)!.cannotReplyContactNotFound);
           return;
         }
       }
@@ -564,13 +564,13 @@ class _MessagesTabState extends State<MessagesTab> {
       } else {
         final senderPrefix = message.senderPublicKeyPrefix;
         if (senderPrefix == null || senderPrefix.length < 6) {
-          ToastLogger.error(context, l10n.cannotReplySenderMissing);
+          ToastLogger.error(context, AppLocalizations.of(context)!.cannotReplySenderMissing);
           return;
         }
 
         recipient = contactsProvider.findContactByPrefix(senderPrefix);
         if (recipient == null) {
-          ToastLogger.error(context, l10n.cannotReplyContactNotFound);
+          ToastLogger.error(context, AppLocalizations.of(context)!.cannotReplyContactNotFound);
           return;
         }
 
@@ -1376,7 +1376,7 @@ class _MessagesTabState extends State<MessagesTab> {
     final decision = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Send to Public Channel?'),
+        title: Text(AppLocalizations.of(context)!.sendToPublicChannel),
         content: Text(
           'You are about to send $mediaType to the Public Channel. '
           'This is not advised because everyone on the mesh may receive it. '
@@ -1389,7 +1389,7 @@ class _MessagesTabState extends State<MessagesTab> {
           ),
           FilledButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('Send anyway'),
+            child: Text(AppLocalizations.of(context)!.sendAnyway),
           ),
         ],
       ),
@@ -1449,8 +1449,8 @@ class _MessagesTabState extends State<MessagesTab> {
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                leading: const Icon(Icons.search),
-                title: const Text('Search messages'),
+                leading: Icon(Icons.search),
+                title: Text(AppLocalizations.of(context)!.searchMessages),
                 onTap: () async {
                   await _runAfterSheetDismissal(sheetContext, () async {
                     _showFilteredMessageSearch();
@@ -1458,7 +1458,7 @@ class _MessagesTabState extends State<MessagesTab> {
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.add_location_alt),
+                leading: Icon(Icons.add_location_alt),
                 title: Text(AppLocalizations.of(context)!.sendSarMarker),
                 onTap: () async {
                   await _runAfterSheetDismissal(sheetContext, () async {
@@ -1485,8 +1485,8 @@ class _MessagesTabState extends State<MessagesTab> {
                 ),
               ListTile(
                 enabled: !_isSendingImage,
-                leading: const Icon(Icons.photo_library),
-                title: const Text('Send image from gallery'),
+                leading: Icon(Icons.photo_library),
+                title: Text(AppLocalizations.of(context)!.sendImageFromGallery),
                 onTap: _isSendingImage
                     ? null
                     : () async {
@@ -1497,8 +1497,8 @@ class _MessagesTabState extends State<MessagesTab> {
               ),
               ListTile(
                 enabled: !_isSendingImage,
-                leading: const Icon(Icons.camera_alt),
-                title: const Text('Take photo'),
+                leading: Icon(Icons.camera_alt),
+                title: Text(AppLocalizations.of(context)!.takePhoto),
                 onTap: _isSendingImage
                     ? null
                     : () async {
@@ -1508,9 +1508,9 @@ class _MessagesTabState extends State<MessagesTab> {
                       },
               ),
               ListTile(
-                leading: const Icon(Icons.grid_3x3),
-                title: const Text('Start Tic-Tac-Toe'),
-                subtitle: const Text('DM only'),
+                leading: Icon(Icons.grid_3x3),
+                title: Text(AppLocalizations.of(context)!.startTictactoe),
+                subtitle: Text(AppLocalizations.of(context)!.dmOnly),
                 onTap: () async {
                   await _runAfterSheetDismissal(sheetContext, () async {
                     await _startTicTacToeGame();

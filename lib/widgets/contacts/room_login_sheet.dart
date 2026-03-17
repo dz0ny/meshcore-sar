@@ -401,7 +401,7 @@ class _RoomLoginSheetState extends State<RoomLoginSheet> {
                             color: colorScheme.onPrimaryContainer,
                             size: 20,
                           ),
-                          const SizedBox(width: 12),
+                          SizedBox(width: 12),
                           Expanded(
                             child: Text(
                               AppLocalizations.of(context)!.enterPasswordInfo,
@@ -488,7 +488,7 @@ class _RoomLoginSheetState extends State<RoomLoginSheet> {
                               height: 20,
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
-                          : const Icon(Icons.login),
+                          : Icon(Icons.login),
                       label: Text(
                         _isLoggingIn
                             ? AppLocalizations.of(context)!.loggingInDots

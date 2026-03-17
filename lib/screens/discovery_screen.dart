@@ -54,7 +54,7 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Clear discoveries'),
+        title: Text(AppLocalizations.of(context)!.clearDiscoveries),
         content: Text(
           'Remove all $pendingCount pending discover${pendingCount == 1 ? 'y' : 'ies'} from this device?',
         ),
@@ -65,7 +65,7 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
           ),
           FilledButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('Clear all'),
+            child: Text(AppLocalizations.of(context)!.clearAllLabel),
           ),
         ],
       ),
@@ -80,7 +80,7 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
       return;
     }
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Cleared pending discoveries.')),
+      SnackBar(content: Text(AppLocalizations.of(context)!.clearedPendingDiscoveries)),
     );
   }
 
@@ -363,7 +363,7 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Discovery'),
+        title: Text(l10n.discovery),
         actions: [
           Consumer<ConnectionProvider>(
             builder: (context, connectionProvider, child) {
@@ -393,8 +393,8 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
                                 ),
                               )
                             : const Icon(Icons.router_outlined),
-                        const SizedBox(width: 12),
-                        const Text('Discover repeaters'),
+                        SizedBox(width: 12),
+                        Text(l10n.discoverRepeaters),
                       ],
                     ),
                   ),
@@ -412,8 +412,8 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
                                 ),
                               )
                             : const Icon(Icons.sensors_outlined),
-                        const SizedBox(width: 12),
-                        const Text('Discover sensors'),
+                        SizedBox(width: 12),
+                        Text(l10n.discoverSensors),
                       ],
                     ),
                   ),
@@ -490,7 +490,7 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
                                     : const Icon(
                                         Icons.download_for_offline_outlined,
                                       ),
-                                label: const Text('Resolve all'),
+                                label: Text(l10n.resolveAll),
                               ),
                             ),
                             const SizedBox(width: 10),
@@ -499,8 +499,8 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
                                 onPressed: pendingAdverts.isNotEmpty
                                     ? _clearAllDiscoveries
                                     : null,
-                                icon: const Icon(Icons.clear_all_rounded),
-                                label: const Text('Clear all'),
+                                icon: Icon(Icons.clear_all_rounded),
+                                label: Text(l10n.clearAllLabel),
                               ),
                             ),
                           ],

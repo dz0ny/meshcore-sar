@@ -133,7 +133,7 @@ class _AddChannelSheetState extends State<AddChannelSheet> {
                       onPressed: _isCreating
                           ? null
                           : () => Navigator.of(context).pop(),
-                      icon: const Icon(Icons.close),
+                      icon: Icon(Icons.close),
                       tooltip: l10n.close,
                     ),
                   ],
@@ -158,7 +158,7 @@ class _AddChannelSheetState extends State<AddChannelSheet> {
                         size: 20,
                         color: theme.colorScheme.primary,
                       ),
-                      const SizedBox(width: 8),
+                      SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           l10n.channelTypesInfo,
@@ -170,7 +170,7 @@ class _AddChannelSheetState extends State<AddChannelSheet> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
                 TextFormField(
                   controller: _nameController,
                   decoration: InputDecoration(
@@ -196,7 +196,7 @@ class _AddChannelSheetState extends State<AddChannelSheet> {
                   },
                 ),
                 if (!isHashChannel) ...[
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16),
                   TextFormField(
                     controller: _secretController,
                     decoration: InputDecoration(
@@ -211,7 +211,7 @@ class _AddChannelSheetState extends State<AddChannelSheet> {
                     textInputAction: TextInputAction.done,
                     onFieldSubmitted: (_) => _handleCreate(),
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: 8),
                   Text(
                     l10n.channelSecretHelp,
                     style: theme.textTheme.bodySmall?.copyWith(
@@ -236,7 +236,7 @@ class _AddChannelSheetState extends State<AddChannelSheet> {
                           size: 20,
                           color: Colors.blue,
                         ),
-                        const SizedBox(width: 8),
+                        SizedBox(width: 8),
                         Expanded(
                           child: Text(
                             l10n.hashChannelInfo,

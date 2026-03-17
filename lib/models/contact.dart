@@ -141,6 +141,23 @@ class ContactRouteCodec {
     );
   }
 
+  static ParsedContactRoute direct({int hashSize = 1}) {
+    if (hashSize < 1 || hashSize > maxHashSize) {
+      throw ArgumentError.value(hashSize, 'hashSize', 'Must be 1, 2, or 3.');
+    }
+
+    final encodedPathLen = (hashSize - 1) << 6;
+    return ParsedContactRoute(
+      canonicalText: '',
+      hashSize: hashSize,
+      hopCount: 0,
+      encodedPathLen: encodedPathLen,
+      signedEncodedPathLen: toSignedDescriptor(encodedPathLen),
+      pathBytes: Uint8List(0),
+      paddedPathBytes: Uint8List(maxPathBytes),
+    );
+  }
+
   static ParsedContactRoute? fromContact(Contact contact) {
     if (!contact.routeHasPath || contact.routeHopCount == 0) {
       return null;

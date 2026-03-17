@@ -362,7 +362,7 @@ class _HomeScreenState extends State<HomeScreen>
                   ),
                 ),
                 title: Text(l10n.flood),
-                subtitle: const Text('Relay through repeaters across the mesh'),
+                subtitle: Text(l10n.relayThroughRepeatersAcrossTheMesh),
                 trailing: const Icon(Icons.chevron_right_rounded),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
@@ -388,7 +388,7 @@ class _HomeScreenState extends State<HomeScreen>
                   ),
                 ),
                 title: Text(l10n.direct),
-                subtitle: const Text('Nearby only, without repeater flooding'),
+                subtitle: Text(l10n.nearbyOnlyWithoutRepeaterFlooding),
                 trailing: const Icon(Icons.chevron_right_rounded),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
@@ -609,7 +609,7 @@ class _HomeScreenState extends State<HomeScreen>
                         onPressed: () async {
                           await provider.disconnect();
                         },
-                        icon: const Icon(Icons.power_settings_new),
+                        icon: Icon(Icons.power_settings_new),
                         tooltip: AppLocalizations.of(context)!.disconnect,
                         color: Colors.red.shade700,
                       );
@@ -631,8 +631,8 @@ class _HomeScreenState extends State<HomeScreen>
                           child: Row(
                             children: [
                               const Icon(Icons.radar),
-                              const SizedBox(width: 8),
-                              const Text('Spectrum Scan'),
+                              SizedBox(width: 8),
+                              Text(AppLocalizations.of(context)!.spectrumScan),
                             ],
                           ),
                           onTap: () {
@@ -653,11 +653,11 @@ class _HomeScreenState extends State<HomeScreen>
 
                     items.add(
                       PopupMenuItem(
-                        child: const Row(
+                        child: Row(
                           children: [
-                            Icon(Icons.radar_outlined),
-                            SizedBox(width: 8),
-                            Text('Live Traffic'),
+                            const Icon(Icons.radar_outlined),
+                            const SizedBox(width: 8),
+                            Text(AppLocalizations.of(context)!.liveTraffic),
                           ],
                         ),
                         onTap: () {
@@ -688,11 +688,11 @@ class _HomeScreenState extends State<HomeScreen>
 
                     items.add(
                       PopupMenuItem(
-                        child: const Row(
+                        child: Row(
                           children: [
-                            Icon(Icons.router_outlined),
-                            SizedBox(width: 8),
-                            Text('Repeaters Map'),
+                            const Icon(Icons.router_outlined),
+                            const SizedBox(width: 8),
+                            Text(AppLocalizations.of(context)!.repeatersMap),
                           ],
                         ),
                         onTap: () {
@@ -749,7 +749,7 @@ class _HomeScreenState extends State<HomeScreen>
                         child: Row(
                           children: [
                             const Icon(Icons.settings),
-                            const SizedBox(width: 8),
+                            SizedBox(width: 8),
                             Text(AppLocalizations.of(context)!.settings),
                           ],
                         ),
@@ -777,11 +777,11 @@ class _HomeScreenState extends State<HomeScreen>
                     if (profilesEnabled) {
                       items.add(
                         PopupMenuItem(
-                          child: const Row(
+                          child: Row(
                             children: [
-                              Icon(Icons.layers_outlined),
-                              SizedBox(width: 8),
-                              Text('Profiles'),
+                              const Icon(Icons.layers_outlined),
+                              const SizedBox(width: 8),
+                              Text(AppLocalizations.of(context)!.profiles),
                             ],
                           ),
                           onTap: () {
@@ -889,7 +889,7 @@ class _HomeScreenState extends State<HomeScreen>
                           );
                         case _HomeTab.map:
                           return Tab(
-                            icon: const Icon(Icons.map),
+                            icon: Icon(Icons.map),
                             text: AppLocalizations.of(context)!.map,
                           );
                         case _HomeTab.sensors:
@@ -941,7 +941,7 @@ class _HomeScreenState extends State<HomeScreen>
                           ),
                         ),
                       )
-                    : const Icon(Icons.bluetooth, size: 18),
+                    : Icon(Icons.bluetooth, size: 18),
                 label: Text(
                   provider.isReconnecting
                       ? '${provider.reconnectionAttempt}/${provider.maxReconnectionAttempts}'
@@ -960,7 +960,7 @@ class _HomeScreenState extends State<HomeScreen>
                 const SizedBox(width: 8),
                 IconButton(
                   onPressed: () => provider.cancelReconnection(),
-                  icon: const Icon(Icons.close, size: 20),
+                  icon: Icon(Icons.close, size: 20),
                   tooltip: AppLocalizations.of(context)!.cancelReconnection,
                   style: IconButton.styleFrom(
                     backgroundColor: Colors.red.shade700,

@@ -98,7 +98,7 @@ class _MapMessageOverlayState extends State<MapMessageOverlay> {
                   color: Colors.white,
                   size: 20,
                 ),
-                const SizedBox(width: 8),
+                SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     AppLocalizations.of(context)!.recentMessages,

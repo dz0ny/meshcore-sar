@@ -1932,4 +1932,774 @@ class AppLocalizationsEs extends AppLocalizations {
   String contactFailedToSetRoute(String error) {
     return 'No se pudo establecer la ruta: $error';
   }
+
+  @override
+  String get rssi => 'RSSI';
+
+  @override
+  String get snr => 'SNR';
+
+  @override
+  String get ackTimeout => 'Tiempo de espera ACK';
+
+  @override
+  String get opcode => 'Código de operación';
+
+  @override
+  String get payload => 'Carga útil';
+
+  @override
+  String get hops => 'Saltos';
+
+  @override
+  String get hashSize => 'Tamaño del hash';
+
+  @override
+  String get pathBytes => 'Bytes de ruta';
+
+  @override
+  String get selectedPath => 'Ruta seleccionada';
+
+  @override
+  String get estimatedTx => 'Transmisión estimada';
+
+  @override
+  String get senderToReceipt => 'Del remitente al recibo';
+
+  @override
+  String get receivedCopies => 'Copias recibidas';
+
+  @override
+  String get retryCause => 'Causa del reintento';
+
+  @override
+  String get retryMode => 'Modo de reintento';
+
+  @override
+  String get retryResult => 'Resultado del reintento';
+
+  @override
+  String get lastRetry => 'Último reintento';
+
+  @override
+  String get rxPackets => 'Paquetes RX';
+
+  @override
+  String get mesh => 'Mesh';
+
+  @override
+  String get rate => 'Velocidad';
+
+  @override
+  String get window => 'Ventana';
+
+  @override
+  String get posttxDelay => 'Retardo post-tx';
+
+  @override
+  String get bandpass => 'Paso de banda';
+
+  @override
+  String get bandpassFilterVoice => 'Filtro de paso de banda de voz';
+
+  @override
+  String get frequency => 'Frecuencia';
+
+  @override
+  String get australia => 'Australia';
+
+  @override
+  String get australiaNarrow => 'Australia (Estrecho)';
+
+  @override
+  String get australiaQld => 'Australia: QLD';
+
+  @override
+  String get australiaSaWa => 'Australia: SA, WA';
+
+  @override
+  String get newZealand => 'Nueva Zelanda';
+
+  @override
+  String get newZealandNarrow => 'Nueva Zelanda (Estrecho)';
+
+  @override
+  String get switzerland => 'Suiza';
+
+  @override
+  String get portugal433 => 'Portugal 433';
+
+  @override
+  String get portugal868 => 'Portugal 868';
+
+  @override
+  String get czechRepublicNarrow => 'República Checa (Estrecho)';
+
+  @override
+  String get eu433mhzLongRange => 'EU 433MHz (Largo Alcance)';
+
+  @override
+  String get euukDeprecated => 'UE/RU (Obsoleto)';
+
+  @override
+  String get euukNarrow => 'UE/RU (Estrecho)';
+
+  @override
+  String get usacanadaRecommended => 'EE.UU./Canadá (Recomendado)';
+
+  @override
+  String get vietnamDeprecated => 'Vietnam (Obsoleto)';
+
+  @override
+  String get vietnamNarrow => 'Vietnam (Estrecho)';
+
+  @override
+  String get active => 'Activo';
+
+  @override
+  String get addContact => 'Añadir contacto';
+
+  @override
+  String get all => 'Todo';
+
+  @override
+  String get autoResolve => 'Resolver automáticamente';
+
+  @override
+  String get clearAllLabel => 'Borrar todo';
+
+  @override
+  String get clearRelays => 'Borrar repetidores';
+
+  @override
+  String get clearFilters => 'Borrar filtros';
+
+  @override
+  String get clearRoute => 'Borrar ruta';
+
+  @override
+  String get clearMessages => 'Borrar mensajes';
+
+  @override
+  String get clearScale => 'Borrar escala';
+
+  @override
+  String get clearDiscoveries => 'Borrar descubrimientos';
+
+  @override
+  String get clearOnlineTraceDatabase => 'Borrar base de datos de trazas';
+
+  @override
+  String get clearAllChannels => 'Borrar todos los canales';
+
+  @override
+  String get clearAllContacts => 'Borrar todos los contactos';
+
+  @override
+  String get clearChannels => 'Borrar canales';
+
+  @override
+  String get clearContacts => 'Borrar contactos';
+
+  @override
+  String get clearPathOnMaxRetry => 'Borrar ruta en máximo reintento';
+
+  @override
+  String get create => 'Crear';
+
+  @override
+  String get custom => 'Personalizado';
+
+  @override
+  String get defaultValue => 'Predeterminado';
+
+  @override
+  String get duplicate => 'Duplicar';
+
+  @override
+  String get editName => 'Editar nombre';
+
+  @override
+  String get open => 'Abrir';
+
+  @override
+  String get paste => 'Pegar';
+
+  @override
+  String get preview => 'Vista previa';
+
+  @override
+  String get remove => 'Eliminar';
+
+  @override
+  String get rename => 'Renombrar';
+
+  @override
+  String get resolveAll => 'Resolver todo';
+
+  @override
+  String get send => 'Enviar';
+
+  @override
+  String get sendAnyway => 'Enviar de todos modos';
+
+  @override
+  String get share => 'Compartir';
+
+  @override
+  String get shareContact => 'Compartir contacto';
+
+  @override
+  String get trace => 'Traza';
+
+  @override
+  String get use => 'Usar';
+
+  @override
+  String get useSelectedFrequency => 'Usar frecuencia seleccionada';
+
+  @override
+  String get discovery => 'Descubrimiento';
+
+  @override
+  String get discoverRepeaters => 'Descubrir repetidores';
+
+  @override
+  String get discoverSensors => 'Descubrir sensores';
+
+  @override
+  String get repeaterDiscoverySent => 'Descubrimiento de repetidores enviado';
+
+  @override
+  String get sensorDiscoverySent => 'Descubrimiento de sensores enviado';
+
+  @override
+  String get clearedPendingDiscoveries =>
+      'Descubrimientos pendientes borrados.';
+
+  @override
+  String get autoDiscovery => 'Descubrimiento automático';
+
+  @override
+  String get enableAutomaticAdding => 'Habilitar adición automática';
+
+  @override
+  String get autoaddRepeaters => 'Añadir repetidores automáticamente';
+
+  @override
+  String get autoaddRoomServers => 'Añadir servidores de sala automáticamente';
+
+  @override
+  String get autoaddSensors => 'Añadir sensores automáticamente';
+
+  @override
+  String get autoaddUsers => 'Añadir usuarios automáticamente';
+
+  @override
+  String get overwriteOldestWhenFull =>
+      'Sobrescribir más antiguos cuando esté lleno';
+
+  @override
+  String get storage => 'Almacenamiento';
+
+  @override
+  String get dangerZone => 'Zona de peligro';
+
+  @override
+  String get profiles => 'Perfiles';
+
+  @override
+  String get favourites => 'Favoritos';
+
+  @override
+  String get sensors => 'Sensores';
+
+  @override
+  String get others => 'Otros';
+
+  @override
+  String get gpsModule => 'Módulo GPS';
+
+  @override
+  String get liveTraffic => 'Tráfico en vivo';
+
+  @override
+  String get repeatersMap => 'Mapa de repetidores';
+
+  @override
+  String get spectrumScan => 'Escaneo de espectro';
+
+  @override
+  String get blePacketLogs => 'Registros de paquetes BLE';
+
+  @override
+  String get onlineTraceDatabase => 'Base de datos de trazas';
+
+  @override
+  String get routePathByteSize => 'Tamaño en bytes de la ruta';
+
+  @override
+  String get messageNotifications => 'Notificaciones de mensajes';
+
+  @override
+  String get sarAlerts => 'Alertas SAR';
+
+  @override
+  String get discoveryNotifications => 'Notificaciones de descubrimiento';
+
+  @override
+  String get updateNotifications => 'Notificaciones de actualización';
+
+  @override
+  String get muteWhileAppIsOpen => 'Silenciar con la app abierta';
+
+  @override
+  String get disableContacts => 'Desactivar contactos';
+
+  @override
+  String get enableSensorsTab => 'Habilitar pestaña Sensores';
+
+  @override
+  String get enableProfiles => 'Habilitar perfiles';
+
+  @override
+  String get autoRouteRotation => 'Rotación automática de ruta';
+
+  @override
+  String get nearestRepeaterFallback => 'Repetidor más cercano como reserva';
+
+  @override
+  String get deleteAllStoredMessageHistory =>
+      'Eliminar todo el historial de mensajes';
+
+  @override
+  String get messageFontSize => 'Tamaño de fuente de mensajes';
+
+  @override
+  String get rotateMapWithHeading => 'Rotar mapa con rumbo';
+
+  @override
+  String get showMapDebugInfo => 'Mostrar info de depuración del mapa';
+
+  @override
+  String get openMapInFullscreen => 'Abrir mapa en pantalla completa';
+
+  @override
+  String get showSarMarkersLabel => 'Mostrar marcadores SAR';
+
+  @override
+  String get displaySarMarkersOnTheMainMap =>
+      'Mostrar marcadores SAR en el mapa principal';
+
+  @override
+  String get showAllContactTrailsLabel =>
+      'Mostrar todos los rastros de contactos';
+
+  @override
+  String get hideRepeatersOnMap => 'Ocultar repetidores en el mapa';
+
+  @override
+  String get setMapScale => 'Establecer escala del mapa';
+
+  @override
+  String get customMapScaleSaved => 'Escala de mapa personalizada guardada';
+
+  @override
+  String get voiceBitrate => 'Tasa de bits de voz';
+
+  @override
+  String get voiceCompressor => 'Compresor de voz';
+
+  @override
+  String get balancesQuietAndLoudSpeechLevels =>
+      'Equilibra niveles de habla suaves y altos';
+
+  @override
+  String get voiceLimiter => 'Limitador de voz';
+
+  @override
+  String get preventsClippingPeaksBeforeEncoding =>
+      'Previene recorte de picos antes de codificar';
+
+  @override
+  String get micAutoGain => 'Ganancia automática del micrófono';
+
+  @override
+  String get letsTheRecorderAdjustInputLevel =>
+      'Permite al grabador ajustar el nivel de entrada';
+
+  @override
+  String get echoCancellation => 'Cancelación de eco';
+
+  @override
+  String get noiseSuppression => 'Supresión de ruido';
+
+  @override
+  String get trimSilenceInVoiceMessages =>
+      'Recortar silencio en mensajes de voz';
+
+  @override
+  String get compressor => 'Compresor';
+
+  @override
+  String get limiter => 'Limitador';
+
+  @override
+  String get autoGain => 'Ganancia automática';
+
+  @override
+  String get echoCancel => 'Eco';
+
+  @override
+  String get noiseSuppress => 'Ruido';
+
+  @override
+  String get silenceTrim => 'Silencio';
+
+  @override
+  String get maxImageSize => 'Tamaño máximo de imagen';
+
+  @override
+  String get imageCompression => 'Compresión de imagen';
+
+  @override
+  String get grayscale => 'Escala de grises';
+
+  @override
+  String get ultraMode => 'Modo ultra';
+
+  @override
+  String get fastPrivateGpsUpdates => 'Actualizaciones GPS privadas rápidas';
+
+  @override
+  String get movementThreshold => 'Umbral de movimiento';
+
+  @override
+  String get fastGpsMovementThreshold => 'Umbral de movimiento GPS rápido';
+
+  @override
+  String get fastGpsActiveuseInterval => 'Intervalo de uso activo GPS rápido';
+
+  @override
+  String get activeuseUpdateInterval =>
+      'Intervalo de actualización de uso activo';
+
+  @override
+  String get repeatNearbyTraffic => 'Repetir tráfico cercano';
+
+  @override
+  String get relayThroughRepeatersAcrossTheMesh =>
+      'Retransmitir a través de repetidores en la red';
+
+  @override
+  String get nearbyOnlyWithoutRepeaterFlooding =>
+      'Solo cercanos, sin inundación de repetidores';
+
+  @override
+  String get multihop => 'Multi-salto';
+
+  @override
+  String get createProfile => 'Crear perfil';
+
+  @override
+  String get renameProfile => 'Renombrar perfil';
+
+  @override
+  String get newProfile => 'Nuevo perfil';
+
+  @override
+  String get manageProfiles => 'Gestionar perfiles';
+
+  @override
+  String get enableProfilesToStartManagingThem =>
+      'Habilite los perfiles para comenzar a gestionarlos.';
+
+  @override
+  String get openMessage => 'Abrir mensaje';
+
+  @override
+  String get jumpToTheRelatedSarMessage => 'Ir al mensaje SAR relacionado';
+
+  @override
+  String get removeSarMarker => 'Eliminar marcador SAR';
+
+  @override
+  String get pleaseSelectADestinationToSendSarMarker =>
+      'Seleccione un destino para enviar el marcador SAR';
+
+  @override
+  String get sarMarkerBroadcastToPublicChannel =>
+      'Marcador SAR transmitido al canal público';
+
+  @override
+  String get sarMarkerSentToRoom => 'Marcador SAR enviado a la sala';
+
+  @override
+  String get loadFromGallery => 'Cargar desde galería';
+
+  @override
+  String get replaceImage => 'Reemplazar imagen';
+
+  @override
+  String get selectFromGallery => 'Seleccionar de galería';
+
+  @override
+  String get team => 'Equipo';
+
+  @override
+  String get found => 'Encontrado';
+
+  @override
+  String get staging => 'Área de reunión';
+
+  @override
+  String get object => 'Objeto';
+
+  @override
+  String get quiet => 'Silencioso';
+
+  @override
+  String get moderate => 'Moderado';
+
+  @override
+  String get busy => 'Ocupado';
+
+  @override
+  String get spectrumScanReturnedNoCandidateFrequencies =>
+      'El escaneo de espectro no encontró frecuencias candidatas';
+
+  @override
+  String get searchMessages => 'Buscar mensajes';
+
+  @override
+  String get sendImageFromGallery => 'Enviar imagen desde galería';
+
+  @override
+  String get takePhoto => 'Tomar foto';
+
+  @override
+  String get dmOnly => 'Solo mensaje directo';
+
+  @override
+  String get allMessages => 'Todos los mensajes';
+
+  @override
+  String get sendToPublicChannel => '¿Enviar al canal público?';
+
+  @override
+  String get selectMarkerTypeAndDestination =>
+      'Seleccione tipo de marcador y destino';
+
+  @override
+  String get noDestinationsAvailableLabel => 'No hay destinos disponibles';
+
+  @override
+  String get image => 'Imagen';
+
+  @override
+  String get format => 'Formato';
+
+  @override
+  String get dimensions => 'Dimensiones';
+
+  @override
+  String get segments => 'Segmentos';
+
+  @override
+  String get transfers => 'Transferencias';
+
+  @override
+  String get downloadedBy => 'Descargado por';
+
+  @override
+  String get saveDiscoverySettings => 'Guardar ajustes de descubrimiento';
+
+  @override
+  String get savePublicInfo => 'Guardar información pública';
+
+  @override
+  String get saveRadioSettings => 'Guardar ajustes de radio';
+
+  @override
+  String get savePath => 'Guardar ruta';
+
+  @override
+  String get wipeDeviceData => 'Borrar datos del dispositivo';
+
+  @override
+  String get wipeDevice => 'Borrar dispositivo';
+
+  @override
+  String get destructiveDeviceActions =>
+      'Acciones destructivas del dispositivo.';
+
+  @override
+  String get chooseAPresetOrFinetuneCustomRadioSettings =>
+      'Elija un preajuste o ajuste la configuración de radio.';
+
+  @override
+  String get chooseTheNameAndLocationThisDeviceShares =>
+      'Elija el nombre y la ubicación que comparte este dispositivo.';
+
+  @override
+  String get availableSpaceOnThisDevice =>
+      'Espacio disponible en este dispositivo.';
+
+  @override
+  String get used => 'Usado';
+
+  @override
+  String get total => 'Total';
+
+  @override
+  String get renameValue => 'Renombrar valor';
+
+  @override
+  String get customizeFields => 'Personalizar campos';
+
+  @override
+  String get livePreview => 'Vista previa en vivo';
+
+  @override
+  String get refreshSchedule => 'Programación de actualización';
+
+  @override
+  String get noResponse => 'Sin respuesta';
+
+  @override
+  String get refreshing => 'Actualizando';
+
+  @override
+  String get unavailable => 'No disponible';
+
+  @override
+  String get pickARelayOrNodeToWatchInSensors =>
+      'Elija un relay o nodo para observar.';
+
+  @override
+  String get publicKeyLabel => 'Clave pública';
+
+  @override
+  String get alreadyInContacts => 'Ya en contactos';
+
+  @override
+  String get connectToADeviceBeforeAddingContacts =>
+      'Conéctese a un dispositivo antes de añadir contactos';
+
+  @override
+  String get fromContacts => 'De contactos';
+
+  @override
+  String get onlineOnly => 'Solo en línea';
+
+  @override
+  String get inBoth => 'En ambos';
+
+  @override
+  String get source => 'Fuente';
+
+  @override
+  String get manualRouteEdit => 'Edición manual de ruta';
+
+  @override
+  String get observedMeshRoute => 'Ruta mesh observada';
+
+  @override
+  String get allMessagesCleared => 'Todos los mensajes borrados';
+
+  @override
+  String get onlineTraceDatabaseCleared => 'Base de datos de trazas borrada';
+
+  @override
+  String get packetLogsCleared => 'Registros de paquetes borrados';
+
+  @override
+  String get hexDataCopiedToClipboard => 'Datos hex copiados al portapapeles';
+
+  @override
+  String get developerModeEnabled => 'Modo desarrollador activado';
+
+  @override
+  String get developerModeDisabled => 'Modo desarrollador desactivado';
+
+  @override
+  String get clipboardIsEmpty => 'El portapapeles está vacío';
+
+  @override
+  String get contactImported => 'Contacto importado';
+
+  @override
+  String get contactLinkCopiedToClipboard =>
+      'Enlace de contacto copiado al portapapeles';
+
+  @override
+  String get failedToExportContact => 'Error al exportar el contacto';
+
+  @override
+  String get noLogsToExport => 'No hay registros para exportar';
+
+  @override
+  String get exportAsCsv => 'Exportar como CSV';
+
+  @override
+  String get exportAsText => 'Exportar como texto';
+
+  @override
+  String get receivedRfc3339 => 'Recibido (RFC3339)';
+
+  @override
+  String get buildTime => 'Hora de compilación';
+
+  @override
+  String get downloadUrlNotAvailable => 'URL de descarga no disponible';
+
+  @override
+  String get cannotOpenDownloadUrl => 'No se puede abrir la URL de descarga';
+
+  @override
+  String get updateCheckIsOnlyAvailableOnAndroid =>
+      'La comprobación de actualizaciones solo está disponible en Android';
+
+  @override
+  String get youAreRunningTheLatestVersion =>
+      'Está ejecutando la última versión';
+
+  @override
+  String get updateAvailableButDownloadUrlNotFound =>
+      'Actualización disponible pero URL de descarga no encontrada';
+
+  @override
+  String get startTictactoe => 'Iniciar Tic-Tac-Toe';
+
+  @override
+  String get tictactoeUnavailable => 'Tic-Tac-Toe no disponible';
+
+  @override
+  String get tictactoeOpponentUnknown => 'Tic-Tac-Toe: oponente desconocido';
+
+  @override
+  String get tictactoeWaitingForStart => 'Tic-Tac-Toe: esperando inicio';
+
+  @override
+  String get acceptsShareLinks => 'Acepta enlaces compartidos';
+
+  @override
+  String get supportsRawHex => 'Soporta hex sin procesar';
+
+  @override
+  String get clipboardfriendly => 'Compatible con portapapeles';
+
+  @override
+  String get captured => 'Capturado';
+
+  @override
+  String get size => 'Tamaño';
+
+  @override
+  String get noCustomChannelsToClear =>
+      'No hay canales personalizados que borrar.';
+
+  @override
+  String get noDeviceContactsToClear =>
+      'No hay contactos del dispositivo que borrar.';
 }

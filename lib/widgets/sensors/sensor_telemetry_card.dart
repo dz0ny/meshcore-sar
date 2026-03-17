@@ -1090,7 +1090,7 @@ class SensorTelemetryCard extends StatelessWidget {
                             ),
                           ),
                           if (state == SensorRefreshState.timeout)
-                            const _InlineAlertBadge(label: 'No response'),
+                            _InlineAlertBadge(label: l10n.noResponse),
                         ],
                       ),
                       if (telemetry != null) ...[
@@ -1107,8 +1107,8 @@ class SensorTelemetryCard extends StatelessWidget {
                               ),
                             ),
                             if (state == SensorRefreshState.refreshing)
-                              const _InlineStateMeta(
-                                label: 'Refreshing',
+                              _InlineStateMeta(
+                                label: l10n.refreshing,
                                 color: Color(0xFF266AC2),
                                 spinning: true,
                               ),
@@ -1119,8 +1119,8 @@ class SensorTelemetryCard extends StatelessWidget {
                                 icon: Icons.check_circle,
                               ),
                             if (state == SensorRefreshState.unavailable)
-                              const _InlineStateMeta(
-                                label: 'Unavailable',
+                              _InlineStateMeta(
+                                label: l10n.unavailable,
                                 color: Color(0xFFB13B55),
                                 icon: Icons.error_outline,
                               ),
@@ -1153,17 +1153,17 @@ class SensorTelemetryCard extends StatelessWidget {
                       }
                       if (onCustomize != null) {
                         items.add(
-                          const PopupMenuItem<String>(
+                          PopupMenuItem<String>(
                             value: 'customize',
-                            child: Text('Customize fields'),
+                            child: Text(l10n.customizeFields),
                           ),
                         );
                       }
                       if (onRemove != null) {
                         items.add(
-                          const PopupMenuItem<String>(
+                          PopupMenuItem<String>(
                             value: 'remove',
-                            child: Text('Remove'),
+                            child: Text(l10n.remove),
                           ),
                         );
                       }

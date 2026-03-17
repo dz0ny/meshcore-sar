@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:meshcore_client/meshcore_client.dart';
+import '../../l10n/app_localizations.dart';
 
 class SpectrumScanPanel extends StatelessWidget {
   final ThemeData theme;
@@ -103,12 +104,12 @@ class SpectrumScanPanel extends StatelessWidget {
             children: [
               _LegendChip(
                 color: theme.colorScheme.primary,
-                label: 'Quiet',
+                label: AppLocalizations.of(context)!.quiet,
               ),
-              const _LegendChip(color: Colors.orange, label: 'Moderate'),
+              _LegendChip(color: Colors.orange, label: AppLocalizations.of(context)!.moderate),
               _LegendChip(
                 color: theme.colorScheme.error,
-                label: 'Busy',
+                label: AppLocalizations.of(context)!.busy,
               ),
             ],
           ),
@@ -211,8 +212,8 @@ class SpectrumScanPanel extends StatelessWidget {
                 onPressed: selectedFrequencyKhz == null
                     ? null
                     : onApplySelected,
-                icon: const Icon(Icons.north_east),
-                label: const Text('Use selected frequency'),
+                icon: Icon(Icons.north_east),
+                label: Text(AppLocalizations.of(context)!.useSelectedFrequency),
               ),
             ),
           ],

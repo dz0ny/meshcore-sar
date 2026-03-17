@@ -159,7 +159,7 @@ class ContactTile extends StatelessWidget {
                 Row(children: [_buildRoutePill(context, contact)]),
               ] else
                 Padding(
-                  padding: const EdgeInsets.only(top: 4),
+                  padding: EdgeInsets.only(top: 4),
                   child: Text(
                     AppLocalizations.of(context)!.noGpsData,
                     style: Theme.of(
@@ -361,8 +361,8 @@ class ContactTile extends StatelessWidget {
                   onTap: () async {
                     Navigator.pop(sheetContext);
                     final toggled = contact.toggleFavourite();
-                    final connectionProvider =
-                        context.read<ConnectionProvider>();
+                    final connectionProvider = context
+                        .read<ConnectionProvider>();
                     await connectionProvider.addOrUpdateContact(toggled);
                     if (context.mounted) {
                       // Refresh contact from device so the local cache is updated
@@ -372,12 +372,12 @@ class ContactTile extends StatelessWidget {
                 ),
               if (!contact.isChannel)
                 ListTile(
-                  leading: const Icon(Icons.share_outlined),
-                  title: const Text('Share Contact'),
+                  leading: Icon(Icons.share_outlined),
+                  title: Text(l10n.shareContact),
                   onTap: () async {
                     Navigator.pop(sheetContext);
-                    final connectionProvider =
-                        context.read<ConnectionProvider>();
+                    final connectionProvider = context
+                        .read<ConnectionProvider>();
                     final url = await connectionProvider.exportContactUrl(
                       contact.publicKey,
                     );
@@ -385,22 +385,20 @@ class ContactTile extends StatelessWidget {
                       await Clipboard.setData(ClipboardData(text: url));
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Contact link copied to clipboard'),
+                          SnackBar(
+                            content: Text(l10n.contactLinkCopiedToClipboard),
                           ),
                         );
                       }
                     } else if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Failed to export contact'),
-                        ),
+                        SnackBar(content: Text(l10n.failedToExportContact)),
                       );
                     }
                   },
                 ),
               ListTile(
-                leading: const Icon(Icons.message_outlined),
+                leading: Icon(Icons.message_outlined),
                 title: Text(l10n.messages),
                 enabled: canMessage,
                 onTap: !canMessage
@@ -412,7 +410,7 @@ class ContactTile extends StatelessWidget {
               ),
               if (contact.displayLocation != null)
                 ListTile(
-                  leading: const Icon(Icons.map_outlined),
+                  leading: Icon(Icons.map_outlined),
                   title: Text(l10n.viewOnMap),
                   onTap: () {
                     Navigator.pop(sheetContext);
@@ -438,8 +436,8 @@ class ContactTile extends StatelessWidget {
                 ),
               if (canPreviewSensor)
                 ListTile(
-                  leading: const Icon(Icons.visibility_outlined),
-                  title: const Text('Preview'),
+                  leading: Icon(Icons.visibility_outlined),
+                  title: Text(l10n.preview),
                   onTap: () async {
                     Navigator.pop(sheetContext);
                     await Future<void>.delayed(Duration.zero);
@@ -467,7 +465,7 @@ class ContactTile extends StatelessWidget {
                 ),
               if (canSetPath)
                 ListTile(
-                  leading: const Icon(Icons.alt_route),
+                  leading: Icon(Icons.alt_route),
                   title: Text(l10n.contactSetPath),
                   onTap: () {
                     Navigator.pop(sheetContext);
@@ -476,8 +474,8 @@ class ContactTile extends StatelessWidget {
                 ),
               if (!contact.isChannel)
                 ListTile(
-                  leading: const Icon(Icons.route),
-                  title: const Text('Trace'),
+                  leading: Icon(Icons.route),
+                  title: Text(l10n.trace),
                   onTap: () {
                     Navigator.pop(sheetContext);
                     _showTraceSheet(context, contact);
@@ -494,8 +492,8 @@ class ContactTile extends StatelessWidget {
                 ),
               if (!contact.isPublicChannel)
                 ListTile(
-                  leading: const Icon(Icons.edit_outlined),
-                  title: const Text('Edit name'),
+                  leading: Icon(Icons.edit_outlined),
+                  title: Text(l10n.editName),
                   onTap: () {
                     Navigator.pop(sheetContext);
                     _showNameOverrideDialog(context, contact);
@@ -503,7 +501,7 @@ class ContactTile extends StatelessWidget {
                 ),
               if (!contact.isPublicChannel)
                 ListTile(
-                  leading: const Icon(Icons.delete, color: Colors.red),
+                  leading: Icon(Icons.delete, color: Colors.red),
                   title: Text(
                     contact.isChannel ? l10n.deleteChannel : l10n.deleteContact,
                     style: const TextStyle(color: Colors.red),
@@ -788,12 +786,13 @@ class ContactTile extends StatelessWidget {
         paddedPathBytes: parsedRoute.paddedPathBytes,
       );
       if (context.mounted) {
+        final routeLabel = parsedRoute.hopCount == 0
+            ? AppLocalizations.of(context)!.direct
+            : parsedRoute.canonicalText;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              AppLocalizations.of(
-                context,
-              )!.contactRouteSet(parsedRoute.canonicalText),
+              AppLocalizations.of(context)!.contactRouteSet(routeLabel),
             ),
           ),
         );
@@ -1321,14 +1320,16 @@ class _NeighboursSheetState extends State<_NeighboursSheet> {
           final timestampOrMs = int.tryParse(parts[1]);
           final snrRaw = int.tryParse(parts[2]);
           final isMs = timestampOrMs != null && timestampOrMs < 1e9;
-          parsed.add(_Neighbour(
-            publicKeyHex: keyHex,
-            lastSeenAt: !isMs && timestampOrMs != null
-                ? DateTime.fromMillisecondsSinceEpoch(timestampOrMs * 1000)
-                : null,
-            lastSeenMs: isMs ? timestampOrMs : null,
-            snrDb: snrRaw != null ? snrRaw / 4.0 : null,
-          ));
+          parsed.add(
+            _Neighbour(
+              publicKeyHex: keyHex,
+              lastSeenAt: !isMs && timestampOrMs != null
+                  ? DateTime.fromMillisecondsSinceEpoch(timestampOrMs * 1000)
+                  : null,
+              lastSeenMs: isMs ? timestampOrMs : null,
+              snrDb: snrRaw != null ? snrRaw / 4.0 : null,
+            ),
+          );
         }
       }
 
@@ -1401,41 +1402,35 @@ class _NeighboursSheetState extends State<_NeighboursSheet> {
               child: _loading
                   ? const Center(child: CircularProgressIndicator())
                   : _error != null
-                      ? Center(
-                          child: Padding(
-                            padding: const EdgeInsets.all(24),
-                            child: Text(
-                              _error!,
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                        )
-                      : _neighbours.isEmpty
-                          ? const Center(child: Text('No neighbours found'))
-                          : ListView.builder(
-                              padding: const EdgeInsets.only(bottom: 16),
-                              itemCount: _neighbours.length,
-                              itemBuilder: (context, index) {
-                                final n = _neighbours[index];
-                                final name =
-                                    _resolveNeighbourName(n.publicKeyHex);
-                                final parts = <String>[
-                                  if (n.snrDb != null)
-                                    'SNR ${n.snrDb!.toStringAsFixed(1)} dB',
-                                  if (n.lastSeenAt != null)
-                                    _formatAge(n.lastSeenAt!),
-                                  if (n.lastSeenMs != null)
-                                    '${n.lastSeenMs}ms ago',
-                                ];
-                                return ListTile(
-                                  leading: const Icon(Icons.router_outlined),
-                                  title: Text(name),
-                                  subtitle: parts.isNotEmpty
-                                      ? Text(parts.join(' • '))
-                                      : null,
-                                );
-                              },
-                            ),
+                  ? Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Text(_error!, textAlign: TextAlign.center),
+                      ),
+                    )
+                  : _neighbours.isEmpty
+                  ? const Center(child: Text('No neighbours found'))
+                  : ListView.builder(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      itemCount: _neighbours.length,
+                      itemBuilder: (context, index) {
+                        final n = _neighbours[index];
+                        final name = _resolveNeighbourName(n.publicKeyHex);
+                        final parts = <String>[
+                          if (n.snrDb != null)
+                            'SNR ${n.snrDb!.toStringAsFixed(1)} dB',
+                          if (n.lastSeenAt != null) _formatAge(n.lastSeenAt!),
+                          if (n.lastSeenMs != null) '${n.lastSeenMs}ms ago',
+                        ];
+                        return ListTile(
+                          leading: const Icon(Icons.router_outlined),
+                          title: Text(name),
+                          subtitle: parts.isNotEmpty
+                              ? Text(parts.join(' • '))
+                              : null,
+                        );
+                      },
+                    ),
             ),
           ],
         ),

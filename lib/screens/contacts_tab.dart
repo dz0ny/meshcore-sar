@@ -493,7 +493,7 @@ class _ContactsTabState extends State<ContactsTab> {
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: const Icon(Icons.message_outlined),
+              leading: Icon(Icons.message_outlined),
               title: Text(l10n.messages),
               onTap: () async {
                 Navigator.pop(sheetContext);
@@ -502,7 +502,7 @@ class _ContactsTabState extends State<ContactsTab> {
             ),
             if (channel.displayLocation != null)
               ListTile(
-                leading: const Icon(Icons.map_outlined),
+                leading: Icon(Icons.map_outlined),
                 title: Text(l10n.viewOnMap),
                 onTap: () {
                   Navigator.pop(sheetContext);
@@ -511,7 +511,7 @@ class _ContactsTabState extends State<ContactsTab> {
               ),
             if (!channel.isPublicChannel)
               ListTile(
-                leading: const Icon(Icons.delete, color: Colors.red),
+                leading: Icon(Icons.delete, color: Colors.red),
                 title: Text(
                   l10n.deleteChannel,
                   style: const TextStyle(color: Colors.red),
@@ -655,12 +655,12 @@ class _ContactsTabState extends State<ContactsTab> {
                     size: 64,
                     color: Theme.of(context).disabledColor,
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16),
                   Text(
                     l10n.noContactsYet,
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: 8),
                   Text(
                     l10n.connectToDeviceToLoadContacts,
                     style: Theme.of(context).textTheme.bodyMedium,
@@ -674,8 +674,8 @@ class _ContactsTabState extends State<ContactsTab> {
                       padding: const EdgeInsets.only(top: 16),
                       child: OutlinedButton.icon(
                         onPressed: () => _openAddContactScreen(context),
-                        icon: const Icon(Icons.person_add_alt_1_outlined),
-                        label: const Text('Add Contact'),
+                        icon: Icon(Icons.person_add_alt_1_outlined),
+                        label: Text(l10n.addContact),
                       ),
                     ),
                 ],
@@ -691,7 +691,7 @@ class _ContactsTabState extends State<ContactsTab> {
                 // Favourites (contacts with firmware favourite flag set)
                 if (contactsProvider.favouriteContacts.isNotEmpty) ...[
                   _SectionHeader(
-                    title: 'Favourites',
+                    title: l10n.favourites,
                     count: contactsProvider.favouriteContacts.length,
                     icon: Icons.star,
                   ),
@@ -766,8 +766,8 @@ class _ContactsTabState extends State<ContactsTab> {
                                   .read<ConnectionProvider>()
                                   .discoverNodeType(advertType: 2);
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Repeater discovery sent'),
+                                SnackBar(
+                                  content: Text(l10n.repeaterDiscoverySent),
                                 ),
                               );
                             },
@@ -802,7 +802,7 @@ class _ContactsTabState extends State<ContactsTab> {
                     _buildNoFilterResults(context)
                   else if (showRepeatersOthersGroup)
                     _InferredContactGroupCard(
-                      label: 'Others',
+                      label: l10n.others,
                       contacts: ungroupedRepeaters,
                       compactContacts: true,
                       currentPosition: _currentPosition,
@@ -822,7 +822,7 @@ class _ContactsTabState extends State<ContactsTab> {
                 // Sensors
                 if (showSensorsSection) ...[
                   _SectionHeader(
-                    title: 'Sensors',
+                    title: l10n.sensors,
                     count: sensors.length,
                     icon: Icons.sensors,
                     trailing: Row(
@@ -841,8 +841,8 @@ class _ContactsTabState extends State<ContactsTab> {
                                   .read<ConnectionProvider>()
                                   .discoverNodeType(advertType: 4);
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Sensor discovery sent'),
+                                SnackBar(
+                                  content: Text(l10n.sensorDiscoverySent),
                                 ),
                               );
                             },
@@ -946,8 +946,8 @@ class _ContactsTabState extends State<ContactsTab> {
                         Expanded(
                           child: OutlinedButton.icon(
                             onPressed: () => _openAddContactScreen(context),
-                            icon: const Icon(Icons.person_add_alt_1_outlined),
-                            label: const Text('Add Contact'),
+                            icon: Icon(Icons.person_add_alt_1_outlined),
+                            label: Text(l10n.addContact),
                             style: OutlinedButton.styleFrom(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 24,
@@ -960,7 +960,7 @@ class _ContactsTabState extends State<ContactsTab> {
                         Expanded(
                           child: OutlinedButton.icon(
                             onPressed: () => _showAddChannelDialog(context),
-                            icon: const Icon(Icons.add_circle_outline),
+                            icon: Icon(Icons.add_circle_outline),
                             label: Text(l10n.addChannel),
                             style: OutlinedButton.styleFrom(
                               padding: const EdgeInsets.symmetric(
@@ -1285,7 +1285,7 @@ class _ContactsTabState extends State<ContactsTab> {
                     ? colorScheme.primary
                     : null,
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: 8),
               Text(l10n.lastSeen),
             ],
           ),
@@ -1301,7 +1301,7 @@ class _ContactsTabState extends State<ContactsTab> {
                     ? colorScheme.primary
                     : null,
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: 8),
               Text(l10n.distance),
             ],
           ),

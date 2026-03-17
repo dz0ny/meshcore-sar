@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
+import '../l10n/app_localizations.dart';
 
 /// Dialog that requests location permissions on app startup
 class PermissionRequestDialog extends StatefulWidget {
@@ -109,8 +110,8 @@ class _PermissionRequestDialogState extends State<PermissionRequestDialog> {
               Icons.location_on,
               color: Theme.of(context).colorScheme.primary,
             ),
-            const SizedBox(width: 12),
-            const Text('Location Permission'),
+            SizedBox(width: 12),
+            Text(AppLocalizations.of(context)!.locationPermission),
           ],
         ),
         content: Column(

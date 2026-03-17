@@ -15,6 +15,7 @@ import '../utils/log_rx_route_decoder.dart';
 import '../widgets/compact_signal_indicator.dart';
 import '../widgets/messages/message_trace_sheet.dart';
 import 'packet_log_screen.dart';
+import '../l10n/app_localizations.dart';
 
 T? _maybeProvider<T>(BuildContext context) {
   try {
@@ -147,7 +148,7 @@ class _LiveTrafficScreenState extends State<LiveTrafficScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Live Traffic'),
+        title: Text(AppLocalizations.of(context)!.liveTraffic),
         actions: [
           if (widget.openPacketLogs != null)
             IconButton(
@@ -327,17 +328,17 @@ class _SummaryPanel extends StatelessWidget {
             runSpacing: 6,
             children: [
               _SummaryBadge(
-                label: 'Mesh',
+                label: AppLocalizations.of(context)!.mesh,
                 value: busynessLabel,
                 color: busynessColor,
               ),
               _SummaryBadge(
-                label: 'Rate',
+                label: AppLocalizations.of(context)!.rate,
                 value: '${snapshot.packetsPerMinute} pkt/min',
                 color: Theme.of(context).colorScheme.primary,
               ),
               _SummaryBadge(
-                label: 'Window',
+                label: AppLocalizations.of(context)!.window,
                 value: _windowLabel(snapshot.windowDuration),
                 color: Theme.of(context).colorScheme.secondary,
                 onTap: onWindowTap,
@@ -350,14 +351,14 @@ class _SummaryPanel extends StatelessWidget {
             runSpacing: 10,
             children: [
               _MetricTile(
-                label: 'RX packets',
+                label: AppLocalizations.of(context)!.rxPackets,
                 value: '${snapshot.rxCount}',
                 subtitle: totalRxCount == null
                     ? _windowSummaryLabel(snapshot.windowDuration)
                     : 'Device total $totalRxCount',
               ),
               _MetricTile(
-                label: 'RSSI',
+                label: AppLocalizations.of(context)!.rssi,
                 value: snapshot.latestRssiDbm == null
                     ? 'No RX data'
                     : '${snapshot.latestRssiDbm} dBm',
@@ -366,7 +367,7 @@ class _SummaryPanel extends StatelessWidget {
                     : 'Avg ${snapshot.avgRssiDbm!.toStringAsFixed(1)} dBm',
               ),
               _MetricTile(
-                label: 'SNR',
+                label: AppLocalizations.of(context)!.snr,
                 value: snapshot.latestSnrDb == null
                     ? 'No RX data'
                     : '${snapshot.latestSnrDb!.toStringAsFixed(1)} dB',
@@ -375,7 +376,7 @@ class _SummaryPanel extends StatelessWidget {
                     : 'Avg ${snapshot.avgSnrDb!.toStringAsFixed(1)} dB',
               ),
               _MetricTile(
-                label: 'Multi-hop',
+                label: AppLocalizations.of(context)!.multihop,
                 value: '${snapshot.multiHopCount}',
                 subtitle: routeHashCounts.summaryLabel,
                 footer: snapshot.avgHopCount == null
@@ -455,7 +456,7 @@ class _PacketTypeFilterBar extends StatelessWidget {
       child: Row(
         children: [
           _FilterChip(
-            label: 'All',
+            label: AppLocalizations.of(context)!.all,
             selected: selectedType == null,
             onTap: () => onSelected(null),
           ),

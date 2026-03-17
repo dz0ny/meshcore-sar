@@ -192,7 +192,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       });
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Developer mode disabled')));
+      ).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.developerModeDisabled)));
       return;
     }
 
@@ -206,7 +206,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       });
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Developer mode enabled')));
+      ).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.developerModeEnabled)));
       return;
     }
 
@@ -328,7 +328,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final value = await showDialog<double>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Fast GPS movement threshold'),
+        title: Text(AppLocalizations.of(context)!.fastGpsMovementThreshold),
         content: TextField(
           controller: controller,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -369,7 +369,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final value = await showDialog<int>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Fast GPS active-use interval'),
+        title: Text(AppLocalizations.of(context)!.fastGpsActiveuseInterval),
         content: TextField(
           controller: controller,
           keyboardType: TextInputType.number,
@@ -558,8 +558,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (kIsWeb || defaultTargetPlatform != TargetPlatform.android) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Update check is only available on Android'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.updateCheckIsOnlyAvailableOnAndroid),
             backgroundColor: Colors.orange,
           ),
         );
@@ -583,8 +583,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
       if (!updateInfo.isAvailable) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('You are running the latest version'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.youAreRunningTheLatestVersion),
             backgroundColor: Colors.green,
           ),
         );
@@ -593,8 +593,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
       if (updateInfo.downloadUrl == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Update available but download URL not found'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.updateAvailableButDownloadUrlNotFound),
             backgroundColor: Colors.orange,
           ),
         );
@@ -736,7 +736,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             title: Row(
               children: [
                 const Icon(Icons.settings, size: 24),
-                const SizedBox(width: 12),
+                SizedBox(width: 12),
                 Text(AppLocalizations.of(context)!.locationPermission),
               ],
             ),
@@ -878,7 +878,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Clear Messages'),
+        title: Text(AppLocalizations.of(context)!.clearMessages),
         content: const Text(
           'This will permanently delete all stored messages. Are you sure?',
         ),
@@ -907,8 +907,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (!mounted) return;
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('All messages cleared'),
+      SnackBar(
+        content: Text(AppLocalizations.of(context)!.allMessagesCleared),
         backgroundColor: Colors.orange,
       ),
     );
@@ -918,7 +918,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Clear online trace database'),
+        title: Text(AppLocalizations.of(context)!.clearOnlineTraceDatabase),
         content: const Text(
           'This removes the cached online node database used as a trace fallback.',
         ),
@@ -951,8 +951,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     });
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Online trace database cleared'),
+      SnackBar(
+        content: Text(AppLocalizations.of(context)!.onlineTraceDatabaseCleared),
         backgroundColor: Colors.orange,
       ),
     );
@@ -978,7 +978,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final selected = await showDialog<int>(
       context: context,
       builder: (context) => SimpleDialog(
-        title: const Text('Route path byte size'),
+        title: Text(AppLocalizations.of(context)!.routePathByteSize),
         children: [
           for (final value in RouteHashPreferences.supportedSizes)
             SimpleDialogOption(
@@ -1024,21 +1024,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
           _buildSectionHeader('Appearance'),
           _buildSettingsCard([
             ListTile(
-              leading: const Icon(Icons.palette),
+              leading: Icon(Icons.palette),
               title: Text(AppLocalizations.of(context)!.theme),
               subtitle: Text(AppTheme.getThemeDisplayName(_selectedTheme)),
               trailing: const Icon(Icons.chevron_right),
               onTap: () => _showThemeDialog(),
             ),
             ListTile(
-              leading: const Icon(Icons.language),
+              leading: Icon(Icons.language),
               title: Text(AppLocalizations.of(context)!.language),
               subtitle: Text(LocalePreferences.getDisplayName(_selectedLocale)),
               trailing: const Icon(Icons.chevron_right),
               onTap: () => _showLanguageDialog(),
             ),
             SwitchListTile(
-              secondary: const Icon(Icons.radar),
+              secondary: Icon(Icons.radar),
               title: Text(AppLocalizations.of(context)!.showRxTxIndicators),
               subtitle: Text(
                 AppLocalizations.of(context)!.displayPacketActivity,
@@ -1056,8 +1056,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
           _buildSectionHeader('Notifications'),
           _buildSettingsCard([
             SwitchListTile(
-              secondary: const Icon(Icons.chat_bubble_outline),
-              title: const Text('Message notifications'),
+              secondary: Icon(Icons.chat_bubble_outline),
+              title: Text(AppLocalizations.of(context)!.messageNotifications),
               subtitle: const Text(
                 'Notify for incoming direct and channel messages',
               ),
@@ -1072,8 +1072,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
               },
             ),
             SwitchListTile(
-              secondary: const Icon(Icons.warning_amber_outlined),
-              title: const Text('SAR alerts'),
+              secondary: Icon(Icons.warning_amber_outlined),
+              title: Text(AppLocalizations.of(context)!.sarAlerts),
               subtitle: const Text(
                 'Notify for incoming SAR markers such as found person or fire',
               ),
@@ -1086,8 +1086,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
               },
             ),
             SwitchListTile(
-              secondary: const Icon(Icons.contact_page_outlined),
-              title: const Text('Discovery notifications'),
+              secondary: Icon(Icons.contact_page_outlined),
+              title: Text(AppLocalizations.of(context)!.discoveryNotifications),
               subtitle: const Text(
                 'Notify when new contacts appear in Discovery',
               ),
@@ -1102,8 +1102,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
               },
             ),
             SwitchListTile(
-              secondary: const Icon(Icons.system_update),
-              title: const Text('Update notifications'),
+              secondary: Icon(Icons.system_update),
+              title: Text(AppLocalizations.of(context)!.updateNotifications),
               subtitle: const Text(
                 'Notify when a newer app version is available',
               ),
@@ -1118,8 +1118,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
               },
             ),
             SwitchListTile(
-              secondary: const Icon(Icons.visibility_off_outlined),
-              title: const Text('Mute while app is open'),
+              secondary: Icon(Icons.visibility_off_outlined),
+              title: Text(AppLocalizations.of(context)!.muteWhileAppIsOpen),
               subtitle: const Text(
                 'Do not show local notifications while the app is in the foreground',
               ),
@@ -1139,7 +1139,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           _buildSettingsCard([
             Consumer<AppProvider>(
               builder: (context, appProvider, child) => SwitchListTile(
-                secondary: const Icon(Icons.map_outlined),
+                secondary: Icon(Icons.map_outlined),
                 title: Text(AppLocalizations.of(context)!.disableMap),
                 subtitle: Text(
                   AppLocalizations.of(context)!.disableMapDescription,
@@ -1152,8 +1152,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             Consumer<AppProvider>(
               builder: (context, appProvider, child) => SwitchListTile(
-                secondary: const Icon(Icons.contacts_outlined),
-                title: const Text('Disable Contacts'),
+                secondary: Icon(Icons.contacts_outlined),
+                title: Text(AppLocalizations.of(context)!.disableContacts),
                 subtitle: const Text(
                   'Hide the contacts tab to simplify navigation',
                 ),
@@ -1165,8 +1165,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             Consumer<AppProvider>(
               builder: (context, appProvider, child) => SwitchListTile(
-                secondary: const Icon(Icons.sensors),
-                title: const Text('Enable Sensors tab'),
+                secondary: Icon(Icons.sensors),
+                title: Text(AppLocalizations.of(context)!.enableSensorsTab),
                 subtitle: const Text(
                   'Show a dedicated tab for watched relay and node telemetry',
                 ),
@@ -1181,8 +1181,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
           _buildSectionHeader('Messaging'),
           _buildSettingsCard([
             ListTile(
-              leading: const Icon(Icons.alt_route),
-              title: const Text('Route path byte size'),
+              leading: Icon(Icons.alt_route),
+              title: Text(AppLocalizations.of(context)!.routePathByteSize),
               subtitle: Text(
                 '$_routeHashSize byte${_routeHashSize == 1 ? '' : 's'} for manual contact routes',
               ),
@@ -1191,8 +1191,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             Consumer<AppProvider>(
               builder: (context, appProvider, child) => SwitchListTile(
-                secondary: const Icon(Icons.swap_horiz),
-                title: const Text('Auto route rotation'),
+                secondary: Icon(Icons.swap_horiz),
+                title: Text(AppLocalizations.of(context)!.autoRouteRotation),
                 subtitle: const Text(
                   'Rotate between best known direct paths and flood mode for room/contact sends',
                 ),
@@ -1204,8 +1204,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             Consumer<AppProvider>(
               builder: (context, appProvider, child) => SwitchListTile(
-                secondary: const Icon(Icons.route),
-                title: const Text('Nearest repeater fallback'),
+                secondary: Icon(Icons.route),
+                title: Text(AppLocalizations.of(context)!.nearestRepeaterFallback),
                 subtitle: const Text(
                   'After normal retries fail, try one final resend through the nearest repeater',
                 ),
@@ -1217,8 +1217,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             Consumer<AppProvider>(
               builder: (context, appProvider, child) => SwitchListTile(
-                secondary: const Icon(Icons.route),
-                title: const Text('Clear path on max retry'),
+                secondary: Icon(Icons.route),
+                title: Text(AppLocalizations.of(context)!.clearPathOnMaxRetry),
                 subtitle: const Text(
                   'Clear the route only after all retries and final router fallback fail',
                 ),
@@ -1234,13 +1234,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 'Clear Messages',
                 style: TextStyle(color: Colors.red),
               ),
-              subtitle: const Text('Delete all stored message history'),
+              subtitle: Text(AppLocalizations.of(context)!.deleteAllStoredMessageHistory),
               onTap: _clearMessages,
             ),
             Consumer<AppProvider>(
               builder: (context, appProvider, child) => ListTile(
-                leading: const Icon(Icons.format_size),
-                title: const Text('Message font size'),
+                leading: Icon(Icons.format_size),
+                title: Text(AppLocalizations.of(context)!.messageFontSize),
                 subtitle: Text(
                   '${(appProvider.messageFontScale * 100).round()}% of default',
                 ),
@@ -1264,8 +1264,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
           _buildSectionHeader('Tracing'),
           _buildSettingsCard([
             ListTile(
-              leading: const Icon(Icons.cloud_sync),
-              title: const Text('Online trace database'),
+              leading: Icon(Icons.cloud_sync),
+              title: Text(AppLocalizations.of(context)!.onlineTraceDatabase),
               subtitle: Text(_onlineTraceCacheSubtitle()),
             ),
             ListTile(
@@ -1299,8 +1299,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
           _buildSectionHeader('Map'),
           _buildSettingsCard([
             SwitchListTile(
-              secondary: const Icon(Icons.explore),
-              title: const Text('Rotate map with heading'),
+              secondary: Icon(Icons.explore),
+              title: Text(AppLocalizations.of(context)!.rotateMapWithHeading),
               subtitle: const Text(
                 'Rotate the map based on your compass or movement heading',
               ),
@@ -1313,8 +1313,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
               },
             ),
             SwitchListTile(
-              secondary: const Icon(Icons.bug_report_outlined),
-              title: const Text('Show map debug info'),
+              secondary: Icon(Icons.bug_report_outlined),
+              title: Text(AppLocalizations.of(context)!.showMapDebugInfo),
               subtitle: const Text(
                 'Display extra map diagnostics and internal state overlays',
               ),
@@ -1327,8 +1327,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
               },
             ),
             SwitchListTile(
-              secondary: const Icon(Icons.fullscreen),
-              title: const Text('Open map in fullscreen'),
+              secondary: Icon(Icons.fullscreen),
+              title: Text(AppLocalizations.of(context)!.openMapInFullscreen),
               subtitle: const Text(
                 'Start the map tab in fullscreen mode by default',
               ),
@@ -1342,9 +1342,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             Consumer<DrawingProvider>(
               builder: (context, drawingProvider, child) => SwitchListTile(
-                secondary: const Icon(Icons.fmd_good_outlined),
-                title: const Text('Show SAR markers'),
-                subtitle: const Text('Display SAR markers on the main map'),
+                secondary: Icon(Icons.fmd_good_outlined),
+                title: Text(AppLocalizations.of(context)!.showSarMarkersLabel),
+                subtitle: Text(AppLocalizations.of(context)!.displaySarMarkersOnTheMainMap),
                 value: drawingProvider.showSarMarkers,
                 onChanged: (value) {
                   drawingProvider.toggleSarMarkers();
@@ -1353,8 +1353,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             Consumer<MapProvider>(
               builder: (context, mapProvider, child) => SwitchListTile(
-                secondary: const Icon(Icons.timeline),
-                title: const Text('Show all contact trails'),
+                secondary: Icon(Icons.timeline),
+                title: Text(AppLocalizations.of(context)!.showAllContactTrailsLabel),
                 subtitle: const Text(
                   'Display location trails for all contacts that have history',
                 ),
@@ -1366,8 +1366,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             Consumer<MapProvider>(
               builder: (context, mapProvider, child) => SwitchListTile(
-                secondary: const Icon(Icons.router_outlined),
-                title: const Text('Hide repeaters on map'),
+                secondary: Icon(Icons.router_outlined),
+                title: Text(AppLocalizations.of(context)!.hideRepeatersOnMap),
                 subtitle: const Text(
                   'Hide repeater contacts from the main map view',
                 ),
@@ -1397,16 +1397,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           _buildSettingsCard([
             ListTile(
-              leading: const Icon(Icons.graphic_eq),
-              title: const Text('Voice bitrate'),
+              leading: Icon(Icons.graphic_eq),
+              title: Text(AppLocalizations.of(context)!.voiceBitrate),
               subtitle: Text(_voiceBitrateSubtitle(_voiceBitrate)),
               trailing: const Icon(Icons.chevron_right),
               onTap: _showVoiceBitrateDialog,
             ),
             Consumer<AppProvider>(
               builder: (context, appProvider, child) => SwitchListTile(
-                secondary: const Icon(Icons.tune),
-                title: const Text('Band-pass filter voice'),
+                secondary: Icon(Icons.tune),
+                title: Text(AppLocalizations.of(context)!.bandpassFilterVoice),
                 subtitle: const Text(
                   'Keeps speech frequencies and cuts low/high noise',
                 ),
@@ -1418,9 +1418,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             Consumer<AppProvider>(
               builder: (context, appProvider, child) => SwitchListTile(
-                secondary: const Icon(Icons.compress),
-                title: const Text('Voice compressor'),
-                subtitle: const Text('Balances quiet and loud speech levels'),
+                secondary: Icon(Icons.compress),
+                title: Text(AppLocalizations.of(context)!.voiceCompressor),
+                subtitle: Text(AppLocalizations.of(context)!.balancesQuietAndLoudSpeechLevels),
                 value: appProvider.isVoiceCompressorEnabled,
                 onChanged: (value) async {
                   await appProvider.toggleVoiceCompressorEnabled(value);
@@ -1429,9 +1429,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             Consumer<AppProvider>(
               builder: (context, appProvider, child) => SwitchListTile(
-                secondary: const Icon(Icons.speed),
-                title: const Text('Voice limiter'),
-                subtitle: const Text('Prevents clipping peaks before encoding'),
+                secondary: Icon(Icons.speed),
+                title: Text(AppLocalizations.of(context)!.voiceLimiter),
+                subtitle: Text(AppLocalizations.of(context)!.preventsClippingPeaksBeforeEncoding),
                 value: appProvider.isVoiceLimiterEnabled,
                 onChanged: (value) async {
                   await appProvider.toggleVoiceLimiterEnabled(value);
@@ -1440,9 +1440,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             Consumer<AppProvider>(
               builder: (context, appProvider, child) => SwitchListTile(
-                secondary: const Icon(Icons.auto_fix_high),
-                title: const Text('Mic auto gain'),
-                subtitle: const Text('Lets the recorder adjust input level'),
+                secondary: Icon(Icons.auto_fix_high),
+                title: Text(AppLocalizations.of(context)!.micAutoGain),
+                subtitle: Text(AppLocalizations.of(context)!.letsTheRecorderAdjustInputLevel),
                 value: appProvider.isVoiceAutoGainEnabled,
                 onChanged: (value) async {
                   await appProvider.toggleVoiceAutoGainEnabled(value);
@@ -1451,8 +1451,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             Consumer<AppProvider>(
               builder: (context, appProvider, child) => SwitchListTile(
-                secondary: const Icon(Icons.hearing_disabled),
-                title: const Text('Echo cancellation'),
+                secondary: Icon(Icons.hearing_disabled),
+                title: Text(AppLocalizations.of(context)!.echoCancellation),
                 subtitle: const Text(
                   'Uses recorder echo cancellation if available',
                 ),
@@ -1464,8 +1464,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             Consumer<AppProvider>(
               builder: (context, appProvider, child) => SwitchListTile(
-                secondary: const Icon(Icons.noise_control_off),
-                title: const Text('Noise suppression'),
+                secondary: Icon(Icons.noise_control_off),
+                title: Text(AppLocalizations.of(context)!.noiseSuppression),
                 subtitle: const Text(
                   'Uses recorder noise suppression if available',
                 ),
@@ -1477,8 +1477,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             Consumer<AppProvider>(
               builder: (context, appProvider, child) => SwitchListTile(
-                secondary: const Icon(Icons.content_cut),
-                title: const Text('Trim silence in voice messages'),
+                secondary: Icon(Icons.content_cut),
+                title: Text(AppLocalizations.of(context)!.trimSilenceInVoiceMessages),
                 subtitle: const Text(
                   'Removes long silent parts before sending voice',
                 ),
@@ -1493,15 +1493,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
           _buildSectionHeader('Images'),
           _buildSettingsCard([
             ListTile(
-              leading: const Icon(Icons.photo_size_select_large),
-              title: const Text('Max image size'),
+              leading: Icon(Icons.photo_size_select_large),
+              title: Text(AppLocalizations.of(context)!.maxImageSize),
               subtitle: Text('$_imageMaxSize×$_imageMaxSize px'),
               trailing: const Icon(Icons.chevron_right),
               onTap: _showImageMaxSizeDialog,
             ),
             ListTile(
-              leading: const Icon(Icons.tune),
-              title: const Text('Image compression'),
+              leading: Icon(Icons.tune),
+              title: Text(AppLocalizations.of(context)!.imageCompression),
               subtitle: Text(
                 '$_imageCompression / 90  (higher = smaller file)',
               ),
@@ -1519,8 +1519,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ),
             SwitchListTile(
-              secondary: const Icon(Icons.invert_colors),
-              title: const Text('Grayscale'),
+              secondary: Icon(Icons.invert_colors),
+              title: Text(AppLocalizations.of(context)!.grayscale),
               subtitle: const Text(
                 'Converts image to grayscale for smaller file size',
               ),
@@ -1532,8 +1532,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
               },
             ),
             SwitchListTile(
-              secondary: const Icon(Icons.compress),
-              title: const Text('Ultra mode'),
+              secondary: Icon(Icons.compress),
+              title: Text(AppLocalizations.of(context)!.ultraMode),
               subtitle: const Text(
                 'Extra-aggressive compression with stronger AVIF settings',
               ),
@@ -1554,8 +1554,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
           _buildSectionHeader('Profiles'),
           _buildSettingsCard([
             SwitchListTile(
-              secondary: const Icon(Icons.layers_outlined),
-              title: const Text('Enable Profiles'),
+              secondary: Icon(Icons.layers_outlined),
+              title: Text(AppLocalizations.of(context)!.enableProfiles),
               subtitle: const Text(
                 'Show profile management UI while keeping the hidden Default profile as the current workspace.',
               ),
@@ -1572,8 +1572,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             if (_profilesEnabled)
               ListTile(
-                leading: const Icon(Icons.folder_copy_outlined),
-                title: const Text('Manage profiles'),
+                leading: Icon(Icons.folder_copy_outlined),
+                title: Text(AppLocalizations.of(context)!.manageProfiles),
                 subtitle: Text(
                   context.watch<ProfileManager>().activeProfileId ==
                           ConfigProfile.defaultProfileId
@@ -1594,7 +1594,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           _buildSectionHeader('Templates & Help'),
           _buildSettingsCard([
             ListTile(
-              leading: const Icon(Icons.location_searching),
+              leading: Icon(Icons.location_searching),
               title: Text(AppLocalizations.of(context)!.sarTemplates),
               subtitle: Text(AppLocalizations.of(context)!.manageSarTemplates),
               trailing: const Icon(Icons.chevron_right),
@@ -1608,7 +1608,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.school),
+              leading: Icon(Icons.school),
               title: Text(AppLocalizations.of(context)!.viewWelcomeTutorial),
               trailing: const Icon(Icons.chevron_right),
               onTap: () async {
@@ -1629,8 +1629,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
           _buildSectionHeader(AppLocalizations.of(context)!.permissionsSection),
           _buildSettingsCard([
             SwitchListTile(
-              secondary: const Icon(Icons.gps_fixed),
-              title: const Text('Fast private GPS updates'),
+              secondary: Icon(Icons.gps_fixed),
+              title: Text(AppLocalizations.of(context)!.fastPrivateGpsUpdates),
               subtitle: const Text(
                 'Use private zero-hop updates while moving significantly or while actively using map/messages.',
               ),
@@ -1638,8 +1638,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
               onChanged: _setFastLocationUpdatesEnabled,
             ),
             ListTile(
-              leading: const Icon(Icons.straighten),
-              title: const Text('Movement threshold'),
+              leading: Icon(Icons.straighten),
+              title: Text(AppLocalizations.of(context)!.movementThreshold),
               subtitle: Text(
                 '${_fastLocationMovementThresholdMeters.toStringAsFixed(0)} m',
               ),
@@ -1647,14 +1647,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
               onTap: _editFastLocationMovementThreshold,
             ),
             ListTile(
-              leading: const Icon(Icons.timer),
-              title: const Text('Active-use update interval'),
+              leading: Icon(Icons.timer),
+              title: Text(AppLocalizations.of(context)!.activeuseUpdateInterval),
               subtitle: Text('$_fastLocationActiveCadenceSeconds s'),
               trailing: const Icon(Icons.chevron_right),
               onTap: _editFastLocationActiveCadence,
             ),
             ListTile(
-              leading: const Icon(Icons.location_on),
+              leading: Icon(Icons.location_on),
               title: Text(AppLocalizations.of(context)!.locationPermission),
               subtitle: FutureBuilder<LocationPermission>(
                 future: Geolocator.checkPermission(),
@@ -1707,7 +1707,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           _buildSectionHeader(AppLocalizations.of(context)!.about),
           _buildSettingsCard([
             ListTile(
-              leading: const Icon(Icons.info),
+              leading: Icon(Icons.info),
               title: Text(AppLocalizations.of(context)!.appVersion),
               subtitle: Text(
                 _packageInfo != null
@@ -1717,12 +1717,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
               onTap: _handleVersionTap,
             ),
             ListTile(
-              leading: const Icon(Icons.badge),
+              leading: Icon(Icons.badge),
               title: Text(AppLocalizations.of(context)!.appName),
               subtitle: Text(_packageInfo?.appName ?? 'MeshCore SAR'),
             ),
             ListTile(
-              leading: const Icon(Icons.description),
+              leading: Icon(Icons.description),
               title: Text(AppLocalizations.of(context)!.aboutMeshCoreSar),
               subtitle: Text(
                 AppLocalizations.of(context)!.aboutDescription.split('\n\n')[0],
@@ -1756,19 +1756,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
           _buildSectionHeader('Developer & Data'),
           _buildSettingsCard([
             ListTile(
-              leading: const Icon(Icons.bug_report),
+              leading: Icon(Icons.bug_report),
               title: Text(AppLocalizations.of(context)!.packageName),
               subtitle: Text(_packageInfo?.packageName ?? 'com.meshcore.sar'),
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+              padding: EdgeInsets.fromLTRB(16, 12, 16, 4),
               child: Text(
                 AppLocalizations.of(context)!.sampleData,
                 style: Theme.of(context).textTheme.titleSmall,
               ),
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              padding: EdgeInsets.fromLTRB(16, 0, 16, 8),
               child: Text(
                 AppLocalizations.of(context)!.sampleDataDescription,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -1791,7 +1791,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               height: 16,
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
-                          : const Icon(Icons.add_circle_outline),
+                          : Icon(Icons.add_circle_outline),
                       label: Text(AppLocalizations.of(context)!.loadSampleData),
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 12),
@@ -1802,7 +1802,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   Expanded(
                     child: OutlinedButton.icon(
                       onPressed: _isLoadingSampleData ? null : _clearSampleData,
-                      icon: const Icon(Icons.delete_outline),
+                      icon: Icon(Icons.delete_outline),
                       label: Text(AppLocalizations.of(context)!.clearAllData),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: Colors.red,
@@ -1908,8 +1908,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   onPressed: _isPreviewLoading
                       ? null
                       : _selectPreviewImageFromGallery,
-                  icon: const Icon(Icons.photo_library_outlined),
-                  label: const Text('Select from gallery'),
+                  icon: Icon(Icons.photo_library_outlined),
+                  label: Text(AppLocalizations.of(context)!.selectFromGallery),
                 ),
               ],
             ),
@@ -2115,21 +2115,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
               children: [
                 Expanded(
                   child: _voiceStatChip(
-                    label: 'Band-pass',
+                    label: AppLocalizations.of(context)!.bandpass,
                     enabled: bandPassEnabled,
                   ),
                 ),
-                const SizedBox(width: 8),
+                SizedBox(width: 8),
                 Expanded(
                   child: _voiceStatChip(
-                    label: 'Compressor',
+                    label: AppLocalizations.of(context)!.compressor,
                     enabled: compressorEnabled,
                   ),
                 ),
-                const SizedBox(width: 8),
+                SizedBox(width: 8),
                 Expanded(
                   child: _voiceStatChip(
-                    label: 'Limiter',
+                    label: AppLocalizations.of(context)!.limiter,
                     enabled: limiterEnabled,
                   ),
                 ),
@@ -2140,21 +2140,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
               children: [
                 Expanded(
                   child: _voiceStatChip(
-                    label: 'Auto gain',
+                    label: AppLocalizations.of(context)!.autoGain,
                     enabled: autoGainEnabled,
                   ),
                 ),
-                const SizedBox(width: 8),
+                SizedBox(width: 8),
                 Expanded(
                   child: _voiceStatChip(
-                    label: 'Echo cancel',
+                    label: AppLocalizations.of(context)!.echoCancel,
                     enabled: echoCancellationEnabled,
                   ),
                 ),
-                const SizedBox(width: 8),
+                SizedBox(width: 8),
                 Expanded(
                   child: _voiceStatChip(
-                    label: 'Noise suppress',
+                    label: AppLocalizations.of(context)!.noiseSuppress,
                     enabled: noiseSuppressionEnabled,
                   ),
                 ),
@@ -2165,7 +2165,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               children: [
                 Expanded(
                   child: _voiceStatChip(
-                    label: 'Silence trim',
+                    label: AppLocalizations.of(context)!.silenceTrim,
                     enabled: silenceTrimEnabled,
                   ),
                 ),
@@ -2237,7 +2237,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   subtitle: Text(AppLocalizations.of(context)!.blueDarkTheme),
                   value: AppThemeMode.dark,
                 ),
-                const Divider(),
+                Divider(),
                 RadioListTile<AppThemeMode>(
                   title: Row(
                     children: [
@@ -2301,7 +2301,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   value: AppThemeMode.sarNavyBlue,
                 ),
-                const Divider(),
+                Divider(),
                 RadioListTile<AppThemeMode>(
                   title: Text(AppLocalizations.of(context)!.autoSystem),
                   subtitle: Text(
@@ -2368,7 +2368,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Max image size'),
+        title: Text(AppLocalizations.of(context)!.maxImageSize),
         content: SingleChildScrollView(
           child: RadioGroup<int>(
             groupValue: _imageMaxSize,
@@ -2384,7 +2384,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       value: size,
                       title: Text('$size×$size px'),
                       subtitle: size == ImagePreferences.defaultMaxSize
-                          ? const Text('Default')
+                          ? Text(AppLocalizations.of(context)!.defaultValue)
                           : null,
                     ),
                   )
@@ -2406,7 +2406,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Voice bitrate'),
+        title: Text(AppLocalizations.of(context)!.voiceBitrate),
         content: SingleChildScrollView(
           child: RadioGroup<int>(
             groupValue: _voiceBitrate,
@@ -2425,7 +2425,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       title: Text('$bitrate bps'),
                       subtitle:
                           bitrate == VoiceBitratePreferences.defaultBitrate
-                          ? const Text('Default')
+                          ? Text(AppLocalizations.of(context)!.defaultValue)
                           : null,
                     ),
                   )
@@ -2464,16 +2464,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 'Version ${_packageInfo?.version ?? '1.0.0'}',
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               Text(AppLocalizations.of(context)!.aboutDescription),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               Text(
                 AppLocalizations.of(context)!.technologiesUsed,
                 style: Theme.of(
                   context,
                 ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: 8),
               Text(AppLocalizations.of(context)!.technologiesList),
             ],
           ),
@@ -2486,7 +2486,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 await launchUrl(url, mode: LaunchMode.externalApplication);
               }
             },
-            icon: const Icon(Icons.open_in_new),
+            icon: Icon(Icons.open_in_new),
             label: Text(AppLocalizations.of(context)!.moreInfo),
           ),
           TextButton(

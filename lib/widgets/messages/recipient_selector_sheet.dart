@@ -111,7 +111,7 @@ class _RecipientSelectorSheetState extends State<RecipientSelectorSheet> {
 
           // Search field
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.all(16),
             child: TextField(
               controller: _searchController,
               decoration: InputDecoration(
@@ -154,7 +154,7 @@ class _RecipientSelectorSheetState extends State<RecipientSelectorSheet> {
                     context: context,
                     icon: Icons.all_inbox,
                     title: l10n.showAll,
-                    subtitle: 'All messages',
+                    subtitle: l10n.allMessages,
                     unreadCount: widget.unreadCount,
                     isSelected: _isSelected('all', null),
                     onTap: () {
@@ -181,7 +181,7 @@ class _RecipientSelectorSheetState extends State<RecipientSelectorSheet> {
                   ),
                   if (filteredChannels.isEmpty)
                     Padding(
-                      padding: const EdgeInsets.all(16),
+                      padding: EdgeInsets.all(16),
                       child: Text(
                         l10n.noChannelsFound,
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -234,7 +234,7 @@ class _RecipientSelectorSheetState extends State<RecipientSelectorSheet> {
                   ),
                   if (filteredContacts.isEmpty)
                     Padding(
-                      padding: const EdgeInsets.all(16),
+                      padding: EdgeInsets.all(16),
                       child: Text(
                         l10n.noContactsFound,
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -283,7 +283,7 @@ class _RecipientSelectorSheetState extends State<RecipientSelectorSheet> {
                   ),
                   if (filteredRooms.isEmpty)
                     Padding(
-                      padding: const EdgeInsets.all(16),
+                      padding: EdgeInsets.all(16),
                       child: Text(
                         l10n.noRoomsFound,
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -323,7 +323,7 @@ class _RecipientSelectorSheetState extends State<RecipientSelectorSheet> {
                           size: 64,
                           color: Theme.of(context).disabledColor,
                         ),
-                        const SizedBox(height: 16),
+                        SizedBox(height: 16),
                         Text(
                           l10n.noRecipientsAvailable,
                           style: Theme.of(context).textTheme.bodyLarge

@@ -54,10 +54,10 @@ class UpdateDialog extends StatelessWidget {
 
           // Optional: Build timestamp
           if (updateInfo.timestamp != null) ...[
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             _buildInfoRow(
               context,
-              label: 'Build Time',
+              label: AppLocalizations.of(context)!.buildTime,
               value: _formatTimestamp(updateInfo.timestamp!),
             ),
           ],
@@ -131,8 +131,8 @@ class UpdateDialog extends StatelessWidget {
     if (updateInfo.downloadUrl == null) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Download URL not available'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.downloadUrlNotAvailable),
             backgroundColor: Colors.red,
           ),
         );
@@ -147,8 +147,8 @@ class UpdateDialog extends StatelessWidget {
       if (!canLaunch) {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Cannot open download URL'),
+            SnackBar(
+              content: Text(AppLocalizations.of(context)!.cannotOpenDownloadUrl),
               backgroundColor: Colors.red,
             ),
           );

@@ -64,7 +64,7 @@ class CompassSarList extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.only(left: 16, top: 16, bottom: 8),
+          padding: EdgeInsets.only(left: 16, top: 16, bottom: 8),
           child: Text(
             l10n.sarMarkers,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(

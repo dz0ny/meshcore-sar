@@ -49,7 +49,7 @@ class _CompassFiltersState extends State<CompassFilters> {
           title: Row(
             children: [
               const Icon(Icons.filter_list, size: 20),
-              const SizedBox(width: 8),
+              SizedBox(width: 8),
               Text(l10n.filterMarkers),
             ],
           ),
@@ -62,7 +62,7 @@ class _CompassFiltersState extends State<CompassFilters> {
               _CompactFilterItem(
                 icon: Icons.timeline,
                 color: Colors.blue,
-                label: 'Location Trail',
+                label: l10n.locationTrail,
                 value: mapProvider.isTrailVisible,
                 onChanged: (value) {
                   mapProvider.toggleTrailVisibility();
@@ -100,7 +100,7 @@ class _CompassFiltersState extends State<CompassFilters> {
               const SizedBox(height: 4),
               // SAR Markers section
               Padding(
-                padding: const EdgeInsets.only(left: 8, bottom: 8, top: 4),
+                padding: EdgeInsets.only(left: 8, bottom: 8, top: 4),
                 child: Text(
                   l10n.sarMarkers,
                   style: Theme.of(context).textTheme.labelLarge?.copyWith(
@@ -118,7 +118,7 @@ class _CompassFiltersState extends State<CompassFilters> {
                   setDialogState(() {});
                 },
               ),
-              const SizedBox(height: 4),
+              SizedBox(height: 4),
               _CompactFilterItem(
                 icon: Icons.local_fire_department,
                 color: Colors.red,
@@ -129,7 +129,7 @@ class _CompassFiltersState extends State<CompassFilters> {
                   setDialogState(() {});
                 },
               ),
-              const SizedBox(height: 4),
+              SizedBox(height: 4),
               _CompactFilterItem(
                 icon: Icons.home_work,
                 color: Colors.orange,
@@ -164,7 +164,7 @@ class _CompassFiltersState extends State<CompassFilters> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     return IconButton(
-      icon: const Icon(Icons.filter_list),
+      icon: Icon(Icons.filter_list),
       tooltip: l10n.filterMarkersTooltip,
       onPressed: () => _showFilterDialog(),
     );

@@ -10,6 +10,7 @@ import '../models/contact.dart';
 import '../providers/connection_provider.dart';
 import '../providers/contacts_provider.dart';
 import '../services/mesh_map_nodes_service.dart';
+import '../l10n/app_localizations.dart';
 
 class RepeatersMapScreen extends StatefulWidget {
   const RepeatersMapScreen({super.key});
@@ -191,18 +192,18 @@ class _RepeatersMapScreenState extends State<RepeatersMapScreen> {
                   context,
                 ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               _InfoLine(
-                label: 'Public key',
+                label: AppLocalizations.of(context)!.publicKeyLabel,
                 value: repeater.publicKey,
                 monospace: true,
               ),
               _InfoLine(
-                label: 'Coordinates',
+                label: AppLocalizations.of(context)!.coordinates,
                 value:
                     '${repeater.latitude.toStringAsFixed(5)}, ${repeater.longitude.toStringAsFixed(5)}',
               ),
-              _InfoLine(label: 'Source', value: repeater.sourceLabel),
+              _InfoLine(label: AppLocalizations.of(context)!.source, value: repeater.sourceLabel),
               const SizedBox(height: 12),
               if (canAdd)
                 SizedBox(
@@ -233,8 +234,8 @@ class _RepeatersMapScreenState extends State<RepeatersMapScreen> {
                   width: double.infinity,
                   child: FilledButton.icon(
                     onPressed: null,
-                    icon: const Icon(Icons.check_circle),
-                    label: const Text('Already in contacts'),
+                    icon: Icon(Icons.check_circle),
+                    label: Text(AppLocalizations.of(context)!.alreadyInContacts),
                   ),
                 ),
             ],
@@ -253,8 +254,8 @@ class _RepeatersMapScreenState extends State<RepeatersMapScreen> {
     if (!connectionProvider.deviceInfo.isConnected) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Connect to a device before adding contacts'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.connectToADeviceBeforeAddingContacts),
         ),
       );
       return;
@@ -366,7 +367,7 @@ class _RepeatersMapScreenState extends State<RepeatersMapScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Repeaters Map'),
+        title: Text(AppLocalizations.of(context)!.repeatersMap),
         actions: [
           IconButton(
             onPressed: _isLoading
@@ -446,18 +447,18 @@ class _RepeatersMapScreenState extends State<RepeatersMapScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
-                    children: const [
+                    children: [
                       _LegendRow(
-                        color: Color(0xFF7C3AED),
-                        label: 'From contacts',
+                        color: const Color(0xFF7C3AED),
+                        label: AppLocalizations.of(context)!.fromContacts,
                       ),
-                      SizedBox(height: 8),
+                      const SizedBox(height: 8),
                       _LegendRow(
-                        color: Color(0xFFE8681D),
-                        label: 'Online only',
+                        color: const Color(0xFFE8681D),
+                        label: AppLocalizations.of(context)!.onlineOnly,
                       ),
-                      SizedBox(height: 8),
-                      _LegendRow(color: Color(0xFF1B8F4F), label: 'In both'),
+                      const SizedBox(height: 8),
+                      _LegendRow(color: const Color(0xFF1B8F4F), label: AppLocalizations.of(context)!.inBoth),
                     ],
                   ),
                 ),

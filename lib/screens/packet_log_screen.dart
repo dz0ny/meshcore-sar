@@ -61,7 +61,7 @@ class _PacketLogScreenState extends State<PacketLogScreen> {
         if (context.mounted) {
           ScaffoldMessenger.of(
             context,
-          ).showSnackBar(const SnackBar(content: Text('No logs to export')));
+          ).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.noLogsToExport)));
         }
         return;
       }
@@ -108,7 +108,7 @@ class _PacketLogScreenState extends State<PacketLogScreen> {
         if (context.mounted) {
           ScaffoldMessenger.of(
             context,
-          ).showSnackBar(const SnackBar(content: Text('No logs to export')));
+          ).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.noLogsToExport)));
         }
         return;
       }
@@ -155,8 +155,8 @@ class _PacketLogScreenState extends State<PacketLogScreen> {
   void _copyToClipboard(BuildContext context, BlePacketLog log) {
     Clipboard.setData(ClipboardData(text: log.hexData));
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Hex data copied to clipboard'),
+      SnackBar(
+        content: Text(AppLocalizations.of(context)!.hexDataCopiedToClipboard),
         duration: Duration(seconds: 1),
       ),
     );
@@ -184,7 +184,7 @@ class _PacketLogScreenState extends State<PacketLogScreen> {
               setState(() {});
               if (parentContext.mounted) {
                 ScaffoldMessenger.of(parentContext).showSnackBar(
-                  const SnackBar(content: Text('Packet logs cleared')),
+                  SnackBar(content: Text(AppLocalizations.of(context)!.packetLogsCleared)),
                 );
               }
             },
@@ -205,7 +205,7 @@ class _PacketLogScreenState extends State<PacketLogScreen> {
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('BLE Packet Logs'),
+            Text(AppLocalizations.of(context)!.blePacketLogs),
             Text(
               '${logs.length} packets',
               style: Theme.of(context).textTheme.bodySmall,
@@ -316,23 +316,23 @@ class _PacketLogScreenState extends State<PacketLogScreen> {
             icon: const Icon(Icons.share),
             tooltip: 'Export logs',
             itemBuilder: (context) => [
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'csv',
                 child: Row(
                   children: [
-                    Icon(Icons.table_chart),
-                    SizedBox(width: 8),
-                    Text('Export as CSV'),
+                    const Icon(Icons.table_chart),
+                    const SizedBox(width: 8),
+                    Text(AppLocalizations.of(context)!.exportAsCsv),
                   ],
                 ),
               ),
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'txt',
                 child: Row(
                   children: [
-                    Icon(Icons.text_snippet),
-                    SizedBox(width: 8),
-                    Text('Export as Text'),
+                    const Icon(Icons.text_snippet),
+                    const SizedBox(width: 8),
+                    Text(AppLocalizations.of(context)!.exportAsText),
                   ],
                 ),
               ),
@@ -411,8 +411,8 @@ class _PacketLogScreenState extends State<PacketLogScreen> {
                                 _filterDirection = null;
                               });
                             },
-                            icon: const Icon(Icons.clear_all),
-                            label: const Text('Clear filters'),
+                            icon: Icon(Icons.clear_all),
+                            label: Text(AppLocalizations.of(context)!.clearFilters),
                           ),
                         ],
                       ],
@@ -519,24 +519,24 @@ class _PacketLogCard extends StatelessWidget {
                   children: [
                     _FactCard(
                       icon: isRx ? Icons.call_received : Icons.call_made,
-                      label: 'Direction',
+                      label: AppLocalizations.of(context)!.direction,
                       value: isRx ? 'RX' : 'TX',
                       accent: directionColor,
                     ),
                     _FactCard(
                       icon: Icons.data_object,
-                      label: 'Size',
+                      label: AppLocalizations.of(context)!.size,
                       value: '${log.rawData.length} bytes',
                     ),
                     _FactCard(
                       icon: Icons.schedule,
-                      label: 'Captured',
+                      label: AppLocalizations.of(context)!.captured,
                       value: _formatTimestamp(log.timestamp),
                     ),
                     if (log.responseCode != null)
                       _FactCard(
                         icon: Icons.sell,
-                        label: 'Opcode',
+                        label: AppLocalizations.of(context)!.opcode,
                         value: log.opcodeName,
                       ),
                   ],
@@ -565,7 +565,7 @@ class _PacketLogCard extends StatelessWidget {
                         const SizedBox(height: 10),
                         if (rxInfo?.rssiDbm != null)
                           _SignalMeter(
-                            label: 'RSSI',
+                            label: AppLocalizations.of(context)!.rssi,
                             valueLabel: '${rxInfo!.rssiDbm} dBm',
                             normalized: _normalizeRssi(
                               rxInfo.rssiDbm!.toDouble(),
@@ -573,9 +573,9 @@ class _PacketLogCard extends StatelessWidget {
                             color: _rssiColor(rxInfo.rssiDbm!.toDouble()),
                           ),
                         if (rxInfo?.snrDb != null) ...[
-                          const SizedBox(height: 8),
+                          SizedBox(height: 8),
                           _SignalMeter(
-                            label: 'SNR',
+                            label: AppLocalizations.of(context)!.snr,
                             valueLabel:
                                 '${rxInfo!.snrDb!.toStringAsFixed(1)} dB',
                             normalized: _normalizeSnr(rxInfo.snrDb!),
@@ -854,17 +854,17 @@ class _RouteSection extends StatelessWidget {
             children: [
               _FactCard(
                 icon: Icons.route,
-                label: 'Payload',
+                label: AppLocalizations.of(context)!.payload,
                 value: _payloadTypeLabel(route.payloadType),
               ),
               _FactCard(
                 icon: Icons.hub,
-                label: 'Hops',
+                label: AppLocalizations.of(context)!.hops,
                 value: '${route.hopCount}',
               ),
               _FactCard(
                 icon: Icons.tag,
-                label: 'Hash size',
+                label: AppLocalizations.of(context)!.hashSize,
                 value:
                     '${route.hashSize} byte${route.hashSize == 1 ? '' : 's'}',
               ),

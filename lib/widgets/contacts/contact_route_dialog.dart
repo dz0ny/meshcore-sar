@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 
 import '../../models/contact.dart';
 import '../../models/path_history.dart';
+import '../../l10n/app_localizations.dart';
 import '../../providers/app_provider.dart';
 import '../../providers/connection_provider.dart';
 import '../../services/contact_route_resolver.dart';
@@ -213,6 +214,16 @@ class _ContactRouteDialogState extends State<ContactRouteDialog> {
     );
   }
 
+  ParsedContactRoute? get _effectiveRoute {
+    if (_parsedRoute != null) {
+      return _parsedRoute;
+    }
+    if (_errorText != null || _controller.text.trim().isNotEmpty) {
+      return null;
+    }
+    return ContactRouteCodec.direct(hashSize: _selectedHashSize);
+  }
+
   void _toggleHop(Contact contact) {
     setState(() {
       if (_selectedMapHops.any(
@@ -415,13 +426,14 @@ class _ContactRouteDialogState extends State<ContactRouteDialog> {
         ),
         trailing: FilledButton.tonal(
           onPressed: () => _applyHistoryRecord(record),
-          child: const Text('Use'),
+          child: Text(AppLocalizations.of(context)!.use),
         ),
       ),
     );
   }
 
   Widget _buildPreviewSection() {
+    final previewRoute = _effectiveRoute;
     final colorScheme = Theme.of(context).colorScheme;
     return Container(
       width: double.infinity,
@@ -435,20 +447,21 @@ class _ContactRouteDialogState extends State<ContactRouteDialog> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            _parsedRoute == null ? 'Route preview' : _parsedRoute!.summary,
+            previewRoute == null ? 'Route preview' : previewRoute.summary,
             style: Theme.of(context).textTheme.titleSmall,
           ),
           const SizedBox(height: 4),
           Text(
-            _parsedRoute == null
+            previewRoute == null
                 ? 'Pick relays from the list below or open manual edit if you need exact hop tokens.'
-                : '${_parsedRoute!.byteLength} bytes • descriptor 0x${_parsedRoute!.encodedPathLen.toRadixString(16).padLeft(2, '0').toUpperCase()}',
+                : '${previewRoute.byteLength} bytes • descriptor 0x${previewRoute.encodedPathLen.toRadixString(16).padLeft(2, '0').toUpperCase()}',
             style: Theme.of(context).textTheme.bodySmall,
           ),
-          if (_parsedRoute != null) ...[
+          if (previewRoute != null &&
+              previewRoute.canonicalText.isNotEmpty) ...[
             const SizedBox(height: 10),
             SelectableText(
-              _parsedRoute!.canonicalText,
+              previewRoute.canonicalText,
               style: Theme.of(
                 context,
               ).textTheme.bodyMedium?.copyWith(fontFamily: 'monospace'),
@@ -469,7 +482,7 @@ class _ContactRouteDialogState extends State<ContactRouteDialog> {
           border: Border.all(color: Theme.of(context).dividerColor),
         ),
         child: Text(
-          'No relays selected yet. Add repeaters below or let auto resolve build a route.',
+          'No relays selected. Save now to use a direct path, or add repeaters below.',
           style: Theme.of(context).textTheme.bodyMedium,
         ),
       );
@@ -590,7 +603,7 @@ class _ContactRouteDialogState extends State<ContactRouteDialog> {
           _showManualEditor = expanded;
         });
       },
-      title: const Text('Manual route edit'),
+      title: Text(AppLocalizations.of(context)!.manualRouteEdit),
       subtitle: const Text(
         'Use this when you need to paste or tweak hop tokens directly.',
       ),
@@ -728,8 +741,8 @@ class _ContactRouteDialogState extends State<ContactRouteDialog> {
           children: [
             FilledButton.tonalIcon(
               onPressed: _resolvePathAutomatically,
-              icon: const Icon(Icons.auto_fix_high),
-              label: const Text('Auto resolve'),
+              icon: Icon(Icons.auto_fix_high),
+              label: Text(AppLocalizations.of(context)!.autoResolve),
             ),
             OutlinedButton.icon(
               onPressed: _selectedMapHops.isEmpty
@@ -740,8 +753,8 @@ class _ContactRouteDialogState extends State<ContactRouteDialog> {
                         _syncControllerFromSelectedHops();
                       });
                     },
-              icon: const Icon(Icons.clear_all),
-              label: const Text('Clear relays'),
+              icon: Icon(Icons.clear_all),
+              label: Text(AppLocalizations.of(context)!.clearRelays),
             ),
           ],
         ),
@@ -796,7 +809,7 @@ class _ContactRouteDialogState extends State<ContactRouteDialog> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (observedRecord != null) ...[
-          _buildHistoryRecordTile(observedRecord, title: 'Observed mesh route'),
+          _buildHistoryRecordTile(observedRecord, title: AppLocalizations.of(context)!.observedMeshRoute),
           const SizedBox(height: 16),
         ],
         if (remainingRecords.isEmpty)
@@ -822,6 +835,7 @@ class _ContactRouteDialogState extends State<ContactRouteDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final effectiveRoute = _effectiveRoute;
     final appProvider = context.watch<AppProvider>();
     final connectionProvider = context.watch<ConnectionProvider>();
     final selfPoint =
@@ -939,22 +953,24 @@ class _ContactRouteDialogState extends State<ContactRouteDialog> {
                   TextButton(
                     onPressed: () => Navigator.of(
                       context,
-                    ).pop(const ContactRouteDialogResult.clear()),
-                    child: const Text('Clear Route'),
+                    ).pop(ContactRouteDialogResult.clear()),
+                    child: Text(
+                      '${AppLocalizations.of(context)!.clearRoute} (${AppLocalizations.of(context)!.flood})',
+                    ),
                   )
                 else
                   const SizedBox.shrink(),
                 FilledButton(
-                  onPressed: _parsedRoute == null
+                  onPressed: effectiveRoute == null
                       ? null
                       : () => Navigator.of(context).pop(
                           ContactRouteDialogResult.setWithFallback(
-                            _parsedRoute!,
+                            effectiveRoute,
                             inferredFallbackLocation:
                                 _buildSyntheticFallbackLocation(),
                           ),
                         ),
-                  child: const Text('Save Path'),
+                  child: Text(AppLocalizations.of(context)!.savePath),
                 ),
               ],
             ),

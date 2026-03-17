@@ -603,7 +603,7 @@ class DrawingToolbar extends StatelessWidget {
                 child: Row(
                   children: [
                     const Icon(Icons.share),
-                    const SizedBox(width: 12),
+                    SizedBox(width: 12),
                     Expanded(
                       child: Text(
                         AppLocalizations.of(context)!.shareDrawingsCount(
@@ -620,7 +620,7 @@ class DrawingToolbar extends StatelessWidget {
               const Divider(),
               // Option: Send to Public Channel
               ListTile(
-                leading: const Icon(Icons.public, color: Colors.blue),
+                leading: Icon(Icons.public, color: Colors.blue),
                 title: Text(AppLocalizations.of(context)!.publicChannel),
                 subtitle: Text(AppLocalizations.of(context)!.broadcastToAll),
                 onTap: () async {

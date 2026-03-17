@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../l10n/app_localizations.dart';
 
 class MapLegend extends StatelessWidget {
   final int teamMemberCount;
@@ -35,31 +36,31 @@ class MapLegend extends StatelessWidget {
             _LegendItem(
               icon: Icons.person,
               color: Theme.of(context).colorScheme.primary,
-              label: 'Team',
+              label: AppLocalizations.of(context)!.team,
               count: teamMemberCount,
             ),
             _LegendItem(
               icon: Icons.person_pin,
               color: Colors.green,
-              label: 'Found',
+              label: AppLocalizations.of(context)!.found,
               count: foundPersonCount,
             ),
             _LegendItem(
               icon: Icons.local_fire_department,
               color: Colors.red,
-              label: 'Fire',
+              label: AppLocalizations.of(context)!.fire,
               count: fireCount,
             ),
             _LegendItem(
               icon: Icons.home_work,
               color: Colors.orange,
-              label: 'Staging',
+              label: AppLocalizations.of(context)!.staging,
               count: stagingAreaCount,
             ),
             _LegendItem(
               icon: Icons.inventory_2,
               color: Colors.purple,
-              label: 'Object',
+              label: AppLocalizations.of(context)!.object,
               count: objectCount,
             ),
           ],

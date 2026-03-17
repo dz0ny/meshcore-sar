@@ -565,7 +565,7 @@ class _LocationFormatToggleState extends State<_LocationFormatToggle> {
   Widget build(BuildContext context) {
     final position = widget.position;
     if (position == null) {
-      return const SizedBox.shrink();
+      return SizedBox.shrink();
     }
 
     final l10n = AppLocalizations.of(context)!;

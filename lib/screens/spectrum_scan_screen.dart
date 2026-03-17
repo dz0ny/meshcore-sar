@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../models/device_info.dart';
 import '../providers/connection_provider.dart';
 import '../widgets/device/spectrum_scan_panel.dart';
+import '../l10n/app_localizations.dart';
 
 class SpectrumScanScreen extends StatefulWidget {
   const SpectrumScanScreen({super.key});
@@ -323,8 +324,8 @@ class _SpectrumScanScreenState extends State<SpectrumScanScreen> {
     final mergedCandidates = _mergeSectorCandidates(sectorCandidates);
     if (mergedCandidates.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Spectrum scan returned no candidate frequencies'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.spectrumScanReturnedNoCandidateFrequencies),
           backgroundColor: Colors.red,
         ),
       );
@@ -383,7 +384,7 @@ class _SpectrumScanScreenState extends State<SpectrumScanScreen> {
         : possibleBracketFrequencies;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Spectrum Scan')),
+      appBar: AppBar(title: Text(AppLocalizations.of(context)!.spectrumScan)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [

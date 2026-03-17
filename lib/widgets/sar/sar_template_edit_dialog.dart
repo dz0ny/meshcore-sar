@@ -210,7 +210,7 @@ class _SarTemplateEditDialogState extends State<SarTemplateEditDialog> {
                   maxLines: 2,
                   onChanged: (_) => setState(() {}),
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
 
                 // Color picker
                 Text(
@@ -305,7 +305,7 @@ class _SarTemplateEditDialogState extends State<SarTemplateEditDialog> {
                     const SizedBox(width: 12),
                     ElevatedButton.icon(
                       onPressed: _save,
-                      icon: const Icon(Icons.save),
+                      icon: Icon(Icons.save),
                       label: Text(l10n.save),
                     ),
                   ],

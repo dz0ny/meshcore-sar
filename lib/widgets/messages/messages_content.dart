@@ -55,12 +55,12 @@ class MessagesContent extends StatelessWidget {
                           size: 64,
                           color: Theme.of(context).disabledColor,
                         ),
-                        const SizedBox(height: 16),
+                        SizedBox(height: 16),
                         Text(
                           AppLocalizations.of(context)!.noMessagesYet,
                           style: Theme.of(context).textTheme.titleLarge,
                         ),
-                        const SizedBox(height: 8),
+                        SizedBox(height: 8),
                         Text(
                           AppLocalizations.of(context)!.pullDownToSync,
                           style: Theme.of(context).textTheme.bodyMedium,

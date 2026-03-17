@@ -100,7 +100,7 @@ class CompassContactList extends StatelessWidget {
         // Persons/Team section
         if (showContacts && persons.isNotEmpty) ...[
           Padding(
-            padding: const EdgeInsets.only(left: 16, bottom: 8, top: 4),
+            padding: EdgeInsets.only(left: 16, bottom: 8, top: 4),
             child: Text(
               l10n.teamMembers,
               style: Theme.of(
@@ -135,7 +135,7 @@ class CompassContactList extends StatelessWidget {
         // Repeaters section
         if (showRepeaters && repeaters.isNotEmpty) ...[
           Padding(
-            padding: const EdgeInsets.only(left: 16, bottom: 8, top: 12),
+            padding: EdgeInsets.only(left: 16, bottom: 8, top: 12),
             child: Text(
               l10n.repeaters,
               style: Theme.of(
@@ -151,7 +151,7 @@ class CompassContactList extends StatelessWidget {
         // Rooms section
         if (rooms.isNotEmpty) ...[
           Padding(
-            padding: const EdgeInsets.only(left: 16, bottom: 8, top: 12),
+            padding: EdgeInsets.only(left: 16, bottom: 8, top: 12),
             child: Text(
               l10n.rooms,
               style: Theme.of(

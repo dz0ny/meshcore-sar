@@ -39,7 +39,7 @@ class TrailControls extends StatelessWidget {
                 Row(
                   children: [
                     const Icon(Icons.timeline, size: 24),
-                    const SizedBox(width: 12),
+                    SizedBox(width: 12),
                     Text(
                       l10n.locationTrail,
                       style: const TextStyle(
@@ -53,7 +53,7 @@ class TrailControls extends StatelessWidget {
 
                 // Trail visibility toggle
                 SwitchListTile(
-                  secondary: const Icon(Icons.visibility),
+                  secondary: Icon(Icons.visibility),
                   title: Text(l10n.showTrailOnMap),
                   subtitle: Text(
                     mapProvider.isTrailVisible
@@ -75,7 +75,7 @@ class TrailControls extends StatelessWidget {
                   children: [
                     OutlinedButton.icon(
                       onPressed: () => _importTrail(context, mapProvider),
-                      icon: const Icon(Icons.file_upload_outlined),
+                      icon: Icon(Icons.file_upload_outlined),
                       label: Text(l10n.importFromClipboard),
                     ),
                     if (mapProvider.currentTrail != null &&
@@ -86,7 +86,7 @@ class TrailControls extends StatelessWidget {
                           mapProvider.currentTrail!,
                           customName: 'My Trail',
                         ),
-                        icon: const Icon(Icons.file_download_outlined),
+                        icon: Icon(Icons.file_download_outlined),
                         label: Text(l10n.exportToClipboard),
                       ),
                   ],
@@ -116,13 +116,13 @@ class TrailControls extends StatelessWidget {
                             mapProvider.totalTrailDistance,
                           ),
                         ),
-                        const SizedBox(height: 8),
+                        SizedBox(height: 8),
                         _buildStatRow(
                           icon: Icons.access_time,
                           label: l10n.duration,
                           value: _formatDuration(mapProvider.trailDuration),
                         ),
-                        const SizedBox(height: 8),
+                        SizedBox(height: 8),
                         _buildStatRow(
                           icon: Icons.place,
                           label: l10n.points,
@@ -139,7 +139,7 @@ class TrailControls extends StatelessWidget {
                     onPressed: () {
                       _showClearConfirmation(context, mapProvider, l10n);
                     },
-                    icon: const Icon(Icons.delete_outline),
+                    icon: Icon(Icons.delete_outline),
                     label: Text(l10n.clearTrail),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.red,
@@ -161,7 +161,7 @@ class TrailControls extends StatelessWidget {
                             size: 48,
                             color: Colors.grey,
                           ),
-                          const SizedBox(height: 8),
+                          SizedBox(height: 8),
                           Text(
                             l10n.noTrailRecorded,
                             style: const TextStyle(
@@ -169,7 +169,7 @@ class TrailControls extends StatelessWidget {
                               fontSize: 16,
                             ),
                           ),
-                          const SizedBox(height: 8),
+                          SizedBox(height: 8),
                           Text(
                             l10n.startTrackingToRecord,
                             style: const TextStyle(
@@ -191,7 +191,7 @@ class TrailControls extends StatelessWidget {
                 Row(
                   children: [
                     const Icon(Icons.people, size: 20),
-                    const SizedBox(width: 8),
+                    SizedBox(width: 8),
                     Text(
                       l10n.contactTrails,
                       style: const TextStyle(
@@ -205,7 +205,7 @@ class TrailControls extends StatelessWidget {
 
                 // Show All Contact Trails toggle
                 SwitchListTile(
-                  secondary: const Icon(Icons.route),
+                  secondary: Icon(Icons.route),
                   title: Text(l10n.showAllContactTrails),
                   subtitle: Text(
                     contactsWithTrails.isEmpty

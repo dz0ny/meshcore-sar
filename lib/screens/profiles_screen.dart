@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../models/config_profile.dart';
 import '../services/profile_manager.dart';
 import '../services/profile_workspace_coordinator.dart';
+import '../l10n/app_localizations.dart';
 
 class ProfilesScreen extends StatelessWidget {
   const ProfilesScreen({super.key});
@@ -15,7 +16,7 @@ class ProfilesScreen extends StatelessWidget {
         final profiles = profileManager.visibleProfiles;
         return Scaffold(
           appBar: AppBar(
-            title: const Text('Profiles'),
+            title: Text(AppLocalizations.of(context)!.profiles),
             actions: [
               IconButton(
                 onPressed: () async {
@@ -30,12 +31,12 @@ class ProfilesScreen extends StatelessWidget {
           ),
           floatingActionButton: FloatingActionButton.extended(
             onPressed: () => _createProfile(context),
-            icon: const Icon(Icons.add),
-            label: const Text('New Profile'),
+            icon: Icon(Icons.add),
+            label: Text(AppLocalizations.of(context)!.newProfile),
           ),
           body: profiles.isEmpty
-              ? const Center(
-                  child: Text('Enable profiles to start managing them.'),
+              ? Center(
+                  child: Text(AppLocalizations.of(context)!.enableProfilesToStartManagingThem),
                 )
               : ListView.builder(
                   padding: const EdgeInsets.all(16),
@@ -73,7 +74,7 @@ class ProfilesScreen extends StatelessWidget {
                                       ).colorScheme.primaryContainer,
                                       borderRadius: BorderRadius.circular(999),
                                     ),
-                                    child: const Text('Active'),
+                                    child: Text(AppLocalizations.of(context)!.active),
                                   ),
                               ],
                             ),
@@ -90,7 +91,7 @@ class ProfilesScreen extends StatelessWidget {
                                         .read<ProfileWorkspaceCoordinator>()
                                         .openProfile(profile.id);
                                   },
-                                  child: const Text('Open'),
+                                  child: Text(AppLocalizations.of(context)!.open),
                                 ),
                                 OutlinedButton(
                                   onPressed: () async {
@@ -111,7 +112,7 @@ class ProfilesScreen extends StatelessWidget {
                                         .read<ProfileWorkspaceCoordinator>()
                                         .exportProfile(resolved);
                                   },
-                                  child: const Text('Share'),
+                                  child: Text(AppLocalizations.of(context)!.share),
                                 ),
                                 PopupMenuButton<String>(
                                   onSelected: (value) async {
@@ -132,14 +133,14 @@ class ProfilesScreen extends StatelessWidget {
                                     }
                                   },
                                   itemBuilder: (context) => [
-                                    const PopupMenuItem(
+                                    PopupMenuItem(
                                       value: 'duplicate',
-                                      child: Text('Duplicate'),
+                                      child: Text(AppLocalizations.of(context)!.duplicate),
                                     ),
                                     if (!profile.isDefault)
-                                      const PopupMenuItem(
+                                      PopupMenuItem(
                                         value: 'rename',
-                                        child: Text('Rename'),
+                                        child: Text(AppLocalizations.of(context)!.rename),
                                       ),
                                     if (!profile.isDefault)
                                       const PopupMenuItem(
@@ -187,7 +188,7 @@ class ProfilesScreen extends StatelessWidget {
     final name = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Create Profile'),
+        title: Text(AppLocalizations.of(context)!.createProfile),
         content: TextField(
           controller: controller,
           autofocus: true,
@@ -200,7 +201,7 @@ class ProfilesScreen extends StatelessWidget {
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(controller.text.trim()),
-            child: const Text('Create'),
+            child: Text(AppLocalizations.of(context)!.create),
           ),
         ],
       ),
@@ -221,7 +222,7 @@ class ProfilesScreen extends StatelessWidget {
     final name = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Rename Profile'),
+        title: Text(AppLocalizations.of(context)!.renameProfile),
         content: TextField(
           controller: controller,
           autofocus: true,

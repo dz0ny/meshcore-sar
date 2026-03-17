@@ -164,7 +164,12 @@ class _ContactRouteDialogState extends State<ContactRouteDialog> {
   }
 
   Future<void> _loadHashSizePreference() async {
-    final hashSize = await RouteHashPreferences.getHashSize();
+    // Use the contact's current path hash size if it has a path,
+    // otherwise fall back to the global preference.
+    final contactHashSize = widget.contact.hasPath
+        ? widget.contact.pathHashSize
+        : null;
+    final hashSize = contactHashSize ?? await RouteHashPreferences.getHashSize();
     if (!mounted) return;
     setState(() {
       _selectedHashSize = hashSize;
@@ -594,7 +599,7 @@ class _ContactRouteDialogState extends State<ContactRouteDialog> {
                 ? 'AABB,CCDD'
                 : 'AABBCC,DDEEFF',
             helperText:
-                'Comma-separated hops. Hash size follows global Settings. Colon form like AA:BB is also accepted.',
+                'Comma-separated hops using the selected path size. Colon form like AA:BB is also accepted.',
             errorText: _errorText,
             border: const OutlineInputBorder(),
           ),
@@ -690,6 +695,32 @@ class _ContactRouteDialogState extends State<ContactRouteDialog> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        Row(
+          children: [
+            Text(
+              'Path Size',
+              style: Theme.of(context).textTheme.labelLarge,
+            ),
+            const Spacer(),
+            SegmentedButton<int>(
+              segments: [
+                for (final size in RouteHashPreferences.supportedSizes)
+                  ButtonSegment<int>(
+                    value: size,
+                    label: Text('${size}B'),
+                  ),
+              ],
+              selected: {_selectedHashSize},
+              onSelectionChanged: (selection) {
+                setState(() {
+                  _selectedHashSize = selection.first;
+                  _syncControllerFromSelectedHops();
+                });
+              },
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
         Wrap(
           spacing: 8,
           runSpacing: 8,

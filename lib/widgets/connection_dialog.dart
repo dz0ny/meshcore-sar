@@ -758,6 +758,7 @@ class _UsbDeviceListState extends State<_UsbDeviceList> {
         widget.onConnected();
       } else {
         await port.close();
+        if (!mounted) return;
         setState(() => _isConnecting = false);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Failed to connect via USB')),

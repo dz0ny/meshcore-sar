@@ -1,6 +1,4 @@
 import 'dart:async';
-import 'dart:typed_data';
-import 'package:flutter/foundation.dart';
 import 'package:meshcore_client/meshcore_client.dart';
 
 // Web Serial API is only available on web platform.

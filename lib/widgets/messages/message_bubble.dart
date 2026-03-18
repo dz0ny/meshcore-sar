@@ -74,12 +74,14 @@ class MessageBubble extends StatefulWidget {
 class _MessageBubbleState extends State<MessageBubble> {
   static final RegExp _mentionPattern = RegExp(r'@\[(.+?)\]');
   bool _isExpanded = false;
+  bool _showReceivedStats = false;
 
   @override
   void didUpdateWidget(MessageBubble oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.message.id != widget.message.id) {
       _isExpanded = false;
+      _showReceivedStats = false;
       return;
     }
 
@@ -173,6 +175,19 @@ class _MessageBubbleState extends State<MessageBubble> {
       context.read<MessagesProvider>().markAsRead(widget.message.id);
     }
     widget.onTap?.call();
+  }
+
+  void _handleBubbleDoubleTap({
+    required bool isSarMarker,
+    required bool isDrawing,
+  }) {
+    if (widget.isCompact || isSarMarker || isDrawing) {
+      return;
+    }
+
+    setState(() {
+      _showReceivedStats = !_showReceivedStats;
+    });
   }
 
   Future<void> _retryFailedMessage(
@@ -1924,6 +1939,10 @@ class _MessageBubbleState extends State<MessageBubble> {
           isSarMarker: isSarMarker,
           isDrawing: message.isDrawing,
         ),
+        onDoubleTap: () => _handleBubbleDoubleTap(
+          isSarMarker: isSarMarker,
+          isDrawing: message.isDrawing,
+        ),
         onLongPress: widget.isCompact
             ? null
             : () => _showMessageOptions(context),
@@ -2493,7 +2512,8 @@ class _MessageBubbleState extends State<MessageBubble> {
               if (!widget.isCompact &&
                   !isSarMarker &&
                   !message.isDrawing &&
-                  !message.isSentMessage) ...[
+                  !message.isSentMessage &&
+                  _showReceivedStats) ...[
                 const SizedBox(height: 6),
                 buildReceivedSignalStatus(
                   context,
@@ -2706,6 +2726,7 @@ class _MessageBubbleState extends State<MessageBubble> {
                           message.isContactMessage &&
                           message.deliveryStatus ==
                               MessageDeliveryStatus.delivered &&
+                          _showReceivedStats &&
                           message.roundTripTimeMs != null;
 
                       return Column(
@@ -2811,7 +2832,8 @@ class _MessageBubbleState extends State<MessageBubble> {
                       );
                     },
                   ),
-                if (shouldShowSentChannelStats(message)) ...[
+                if (_showReceivedStats &&
+                    shouldShowSentChannelStats(message)) ...[
                   const SizedBox(height: 6),
                   buildChannelEchoStatus(context, message),
                 ],

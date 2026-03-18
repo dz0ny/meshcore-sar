@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:meshcore_sar_app/l10n/app_localizations.dart';
@@ -25,7 +26,7 @@ void main() {
     SharedPreferences.setMockInitialValues({});
   });
 
-  testWidgets('received bubbles show signal chips without tapping', (
+  testWidgets('received bubbles show signal chips on double tap', (
     tester,
   ) async {
     final harness = await _TestHarness.create();
@@ -47,6 +48,19 @@ void main() {
       await tester.pumpWidget(_buildApp(harness, message));
       await tester.pump(const Duration(milliseconds: 60));
 
+      expect(find.text('1 hop'), findsNothing);
+      expect(find.text('Fair'), findsNothing);
+      expect(find.text('-84'), findsNothing);
+      expect(find.text('6.0'), findsNothing);
+
+      await tester.tap(find.text('Inbound message'));
+      await tester.pump(kDoubleTapTimeout);
+
+      expect(find.text('1 hop'), findsNothing);
+      expect(find.text('-84'), findsNothing);
+
+      await _doubleTap(tester, find.text('Inbound message'));
+
       expect(find.text('1 hop'), findsOneWidget);
       expect(find.text('Fair'), findsOneWidget);
       expect(find.text('-84'), findsOneWidget);
@@ -56,7 +70,7 @@ void main() {
     }
   });
 
-  testWidgets('delivered direct bubbles show timing chips without tapping', (
+  testWidgets('delivered direct bubbles show timing chips on double tap', (
     tester,
   ) async {
     final harness = await _TestHarness.create();
@@ -78,6 +92,17 @@ void main() {
       await tester.pumpWidget(_buildApp(harness, message));
       await tester.pump(const Duration(milliseconds: 60));
 
+      expect(find.text('Direct'), findsNothing);
+      expect(find.text('320ms'), findsNothing);
+
+      await tester.tap(find.text('Outbound message'));
+      await tester.pump(kDoubleTapTimeout);
+
+      expect(find.text('Direct'), findsNothing);
+      expect(find.text('320ms'), findsNothing);
+
+      await _doubleTap(tester, find.text('Outbound message'));
+
       expect(find.text('Direct'), findsOneWidget);
       expect(find.text('320ms'), findsOneWidget);
     } finally {
@@ -85,7 +110,7 @@ void main() {
     }
   });
 
-  testWidgets('sent channel bubbles show echo chips without tapping', (
+  testWidgets('sent channel bubbles show echo chips on double tap', (
     tester,
   ) async {
     final harness = await _TestHarness.create();
@@ -108,6 +133,18 @@ void main() {
 
       await tester.pumpWidget(_buildApp(harness, message));
       await tester.pump(const Duration(milliseconds: 60));
+
+      expect(find.text('x2'), findsNothing);
+      expect(find.text('-76'), findsNothing);
+      expect(find.text('5.0'), findsNothing);
+
+      await tester.tap(find.text('Broadcast message'));
+      await tester.pump(kDoubleTapTimeout);
+
+      expect(find.text('x2'), findsNothing);
+      expect(find.text('-76'), findsNothing);
+
+      await _doubleTap(tester, find.text('Broadcast message'));
 
       expect(find.text('x2'), findsOneWidget);
       expect(find.text('-76'), findsOneWidget);
@@ -193,7 +230,15 @@ Uint8List _key(int seed) =>
     Uint8List.fromList(List<int>.generate(32, (index) => seed + index));
 
 Future<void> _disposeHarness(WidgetTester tester, _TestHarness harness) async {
+  await tester.pump(kDoubleTapTimeout);
   await tester.pumpWidget(const SizedBox.shrink());
   harness.dispose();
+  await tester.pump();
+}
+
+Future<void> _doubleTap(WidgetTester tester, Finder finder) async {
+  await tester.tap(finder);
+  await tester.pump(kDoubleTapMinTime);
+  await tester.tap(finder);
   await tester.pump();
 }

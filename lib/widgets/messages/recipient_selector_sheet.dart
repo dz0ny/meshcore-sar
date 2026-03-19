@@ -4,7 +4,7 @@ import '../../l10n/app_localizations.dart';
 import '../../models/contact.dart';
 import '../common/contact_avatar.dart';
 
-enum _RecipientSortMode { activity, alphabetical }
+enum _RecipientSortMode { activity, favorites, alphabetical }
 
 /// Bottom sheet for selecting message recipient (channel, contact, or room)
 class RecipientSelectorSheet extends StatefulWidget {
@@ -74,10 +74,26 @@ class _RecipientSelectorSheetState extends State<RecipientSelectorSheet> {
         return a.isPublicChannel ? -1 : 1;
       }
 
-      if (_sortMode == _RecipientSortMode.activity) {
+      if (_sortMode == _RecipientSortMode.favorites) {
+        if (a.isFavourite != b.isFavourite) {
+          return a.isFavourite ? -1 : 1;
+        }
         final unreadCompare = _unreadFor(b).compareTo(_unreadFor(a));
         if (unreadCompare != 0) {
           return unreadCompare;
+        }
+        final lastSeenCompare = b.lastSeenTime.compareTo(a.lastSeenTime);
+        if (lastSeenCompare != 0) {
+          return lastSeenCompare;
+        }
+      } else if (_sortMode == _RecipientSortMode.activity) {
+        final unreadCompare = _unreadFor(b).compareTo(_unreadFor(a));
+        if (unreadCompare != 0) {
+          return unreadCompare;
+        }
+        final lastSeenCompare = b.lastSeenTime.compareTo(a.lastSeenTime);
+        if (lastSeenCompare != 0) {
+          return lastSeenCompare;
         }
       }
 
@@ -165,7 +181,7 @@ class _RecipientSelectorSheetState extends State<RecipientSelectorSheet> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
             child: Column(
               children: [
                 Container(
@@ -176,64 +192,16 @@ class _RecipientSelectorSheetState extends State<RecipientSelectorSheet> {
                     borderRadius: BorderRadius.circular(999),
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
                 Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            l10n.selectRecipient,
-                            style: Theme.of(context).textTheme.titleLarge
-                                ?.copyWith(
-                                  fontWeight: FontWeight.w900,
-                                  letterSpacing: -0.5,
-                                ),
-                          ),
-                          const SizedBox(height: 10),
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            children: [
-                              if (widget.showAllOption)
-                                _SummaryChip(
-                                  icon: Icons.all_inbox_rounded,
-                                  label: l10n.showAll,
-                                  count: widget.unreadCount,
-                                  accentColor: colorScheme.primary,
-                                ),
-                              if (hasChannels)
-                                _SummaryChip(
-                                  icon: Icons.broadcast_on_personal_rounded,
-                                  label: l10n.channels,
-                                  count: filteredChannels.length,
-                                  accentColor: _sectionColor(
-                                    context,
-                                    'channel',
-                                  ),
-                                ),
-                              if (hasContacts)
-                                _SummaryChip(
-                                  icon: Icons.person_rounded,
-                                  label: l10n.contacts,
-                                  count: filteredContacts.length,
-                                  accentColor: _sectionColor(
-                                    context,
-                                    'contact',
-                                  ),
-                                ),
-                              if (hasRooms)
-                                _SummaryChip(
-                                  icon: Icons.meeting_room_outlined,
-                                  label: l10n.rooms,
-                                  count: filteredRooms.length,
-                                  accentColor: _sectionColor(context, 'room'),
-                                ),
-                            ],
-                          ),
-                        ],
+                      child: Text(
+                        l10n.selectRecipient,
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: -0.5,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -244,69 +212,47 @@ class _RecipientSelectorSheetState extends State<RecipientSelectorSheet> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: _searchController,
-                  decoration: InputDecoration(
-                    hintText: l10n.searchRecipients,
-                    prefixIcon: const Icon(Icons.search_rounded),
-                    suffixIcon: _searchQuery.isNotEmpty
-                        ? IconButton(
-                            icon: const Icon(Icons.close_rounded),
-                            onPressed: () {
-                              _searchController.clear();
-                              setState(() {
-                                _searchQuery = '';
-                              });
-                            },
-                          )
-                        : null,
-                    filled: true,
-                    fillColor: colorScheme.surfaceContainerHigh,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(18),
-                      borderSide: BorderSide.none,
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 18,
-                      vertical: 16,
-                    ),
-                  ),
-                  onChanged: (value) {
-                    setState(() {
-                      _searchQuery = value;
-                    });
-                  },
-                ),
                 const SizedBox(height: 12),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      _SortChip(
-                        icon: Icons.flash_on_rounded,
-                        label: l10n.active,
-                        selected: _sortMode == _RecipientSortMode.activity,
-                        onTap: () {
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _searchController,
+                        decoration: InputDecoration(
+                          hintText: l10n.searchRecipients,
+                          prefixIcon: const Icon(Icons.search_rounded),
+                          suffixIcon: _searchQuery.isNotEmpty
+                              ? IconButton(
+                                  icon: const Icon(Icons.close_rounded),
+                                  onPressed: () {
+                                    _searchController.clear();
+                                    setState(() {
+                                      _searchQuery = '';
+                                    });
+                                  },
+                                )
+                              : null,
+                          filled: true,
+                          fillColor: colorScheme.surfaceContainerHigh,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide.none,
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 14,
+                          ),
+                        ),
+                        onChanged: (value) {
                           setState(() {
-                            _sortMode = _RecipientSortMode.activity;
+                            _searchQuery = value;
                           });
                         },
                       ),
-                      _SortChip(
-                        icon: Icons.sort_by_alpha_rounded,
-                        label: 'A-Z',
-                        selected: _sortMode == _RecipientSortMode.alphabetical,
-                        onTap: () {
-                          setState(() {
-                            _sortMode = _RecipientSortMode.alphabetical;
-                          });
-                        },
-                      ),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(width: 10),
+                    _buildSortMenuButton(context),
+                  ],
                 ),
               ],
             ),
@@ -422,6 +368,82 @@ class _RecipientSelectorSheetState extends State<RecipientSelectorSheet> {
     );
   }
 
+  Widget _buildSortMenuButton(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return PopupMenuButton<_RecipientSortMode>(
+      tooltip: 'Sort',
+      initialValue: _sortMode,
+      onSelected: (sortMode) {
+        setState(() {
+          _sortMode = sortMode;
+        });
+      },
+      itemBuilder: (context) => [
+        PopupMenuItem<_RecipientSortMode>(
+          value: _RecipientSortMode.activity,
+          child: Row(
+            children: [
+              Icon(
+                Icons.flash_on_rounded,
+                size: 18,
+                color: _sortMode == _RecipientSortMode.activity
+                    ? colorScheme.primary
+                    : null,
+              ),
+              const SizedBox(width: 8),
+              Text(l10n.active),
+            ],
+          ),
+        ),
+        PopupMenuItem<_RecipientSortMode>(
+          value: _RecipientSortMode.favorites,
+          child: Row(
+            children: [
+              Icon(
+                Icons.star_rounded,
+                size: 18,
+                color: _sortMode == _RecipientSortMode.favorites
+                    ? colorScheme.primary
+                    : null,
+              ),
+              const SizedBox(width: 8),
+              Text(l10n.favourites),
+            ],
+          ),
+        ),
+        const PopupMenuItem<_RecipientSortMode>(
+          value: _RecipientSortMode.alphabetical,
+          child: Row(
+            children: [
+              Icon(Icons.sort_by_alpha_rounded, size: 18),
+              SizedBox(width: 8),
+              Text('A-Z'),
+            ],
+          ),
+        ),
+      ],
+      child: Container(
+        width: 46,
+        height: 46,
+        decoration: BoxDecoration(
+          color: colorScheme.surfaceContainerHigh,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        alignment: Alignment.center,
+        child: Icon(
+          _sortMode == _RecipientSortMode.activity
+              ? Icons.flash_on_rounded
+              : _sortMode == _RecipientSortMode.favorites
+              ? Icons.star_rounded
+              : Icons.sort_by_alpha_rounded,
+          color: colorScheme.primary,
+        ),
+      ),
+    );
+  }
+
   Widget _buildSectionCard(
     BuildContext context, {
     required String type,
@@ -438,15 +460,7 @@ class _RecipientSelectorSheetState extends State<RecipientSelectorSheet> {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            colorScheme.surface,
-            accentColor.withValues(alpha: 0.05),
-            colorScheme.surfaceContainerLow,
-          ],
-        ),
+        color: colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: accentColor.withValues(alpha: 0.14)),
       ),
@@ -530,14 +544,9 @@ class _RecipientSelectorSheetState extends State<RecipientSelectorSheet> {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            colorScheme.primaryContainer.withValues(alpha: 0.4),
-            colorScheme.surfaceContainerHigh,
-          ],
-        ),
+        color: isSelected
+            ? colorScheme.primaryContainer.withValues(alpha: 0.42)
+            : colorScheme.surfaceContainerHigh,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
           color: isSelected
@@ -747,107 +756,6 @@ class _RecipientSelectorSheetState extends State<RecipientSelectorSheet> {
         if (isSelected)
           Icon(Icons.check_circle_rounded, color: colorScheme.primary),
       ],
-    );
-  }
-}
-
-class _SummaryChip extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final int count;
-  final Color accentColor;
-
-  const _SummaryChip({
-    required this.icon,
-    required this.label,
-    required this.count,
-    required this.accentColor,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHigh,
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: accentColor.withValues(alpha: 0.14)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14, color: accentColor),
-          const SizedBox(width: 8),
-          Text(
-            '$count',
-            style: Theme.of(
-              context,
-            ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800),
-          ),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: Theme.of(context).textTheme.labelLarge?.copyWith(
-              color: colorScheme.onSurfaceVariant,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _SortChip extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  const _SortChip({
-    required this.icon,
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return FilterChip(
-      selected: selected,
-      onSelected: (_) => onTap(),
-      avatar: Icon(
-        icon,
-        size: 16,
-        color: selected
-            ? colorScheme.onSecondaryContainer
-            : colorScheme.primary,
-      ),
-      label: Text(
-        label,
-        style: Theme.of(
-          context,
-        ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700),
-      ),
-      side: BorderSide(
-        color: selected
-            ? colorScheme.secondaryContainer
-            : colorScheme.outlineVariant.withValues(alpha: 0.35),
-      ),
-      selectedColor: colorScheme.secondaryContainer,
-      checkmarkColor: colorScheme.onSecondaryContainer,
-      backgroundColor: colorScheme.surfaceContainerLow,
-      labelStyle: TextStyle(
-        color: selected
-            ? colorScheme.onSecondaryContainer
-            : colorScheme.onSurface,
-      ),
-      showCheckmark: false,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
     );
   }
 }

@@ -106,7 +106,10 @@ class SpectrumScanPanel extends StatelessWidget {
                 color: theme.colorScheme.primary,
                 label: AppLocalizations.of(context)!.quiet,
               ),
-              _LegendChip(color: Colors.orange, label: AppLocalizations.of(context)!.moderate),
+              _LegendChip(
+                color: Colors.orange,
+                label: AppLocalizations.of(context)!.moderate,
+              ),
               _LegendChip(
                 color: theme.colorScheme.error,
                 label: AppLocalizations.of(context)!.busy,
@@ -147,7 +150,7 @@ class SpectrumScanPanel extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               decoration: BoxDecoration(
-                color: theme.colorScheme.surface.withValues(alpha: 0.7),
+                color: theme.colorScheme.surfaceContainerLow,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: theme.colorScheme.outlineVariant),
               ),
@@ -303,12 +306,7 @@ class _FrequencyRangePreview extends StatelessWidget {
           height: 108,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
-            gradient: LinearGradient(
-              colors: [
-                scheme.surface,
-                scheme.surfaceContainerHighest.withValues(alpha: 0.9),
-              ],
-            ),
+            color: scheme.surfaceContainerLow,
             border: Border.all(color: scheme.outlineVariant),
           ),
           child: Stack(
@@ -322,13 +320,7 @@ class _FrequencyRangePreview extends StatelessWidget {
                   child: DecoratedBox(
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(12),
-                      gradient: LinearGradient(
-                        colors: [
-                          scheme.primary.withValues(alpha: 0.12),
-                          scheme.tertiary.withValues(alpha: 0.08),
-                          scheme.primary.withValues(alpha: 0.12),
-                        ],
-                      ),
+                      color: scheme.surfaceContainerHigh,
                     ),
                   ),
                 ),
@@ -341,7 +333,7 @@ class _FrequencyRangePreview extends StatelessWidget {
                 child: DecoratedBox(
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(12),
-                    color: scheme.primary.withValues(alpha: 0.20),
+                    color: scheme.primaryContainer,
                     border: Border.all(color: scheme.primary),
                   ),
                 ),
@@ -355,7 +347,7 @@ class _FrequencyRangePreview extends StatelessWidget {
                   child: DecoratedBox(
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(999),
-                      color: scheme.tertiary.withValues(alpha: 0.32),
+                      color: scheme.tertiaryContainer,
                       border: Border.all(color: scheme.tertiary),
                     ),
                   ),

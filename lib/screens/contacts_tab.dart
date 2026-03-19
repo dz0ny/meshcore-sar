@@ -934,39 +934,6 @@ class _ContactsTabState extends State<ContactsTab> {
                             context,
                             ContactSection.repeaters,
                           ),
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              if (connectionProvider.deviceInfo.isConnected)
-                                IconButton(
-                                  icon: const Icon(Icons.radar, size: 20),
-                                  tooltip: 'Discover repeaters',
-                                  visualDensity: VisualDensity.compact,
-                                  style: IconButton.styleFrom(
-                                    foregroundColor: _sectionAccentColor(
-                                      context,
-                                      ContactSection.repeaters,
-                                    ),
-                                    backgroundColor: _sectionAccentColor(
-                                      context,
-                                      ContactSection.repeaters,
-                                    ).withValues(alpha: 0.10),
-                                  ),
-                                  onPressed: () {
-                                    context
-                                        .read<ConnectionProvider>()
-                                        .discoverNodeType(advertType: 2);
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                          l10n.repeaterDiscoverySent,
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                ),
-                            ],
-                          ),
                         ),
                         _buildSectionFilterField(
                           context,
@@ -1028,37 +995,6 @@ class _ContactsTabState extends State<ContactsTab> {
                           accentColor: _sectionAccentColor(
                             context,
                             ContactSection.sensors,
-                          ),
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              if (connectionProvider.deviceInfo.isConnected)
-                                IconButton(
-                                  icon: const Icon(Icons.radar, size: 20),
-                                  tooltip: 'Discover sensors',
-                                  visualDensity: VisualDensity.compact,
-                                  style: IconButton.styleFrom(
-                                    foregroundColor: _sectionAccentColor(
-                                      context,
-                                      ContactSection.sensors,
-                                    ),
-                                    backgroundColor: _sectionAccentColor(
-                                      context,
-                                      ContactSection.sensors,
-                                    ).withValues(alpha: 0.10),
-                                  ),
-                                  onPressed: () {
-                                    context
-                                        .read<ConnectionProvider>()
-                                        .discoverNodeType(advertType: 4);
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(l10n.sensorDiscoverySent),
-                                      ),
-                                    );
-                                  },
-                                ),
-                            ],
                           ),
                         ),
                         _buildSectionFilterField(
@@ -1718,15 +1654,7 @@ class _SectionCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            colorScheme.surface,
-            accentColor.withValues(alpha: 0.04),
-            colorScheme.surfaceContainerLow,
-          ],
-        ),
+        color: colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(26),
         border: Border.all(color: accentColor.withValues(alpha: 0.14)),
         boxShadow: [
@@ -1903,14 +1831,7 @@ class _ChannelActivityCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(18),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            colorScheme.surfaceContainerLow,
-            colorScheme.surfaceContainerHighest.withValues(alpha: 0.9),
-          ],
-        ),
+        color: colorScheme.surfaceContainerLow,
         border: Border.all(
           color: colorScheme.outlineVariant.withValues(alpha: 0.35),
         ),

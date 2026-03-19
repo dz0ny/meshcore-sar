@@ -185,14 +185,7 @@ class ContactTile extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(18),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            colorScheme.surfaceContainerLow,
-            colorScheme.surfaceContainerHighest.withValues(alpha: 0.9),
-          ],
-        ),
+        color: colorScheme.surfaceContainerLow,
         border: Border.all(
           color: colorScheme.outlineVariant.withValues(alpha: 0.35),
         ),

@@ -7,6 +7,7 @@ import 'package:meshcore_sar_app/l10n/app_localizations.dart';
 import 'package:meshcore_sar_app/models/channel.dart';
 import 'package:meshcore_sar_app/models/contact.dart';
 import 'package:meshcore_sar_app/models/contact_group.dart';
+import 'package:meshcore_sar_app/models/device_info.dart';
 import 'package:meshcore_sar_app/providers/connection_provider.dart';
 import 'package:meshcore_sar_app/providers/contacts_provider.dart';
 import 'package:meshcore_sar_app/providers/map_provider.dart';
@@ -15,6 +16,20 @@ import 'package:meshcore_sar_app/screens/contacts_tab.dart';
 import 'package:meshcore_sar_app/utils/contact_grouping.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+class _FakeConnectionProvider extends ConnectionProvider {
+  _FakeConnectionProvider({required bool isConnected})
+    : _isConnected = isConnected;
+
+  final bool _isConnected;
+
+  @override
+  DeviceInfo get deviceInfo => DeviceInfo(
+    connectionState: _isConnected
+        ? ConnectionState.connected
+        : ConnectionState.disconnected,
+  );
+}
 
 void main() {
   String? clipboardText;
@@ -102,8 +117,11 @@ void main() {
     WidgetTester tester, {
     List<Contact> contacts = const [],
     List<SavedContactGroup> savedGroups = const [],
+    ConnectionProvider? connectionProvider,
   }) async {
     final contactsProvider = ContactsProvider();
+    final resolvedConnectionProvider =
+        connectionProvider ?? ConnectionProvider();
     for (final contact in contacts) {
       contactsProvider.addOrUpdateContact(contact);
     }
@@ -118,7 +136,9 @@ void main() {
       MultiProvider(
         providers: [
           ChangeNotifierProvider.value(value: contactsProvider),
-          ChangeNotifierProvider(create: (_) => ConnectionProvider()),
+          ChangeNotifierProvider<ConnectionProvider>.value(
+            value: resolvedConnectionProvider,
+          ),
           ChangeNotifierProvider(create: (_) => MessagesProvider()),
           ChangeNotifierProvider(create: (_) => MapProvider()),
         ],
@@ -264,4 +284,22 @@ void main() {
     expect(find.text('Sensors'), findsWidgets);
     expect(find.text('WX Station'), findsOneWidget);
   });
+
+  testWidgets(
+    'contacts sections do not show sensor or repeater discovery actions',
+    (tester) async {
+      await pumpContactsTab(
+        tester,
+        contacts: [
+          buildRepeater(seed: 70, name: 'Relay 1'),
+          buildSensor(seed: 71, name: 'WX Station'),
+        ],
+        connectionProvider: _FakeConnectionProvider(isConnected: true),
+      );
+
+      expect(find.byTooltip('Discover repeaters'), findsNothing);
+      expect(find.byTooltip('Discover sensors'), findsNothing);
+      expect(find.byIcon(Icons.radar), findsNothing);
+    },
+  );
 }

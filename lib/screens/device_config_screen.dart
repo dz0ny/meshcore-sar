@@ -729,9 +729,9 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _gpsLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to set GPS mode: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to set GPS mode: $e')));
     }
   }
 
@@ -893,7 +893,9 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
         .toList();
     if (contacts.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppLocalizations.of(context)!.noDeviceContactsToClear)),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.noDeviceContactsToClear),
+        ),
       );
       return;
     }
@@ -988,7 +990,9 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
         .toList();
     if (channels.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppLocalizations.of(context)!.noCustomChannelsToClear)),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.noCustomChannelsToClear),
+        ),
       );
       return;
     }
@@ -1095,19 +1099,8 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
 
     return Scaffold(
       appBar: AppBar(title: Text(AppLocalizations.of(context)!.settings)),
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              colorScheme.primaryContainer.withValues(alpha: 0.55),
-              colorScheme.surface,
-              colorScheme.surface,
-            ],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            stops: const [0.0, 0.22, 1.0],
-          ),
-        ),
+      body: ColoredBox(
+        color: colorScheme.surface,
         child: SafeArea(
           child: ListView(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
@@ -1146,7 +1139,9 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
               SizedBox(height: 20),
               _ConfigSectionCard(
                 title: AppLocalizations.of(context)!.storage,
-                subtitle: AppLocalizations.of(context)!.availableSpaceOnThisDevice,
+                subtitle: AppLocalizations.of(
+                  context,
+                )!.availableSpaceOnThisDevice,
                 icon: Icons.storage_rounded,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -1190,7 +1185,9 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
                       icon: _autoAddDiscoveredContactsEnabled
                           ? Icons.person_add_alt_1
                           : Icons.person_add_disabled,
-                      title: AppLocalizations.of(context)!.enableAutomaticAdding,
+                      title: AppLocalizations.of(
+                        context,
+                      )!.enableAutomaticAdding,
                       description:
                           'Turn this off to keep discoveries manual-only on the radio.',
                       accentColor: _autoAddDiscoveredContactsEnabled
@@ -1293,7 +1290,9 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
                     SizedBox(height: 14),
                     _SettingHighlightCard(
                       icon: Icons.history_toggle_off_rounded,
-                      title: AppLocalizations.of(context)!.overwriteOldestWhenFull,
+                      title: AppLocalizations.of(
+                        context,
+                      )!.overwriteOldestWhenFull,
                       description:
                           'Allow the radio to replace the oldest contact when storage is full.',
                       accentColor: _overwriteOldestAutoAddEnabled
@@ -1329,7 +1328,9 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
                             : _saveAutoDiscoverySettings,
                         isSaving: _isSavingAutoDiscoverySettings,
                         isSaved: _autoDiscoverySettingsSaved,
-                        label: AppLocalizations.of(context)!.saveDiscoverySettings,
+                        label: AppLocalizations.of(
+                          context,
+                        )!.saveDiscoverySettings,
                       ),
                     ),
                   ],
@@ -1338,7 +1339,9 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
               SizedBox(height: 20),
               _ConfigSectionCard(
                 title: AppLocalizations.of(context)!.publicInfo,
-                subtitle: AppLocalizations.of(context)!.chooseTheNameAndLocationThisDeviceShares,
+                subtitle: AppLocalizations.of(
+                  context,
+                )!.chooseTheNameAndLocationThisDeviceShares,
                 icon: Icons.public_rounded,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -1368,9 +1371,7 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
                     if (_gpsEnabled != null) ...[
                       const SizedBox(height: 12),
                       _SettingHighlightCard(
-                        icon: _gpsEnabled!
-                            ? Icons.gps_fixed
-                            : Icons.gps_off,
+                        icon: _gpsEnabled! ? Icons.gps_fixed : Icons.gps_off,
                         title: AppLocalizations.of(context)!.gpsModule,
                         description:
                             'Enable or disable the onboard GPS hardware.',
@@ -1411,13 +1412,9 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
                       Container(
                         padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
-                          color: colorScheme.surface.withValues(alpha: 0.65),
+                          color: colorScheme.surfaceContainerLow,
                           borderRadius: BorderRadius.circular(22),
-                          border: Border.all(
-                            color: colorScheme.outlineVariant.withValues(
-                              alpha: 0.7,
-                            ),
-                          ),
+                          border: Border.all(color: colorScheme.outlineVariant),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1492,7 +1489,9 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
               SizedBox(height: 20),
               _ConfigSectionCard(
                 title: AppLocalizations.of(context)!.radioSettings,
-                subtitle: AppLocalizations.of(context)!.chooseAPresetOrFinetuneCustomRadioSettings,
+                subtitle: AppLocalizations.of(
+                  context,
+                )!.chooseAPresetOrFinetuneCustomRadioSettings,
                 icon: Icons.settings_input_antenna_rounded,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -1716,7 +1715,9 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
                       SizedBox(height: 16),
                       _SettingHighlightCard(
                         icon: Icons.repeat_rounded,
-                        title: AppLocalizations.of(context)!.repeatNearbyTraffic,
+                        title: AppLocalizations.of(
+                          context,
+                        )!.repeatNearbyTraffic,
                         description:
                             deviceInfo.allowedRepeatFreqRanges != null &&
                                 deviceInfo.allowedRepeatFreqRanges!.isNotEmpty
@@ -1762,7 +1763,9 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
               SizedBox(height: 20),
               _ConfigSectionCard(
                 title: AppLocalizations.of(context)!.dangerZone,
-                subtitle: AppLocalizations.of(context)!.destructiveDeviceActions,
+                subtitle: AppLocalizations.of(
+                  context,
+                )!.destructiveDeviceActions,
                 icon: Icons.warning_amber_rounded,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -1770,13 +1773,9 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
                     Container(
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: colorScheme.errorContainer.withValues(
-                          alpha: 0.55,
-                        ),
+                        color: colorScheme.surfaceContainerLow,
                         borderRadius: BorderRadius.circular(22),
-                        border: Border.all(
-                          color: colorScheme.error.withValues(alpha: 0.28),
-                        ),
+                        border: Border.all(color: colorScheme.error),
                       ),
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1794,14 +1793,14 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
                                   'Wipe data on device',
                                   style: theme.textTheme.titleSmall?.copyWith(
                                     fontWeight: FontWeight.w800,
-                                    color: colorScheme.onErrorContainer,
+                                    color: colorScheme.onSurface,
                                   ),
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
                                   'Erase contacts, keys, and radio settings from the connected MeshCore device and return it to factory defaults.',
                                   style: theme.textTheme.bodySmall?.copyWith(
-                                    color: colorScheme.onErrorContainer,
+                                    color: colorScheme.onSurfaceVariant,
                                   ),
                                 ),
                               ],
@@ -1831,7 +1830,9 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
                                 ),
                               )
                             : Icon(Icons.people_alt_outlined),
-                        label: Text(AppLocalizations.of(context)!.clearAllContacts),
+                        label: Text(
+                          AppLocalizations.of(context)!.clearAllContacts,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -1855,7 +1856,9 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
                                 ),
                               )
                             : Icon(Icons.forum_outlined),
-                        label: Text(AppLocalizations.of(context)!.clearAllChannels),
+                        label: Text(
+                          AppLocalizations.of(context)!.clearAllChannels,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -1871,7 +1874,9 @@ class _DeviceConfigScreenState extends State<DeviceConfigScreen> {
                           minimumSize: const Size.fromHeight(52),
                         ),
                         icon: Icon(Icons.delete_forever_rounded),
-                        label: Text(AppLocalizations.of(context)!.wipeDeviceData),
+                        label: Text(
+                          AppLocalizations.of(context)!.wipeDeviceData,
+                        ),
                       ),
                     ),
                   ],
@@ -1930,26 +1935,9 @@ class _ConfigHeroCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            colorScheme.primaryContainer,
-            colorScheme.primary.withValues(alpha: 0.14),
-            colorScheme.surfaceContainerHighest,
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(28),
-        border: Border.all(
-          color: colorScheme.onPrimaryContainer.withValues(alpha: 0.08),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: colorScheme.primary.withValues(alpha: 0.10),
-            blurRadius: 26,
-            offset: const Offset(0, 12),
-          ),
-        ],
+        border: Border.all(color: colorScheme.outlineVariant),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1960,13 +1948,10 @@ class _ConfigHeroCard extends StatelessWidget {
                 width: 56,
                 height: 56,
                 decoration: BoxDecoration(
-                  color: colorScheme.onPrimaryContainer.withValues(alpha: 0.12),
+                  color: colorScheme.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(18),
                 ),
-                child: Icon(
-                  Icons.tune_rounded,
-                  color: colorScheme.onPrimaryContainer,
-                ),
+                child: Icon(Icons.tune_rounded, color: colorScheme.primary),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -1979,15 +1964,13 @@ class _ConfigHeroCard extends StatelessWidget {
                         vertical: 6,
                       ),
                       decoration: BoxDecoration(
-                        color: colorScheme.onPrimaryContainer.withValues(
-                          alpha: 0.10,
-                        ),
+                        color: colorScheme.surfaceContainerHighest,
                         borderRadius: BorderRadius.circular(999),
                       ),
                       child: Text(
                         'Device settings',
                         style: theme.textTheme.labelMedium?.copyWith(
-                          color: colorScheme.onPrimaryContainer,
+                          color: colorScheme.onSurfaceVariant,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -1997,16 +1980,14 @@ class _ConfigHeroCard extends StatelessWidget {
                       title,
                       style: theme.textTheme.headlineSmall?.copyWith(
                         fontWeight: FontWeight.w800,
-                        color: colorScheme.onPrimaryContainer,
+                        color: colorScheme.onSurface,
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       subtitle,
                       style: theme.textTheme.bodyMedium?.copyWith(
-                        color: colorScheme.onPrimaryContainer.withValues(
-                          alpha: 0.82,
-                        ),
+                        color: colorScheme.onSurfaceVariant,
                         height: 1.35,
                       ),
                     ),
@@ -2050,23 +2031,24 @@ class _HeroStat extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final background = data.emphasized
-        ? colorScheme.primary.withValues(alpha: 0.18)
-        : colorScheme.onPrimaryContainer.withValues(alpha: 0.10);
+    final iconColor = data.emphasized
+        ? colorScheme.primary
+        : colorScheme.onSurfaceVariant;
+    final borderColor = data.emphasized
+        ? colorScheme.primary
+        : colorScheme.outlineVariant;
 
     return Container(
       constraints: const BoxConstraints(minWidth: 140),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: background,
+        color: colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: colorScheme.onPrimaryContainer.withValues(alpha: 0.08),
-        ),
+        border: Border.all(color: borderColor),
       ),
       child: Row(
         children: [
-          Icon(data.icon, size: 18, color: colorScheme.onPrimaryContainer),
+          Icon(data.icon, size: 18, color: iconColor),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
@@ -2075,9 +2057,7 @@ class _HeroStat extends StatelessWidget {
                 Text(
                   data.label,
                   style: theme.textTheme.labelMedium?.copyWith(
-                    color: colorScheme.onPrimaryContainer.withValues(
-                      alpha: 0.76,
-                    ),
+                    color: colorScheme.onSurfaceVariant,
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -2086,7 +2066,7 @@ class _HeroStat extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.titleSmall?.copyWith(
-                    color: colorScheme.onPrimaryContainer,
+                    color: colorScheme.onSurface,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -2118,7 +2098,9 @@ class _ConfigSectionCard extends StatelessWidget {
     final colorScheme = theme.colorScheme;
 
     return Card(
+      color: colorScheme.surfaceContainerLow,
       elevation: 0,
+      surfaceTintColor: Colors.transparent,
       clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
       child: Padding(
@@ -2133,7 +2115,7 @@ class _ConfigSectionCard extends StatelessWidget {
                   width: 42,
                   height: 42,
                   decoration: BoxDecoration(
-                    color: colorScheme.primary.withValues(alpha: 0.10),
+                    color: colorScheme.surfaceContainerHighest,
                     borderRadius: BorderRadius.circular(14),
                   ),
                   child: Icon(icon, color: colorScheme.primary),
@@ -2259,14 +2241,7 @@ class _StorageUsageMeter extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            colorScheme.surfaceContainerHighest.withValues(alpha: 0.65),
-            colorScheme.surfaceContainer,
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: colorScheme.outlineVariant),
       ),
@@ -2321,9 +2296,9 @@ class _SelectedPresetCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: colorScheme.primaryContainer.withValues(alpha: 0.55),
+        color: colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: colorScheme.primary.withValues(alpha: 0.18)),
+        border: Border.all(color: colorScheme.outlineVariant),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -2418,16 +2393,9 @@ class _SettingHighlightCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            accentColor.withValues(alpha: 0.14),
-            colorScheme.surfaceContainerHigh.withValues(alpha: 0.85),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: accentColor.withValues(alpha: 0.18)),
+        border: Border.all(color: colorScheme.outlineVariant),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -2436,7 +2404,7 @@ class _SettingHighlightCard extends StatelessWidget {
             width: 42,
             height: 42,
             decoration: BoxDecoration(
-              color: accentColor.withValues(alpha: 0.16),
+              color: colorScheme.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(14),
             ),
             child: Icon(icon, color: accentColor),

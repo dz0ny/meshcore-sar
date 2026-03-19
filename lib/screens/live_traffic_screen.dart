@@ -27,7 +27,6 @@ T? _maybeProvider<T>(BuildContext context) {
 
 class LiveTrafficScreen extends StatefulWidget {
   final List<BlePacketLog> Function() logReader;
-  final int Function()? rxCountReader;
   final Listenable? refreshListenable;
   final DateTime Function() now;
   final VoidCallback? openPacketLogs;
@@ -35,7 +34,6 @@ class LiveTrafficScreen extends StatefulWidget {
   const LiveTrafficScreen({
     super.key,
     required this.logReader,
-    this.rxCountReader,
     this.refreshListenable,
     DateTime Function()? now,
     this.openPacketLogs,
@@ -49,7 +47,6 @@ class LiveTrafficScreen extends StatefulWidget {
     return LiveTrafficScreen(
       key: key,
       logReader: () => provider.bleService.packetLogs,
-      rxCountReader: () => provider.rxPacketCount,
       refreshListenable: provider,
       openPacketLogs: openPacketLogs,
     );
@@ -118,15 +115,17 @@ class _LiveTrafficScreenState extends State<LiveTrafficScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final logs = widget.logReader();
+    final totalRxDataCount = LiveTrafficSummary.countRxDataLogs(logs);
     final unfilteredSnapshot = LiveTrafficSummary.fromLogs(
-      widget.logReader(),
+      logs,
       now: widget.now(),
       clearedAt: _clearedAt,
       preferredHashSize: _preferredHashSize,
       window: _selectedWindow,
     );
     final snapshot = LiveTrafficSummary.fromLogs(
-      widget.logReader(),
+      logs,
       now: widget.now(),
       clearedAt: _clearedAt,
       preferredHashSize: _preferredHashSize,
@@ -177,7 +176,7 @@ class _LiveTrafficScreenState extends State<LiveTrafficScreen> {
                 children: [
                   _SummaryPanel(
                     snapshot: snapshot,
-                    totalRxCount: widget.rxCountReader?.call(),
+                    totalRxCount: totalRxDataCount,
                     routeHashCounts: routeHashCounts,
                     onWindowTap: () => _showWindowPicker(context),
                   ),
@@ -306,8 +305,48 @@ class _SummaryPanel extends StatelessWidget {
       LiveTrafficBusyness.active => 'Active',
       LiveTrafficBusyness.busy => 'Busy',
     };
+    final metrics = [
+      _MetricTile(
+        tileKey: const ValueKey('liveTrafficMetric:rxPackets'),
+        label: AppLocalizations.of(context)!.rxPackets,
+        value: '${snapshot.rxCount}',
+        subtitle: totalRxCount == null
+            ? _windowSummaryLabel(snapshot.windowDuration)
+            : 'Device total $totalRxCount',
+      ),
+      _MetricTile(
+        tileKey: const ValueKey('liveTrafficMetric:rssi'),
+        label: AppLocalizations.of(context)!.rssi,
+        value: snapshot.latestRssiDbm == null
+            ? 'No RX data'
+            : '${snapshot.latestRssiDbm} dBm',
+        subtitle: snapshot.avgRssiDbm == null
+            ? 'No average yet'
+            : 'Avg ${snapshot.avgRssiDbm!.toStringAsFixed(1)} dBm',
+      ),
+      _MetricTile(
+        tileKey: const ValueKey('liveTrafficMetric:snr'),
+        label: AppLocalizations.of(context)!.snr,
+        value: snapshot.latestSnrDb == null
+            ? 'No RX data'
+            : '${snapshot.latestSnrDb!.toStringAsFixed(1)} dB',
+        subtitle: snapshot.avgSnrDb == null
+            ? 'No average yet'
+            : 'Avg ${snapshot.avgSnrDb!.toStringAsFixed(1)} dB',
+      ),
+      _MetricTile(
+        tileKey: const ValueKey('liveTrafficMetric:multihop'),
+        label: AppLocalizations.of(context)!.multihop,
+        value: '${snapshot.multiHopCount}',
+        subtitle: routeHashCounts.summaryLabel,
+        footer: snapshot.avgHopCount == null
+            ? 'No routes yet'
+            : 'Avg ${snapshot.avgHopCount!.toStringAsFixed(1)} hops',
+      ),
+    ];
 
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -346,44 +385,26 @@ class _SummaryPanel extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 14),
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: [
-              _MetricTile(
-                label: AppLocalizations.of(context)!.rxPackets,
-                value: '${snapshot.rxCount}',
-                subtitle: totalRxCount == null
-                    ? _windowSummaryLabel(snapshot.windowDuration)
-                    : 'Device total $totalRxCount',
-              ),
-              _MetricTile(
-                label: AppLocalizations.of(context)!.rssi,
-                value: snapshot.latestRssiDbm == null
-                    ? 'No RX data'
-                    : '${snapshot.latestRssiDbm} dBm',
-                subtitle: snapshot.avgRssiDbm == null
-                    ? 'No average yet'
-                    : 'Avg ${snapshot.avgRssiDbm!.toStringAsFixed(1)} dBm',
-              ),
-              _MetricTile(
-                label: AppLocalizations.of(context)!.snr,
-                value: snapshot.latestSnrDb == null
-                    ? 'No RX data'
-                    : '${snapshot.latestSnrDb!.toStringAsFixed(1)} dB',
-                subtitle: snapshot.avgSnrDb == null
-                    ? 'No average yet'
-                    : 'Avg ${snapshot.avgSnrDb!.toStringAsFixed(1)} dB',
-              ),
-              _MetricTile(
-                label: AppLocalizations.of(context)!.multihop,
-                value: '${snapshot.multiHopCount}',
-                subtitle: routeHashCounts.summaryLabel,
-                footer: snapshot.avgHopCount == null
-                    ? 'No routes yet'
-                    : 'Avg ${snapshot.avgHopCount!.toStringAsFixed(1)} hops',
-              ),
-            ],
+          LayoutBuilder(
+            builder: (context, constraints) {
+              const spacing = 10.0;
+              const minTileWidth = 150.0;
+              final columns =
+                  ((constraints.maxWidth + spacing) / (minTileWidth + spacing))
+                      .floor()
+                      .clamp(1, metrics.length);
+              final tileWidth =
+                  (constraints.maxWidth - (spacing * (columns - 1))) / columns;
+
+              return Wrap(
+                spacing: spacing,
+                runSpacing: spacing,
+                children: [
+                  for (final metric in metrics)
+                    SizedBox(width: tileWidth, child: metric),
+                ],
+              );
+            },
           ),
         ],
       ),
@@ -525,12 +546,14 @@ String _windowSummaryLabel(Duration duration) {
 }
 
 class _MetricTile extends StatelessWidget {
+  final Key? tileKey;
   final String label;
   final String value;
   final String subtitle;
   final String? footer;
 
   const _MetricTile({
+    this.tileKey,
     required this.label,
     required this.value,
     required this.subtitle,
@@ -540,7 +563,7 @@ class _MetricTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 160,
+      key: tileKey,
       height: 136,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -949,7 +972,6 @@ class _LiveTrafficCard extends StatelessWidget {
       ),
     );
   }
-
 }
 
 class _LiveTrafficPacketDetails {
@@ -1104,7 +1126,6 @@ class _PacketInfoLine extends StatelessWidget {
     );
   }
 }
-
 
 class _GeoPoint {
   final double latitude;

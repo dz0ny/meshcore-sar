@@ -27,6 +27,9 @@ jobs:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: 'stable'
           cache: true
+          pub-cache: true
+          cache-key: flutter-${{ runner.os }}-stable-${{ env.FLUTTER_VERSION }}-${{ runner.arch }}
+          pub-cache-key: flutter-pub-${{ runner.os }}-stable-${{ env.FLUTTER_VERSION }}-${{ runner.arch }}-${{ hashFiles('pubspec.lock') }}
 
       - name: Install dependencies
         run: flutter pub get

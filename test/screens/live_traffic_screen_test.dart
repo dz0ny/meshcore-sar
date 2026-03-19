@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:meshcore_sar_app/models/ble_packet_log.dart';
+import 'package:meshcore_sar_app/l10n/app_localizations.dart';
 import 'package:meshcore_sar_app/screens/live_traffic_screen.dart';
 
 BlePacketLog _log({
@@ -50,6 +51,14 @@ List<int> _multiHopRaw({
   ];
 }
 
+Widget _testApp(Widget child) {
+  return MaterialApp(
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    home: child,
+  );
+}
+
 void main() {
   testWidgets('shows empty state before traffic arrives', (tester) async {
     final logs = <BlePacketLog>[];
@@ -57,8 +66,8 @@ void main() {
     DateTime now = DateTime(2026, 3, 12, 12, 0, 0);
 
     await tester.pumpWidget(
-      MaterialApp(
-        home: LiveTrafficScreen(
+      _testApp(
+        LiveTrafficScreen(
           logReader: () => logs,
           refreshListenable: refresh,
           now: () => now,
@@ -78,10 +87,9 @@ void main() {
     DateTime now = DateTime(2026, 3, 12, 12, 0, 0);
 
     await tester.pumpWidget(
-      MaterialApp(
-        home: LiveTrafficScreen(
+      _testApp(
+        LiveTrafficScreen(
           logReader: () => logs,
-          rxCountReader: () => 7,
           refreshListenable: refresh,
           now: () => now,
         ),
@@ -114,10 +122,9 @@ void main() {
     await tester.pump();
 
     expect(find.text('1 pkt/min'), findsOneWidget);
-    expect(find.text('Device total 7'), findsOneWidget);
+    expect(find.text('Device total 1'), findsOneWidget);
     expect(find.text('FLOOD RESPONSE'), findsOneWidget);
-    expect(find.text('MULTI-HOP'), findsOneWidget);
-    expect(find.textContaining('RSSI -84 dBm'), findsOneWidget);
+    expect(find.text('-84 dBm'), findsOneWidget);
     expect(find.textContaining('Hash:'), findsOneWidget);
     expect(
       find.textContaining('Path: 3 hops [c010,6301,68d9]'),
@@ -143,8 +150,8 @@ void main() {
     );
 
     await tester.pumpWidget(
-      MaterialApp(
-        home: LiveTrafficScreen(
+      _testApp(
+        LiveTrafficScreen(
           logReader: () => logs,
           refreshListenable: refresh,
           now: () => now,
@@ -152,7 +159,7 @@ void main() {
       ),
     );
 
-    expect(find.text('MULTI-HOP'), findsOneWidget);
+    expect(find.text('FLOOD RESPONSE'), findsOneWidget);
 
     await tester.tap(find.byTooltip('Clear live view'));
     await tester.pump();
@@ -181,5 +188,44 @@ void main() {
 
     expect(find.text('No packets for this filter'), findsNothing);
     expect(find.textContaining('Size: 3 bytes'), findsOneWidget);
+  });
+
+  testWidgets('summary metrics expand across wide layouts', (tester) async {
+    tester.view.physicalSize = const Size(1200, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    final now = DateTime(2026, 3, 12, 12, 0, 0);
+    final logs = [
+      _log(
+        timestamp: now.subtract(const Duration(seconds: 10)),
+        direction: PacketDirection.rx,
+        rawData: _multiHopRaw(hops: [0xC0, 0x10, 0x63, 0x01]),
+        responseCode: 0x88,
+        snrDb: 9.5,
+        rssiDbm: -82,
+      ),
+    ];
+
+    await tester.pumpWidget(
+      _testApp(LiveTrafficScreen(logReader: () => logs, now: () => now)),
+    );
+
+    expect(
+      tester
+              .getSize(
+                find.byKey(const ValueKey('liveTrafficMetric:rxPackets')),
+              )
+              .width >
+          200,
+      isTrue,
+    );
+    expect(
+      tester
+              .getSize(find.byKey(const ValueKey('liveTrafficMetric:multihop')))
+              .width >
+          200,
+      isTrue,
+    );
   });
 }

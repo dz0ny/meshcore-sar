@@ -146,23 +146,55 @@ void main() {
     test('supports clearing the live view without mutating source logs', () {
       final now = DateTime(2026, 3, 12, 12, 0, 0);
       final clearAt = now.subtract(const Duration(seconds: 8));
-      final snapshot = LiveTrafficSummary.fromLogs([
-        _log(
-          timestamp: now.subtract(const Duration(seconds: 10)),
-          direction: PacketDirection.rx,
-          rawData: [0x88, 0x00, 0x00],
-          responseCode: 0x88,
-        ),
-        _log(
-          timestamp: now.subtract(const Duration(seconds: 4)),
-          direction: PacketDirection.rx,
-          rawData: [0x88, 0x00, 0x00],
-          responseCode: 0x88,
-        ),
-      ], now: now, clearedAt: clearAt);
+      final snapshot = LiveTrafficSummary.fromLogs(
+        [
+          _log(
+            timestamp: now.subtract(const Duration(seconds: 10)),
+            direction: PacketDirection.rx,
+            rawData: [0x88, 0x00, 0x00],
+            responseCode: 0x88,
+          ),
+          _log(
+            timestamp: now.subtract(const Duration(seconds: 4)),
+            direction: PacketDirection.rx,
+            rawData: [0x88, 0x00, 0x00],
+            responseCode: 0x88,
+          ),
+        ],
+        now: now,
+        clearedAt: clearAt,
+      );
 
       expect(snapshot.totalCount, 1);
       expect(snapshot.visibleEntries, hasLength(1));
+    });
+
+    test('counts only RX data packets for device totals', () {
+      final now = DateTime(2026, 3, 12, 12, 0, 0);
+
+      expect(
+        LiveTrafficSummary.countRxDataLogs([
+          _log(
+            timestamp: now.subtract(const Duration(seconds: 30)),
+            direction: PacketDirection.rx,
+            rawData: [0x88, 0x00, 0x00],
+            responseCode: 0x88,
+          ),
+          _log(
+            timestamp: now.subtract(const Duration(seconds: 20)),
+            direction: PacketDirection.tx,
+            rawData: [0x88, 0x00, 0x00],
+            responseCode: 0x88,
+          ),
+          _log(
+            timestamp: now.subtract(const Duration(seconds: 10)),
+            direction: PacketDirection.rx,
+            rawData: [0x05, 0x01, 0x02],
+            responseCode: 0x05,
+          ),
+        ]),
+        1,
+      );
     });
   });
 }

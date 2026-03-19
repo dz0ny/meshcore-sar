@@ -141,6 +141,18 @@ class LiveTrafficSummary {
 
   const LiveTrafficSummary._();
 
+  static bool isRxDataLog(BlePacketLog log) {
+    return log.direction == PacketDirection.rx &&
+        log.responseCode == logRxDataResponseCode;
+  }
+
+  static int countRxDataLogs(Iterable<BlePacketLog> logs, {DateTime? since}) {
+    return logs.where((log) {
+      return isRxDataLog(log) &&
+          (since == null || !log.timestamp.isBefore(since));
+    }).length;
+  }
+
   static LiveTrafficSnapshot fromLogs(
     Iterable<BlePacketLog> logs, {
     required DateTime now,
@@ -154,15 +166,14 @@ class LiveTrafficSummary {
         ? clearedAt
         : windowStart;
 
-    final recentLogs = logs
-        .where(
-          (log) =>
-              log.direction == PacketDirection.rx &&
-              log.responseCode == logRxDataResponseCode &&
-              !log.timestamp.isBefore(effectiveStart),
-        )
-        .toList()
-      ..sort((a, b) => a.timestamp.compareTo(b.timestamp));
+    final recentLogs =
+        logs
+            .where(
+              (log) =>
+                  isRxDataLog(log) && !log.timestamp.isBefore(effectiveStart),
+            )
+            .toList()
+          ..sort((a, b) => a.timestamp.compareTo(b.timestamp));
 
     final entries = <LiveTrafficEntry>[];
     for (final log in recentLogs) {
@@ -215,7 +226,9 @@ class LiveTrafficSummary {
       }
     }
 
-    final visibleEntries = filteredEntries.reversed.take(maxVisibleEntries).toList();
+    final visibleEntries = filteredEntries.reversed
+        .take(maxVisibleEntries)
+        .toList();
     const txCount = 0;
     final totalCount = rxCount;
     final packetsPerMinute =
@@ -233,7 +246,9 @@ class LiveTrafficSummary {
       avgRssiDbm: rssiCount == 0 ? null : rssiSum / rssiCount,
       latestRssiDbm: latestRssiDbm,
       multiHopCount: multiHopCount,
-      avgHopCount: hopCountSamples == 0 ? null : hopCountTotal / hopCountSamples,
+      avgHopCount: hopCountSamples == 0
+          ? null
+          : hopCountTotal / hopCountSamples,
       visibleEntries: visibleEntries,
       busyness: _busynessForPacketsPerMinute(packetsPerMinute),
     );

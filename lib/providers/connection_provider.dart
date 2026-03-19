@@ -2363,6 +2363,24 @@ class ConnectionProvider with ChangeNotifier {
   /// - Total storage in KB (if available)
   ///
   /// Results arrive via onBatteryAndStorage callback and update deviceInfo.
+  /// Request the companion device's own telemetry (GPS, temp, sensors).
+  /// The response arrives via onTelemetryReceived with the device's own key.
+  Future<void> requestSelfTelemetry() async {
+    if (!_activeService.isConnected) return;
+    try {
+      // Request own telemetry by sending telemetry req with zero-length key
+      final deviceKey = _deviceInfo.publicKey;
+      if (deviceKey != null) {
+        await _activeService.requestTelemetry(
+          Uint8List.fromList(deviceKey),
+          zeroHop: true,
+        );
+      }
+    } catch (e) {
+      debugPrint('⚠️ [Provider] requestSelfTelemetry failed: $e');
+    }
+  }
+
   Future<void> getBatteryAndStorage() async {
     if (!_activeService.isConnected) {
       _error = 'Not connected to device';

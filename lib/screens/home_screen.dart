@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vibration/vibration.dart';
 import '../providers/connection_provider.dart';
 import '../providers/app_provider.dart';
+import '../models/contact.dart';
 import '../models/device_info.dart' show ConnectionMode, DeviceInfo;
 import '../providers/messages_provider.dart';
 import '../providers/contacts_provider.dart';
@@ -435,6 +436,19 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   void _showDeviceInfoSheet(BuildContext context, DeviceInfo deviceInfo) {
+    // Request self telemetry so it's fresh
+    context.read<ConnectionProvider>().requestSelfTelemetry();
+
+    // Find the device's own contact to show self telemetry
+    final selfKey = deviceInfo.publicKey;
+    Contact? selfContact;
+    if (selfKey != null) {
+      selfContact = context.read<ContactsProvider>().findContactByKey(
+        Uint8List.fromList(selfKey),
+      );
+    }
+    final telemetry = selfContact?.telemetry;
+
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -513,6 +527,42 @@ class _HomeScreenState extends State<HomeScreen>
                   'TX Power',
                   '${deviceInfo.txPower} dBm',
                 ),
+              if (telemetry != null) ...[
+                const Divider(height: 24),
+                Text(
+                  'Self Telemetry',
+                  style: Theme.of(context).textTheme.titleSmall,
+                ),
+                const SizedBox(height: 8),
+                if (telemetry.temperature != null)
+                  _deviceInfoRow(
+                    context,
+                    Icons.thermostat,
+                    'Temperature',
+                    '${telemetry.temperature!.toStringAsFixed(1)}°C',
+                  ),
+                if (telemetry.humidity != null)
+                  _deviceInfoRow(
+                    context,
+                    Icons.water_drop,
+                    'Humidity',
+                    '${telemetry.humidity!.toStringAsFixed(1)}%',
+                  ),
+                if (telemetry.pressure != null)
+                  _deviceInfoRow(
+                    context,
+                    Icons.compress,
+                    'Pressure',
+                    '${telemetry.pressure!.toStringAsFixed(1)} hPa',
+                  ),
+                if (telemetry.gpsLocation != null)
+                  _deviceInfoRow(
+                    context,
+                    Icons.gps_fixed,
+                    'GPS',
+                    '${telemetry.gpsLocation!.latitude.toStringAsFixed(5)}, ${telemetry.gpsLocation!.longitude.toStringAsFixed(5)}',
+                  ),
+              ],
             ],
           ),
         ),

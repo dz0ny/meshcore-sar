@@ -63,12 +63,14 @@ void main() {
     expect(find.text('Light'), findsOneWidget);
     expect(find.text('Temperature'), findsNothing);
     expect(find.text('Illuminance'), findsNothing);
+    expect(find.text('~4.2 W/m2'), findsOneWidget);
+    expect(find.textContaining('lx'), findsNothing);
     expect(
-      find.byKey(const ValueKey('sensor_metric_channel_temperature')),
+      find.byKey(const ValueKey('sensor_metric_temperature')),
       findsOneWidget,
     );
     expect(
-      find.byKey(const ValueKey('sensor_metric_channel_extra:illuminance_2')),
+      find.byKey(const ValueKey('sensor_metric_extra:illuminance_2')),
       findsOneWidget,
     );
   });

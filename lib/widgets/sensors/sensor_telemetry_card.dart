@@ -211,8 +211,10 @@ List<SensorMetricOption> sensorMetricOptionsFor(
   // Skip them from extraSensorData to avoid duplicates.
   final coreFieldKeys = <String>{
     if (batteryMilliVolts != null || batteryPercentage != null)
-      ...extraSensorData?.keys.where((k) =>
-          k.startsWith('voltage_') || k.startsWith('analog_input_')) ?? [],
+      ...extraSensorData?.keys.where(
+            (k) => k.startsWith('voltage_') || k.startsWith('analog_input_'),
+          ) ??
+          [],
     if (temperature != null)
       ...extraSensorData?.keys.where((k) => k.startsWith('temperature_')) ?? [],
     if (humidity != null)
@@ -290,14 +292,14 @@ SensorMetricCardData? _buildOptionPreviewCardData(
       );
     case 'illuminance':
       final lux = _previewAsDouble(value);
+      final irradiance = lux == null
+          ? null
+          : _previewFormatDaylightIrradiance(lux);
       return SensorMetricCardData(
         fieldKey: fieldKey,
         icon: Icons.light_mode_outlined,
         label: label,
-        value: previewValue,
-        secondaryValue: lux == null
-            ? null
-            : '~${_formatPreviewNumber(_previewApproxDaylightIrradiance(lux), maxFractionDigits: 1)} W/m2 daylight',
+        value: irradiance ?? previewValue,
         accent: const Color(0xFFC17B1D),
         channel: metricKey.channel,
       );
@@ -674,6 +676,10 @@ double _previewApproxDaylightIrradiance(double lux) {
   return lux / 120.0;
 }
 
+String _previewFormatDaylightIrradiance(double lux) {
+  return '~${_formatPreviewNumber(_previewApproxDaylightIrradiance(lux), maxFractionDigits: 1)} W/m2';
+}
+
 String _previewFormatCardinalDirection(double degrees) {
   const points = <String>['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
   final normalized = ((degrees % 360) + 360) % 360;
@@ -699,7 +705,7 @@ String? _sensorMetricPreviewValue(String rawKey, dynamic value) {
     case 'illuminance':
       final lux = _previewAsDouble(value);
       if (lux == null) return null;
-      return '${_formatPreviewNumber(lux, maxFractionDigits: 0)} lx';
+      return _previewFormatDaylightIrradiance(lux);
 
     case 'presence':
       final isPresent = _previewAsBool(value);
@@ -1439,9 +1445,7 @@ class SensorTelemetryCard extends StatelessWidget {
           fieldKey: _extraFieldKey(rawKey),
           icon: Icons.light_mode_outlined,
           label: label,
-          value: '${_formatNumber(lux, maxFractionDigits: 0)} lx',
-          secondaryValue:
-              '~${_formatNumber(_approxDaylightIrradiance(lux), maxFractionDigits: 1)} W/m2 daylight',
+          value: _formatDaylightIrradiance(lux),
           accent: const Color(0xFFC17B1D),
           channel: metricKey.channel,
         );
@@ -1956,6 +1960,10 @@ class SensorTelemetryCard extends StatelessWidget {
 
   double _approxDaylightIrradiance(double lux) {
     return lux / 120.0;
+  }
+
+  String _formatDaylightIrradiance(double lux) {
+    return '~${_formatNumber(_approxDaylightIrradiance(lux), maxFractionDigits: 1)} W/m2';
   }
 
   String _formatCurrent(double amps) {

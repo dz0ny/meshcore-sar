@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:meshcore_sar_app/l10n/app_localizations.dart';
 import 'package:meshcore_sar_app/screens/sensors_tab.dart';
 import 'package:meshcore_sar_app/widgets/sensors/sensor_telemetry_card.dart';
 
@@ -7,6 +8,8 @@ void main() {
   testWidgets('renders selector previews and channel badges', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: SensorMetricSelectorItem(
             option: const SensorMetricOption(
@@ -14,12 +17,12 @@ void main() {
               label: 'Illuminance (ch 2)',
               defaultLabel: 'Illuminance',
               channel: 2,
-              valuePreview: '500 lx',
+              valuePreview: '~4.2 W/m2',
               previewCardData: SensorMetricCardData(
                 fieldKey: 'extra:illuminance_2',
                 icon: Icons.light_mode_outlined,
                 label: 'Illuminance',
-                value: '500 lx',
+                value: '~4.2 W/m2',
                 accent: Color(0xFFC17B1D),
                 channel: 2,
               ),
@@ -39,7 +42,8 @@ void main() {
     );
 
     expect(find.text('Show on sensor card'), findsOneWidget);
-    expect(find.text('500 lx'), findsOneWidget);
+    expect(find.text('~4.2 W/m2'), findsOneWidget);
+    expect(find.textContaining('lx'), findsNothing);
     expect(
       find.byKey(const ValueKey('sensor_selector_channel_extra:illuminance_2')),
       findsOneWidget,
@@ -50,6 +54,8 @@ void main() {
   testWidgets('omits duplicate channel chip for channel 1', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: SensorMetricSelectorItem(
             option: const SensorMetricOption(

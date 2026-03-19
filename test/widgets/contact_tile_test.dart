@@ -164,18 +164,16 @@ void main() {
     expect(find.text('CO2'), findsOneWidget);
     expect(find.text('415 ppm'), findsOneWidget);
     expect(find.text('Illuminance'), findsOneWidget);
-    expect(find.text('~4.2 W/m2 daylight'), findsOneWidget);
+    expect(find.text('~4.2 W/m2'), findsOneWidget);
+    expect(find.textContaining('lx'), findsNothing);
     expect(find.text('Current'), findsOneWidget);
     expect(find.text('15 mA'), findsOneWidget);
     expect(find.text('Power'), findsOneWidget);
     expect(find.text('Distance'), findsOneWidget);
-    expect(
-      find.byKey(const ValueKey('sensor_metric_channel_battery')),
-      findsOneWidget,
-    );
+    expect(find.byKey(const ValueKey('sensor_metric_battery')), findsOneWidget);
     expect(find.text('ch1'), findsWidgets);
     expect(
-      find.byKey(const ValueKey('sensor_metric_channel_extra:illuminance_2')),
+      find.byKey(const ValueKey('sensor_metric_extra:illuminance_2')),
       findsOneWidget,
     );
 

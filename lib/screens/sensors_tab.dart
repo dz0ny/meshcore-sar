@@ -7,6 +7,7 @@ import '../models/contact.dart';
 import '../providers/connection_provider.dart';
 import '../providers/contacts_provider.dart';
 import '../providers/sensors_provider.dart';
+import '../widgets/sensors/bthome_met_history_sheet.dart';
 import '../widgets/sensors/sensor_telemetry_card.dart';
 import '../l10n/app_localizations.dart';
 
@@ -337,6 +338,11 @@ class _SensorsTabState extends State<SensorsTab> {
                               : null,
                           onCustomize: () =>
                               _showMetricSelector(context, key, contact),
+                          onShowMetHistory: (contact) =>
+                              showBTHomeMetHistorySheet(
+                                context,
+                                contact: contact,
+                              ),
                           onRefresh: () => sensorsProvider.refreshSensor(
                             publicKeyHex: key,
                             contactsProvider: contactsProvider,
@@ -427,6 +433,12 @@ class _SensorCustomizeView extends StatelessWidget {
                   labelOverrides: sensorsProvider.labelOverridesFor(
                     publicKeyHex,
                   ),
+                  onShowMetHistory: contact == null
+                      ? null
+                      : (contact) => showBTHomeMetHistorySheet(
+                          context,
+                          contact: contact,
+                        ),
                   fieldSpans: {
                     for (final field in visibleFields)
                       field: sensorsProvider.fieldSpanFor(publicKeyHex, field),

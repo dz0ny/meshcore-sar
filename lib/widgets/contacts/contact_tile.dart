@@ -16,6 +16,7 @@ import 'contact_route_dialog.dart';
 import 'contact_trace_sheet.dart';
 import 'room_login_sheet.dart';
 import '../common/contact_avatar.dart';
+import '../sensors/bthome_met_history_sheet.dart';
 import '../sensors/sensor_telemetry_card.dart';
 import '../../utils/link_quality.dart';
 import '../../utils/time_ago_extensions.dart';
@@ -1153,6 +1154,8 @@ class _SensorPreviewView extends StatelessWidget {
                 visibleFields: visibleFields,
                 fieldOrder: fieldOrder,
                 labelOverrides: sensorsProvider.labelOverridesFor(publicKeyHex),
+                onShowMetHistory: (contact) =>
+                    showBTHomeMetHistorySheet(context, contact: contact),
                 fieldSpans: sensorFullWidthFieldSpans(visibleFields),
                 margin: EdgeInsets.zero,
                 emptyMetricsMessage: 'No telemetry fields available yet.',

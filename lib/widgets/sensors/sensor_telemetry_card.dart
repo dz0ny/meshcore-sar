@@ -7,6 +7,7 @@ import 'package:latlong2/latlong.dart';
 import '../../l10n/app_localizations.dart';
 import '../../models/contact.dart';
 import '../../providers/sensors_provider.dart';
+import '../../services/bthome_met_history.dart';
 import '../../utils/location_formats.dart';
 
 class SensorMetricOption {
@@ -1028,6 +1029,7 @@ class SensorTelemetryCard extends StatelessWidget {
   final Future<void> Function()? onRemove;
   final Future<void> Function()? onRefresh;
   final VoidCallback? onCustomize;
+  final Future<void> Function(Contact contact)? onShowMetHistory;
   final EdgeInsetsGeometry margin;
   final String emptyMetricsMessage;
   final Map<String, String> labelOverrides;
@@ -1042,6 +1044,7 @@ class SensorTelemetryCard extends StatelessWidget {
     this.onRemove,
     this.onRefresh,
     this.onCustomize,
+    this.onShowMetHistory,
     this.margin = const EdgeInsets.only(bottom: 16),
     this.emptyMetricsMessage =
         'All fields are hidden. Use Visible fields to choose what to show.',
@@ -1049,7 +1052,12 @@ class SensorTelemetryCard extends StatelessWidget {
   });
 
   bool get _showsMenu =>
-      onRefresh != null || onCustomize != null || onRemove != null;
+      onRefresh != null ||
+      onCustomize != null ||
+      onRemove != null ||
+      (contact != null &&
+          onShowMetHistory != null &&
+          supportsBTHomeMetHistory(contact));
 
   @override
   Widget build(BuildContext context) {
@@ -1159,6 +1167,10 @@ class SensorTelemetryCard extends StatelessWidget {
                         await onRemove!();
                       } else if (value == 'customize' && onCustomize != null) {
                         onCustomize!();
+                      } else if (value == 'met_history' &&
+                          contact != null &&
+                          onShowMetHistory != null) {
+                        await onShowMetHistory!(contact!);
                       }
                     },
                     itemBuilder: (context) {
@@ -1176,6 +1188,16 @@ class SensorTelemetryCard extends StatelessWidget {
                           PopupMenuItem<String>(
                             value: 'customize',
                             child: Text(l10n.customizeFields),
+                          ),
+                        );
+                      }
+                      if (contact != null &&
+                          onShowMetHistory != null &&
+                          supportsBTHomeMetHistory(contact)) {
+                        items.add(
+                          const PopupMenuItem<String>(
+                            value: 'met_history',
+                            child: Text('MET history'),
                           ),
                         );
                       }

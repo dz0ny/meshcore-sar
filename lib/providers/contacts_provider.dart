@@ -7,6 +7,7 @@ import '../models/contact_group.dart';
 import '../models/message_contact_location.dart';
 import '../services/cayenne_lpp_parser.dart';
 import '../services/contact_storage_service.dart';
+import '../services/profiles_feature_service.dart';
 import '../utils/fast_gps_packet.dart';
 import '../utils/rssi_location_estimator.dart';
 import '../utils/key_comparison.dart';
@@ -140,7 +141,8 @@ class ContactsProvider with ChangeNotifier {
   String? _storageNamespace;
 
   // Add default public channel on initialization
-  ContactsProvider() {
+  ContactsProvider()
+    : _storageNamespace = ProfileStorageScope.effectiveNamespace {
     _ensurePublicChannelExists();
   }
 
@@ -1638,6 +1640,8 @@ class ContactsProvider with ChangeNotifier {
     _contacts.clear();
     _savedContactGroups.clear();
     _pendingAdverts.clear();
+    _estimatedLocations.clear();
+    _rssiObservations.clear();
   }
 
   Map<String, dynamic> _pendingAdvertToJson(PendingAdvert advert) {

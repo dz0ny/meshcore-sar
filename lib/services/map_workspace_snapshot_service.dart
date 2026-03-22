@@ -64,7 +64,6 @@ class MapWorkspaceSnapshotService {
       showPlaceNamesOverlay: mapProvider.showPlaceNamesOverlay,
       showMunicipalityBordersOverlay:
           mapProvider.showMunicipalityBordersOverlay,
-      showAllContactTrails: mapProvider.showAllContactTrails,
       hideRepeatersOnMap: mapProvider.hideRepeatersOnMap,
     );
   }

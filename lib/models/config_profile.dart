@@ -263,7 +263,6 @@ class MapWorkspaceProfileSection {
   final bool? showKrasFireZonesOverlay;
   final bool? showPlaceNamesOverlay;
   final bool? showMunicipalityBordersOverlay;
-  final bool? showAllContactTrails;
   final bool? hideRepeatersOnMap;
 
   const MapWorkspaceProfileSection({
@@ -284,7 +283,6 @@ class MapWorkspaceProfileSection {
     this.showKrasFireZonesOverlay,
     this.showPlaceNamesOverlay,
     this.showMunicipalityBordersOverlay,
-    this.showAllContactTrails,
     this.hideRepeatersOnMap,
   });
 
@@ -306,7 +304,6 @@ class MapWorkspaceProfileSection {
       showKrasFireZonesOverlay == null &&
       showPlaceNamesOverlay == null &&
       showMunicipalityBordersOverlay == null &&
-      showAllContactTrails == null &&
       hideRepeatersOnMap == null;
 
   Map<String, dynamic> toJson() => {
@@ -327,7 +324,6 @@ class MapWorkspaceProfileSection {
     'showKrasFireZonesOverlay': showKrasFireZonesOverlay,
     'showPlaceNamesOverlay': showPlaceNamesOverlay,
     'showMunicipalityBordersOverlay': showMunicipalityBordersOverlay,
-    'showAllContactTrails': showAllContactTrails,
     'hideRepeatersOnMap': hideRepeatersOnMap,
   };
 
@@ -356,7 +352,6 @@ class MapWorkspaceProfileSection {
       showPlaceNamesOverlay: json['showPlaceNamesOverlay'] as bool?,
       showMunicipalityBordersOverlay:
           json['showMunicipalityBordersOverlay'] as bool?,
-      showAllContactTrails: json['showAllContactTrails'] as bool?,
       hideRepeatersOnMap: json['hideRepeatersOnMap'] as bool?,
     );
   }

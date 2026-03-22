@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../models/contact.dart';
 import '../../models/location_trail.dart';
 import '../../providers/map_provider.dart';
-import '../../providers/contacts_provider.dart';
 import '../../services/gpx_service.dart';
-import '../../services/trail_color_service.dart';
 import '../../l10n/app_localizations.dart';
 
 /// Trail management controls widget
@@ -14,16 +11,7 @@ class TrailControls extends StatelessWidget {
 
   void _showTrailMenu(BuildContext context) {
     final mapProvider = Provider.of<MapProvider>(context, listen: false);
-    final contactsProvider = Provider.of<ContactsProvider>(
-      context,
-      listen: false,
-    );
     final l10n = AppLocalizations.of(context)!;
-
-    // Get contacts with trails (advertHistory >= 2 points)
-    final contactsWithTrails = contactsProvider.contactsWithLocation
-        .where((c) => c.advertHistory.length >= 2)
-        .toList();
 
     showModalBottomSheet(
       context: context,
@@ -184,110 +172,6 @@ class TrailControls extends StatelessWidget {
                   ),
 
                 const SizedBox(height: 8),
-                const Divider(),
-                const SizedBox(height: 8),
-
-                // Contact Trails Section
-                Row(
-                  children: [
-                    const Icon(Icons.people, size: 20),
-                    SizedBox(width: 8),
-                    Text(
-                      l10n.contactTrails,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-
-                // Show All Contact Trails toggle
-                SwitchListTile(
-                  secondary: Icon(Icons.route),
-                  title: Text(l10n.showAllContactTrails),
-                  subtitle: Text(
-                    contactsWithTrails.isEmpty
-                        ? l10n.noContactsWithLocationHistory
-                        : mapProvider.showAllContactTrails
-                        ? l10n.showingTrailsForContacts(
-                            contactsWithTrails.length,
-                          )
-                        : l10n.individualContactTrails,
-                  ),
-                  value: mapProvider.showAllContactTrails,
-                  onChanged: contactsWithTrails.isNotEmpty
-                      ? (value) {
-                          mapProvider.toggleAllContactTrails();
-                          setModalState(() {}); // Update modal UI
-                        }
-                      : null, // Disable if no contacts with trails
-                ),
-
-                // Individual contact trails (when "show all" is OFF)
-                if (!mapProvider.showAllContactTrails &&
-                    contactsWithTrails.isNotEmpty)
-                  ExpansionTile(
-                    title: Text(l10n.individualContactTrails),
-                    initiallyExpanded: false,
-                    children: contactsWithTrails.map((contact) {
-                      final trailColor = TrailColorService.getTrailColor(
-                        contact,
-                      );
-                      final isVisible = mapProvider.isContactPathVisible(
-                        contact.publicKeyHex,
-                      );
-
-                      return SwitchListTile(
-                        // Color indicator with emoji
-                        secondary: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            if (contact.roleEmoji != null)
-                              Text(
-                                contact.roleEmoji!,
-                                style: const TextStyle(fontSize: 18),
-                              ),
-                            const SizedBox(width: 4),
-                            Container(
-                              width: 16,
-                              height: 16,
-                              decoration: BoxDecoration(
-                                color: trailColor,
-                                border: Border.all(
-                                  color: Colors.white,
-                                  width: 2,
-                                ),
-                                borderRadius: BorderRadius.circular(3),
-                              ),
-                            ),
-                          ],
-                        ),
-                        title: Row(
-                          children: [
-                            Expanded(child: Text(contact.displayName)),
-                            IconButton(
-                              tooltip: l10n.exportToClipboard,
-                              icon: const Icon(Icons.file_download_outlined),
-                              onPressed: () =>
-                                  _exportContactTrail(context, contact),
-                            ),
-                          ],
-                        ),
-                        subtitle: Text(
-                          '${contact.advertHistory.length} points',
-                        ),
-                        value: isVisible,
-                        onChanged: (value) {
-                          mapProvider.toggleContactPath(contact.publicKeyHex);
-                          setModalState(() {}); // Update modal UI
-                        },
-                      );
-                    }).toList(),
-                  ),
-
-                const SizedBox(height: 8),
 
                 // Close button
                 TextButton(
@@ -358,34 +242,6 @@ class TrailControls extends StatelessWidget {
         SnackBar(content: Text(l10n.exportFailed(error.toString()))),
       );
     }
-  }
-
-  Future<void> _exportContactTrail(BuildContext context, Contact contact) async {
-    await _exportTrail(
-      context,
-      _buildContactTrail(contact),
-      customName: '${contact.displayName} Trail',
-    );
-  }
-
-  LocationTrail _buildContactTrail(Contact contact) {
-    final sortedHistory = [...contact.advertHistory]
-      ..sort((a, b) => a.timestamp.compareTo(b.timestamp));
-
-    return LocationTrail(
-      id: 'contact_${contact.publicKeyHex}',
-      isActive: false,
-      startTime: sortedHistory.first.timestamp,
-      endTime: sortedHistory.last.timestamp,
-      points: sortedHistory
-          .map(
-            (advert) => TrailPoint(
-              position: advert.location,
-              timestamp: advert.timestamp,
-            ),
-          )
-          .toList(),
-    );
   }
 
   void _showClearConfirmation(

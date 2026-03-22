@@ -27,7 +27,6 @@ import '../services/background_location_service.dart';
 import '../services/location_tracking_service.dart';
 import '../services/map_marker_service.dart';
 import '../services/message_destination_preferences.dart';
-import '../services/trail_color_service.dart';
 import '../services/profiles_feature_service.dart';
 import '../widgets/map_debug_info.dart';
 import '../widgets/map/compass_widget.dart';
@@ -873,7 +872,9 @@ class _MapTabState extends State<MapTab> with AutomaticKeepAliveClientMixin {
                           if (!hasCustomMap)
                             ListTile(
                               leading: Icon(Icons.add_photo_alternate),
-                              title: Text(AppLocalizations.of(context)!.loadFromGallery),
+                              title: Text(
+                                AppLocalizations.of(context)!.loadFromGallery,
+                              ),
                               subtitle: const Text(
                                 'Use a cave map image instead of GPS tiles',
                               ),
@@ -905,7 +906,9 @@ class _MapTabState extends State<MapTab> with AutomaticKeepAliveClientMixin {
                             ),
                             ListTile(
                               leading: Icon(Icons.swap_horizontal_circle),
-                              title: Text(AppLocalizations.of(context)!.replaceImage),
+                              title: Text(
+                                AppLocalizations.of(context)!.replaceImage,
+                              ),
                               subtitle: const Text(
                                 'Pick a different map from the gallery',
                               ),
@@ -941,7 +944,9 @@ class _MapTabState extends State<MapTab> with AutomaticKeepAliveClientMixin {
                             if (customMapConfig.isCalibrated)
                               ListTile(
                                 leading: Icon(Icons.clear),
-                                title: Text(AppLocalizations.of(context)!.clearScale),
+                                title: Text(
+                                  AppLocalizations.of(context)!.clearScale,
+                                ),
                                 onTap: () async {
                                   await mapProvider.clearCustomMapCalibration();
                                   if (!context.mounted) return;
@@ -1277,9 +1282,11 @@ class _MapTabState extends State<MapTab> with AutomaticKeepAliveClientMixin {
       _stopCustomMapCalibration();
 
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.customMapScaleSaved)));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.customMapScaleSaved),
+        ),
+      );
     }
   }
 
@@ -1419,7 +1426,9 @@ class _MapTabState extends State<MapTab> with AutomaticKeepAliveClientMixin {
                     contentPadding: EdgeInsets.zero,
                     leading: Icon(Icons.chat_bubble_outline),
                     title: Text(AppLocalizations.of(context)!.openMessage),
-                    subtitle: Text(AppLocalizations.of(context)!.jumpToTheRelatedSarMessage),
+                    subtitle: Text(
+                      AppLocalizations.of(context)!.jumpToTheRelatedSarMessage,
+                    ),
                     onTap: () async {
                       Navigator.pop(sheetContext);
                       await _openSarMarkerMessage(
@@ -1655,7 +1664,11 @@ class _MapTabState extends State<MapTab> with AutomaticKeepAliveClientMixin {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(AppLocalizations.of(context)!.pleaseSelectADestinationToSendSarMarker),
+          content: Text(
+            AppLocalizations.of(
+              context,
+            )!.pleaseSelectADestinationToSendSarMarker,
+          ),
           backgroundColor: Colors.red,
         ),
       );
@@ -1785,7 +1798,9 @@ class _MapTabState extends State<MapTab> with AutomaticKeepAliveClientMixin {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(AppLocalizations.of(context)!.sarMarkerBroadcastToPublicChannel),
+            content: Text(
+              AppLocalizations.of(context)!.sarMarkerBroadcastToPublicChannel,
+            ),
             backgroundColor: Colors.orange,
             duration: Duration(seconds: 2),
           ),
@@ -2514,52 +2529,6 @@ class _MapTabState extends State<MapTab> with AutomaticKeepAliveClientMixin {
                         );
                       },
                     ),
-                    // Contact trail polylines (rendered before user trail and markers)
-                    Consumer<MapProvider>(
-                      builder: (context, mapProvider, _) {
-                        // Determine which contacts to show trails for
-                        final contactsToShow = mapProvider.showAllContactTrails
-                            ? contactsWithLocation // Show all when master toggle is ON
-                            : contactsWithLocation.where(
-                                (contact) => mapProvider.isContactPathVisible(
-                                  contact.publicKeyHex,
-                                ),
-                              ); // Individual toggles
-
-                        return PolylineLayer(
-                          polylines: contactsToShow
-                              .where(
-                                (contact) => contact.advertHistory.length >= 2,
-                              )
-                              .map((contact) {
-                                // Use TrailColorService for consistent, emoji-based colors
-                                final color = TrailColorService.getTrailColor(
-                                  contact,
-                                );
-
-                                return Polyline(
-                                  points: contact.advertHistory
-                                      .map((advert) => advert.location)
-                                      .toList(),
-                                  color: color.withValues(
-                                    alpha: 0.95,
-                                  ), // More opaque for better visibility
-                                  strokeWidth:
-                                      4.5, // Thicker for better visibility on all map backgrounds
-                                  borderColor: Colors.white.withValues(
-                                    alpha: 0.6,
-                                  ), // Stronger border contrast
-                                  borderStrokeWidth: 2.0, // Wider border
-                                  // DASHED pattern to distinguish from solid user trail
-                                  pattern: StrokePattern.dashed(
-                                    segments: [8, 4],
-                                  ),
-                                );
-                              })
-                              .toList(),
-                        );
-                      },
-                    ),
                     // Location trail layer (rendered after paths, before drawings)
                     const LocationTrailLayer(),
                   ],
@@ -2604,7 +2573,8 @@ class _MapTabState extends State<MapTab> with AutomaticKeepAliveClientMixin {
                           context: context,
                           mapRotation: _getMapRotation(),
                           userPosition: _locationService.currentPosition,
-                          estimatedLocations: contactsProvider.estimatedLocations,
+                          estimatedLocations:
+                              contactsProvider.estimatedLocations,
                           onTap: (contact) {
                             _showDetailedCompassWithContact(
                               context,

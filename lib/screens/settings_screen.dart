@@ -1465,21 +1465,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             Consumer<MapProvider>(
               builder: (context, mapProvider, child) => SwitchListTile(
-                secondary: Icon(Icons.timeline),
-                title: Text(
-                  AppLocalizations.of(context)!.showAllContactTrailsLabel,
-                ),
-                subtitle: const Text(
-                  'Display location trails for all contacts that have history',
-                ),
-                value: mapProvider.showAllContactTrails,
-                onChanged: (value) async {
-                  await mapProvider.toggleAllContactTrails();
-                },
-              ),
-            ),
-            Consumer<MapProvider>(
-              builder: (context, mapProvider, child) => SwitchListTile(
                 secondary: Icon(Icons.router_outlined),
                 title: Text(AppLocalizations.of(context)!.hideRepeatersOnMap),
                 subtitle: const Text(

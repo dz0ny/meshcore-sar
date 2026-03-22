@@ -37,8 +37,6 @@ class MapProvider with ChangeNotifier {
   MapCoordinateSpace _targetCoordinateSpace = MapCoordinateSpace.geo;
   String? _targetMapId;
 
-  final Set<String> _visibleContactPaths = {};
-
   LocationTrail? _currentTrail;
   bool _isTrailVisible = true;
   final List<LocationTrail> _trailHistory = [];
@@ -55,7 +53,6 @@ class MapProvider with ChangeNotifier {
   bool _showPlaceNamesOverlay = false;
   bool _showMunicipalityBordersOverlay = false;
 
-  bool _showAllContactTrails = true;
   bool _hideRepeatersOnMap = false;
 
   LocationTrail? _importedTrail;
@@ -72,8 +69,6 @@ class MapProvider with ChangeNotifier {
   bool get shouldAnimate => _shouldAnimate;
   MapCoordinateSpace get targetCoordinateSpace => _targetCoordinateSpace;
   String? get targetMapId => _targetMapId;
-  Set<String> get visibleContactPaths => Set.unmodifiable(_visibleContactPaths);
-
   LocationTrail? get currentTrail => _currentTrail;
   bool get isTrailVisible => _isTrailVisible;
   List<LocationTrail> get trailHistory => List.unmodifiable(_trailHistory);
@@ -91,7 +86,6 @@ class MapProvider with ChangeNotifier {
   bool get showPlaceNamesOverlay => _showPlaceNamesOverlay;
   bool get showMunicipalityBordersOverlay => _showMunicipalityBordersOverlay;
 
-  bool get showAllContactTrails => _showAllContactTrails;
   bool get hideRepeatersOnMap => _hideRepeatersOnMap;
 
   LocationTrail? get importedTrail => _importedTrail;
@@ -365,30 +359,6 @@ class MapProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  void toggleContactPath(String publicKeyHex) {
-    if (_visibleContactPaths.contains(publicKeyHex)) {
-      _visibleContactPaths.remove(publicKeyHex);
-    } else {
-      _visibleContactPaths.add(publicKeyHex);
-    }
-    notifyListeners();
-  }
-
-  bool isContactPathVisible(String publicKeyHex) {
-    return _visibleContactPaths.contains(publicKeyHex);
-  }
-
-  void hideAllPaths() {
-    _visibleContactPaths.clear();
-    notifyListeners();
-  }
-
-  void showOnlyPath(String publicKeyHex) {
-    _visibleContactPaths.clear();
-    _visibleContactPaths.add(publicKeyHex);
-    notifyListeners();
-  }
-
   void startTrail() {
     if (_currentTrail != null && _currentTrail!.isActive) {
       endTrail();
@@ -556,10 +526,15 @@ class MapProvider with ChangeNotifier {
   Future<void> _loadInitialState() async {
     await Future.wait([
       loadOverlayState(),
-      loadTrailSettings(),
       loadRepeaterVisibilitySettings(),
       _loadCustomMapState(),
+      _removeDeprecatedSettings(),
     ]);
+  }
+
+  Future<void> _removeDeprecatedSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_scopedKey('map_show_all_contact_trails'));
   }
 
   Future<void> _saveOverlayState() async {
@@ -607,27 +582,6 @@ class MapProvider with ChangeNotifier {
     await prefs.setBool(
       _scopedKey('map_show_municipality_borders_overlay'),
       _showMunicipalityBordersOverlay,
-    );
-  }
-
-  Future<void> toggleAllContactTrails() async {
-    _showAllContactTrails = !_showAllContactTrails;
-    notifyListeners();
-    await _saveTrailSettings();
-  }
-
-  Future<void> loadTrailSettings() async {
-    final prefs = await SharedPreferences.getInstance();
-    _showAllContactTrails =
-        prefs.getBool(_scopedKey('map_show_all_contact_trails')) ?? true;
-    notifyListeners();
-  }
-
-  Future<void> _saveTrailSettings() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(
-      _scopedKey('map_show_all_contact_trails'),
-      _showAllContactTrails,
     );
   }
 
@@ -755,7 +709,6 @@ class MapProvider with ChangeNotifier {
       'showKrasFireZonesOverlay': _showKrasFireZonesOverlay,
       'showPlaceNamesOverlay': _showPlaceNamesOverlay,
       'showMunicipalityBordersOverlay': _showMunicipalityBordersOverlay,
-      'showAllContactTrails': _showAllContactTrails,
       'hideRepeatersOnMap': _hideRepeatersOnMap,
     };
   }
@@ -792,7 +745,6 @@ class MapProvider with ChangeNotifier {
     _showPlaceNamesOverlay = json['showPlaceNamesOverlay'] as bool? ?? false;
     _showMunicipalityBordersOverlay =
         json['showMunicipalityBordersOverlay'] as bool? ?? false;
-    _showAllContactTrails = json['showAllContactTrails'] as bool? ?? true;
     _hideRepeatersOnMap = json['hideRepeatersOnMap'] as bool? ?? false;
     notifyListeners();
   }

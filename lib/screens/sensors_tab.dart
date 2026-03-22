@@ -105,120 +105,23 @@ class _SensorsTabState extends State<SensorsTab> {
       contactsProvider,
       connectionProvider: context.read<ConnectionProvider>(),
     );
-    final searchController = TextEditingController();
-
-    try {
-      await showModalBottomSheet<void>(
-        context: context,
-        showDragHandle: true,
-        isScrollControlled: true,
-        builder: (sheetContext) {
-          if (candidates.isEmpty) {
-            return const SafeArea(
-              child: Padding(
-                padding: EdgeInsets.all(24),
-                child: Text(
-                  'No eligible nodes available. Discover a relay or node first.',
-                ),
-              ),
-            );
-          }
-
-          return StatefulBuilder(
-            builder: (context, setModalState) {
-              final query = searchController.text.trim().toLowerCase();
-              final filteredCandidates = candidates.where((contact) {
-                if (query.isEmpty) {
-                  return true;
-                }
-                return contact.displayName.toLowerCase().contains(query) ||
-                    contact.publicKeyHex.toLowerCase().contains(query);
-              }).toList();
-
-              return SafeArea(
-                child: Padding(
-                  padding: EdgeInsets.only(
-                    bottom: MediaQuery.of(context).viewInsets.bottom,
-                  ),
-                  child: ListView(
-                    shrinkWrap: true,
-                    padding: const EdgeInsets.only(bottom: 20),
-                    children: [
-                      ListTile(
-                        title: const Text(
-                          'Add sensor node',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        subtitle: Text(
-                          AppLocalizations.of(
-                            context,
-                          )!.pickARelayOrNodeToWatchInSensors,
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
-                        child: TextField(
-                          controller: searchController,
-                          onChanged: (_) => setModalState(() {}),
-                          decoration: const InputDecoration(
-                            prefixIcon: Icon(Icons.search),
-                            hintText: 'Search sensors',
-                            border: OutlineInputBorder(),
-                          ),
-                        ),
-                      ),
-                      if (filteredCandidates.isEmpty)
-                        const Padding(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 16,
-                          ),
-                          child: Text(
-                            'No sensor candidates match your search.',
-                          ),
-                        ),
-                      ...filteredCandidates.map(
-                        (contact) => ListTile(
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 4,
-                          ),
-                          leading: CircleAvatar(
-                            radius: 24,
-                            backgroundColor: const Color(0xFFDDEAF8),
-                            child: Icon(
-                              _typeIcon(contact),
-                              color: const Color(0xFF1E4F7A),
-                            ),
-                          ),
-                          title: Text(contact.displayName),
-                          subtitle: _SensorCandidatePreview(contact: contact),
-                          isThreeLine: true,
-                          onTap: () async {
-                            await sensorsProvider.addSensor(contact);
-                            if (!sheetContext.mounted) return;
-                            Navigator.of(sheetContext).pop();
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  '${contact.displayName} added to Sensors',
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            },
+    await showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (sheetContext) => AddSensorSheet(
+        candidates: candidates,
+        onClose: () => Navigator.of(sheetContext).pop(),
+        onSelect: (contact) async {
+          await sensorsProvider.addSensor(contact);
+          if (!sheetContext.mounted) return;
+          Navigator.of(sheetContext).pop();
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('${contact.displayName} added to Sensors')),
           );
         },
-      );
-    } finally {
-      searchController.dispose();
-    }
+      ),
+    );
   }
 
   Future<void> _showMetricSelector(
@@ -228,7 +131,7 @@ class _SensorsTabState extends State<SensorsTab> {
   ) async {
     await Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (pageContext) => _SensorCustomizeView(
+        builder: (pageContext) => SensorCustomizeView(
           publicKeyHex: publicKeyHex,
           initialContact: contact,
           onRenameMetric:
@@ -474,7 +377,150 @@ class _SensorsTabState extends State<SensorsTab> {
   }
 }
 
-class _SensorCustomizeView extends StatelessWidget {
+class AddSensorSheet extends StatefulWidget {
+  final List<Contact> candidates;
+  final Future<void> Function(Contact contact) onSelect;
+  final VoidCallback onClose;
+
+  const AddSensorSheet({
+    super.key,
+    required this.candidates,
+    required this.onSelect,
+    required this.onClose,
+  });
+
+  @override
+  State<AddSensorSheet> createState() => _AddSensorSheetState();
+}
+
+class _AddSensorSheetState extends State<AddSensorSheet> {
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.candidates.isEmpty) {
+      return const SafeArea(
+        child: Padding(
+          padding: EdgeInsets.all(24),
+          child: Text(
+            'No eligible nodes available. Discover a relay or node first.',
+          ),
+        ),
+      );
+    }
+
+    final l10n = AppLocalizations.of(context)!;
+    final query = _searchController.text.trim().toLowerCase();
+    final filteredCandidates = widget.candidates.where((contact) {
+      if (query.isEmpty) {
+        return true;
+      }
+      return contact.displayName.toLowerCase().contains(query) ||
+          contact.publicKeyHex.toLowerCase().contains(query);
+    }).toList();
+
+    return SafeArea(
+      child: Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
+        child: SizedBox(
+          height: MediaQuery.of(context).size.height * 0.8,
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 8, 12, 8),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Add sensor node',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(l10n.pickARelayOrNodeToWatchInSensors),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: widget.onClose,
+                      tooltip: l10n.close,
+                      icon: const Icon(Icons.close),
+                    ),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+                child: TextField(
+                  controller: _searchController,
+                  onChanged: (_) => setState(() {}),
+                  decoration: const InputDecoration(
+                    prefixIcon: Icon(Icons.search),
+                    hintText: 'Search sensors',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ),
+              Expanded(
+                child: filteredCandidates.isEmpty
+                    ? const Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 16,
+                        ),
+                        child: Align(
+                          alignment: Alignment.topLeft,
+                          child: Text(
+                            'No sensor candidates match your search.',
+                          ),
+                        ),
+                      )
+                    : ListView.builder(
+                        padding: const EdgeInsets.only(bottom: 20),
+                        itemCount: filteredCandidates.length,
+                        itemBuilder: (context, index) {
+                          final contact = filteredCandidates[index];
+                          return ListTile(
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 4,
+                            ),
+                            leading: CircleAvatar(
+                              radius: 24,
+                              backgroundColor: const Color(0xFFDDEAF8),
+                              child: Icon(
+                                _typeIcon(contact),
+                                color: const Color(0xFF1E4F7A),
+                              ),
+                            ),
+                            title: Text(contact.displayName),
+                            subtitle: _SensorCandidatePreview(contact: contact),
+                            isThreeLine: true,
+                            onTap: () => widget.onSelect(contact),
+                          );
+                        },
+                      ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class SensorCustomizeView extends StatelessWidget {
   final String publicKeyHex;
   final Contact? initialContact;
   final Future<void> Function({
@@ -485,7 +531,7 @@ class _SensorCustomizeView extends StatelessWidget {
   })
   onRenameMetric;
 
-  const _SensorCustomizeView({
+  const SensorCustomizeView({
     required this.publicKeyHex,
     required this.initialContact,
     required this.onRenameMetric,

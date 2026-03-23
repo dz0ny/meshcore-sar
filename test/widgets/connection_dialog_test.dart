@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:meshcore_sar_app/l10n/app_localizations.dart';
 import 'package:meshcore_sar_app/providers/connection_provider.dart';
@@ -34,6 +35,24 @@ class _FakeConnectionProvider extends ConnectionProvider {
   }
 }
 
+class _ConnectableFakeConnectionProvider extends ConnectionProvider {
+  int connectCalls = 0;
+
+  @override
+  List<ScannedDevice> get scannedDevices => [
+    ScannedDevice(device: BluetoothDevice.fromId('test-device'), rssi: -55),
+  ];
+
+  @override
+  String? get error => null;
+
+  @override
+  Future<bool> connect(BluetoothDevice device) async {
+    connectCalls += 1;
+    return true;
+  }
+}
+
 void main() {
   testWidgets('BLE scan waits for explicit user action', (tester) async {
     final connectionProvider = _FakeConnectionProvider();
@@ -63,5 +82,48 @@ void main() {
 
     expect(connectionProvider.stopScanCalls, 1);
     expect(connectionProvider.startScanCalls, 1);
+  });
+
+  testWidgets('successful BLE connect closes the dialog immediately', (
+    tester,
+  ) async {
+    final connectionProvider = _ConnectableFakeConnectionProvider();
+
+    await tester.pumpWidget(
+      ChangeNotifierProvider<ConnectionProvider>.value(
+        value: connectionProvider,
+        child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Builder(
+            builder: (context) => Scaffold(
+              body: Center(
+                child: FilledButton(
+                  onPressed: () {
+                    showModalBottomSheet<Object?>(
+                      context: context,
+                      isScrollControlled: true,
+                      builder: (_) => const ConnectionDialog(),
+                    );
+                  },
+                  child: const Text('Open'),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Open'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(ConnectionDialog), findsOneWidget);
+
+    await tester.tap(find.widgetWithText(FilledButton, 'Connect'));
+    await tester.pumpAndSettle();
+
+    expect(connectionProvider.connectCalls, 1);
+    expect(find.byType(ConnectionDialog), findsNothing);
   });
 }

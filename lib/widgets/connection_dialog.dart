@@ -20,6 +20,30 @@ Future<void> _initializeConnectedWorkspace({
   await appProvider.initialize();
 }
 
+String _normalizeConnectionError(Object error) {
+  var message = error.toString();
+  if (message.startsWith('Exception: ')) {
+    message = message.substring('Exception: '.length);
+  }
+  if (message.startsWith('Connection failed: Exception: ')) {
+    return message.substring('Connection failed: Exception: '.length);
+  }
+  if (message.startsWith('Connection failed: ')) {
+    return message.substring('Connection failed: '.length);
+  }
+  return message;
+}
+
+void _showConnectionErrorSnackBar(BuildContext context, Object error) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text(_normalizeConnectionError(error)),
+      backgroundColor: Colors.red,
+      duration: const Duration(seconds: 5),
+    ),
+  );
+}
+
 Future<bool> showConnectionDialogFlow(
   BuildContext context, {
   Color? backgroundColor,
@@ -34,6 +58,21 @@ Future<bool> showConnectionDialogFlow(
 
   if (result != _ConnectionDialogResult.connected || !context.mounted) {
     return result == _ConnectionDialogResult.connected;
+  }
+
+  try {
+    await _initializeConnectedWorkspace(
+      profileWorkspaceCoordinator: context.read<ProfileWorkspaceCoordinator>(),
+      appProvider: context.read<AppProvider>(),
+    );
+  } catch (error) {
+    if (context.mounted) {
+      _showConnectionErrorSnackBar(context, error);
+    }
+  }
+
+  if (!context.mounted) {
+    return true;
   }
 
   if (!offerPostConnectRepeaterDiscovery) {
@@ -182,43 +221,14 @@ class _ConnectionDialogState extends State<ConnectionDialog>
     return Colors.red;
   }
 
-  Future<void> _handleSuccessfulConnection() async {
-    final appProvider = context.read<AppProvider>();
-    final profileWorkspaceCoordinator = context
-        .read<ProfileWorkspaceCoordinator>();
-
-    await _initializeConnectedWorkspace(
-      profileWorkspaceCoordinator: profileWorkspaceCoordinator,
-      appProvider: appProvider,
-    );
-
+  void _closeOnSuccessfulConnection() {
     if (!mounted) return;
     Navigator.of(context).pop(_ConnectionDialogResult.connected);
   }
 
-  String _normalizeConnectionError(Object error) {
-    var message = error.toString();
-    if (message.startsWith('Exception: ')) {
-      message = message.substring('Exception: '.length);
-    }
-    if (message.startsWith('Connection failed: Exception: ')) {
-      return message.substring('Connection failed: Exception: '.length);
-    }
-    if (message.startsWith('Connection failed: ')) {
-      return message.substring('Connection failed: '.length);
-    }
-    return message;
-  }
-
   void _showConnectionError(Object error) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(_normalizeConnectionError(error)),
-        backgroundColor: Colors.red,
-        duration: const Duration(seconds: 5),
-      ),
-    );
+    _showConnectionErrorSnackBar(context, error);
   }
 
   @override
@@ -554,7 +564,7 @@ class _ConnectionDialogState extends State<ConnectionDialog>
                                 'Failed to connect to $name',
                           );
                         }
-                        await _handleSuccessfulConnection();
+                        _closeOnSuccessfulConnection();
                       } catch (error) {
                         _showConnectionError(error);
                       } finally {
@@ -676,7 +686,7 @@ class _ConnectionDialogState extends State<ConnectionDialog>
                                 'Failed to connect to ${server.ipAddress}:${server.port}',
                           );
                         }
-                        await _handleSuccessfulConnection();
+                        _closeOnSuccessfulConnection();
                       } catch (e) {
                         if (!mounted) return;
                         setState(() {
@@ -883,11 +893,6 @@ class _SerialDeviceListState extends State<_SerialDeviceList> {
       if (!mounted) return;
 
       if (success) {
-        await _initializeConnectedWorkspace(
-          profileWorkspaceCoordinator: context
-              .read<ProfileWorkspaceCoordinator>(),
-          appProvider: context.read<AppProvider>(),
-        );
         widget.onConnected(_ConnectionDialogResult.connected);
       } else {
         await connection.disconnect();

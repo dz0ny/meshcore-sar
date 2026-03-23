@@ -37,7 +37,6 @@ import '../providers/image_provider.dart' as ip;
 import '../services/image_codec_service.dart';
 import '../services/image_preferences.dart';
 import '../services/region_scope_preferences.dart';
-import '../services/region_discovery_service.dart';
 import 'package:image_picker/image_picker.dart';
 import '../l10n/app_localizations.dart';
 
@@ -1763,12 +1762,7 @@ class _MessagesTabState extends State<MessagesTab> {
 
   void _showRegionScopeSheet() {
     final channelIdx = _selectedRecipient?.publicKey[1] ?? 0;
-    final contactsProvider = context.read<ContactsProvider>();
-    final connectionProvider = context.read<ConnectionProvider>();
     final l10n = AppLocalizations.of(context)!;
-    final repeaters = contactsProvider.contacts
-        .where((c) => c.isRepeater)
-        .toList();
 
     showModalBottomSheet(
       context: context,
@@ -1777,8 +1771,6 @@ class _MessagesTabState extends State<MessagesTab> {
       builder: (sheetContext) {
         return _RegionScopeSheet(
           currentScopeName: _channelRegionScopeName,
-          repeaters: repeaters,
-          connectionProvider: connectionProvider,
           l10n: l10n,
           onScopeSelected: (String? name) async {
             Navigator.of(sheetContext).pop();
@@ -2412,15 +2404,11 @@ class _MessagesTabState extends State<MessagesTab> {
 /// Bottom sheet for selecting a region scope for the current channel.
 class _RegionScopeSheet extends StatefulWidget {
   final String? currentScopeName;
-  final List<Contact> repeaters;
-  final ConnectionProvider connectionProvider;
   final AppLocalizations l10n;
   final ValueChanged<String?> onScopeSelected;
 
   const _RegionScopeSheet({
     required this.currentScopeName,
-    required this.repeaters,
-    required this.connectionProvider,
     required this.l10n,
     required this.onScopeSelected,
   });
@@ -2431,37 +2419,11 @@ class _RegionScopeSheet extends StatefulWidget {
 
 class _RegionScopeSheetState extends State<_RegionScopeSheet> {
   final TextEditingController _nameController = TextEditingController();
-  List<String> _discoveredRegions = [];
-  bool _isDiscovering = false;
 
   @override
   void dispose() {
     _nameController.dispose();
     super.dispose();
-  }
-
-  Future<void> _discoverRegions() async {
-    if (widget.repeaters.isEmpty) return;
-    setState(() => _isDiscovering = true);
-
-    final allRegions = <String>{};
-    for (final repeater in widget.repeaters) {
-      final regions = await RegionDiscoveryService.discoverFromRepeater(
-        repeaterPublicKey: repeater.publicKey,
-        connectionProvider: widget.connectionProvider,
-      );
-      allRegions.addAll(regions);
-    }
-
-    if (!mounted) return;
-    setState(() {
-      _discoveredRegions = allRegions.toList()..sort();
-      _isDiscovering = false;
-    });
-
-    if (_discoveredRegions.isEmpty && mounted) {
-      ToastLogger.info(context, widget.l10n.noRegionsFound);
-    }
   }
 
   void _submitManualName() {
@@ -2504,7 +2466,6 @@ class _RegionScopeSheetState extends State<_RegionScopeSheet> {
               ),
               const SizedBox(height: 16),
 
-              // "None" option
               _RegionOptionTile(
                 label: l10n.regionScopeNone,
                 isSelected: widget.currentScopeName == null,
@@ -2512,7 +2473,6 @@ class _RegionScopeSheetState extends State<_RegionScopeSheet> {
               ),
               const SizedBox(height: 8),
 
-              // Manual entry
               Row(
                 children: [
                   Expanded(
@@ -2540,38 +2500,6 @@ class _RegionScopeSheetState extends State<_RegionScopeSheet> {
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
-
-              // Discover button
-              if (widget.repeaters.isNotEmpty)
-                FilledButton.tonalIcon(
-                  onPressed: _isDiscovering ? null : _discoverRegions,
-                  icon: _isDiscovering
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.search_rounded, size: 18),
-                  label: Text(
-                    _isDiscovering
-                        ? l10n.discoveringRegions
-                        : l10n.discoverRegions,
-                  ),
-                ),
-
-              // Discovered regions
-              if (_discoveredRegions.isNotEmpty) ...[
-                const SizedBox(height: 12),
-                for (final region in _discoveredRegions) ...[
-                  _RegionOptionTile(
-                    label: region,
-                    isSelected: widget.currentScopeName == region,
-                    onTap: () => widget.onScopeSelected(region),
-                  ),
-                  const SizedBox(height: 4),
-                ],
-              ],
             ],
           ),
         ),

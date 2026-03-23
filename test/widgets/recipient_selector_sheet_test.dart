@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:meshcore_sar_app/l10n/app_localizations.dart';
 import 'package:meshcore_sar_app/models/contact.dart';
+import 'package:meshcore_sar_app/models/message.dart';
+import 'package:meshcore_sar_app/providers/messages_provider.dart';
 import 'package:meshcore_sar_app/widgets/messages/recipient_selector_sheet.dart';
 
 void main() {
@@ -31,13 +33,18 @@ void main() {
     );
   }
 
-  Future<void> pumpSheet(WidgetTester tester) async {
-    final channel = buildContact(
-      name: 'Ops',
-      type: ContactType.channel,
-      secondByte: 3,
-    );
-    final contact = buildContact(name: 'John Smith', type: ContactType.chat);
+  Future<void> pumpSheet(
+    WidgetTester tester, {
+    List<Contact>? contacts,
+    List<Contact>? channels,
+    MessagesProvider? messagesProvider,
+    bool showAllOption = true,
+  }) async {
+    final resolvedChannels =
+        channels ??
+        [buildContact(name: 'Ops', type: ContactType.channel, secondByte: 3)];
+    final resolvedContacts =
+        contacts ?? [buildContact(name: 'John Smith', type: ContactType.chat)];
 
     await tester.pumpWidget(
       MaterialApp(
@@ -45,15 +52,17 @@ void main() {
         supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: RecipientSelectorSheet(
-            contacts: [contact],
+            contacts: resolvedContacts,
             rooms: const [],
-            channels: [channel],
+            channels: resolvedChannels,
             unreadCount: 11,
             unreadCountsByPublicKey: {
-              channel.publicKeyHex: 7,
-              contact.publicKeyHex: 3,
+              for (final channel in resolvedChannels) channel.publicKeyHex: 7,
+              for (final contact in resolvedContacts) contact.publicKeyHex: 3,
             },
             currentDestinationType: 'all',
+            showAllOption: showAllOption,
+            messagesProvider: messagesProvider,
             onSelect: (selectedContact, destinationType) {},
           ),
         ),
@@ -149,5 +158,50 @@ void main() {
 
     expect(charlieY, lessThan(bravoY));
     expect(bravoY, lessThan(alphaY));
+  });
+
+  testWidgets('shows channel activity and participants instead of raw ids', (
+    tester,
+  ) async {
+    final channel = buildContact(
+      name: 'Ops',
+      type: ContactType.channel,
+      secondByte: 3,
+    );
+    final messagesProvider = MessagesProvider()
+      ..addMessage(
+        Message(
+          id: 'channel-activity',
+          messageType: MessageType.channel,
+          senderName: 'Radio Alpha',
+          channelIdx: 3,
+          pathLen: 1,
+          textType: MessageTextType.plain,
+          senderTimestamp:
+              DateTime.now()
+                  .subtract(const Duration(minutes: 5))
+                  .millisecondsSinceEpoch ~/
+              1000,
+          text: 'status update',
+          receivedAt: DateTime.now().subtract(const Duration(minutes: 5)),
+        ),
+      );
+
+    await pumpSheet(
+      tester,
+      contacts: const [],
+      channels: [channel],
+      messagesProvider: messagesProvider,
+      showAllOption: false,
+    );
+
+    expect(
+      find.byKey(Key('channel-participants-${channel.publicKeyHex}')),
+      findsOneWidget,
+    );
+    expect(find.text('Radio Alpha'), findsNothing);
+    expect(find.text('5m ago'), findsOneWidget);
+    expect(find.textContaining('Channel 3'), findsNothing);
+    expect(find.text(channel.publicKeyShort.toUpperCase()), findsNothing);
   });
 }

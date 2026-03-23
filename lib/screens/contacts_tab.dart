@@ -19,6 +19,8 @@ import '../utils/avatar_label_helper.dart';
 import '../widgets/common/contact_avatar.dart';
 import '../widgets/contacts/contact_tile.dart';
 import '../widgets/contacts/add_channel_dialog.dart';
+import '../services/region_scope_preferences.dart';
+import '../utils/toast_logger.dart';
 import 'add_contact_screen.dart';
 
 class ContactsTab extends StatefulWidget {
@@ -546,6 +548,15 @@ class _ContactsTabState extends State<ContactsTab> {
             await _exportHashChannelPskBase64(context, channel);
           },
         ),
+      _ChannelSheetAction(
+        icon: Icons.language_rounded,
+        label: l10n.setRegionScope,
+        onTap: () async {
+          Navigator.pop(context);
+          if (!context.mounted) return;
+          _showRegionScopeForChannel(context, channel);
+        },
+      ),
       if (!channel.isPublicChannel)
         _ChannelSheetAction(
           icon: Icons.delete_outline_rounded,
@@ -572,6 +583,38 @@ class _ContactsTabState extends State<ContactsTab> {
         actions: actions,
         onClose: () => Navigator.pop(sheetContext),
       ),
+    );
+  }
+
+  void _showRegionScopeForChannel(BuildContext context, Contact channel) async {
+    final channelIdx = channel.publicKey.length > 1 ? channel.publicKey[1] : 0;
+    final l10n = AppLocalizations.of(context)!;
+    final currentScope = await RegionScopePreferences.getScope(channelIdx);
+    if (!context.mounted) return;
+
+    showModalBottomSheet(
+      context: context,
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (sheetContext) {
+        return _ContactsRegionScopeSheet(
+          currentScopeName: currentScope?.name,
+          l10n: l10n,
+          onScopeSelected: (String? name) async {
+            Navigator.of(sheetContext).pop();
+            if (name == null) {
+              await RegionScopePreferences.clearScope(channelIdx);
+              if (!context.mounted) return;
+              ToastLogger.success(context, l10n.regionScopeCleared);
+            } else {
+              final key = RegionScopePreferences.deriveRegionKey(name);
+              await RegionScopePreferences.setScope(channelIdx, name, key);
+              if (!context.mounted) return;
+              ToastLogger.success(context, l10n.regionScopeSet(name));
+            }
+          },
+        );
+      },
     );
   }
 
@@ -2390,6 +2433,168 @@ class _MetricChip extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _ContactsRegionScopeSheet extends StatefulWidget {
+  final String? currentScopeName;
+  final AppLocalizations l10n;
+  final ValueChanged<String?> onScopeSelected;
+
+  const _ContactsRegionScopeSheet({
+    required this.currentScopeName,
+    required this.l10n,
+    required this.onScopeSelected,
+  });
+
+  @override
+  State<_ContactsRegionScopeSheet> createState() =>
+      _ContactsRegionScopeSheetState();
+}
+
+class _ContactsRegionScopeSheetState
+    extends State<_ContactsRegionScopeSheet> {
+  final TextEditingController _nameController = TextEditingController();
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    super.dispose();
+  }
+
+  void _submitManualName() {
+    var name = _nameController.text.trim();
+    if (name.isEmpty) return;
+    if (!name.startsWith('#')) name = '#$name';
+    widget.onScopeSelected(name);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final l10n = widget.l10n;
+
+    return SafeArea(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.72,
+        ),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                l10n.regionScope,
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                l10n.regionScopeWarning,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              _ScopeOption(
+                label: l10n.regionScopeNone,
+                isSelected: widget.currentScopeName == null,
+                onTap: () => widget.onScopeSelected(null),
+              ),
+              const SizedBox(height: 8),
+
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _nameController,
+                      decoration: InputDecoration(
+                        hintText: l10n.enterRegionName,
+                        isDense: true,
+                        prefixText: '#',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 10,
+                        ),
+                      ),
+                      onSubmitted: (_) => _submitManualName(),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  FilledButton.tonal(
+                    onPressed: _submitManualName,
+                    child: const Icon(Icons.check_rounded, size: 20),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ScopeOption extends StatelessWidget {
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _ScopeOption({
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Material(
+      color: isSelected
+          ? colorScheme.primaryContainer
+          : colorScheme.surfaceContainerLow,
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Row(
+            children: [
+              Icon(
+                isSelected
+                    ? Icons.radio_button_checked_rounded
+                    : Icons.radio_button_off_rounded,
+                size: 20,
+                color: isSelected
+                    ? colorScheme.primary
+                    : colorScheme.onSurfaceVariant,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  label,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                    color: isSelected
+                        ? colorScheme.onPrimaryContainer
+                        : colorScheme.onSurface,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

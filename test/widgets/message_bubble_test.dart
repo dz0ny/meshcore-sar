@@ -181,6 +181,44 @@ void main() {
     }
   });
 
+  testWidgets('channel bubbles refresh to synced channel names', (
+    tester,
+  ) async {
+    final harness = await _TestHarness.create();
+    try {
+      final message = Message(
+        id: 'channel-name-refresh',
+        messageType: MessageType.channel,
+        senderPublicKeyPrefix: _prefix(61),
+        channelIdx: 3,
+        pathLen: 0,
+        textType: MessageTextType.plain,
+        senderTimestamp: 1700000000,
+        text: 'Team update',
+        receivedAt: DateTime.fromMillisecondsSinceEpoch(1700000000500),
+        deliveryStatus: MessageDeliveryStatus.sent,
+      );
+
+      await tester.pumpWidget(_buildApp(harness, message));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Channel 3'), findsOneWidget);
+      expect(find.text('#slovenija'), findsNothing);
+
+      harness.channelsProvider.addOrUpdateChannel(
+        index: 3,
+        name: '#slovenija',
+        secret: Uint8List(16),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('#slovenija'), findsOneWidget);
+      expect(find.text('Channel 3'), findsNothing);
+    } finally {
+      await _disposeHarness(tester, harness);
+    }
+  });
+
   testWidgets('message bubble detects and opens links', (tester) async {
     final harness = await _TestHarness.create();
     try {

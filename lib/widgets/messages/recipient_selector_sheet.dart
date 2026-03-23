@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../../models/contact.dart';
+import '../../providers/messages_provider.dart';
+import '../../utils/avatar_label_helper.dart';
 import '../common/contact_avatar.dart';
 
 enum _RecipientSortMode { activity, favorites, alphabetical }
@@ -17,6 +20,7 @@ class RecipientSelectorSheet extends StatefulWidget {
   final String? currentRecipientPublicKey;
   final bool showAllOption;
   final Function(String type, Contact? recipient) onSelect;
+  final MessagesProvider? messagesProvider;
 
   /// Region scope names per channel index (e.g. {0: "#auckland"}).
   final Map<int, String> channelRegionScopes;
@@ -32,6 +36,7 @@ class RecipientSelectorSheet extends StatefulWidget {
     this.currentRecipientPublicKey,
     this.showAllOption = true,
     required this.onSelect,
+    this.messagesProvider,
     this.channelRegionScopes = const {},
   });
 
@@ -167,20 +172,162 @@ class _RecipientSelectorSheetState extends State<RecipientSelectorSheet> {
     }
   }
 
-  String _channelSubtitle(BuildContext context, Contact channel) {
-    final l10n = AppLocalizations.of(context)!;
-    final channelIdx = channel.publicKey.length > 1 ? channel.publicKey[1] : 0;
-    final scopeName = widget.channelRegionScopes[channelIdx];
-
-    if (channel.isPublicChannel) {
-      return scopeName != null
-          ? '${l10n.broadcastToAllNearby} • $scopeName'
-          : l10n.broadcastToAllNearby;
+  MessagesProvider? _resolveMessagesProvider(BuildContext context) {
+    if (widget.messagesProvider != null) {
+      return widget.messagesProvider;
     }
 
-    final shortKey = channel.publicKeyShort.toUpperCase();
-    final base = '${l10n.channel} $channelIdx • $shortKey';
-    return scopeName != null ? '$base • $scopeName' : base;
+    try {
+      return Provider.of<MessagesProvider>(context);
+    } on ProviderNotFoundException {
+      return null;
+    }
+  }
+
+  String _formatRelativeTime(BuildContext context, DateTime when) {
+    final l10n = AppLocalizations.of(context)!;
+    final diff = DateTime.now().difference(when);
+
+    if (diff.inMinutes < 1) return l10n.justNow;
+    if (diff.inMinutes < 60) return l10n.minutesAgo(diff.inMinutes);
+    if (diff.inHours < 24) return l10n.hoursAgo(diff.inHours);
+    return l10n.daysAgo(diff.inDays);
+  }
+
+  _ChannelPreviewData _channelPreviewData(
+    BuildContext context,
+    Contact channel,
+    MessagesProvider? messagesProvider,
+  ) {
+    if (messagesProvider == null) {
+      return const _ChannelPreviewData();
+    }
+
+    final lastActivityAt = messagesProvider.getLastActivityForDestination(
+      channel,
+    );
+    final channelIdx = channel.publicKey.length > 1 ? channel.publicKey[1] : 0;
+    final channelMessages = messagesProvider.getMessagesForChannel(channelIdx)
+      ..sort((a, b) => b.sentAt.compareTo(a.sentAt));
+    final participantNames = <String>[];
+
+    for (final message in channelMessages) {
+      final senderName = message.senderName?.trim();
+      if (senderName == null || senderName.isEmpty) {
+        continue;
+      }
+      if (!participantNames.contains(senderName)) {
+        participantNames.add(senderName);
+      }
+    }
+
+    return _ChannelPreviewData(
+      activityLabel: lastActivityAt == null
+          ? null
+          : _formatRelativeTime(context, lastActivityAt),
+      participantNames: participantNames,
+    );
+  }
+
+  Contact? _findParticipantContact(String name) {
+    final normalizedName = name.trim();
+
+    for (final contact in widget.contacts) {
+      if (!contact.isChannel && contact.advName.trim() == normalizedName) {
+        return contact;
+      }
+    }
+
+    for (final contact in widget.contacts) {
+      if (!contact.isChannel && contact.displayName.trim() == normalizedName) {
+        return contact;
+      }
+    }
+
+    return null;
+  }
+
+  String _contactActivityLabel(
+    BuildContext context,
+    Contact contact,
+    MessagesProvider? messagesProvider,
+  ) {
+    final lastActivityAt =
+        messagesProvider?.getLastActivityForDestination(contact) ??
+        contact.lastSeenTime;
+
+    return _formatRelativeTime(context, lastActivityAt);
+  }
+
+  Widget _buildTextSubtitle(
+    BuildContext context,
+    Contact contact,
+    String subtitle,
+  ) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Text(
+      subtitle,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+        color: colorScheme.onSurfaceVariant,
+        fontFamily: contact.isChannel ? null : 'monospace',
+      ),
+    );
+  }
+
+  Widget _buildChannelSubtitle(
+    BuildContext context,
+    Contact channel,
+    _ChannelPreviewData previewData,
+  ) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    if (previewData.participantNames.isEmpty) {
+      return Text(
+        'No recent chatters',
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: Theme.of(
+          context,
+        ).textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
+      );
+    }
+
+    return Row(
+      children: [
+        _ParticipantAvatarStack(
+          key: Key('channel-participants-${channel.publicKeyHex}'),
+          names: previewData.participantNames,
+          contactForName: _findParticipantContact,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildChannelRecipientCard(
+    BuildContext context,
+    Contact channel,
+    MessagesProvider? messagesProvider,
+  ) {
+    final previewData = _channelPreviewData(context, channel, messagesProvider);
+
+    return _buildRecipientCard(
+      context: context,
+      type: 'channel',
+      contact: channel,
+      title: channel.getLocalizedDisplayName(context),
+      subtitle: _buildChannelSubtitle(context, channel, previewData),
+      unreadCount: _unreadFor(channel),
+      isSelected: _isSelected('channel', channel),
+      compact: true,
+      activityLabel: previewData.activityLabel,
+      onTap: () {
+        widget.onSelect('channel', channel);
+        Navigator.pop(context);
+      },
+    );
   }
 
   bool _isDenseSection(String type) => type == 'channel' || type == 'contact';
@@ -189,6 +336,7 @@ class _RecipientSelectorSheetState extends State<RecipientSelectorSheet> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final colorScheme = Theme.of(context).colorScheme;
+    final messagesProvider = _resolveMessagesProvider(context);
     final filteredContacts = _filterAndSortContacts(widget.contacts);
     final filteredRooms = _filterAndSortContacts(widget.rooms);
     final filteredChannels = _filterAndSortContacts(
@@ -335,19 +483,10 @@ class _RecipientSelectorSheetState extends State<RecipientSelectorSheet> {
                     emptyLabel: l10n.noChannelsFound,
                     children: [
                       for (final channel in filteredChannels)
-                        _buildRecipientCard(
-                          context: context,
-                          type: 'channel',
-                          contact: channel,
-                          title: channel.getLocalizedDisplayName(context),
-                          subtitle: _channelSubtitle(context, channel),
-                          unreadCount: _unreadFor(channel),
-                          isSelected: _isSelected('channel', channel),
-                          compact: true,
-                          onTap: () {
-                            widget.onSelect('channel', channel);
-                            Navigator.pop(context);
-                          },
+                        _buildChannelRecipientCard(
+                          context,
+                          channel,
+                          messagesProvider,
                         ),
                     ],
                   ),
@@ -366,7 +505,11 @@ class _RecipientSelectorSheetState extends State<RecipientSelectorSheet> {
                           type: 'contact',
                           contact: contact,
                           title: contact.displayName,
-                          subtitle: contact.publicKeyShort,
+                          activityLabel: _contactActivityLabel(
+                            context,
+                            contact,
+                            messagesProvider,
+                          ),
                           unreadCount: _unreadFor(contact),
                           isSelected: _isSelected('contact', contact),
                           compact: true,
@@ -392,7 +535,11 @@ class _RecipientSelectorSheetState extends State<RecipientSelectorSheet> {
                           type: 'room',
                           contact: room,
                           title: room.displayName,
-                          subtitle: room.publicKeyShort,
+                          subtitle: _buildTextSubtitle(
+                            context,
+                            room,
+                            room.publicKeyShort,
+                          ),
                           unreadCount: _unreadFor(room),
                           isSelected: _isSelected('room', room),
                           onTap: () {
@@ -690,10 +837,11 @@ class _RecipientSelectorSheetState extends State<RecipientSelectorSheet> {
     required String type,
     required Contact contact,
     required String title,
-    required String subtitle,
+    Widget? subtitle,
     required int unreadCount,
     required bool isSelected,
     bool compact = false,
+    String? activityLabel,
     required VoidCallback onTap,
   }) {
     final colorScheme = Theme.of(context).colorScheme;
@@ -757,52 +905,70 @@ class _RecipientSelectorSheetState extends State<RecipientSelectorSheet> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Flexible(
-                            child: Text(
-                              title,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: Theme.of(context).textTheme.titleSmall
-                                  ?.copyWith(
-                                    fontWeight: FontWeight.w800,
-                                    letterSpacing: -0.2,
+                          Expanded(
+                            child: Row(
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    title,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleSmall
+                                        ?.copyWith(
+                                          fontWeight: FontWeight.w800,
+                                          letterSpacing: -0.2,
+                                        ),
                                   ),
+                                ),
+                                if (contact.isPublicChannel) ...[
+                                  SizedBox(width: compact ? 6 : 8),
+                                  Container(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: compact ? 7 : 8,
+                                      vertical: compact ? 2 : 3,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: accentColor.withValues(
+                                        alpha: 0.10,
+                                      ),
+                                      borderRadius: BorderRadius.circular(999),
+                                    ),
+                                    child: Text(
+                                      'Public',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .labelSmall
+                                          ?.copyWith(
+                                            color: accentColor,
+                                            fontWeight: FontWeight.w800,
+                                          ),
+                                    ),
+                                  ),
+                                ],
+                              ],
                             ),
                           ),
-                          if (contact.isPublicChannel) ...[
-                            SizedBox(width: compact ? 6 : 8),
-                            Container(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: compact ? 7 : 8,
-                                vertical: compact ? 2 : 3,
-                              ),
-                              decoration: BoxDecoration(
-                                color: accentColor.withValues(alpha: 0.10),
-                                borderRadius: BorderRadius.circular(999),
-                              ),
-                              child: Text(
-                                'Public',
-                                style: Theme.of(context).textTheme.labelSmall
-                                    ?.copyWith(
-                                      color: accentColor,
-                                      fontWeight: FontWeight.w800,
-                                    ),
-                              ),
+                          if (activityLabel != null) ...[
+                            SizedBox(width: compact ? 8 : 10),
+                            Text(
+                              activityLabel,
+                              style: Theme.of(context).textTheme.labelSmall
+                                  ?.copyWith(
+                                    color: colorScheme.onSurfaceVariant,
+                                    fontWeight: FontWeight.w700,
+                                  ),
                             ),
                           ],
                         ],
                       ),
-                      SizedBox(height: compact ? 2 : 4),
-                      Text(
+                      if (subtitle != null) ...[
+                        SizedBox(height: compact ? 2 : 4),
                         subtitle,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
-                          fontFamily: contact.isChannel ? null : 'monospace',
-                        ),
-                      ),
+                      ],
                     ],
                   ),
                 ),
@@ -855,6 +1021,143 @@ class _RecipientSelectorSheetState extends State<RecipientSelectorSheet> {
         if (isSelected)
           Icon(Icons.check_circle_rounded, color: colorScheme.primary),
       ],
+    );
+  }
+}
+
+class _ChannelPreviewData {
+  final String? activityLabel;
+  final List<String> participantNames;
+
+  const _ChannelPreviewData({
+    this.activityLabel,
+    this.participantNames = const <String>[],
+  });
+}
+
+class _ParticipantAvatarStack extends StatelessWidget {
+  final List<String> names;
+  final Contact? Function(String name) contactForName;
+  static const int _visibleCount = 4;
+
+  const _ParticipantAvatarStack({
+    super.key,
+    required this.names,
+    required this.contactForName,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final visibleNames = names.take(_visibleCount).toList();
+    final overflowCount = names.length - visibleNames.length;
+    const avatarSize = 20.0;
+    const spacing = 14.0;
+    final itemCount = visibleNames.length + (overflowCount > 0 ? 1 : 0);
+    final width = itemCount == 0 ? 0.0 : avatarSize + (itemCount - 1) * spacing;
+
+    return SizedBox(
+      width: width,
+      height: avatarSize,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          for (var i = 0; i < visibleNames.length; i++)
+            Positioned(
+              left: i * spacing,
+              top: 0,
+              child: _ParticipantAvatar(
+                name: visibleNames[i],
+                contact: contactForName(visibleNames[i]),
+              ),
+            ),
+          if (overflowCount > 0)
+            Positioned(
+              left: visibleNames.length * spacing,
+              top: 0,
+              child: _ParticipantOverflowAvatar(count: overflowCount),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ParticipantOverflowAvatar extends StatelessWidget {
+  final int count;
+
+  const _ParticipantOverflowAvatar({required this.count});
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Container(
+      width: 20,
+      height: 20,
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerHighest,
+        shape: BoxShape.circle,
+        border: Border.all(color: colorScheme.surface, width: 2),
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        '+$count',
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+          fontWeight: FontWeight.w700,
+          color: colorScheme.onSurface,
+          fontSize: 8,
+        ),
+      ),
+    );
+  }
+}
+
+class _ParticipantAvatar extends StatelessWidget {
+  final String name;
+  final Contact? contact;
+
+  const _ParticipantAvatar({required this.name, required this.contact});
+
+  @override
+  Widget build(BuildContext context) {
+    if (contact != null) {
+      final surfaceColor = Theme.of(context).colorScheme.surface;
+
+      return SizedBox(
+        width: 20,
+        height: 20,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: surfaceColor, width: 2),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(2),
+            child: ClipOval(child: ContactAvatar(contact: contact!, radius: 6)),
+          ),
+        ),
+      );
+    }
+
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Container(
+      width: 20,
+      height: 20,
+      decoration: BoxDecoration(
+        color: colorScheme.tertiaryContainer,
+        shape: BoxShape.circle,
+        border: Border.all(color: colorScheme.surface, width: 2),
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        AvatarLabelHelper.buildLabel(name),
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+          fontWeight: FontWeight.w700,
+          color: colorScheme.onTertiaryContainer,
+          fontSize: 8,
+        ),
+      ),
     );
   }
 }

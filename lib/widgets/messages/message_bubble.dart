@@ -12,6 +12,7 @@ import '../../models/sar_template.dart';
 import '../../models/map_drawing.dart';
 import '../../models/map_coordinate_space.dart';
 import '../../providers/messages_provider.dart';
+import '../../providers/channels_provider.dart';
 import '../../providers/contacts_provider.dart';
 import '../../providers/connection_provider.dart';
 import '../../providers/drawing_provider.dart';
@@ -1955,10 +1956,12 @@ class _MessageBubbleState extends State<MessageBubble> {
     final isSarMarker = message.isSarMarker;
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final messageFontScale = context.watch<AppProvider>().messageFontScale;
+    final l10n = AppLocalizations.of(context)!;
 
     // Determine if this is own message
     final connectionProvider = context.read<ConnectionProvider>();
     final messagesProvider = context.read<MessagesProvider>();
+    final channelsProvider = context.watch<ChannelsProvider>();
     final selfPublicKey = connectionProvider.deviceInfo.publicKey;
     final isOwnMessage =
         message.isSentMessage || message.isFromSelf(selfPublicKey);
@@ -2004,7 +2007,7 @@ class _MessageBubbleState extends State<MessageBubble> {
 
     // Get rich display name (with emoji if available)
     final displayName = isOwnMessage
-        ? AppLocalizations.of(context)!.you
+        ? l10n.you
         : message.getRichDisplayName(senderContact);
 
     // Look up destination/source display labels for direct/channel messages
@@ -2039,15 +2042,30 @@ class _MessageBubbleState extends State<MessageBubble> {
         }
       }
     } else if (message.isChannelMessage) {
-      if (message.channelIdx == 0) {
-        channelDisplayName = AppLocalizations.of(context)!.publicChannel;
+      final channelIdx = message.channelIdx ?? 0;
+      if (channelIdx == 0) {
+        channelDisplayName = l10n.publicChannel;
       } else {
         final channelContact = contactsProvider.channels.where((c) {
-          return c.publicKey.length > 1 && c.publicKey[1] == message.channelIdx;
+          return c.publicKey.length > 1 && c.publicKey[1] == channelIdx;
         }).firstOrNull;
+        final syncedChannel = channelsProvider.getChannel(channelIdx);
+        final syncedChannelDisplayName =
+            syncedChannel != null && syncedChannel.hasCustomName
+            ? syncedChannel.displayName
+            : null;
+        final contactChannelDisplayName = channelContact
+            ?.getLocalizedDisplayName(context)
+            .trim();
+
         channelDisplayName =
-            channelContact?.getLocalizedDisplayName(context) ??
-            '${AppLocalizations.of(context)!.channel} ${message.channelIdx}';
+            syncedChannelDisplayName ??
+            (contactChannelDisplayName != null &&
+                    contactChannelDisplayName.isNotEmpty
+                ? contactChannelDisplayName
+                : null) ??
+            syncedChannel?.displayName ??
+            '${l10n.channel} $channelIdx';
       }
 
       if (isOwnMessage) {
@@ -2057,14 +2075,14 @@ class _MessageBubbleState extends State<MessageBubble> {
 
     final recipientSubtitle =
         isOwnMessage && message.isChannelMessage && recipientDisplayName != null
-        ? '${AppLocalizations.of(context)!.channel}: $recipientDisplayName'
+        ? '${l10n.channel}: $recipientDisplayName'
         : recipientDisplayName;
     final directCounterpartLabel = !message.isChannelMessage
-        ? (isOwnMessage ? recipientSubtitle : AppLocalizations.of(context)!.you)
+        ? (isOwnMessage ? recipientSubtitle : l10n.you)
         : null;
     final receivedChannelSubtitle =
         !isOwnMessage && message.isChannelMessage && channelDisplayName != null
-        ? '${AppLocalizations.of(context)!.channel}: $channelDisplayName'
+        ? '${l10n.channel}: $channelDisplayName'
         : null;
 
     final shouldFloatBubble = widget.isCompact;

@@ -144,11 +144,11 @@ class AppConfigSnapshotService {
     }
     if (section.fastLocationMovementThresholdMeters != null) {
       locationTracking.fastLocationMovementThresholdMeters =
-          section.fastLocationMovementThresholdMeters!;
+          section.fastLocationMovementThresholdMeters!.clamp(10.0, 1000.0);
     }
     if (section.fastLocationActiveCadenceSeconds != null) {
       locationTracking.fastLocationActiveCadenceSeconds =
-          section.fastLocationActiveCadenceSeconds!;
+          section.fastLocationActiveCadenceSeconds!.clamp(10, 31);
     }
     await locationTracking.saveSettings();
     await appProvider.reloadProfileScopedSettings();

@@ -20,6 +20,14 @@ import 'profiles_feature_service.dart';
 /// - MeshCore mesh network integration
 /// - Real-time position updates via callbacks
 class LocationTrackingService {
+  static const double _defaultFastLocationMovementThresholdMeters = 10.0;
+  static const double _minFastLocationMovementThresholdMeters = 10.0;
+  static const int _defaultFastLocationActiveCadenceSeconds = 10;
+  static const int _minFastLocationActiveCadenceSeconds = 10;
+  static const int _maxFastLocationActiveCadenceSeconds = 31;
+  static const Duration _fastLocationMinimumUpdateInterval = Duration(
+    seconds: 31,
+  );
   // ============================================================================
   // Singleton Pattern
   // ============================================================================
@@ -75,10 +83,12 @@ class LocationTrackingService {
   bool fastLocationUpdatesEnabled = false;
 
   /// Distance threshold for fast GPS updates
-  double fastLocationMovementThresholdMeters = 10.0;
+  double fastLocationMovementThresholdMeters =
+      _defaultFastLocationMovementThresholdMeters;
 
   /// Cadence for active-use fast GPS updates
-  int fastLocationActiveCadenceSeconds = 10;
+  int fastLocationActiveCadenceSeconds =
+      _defaultFastLocationActiveCadenceSeconds;
 
   /// Target channel index for fast GPS updates; null means disabled/unset.
   int? fastLocationChannelIdx;
@@ -522,12 +532,18 @@ class LocationTrackingService {
   }
 
   Future<void> updateFastLocationMovementThreshold(double meters) async {
-    fastLocationMovementThresholdMeters = meters.clamp(1.0, 1000.0);
+    fastLocationMovementThresholdMeters = meters.clamp(
+      _minFastLocationMovementThresholdMeters,
+      1000.0,
+    );
     await saveSettings();
   }
 
   Future<void> updateFastLocationActiveCadenceSeconds(int seconds) async {
-    fastLocationActiveCadenceSeconds = seconds.clamp(5, 60);
+    fastLocationActiveCadenceSeconds = seconds.clamp(
+      _minFastLocationActiveCadenceSeconds,
+      _maxFastLocationActiveCadenceSeconds,
+    );
     await saveSettings();
     _refreshFastLocationTimer();
   }
@@ -583,6 +599,11 @@ class LocationTrackingService {
     final now = DateTime.now();
     final previous = _lastFastLocationSentPosition;
     final previousTime = _lastFastLocationSentAt;
+    if (previousTime != null &&
+        now.difference(previousTime) < _fastLocationMinimumUpdateInterval) {
+      return;
+    }
+
     if (previous != null && previousTime != null) {
       final distance = Geolocator.distanceBetween(
         previous.latitude,
@@ -673,12 +694,14 @@ class LocationTrackingService {
         prefs.getBool(_scopedKey(_prefKeyFastLocationEnabled)) ?? false;
     fastLocationMovementThresholdMeters =
         (prefs.getDouble(_scopedKey(_prefKeyFastMovementThreshold)) ??
-                gpsUpdateDistance)
-            .clamp(1.0, 1000.0);
+                _defaultFastLocationMovementThresholdMeters)
+            .clamp(_minFastLocationMovementThresholdMeters, 1000.0);
     fastLocationActiveCadenceSeconds =
-        (prefs.getInt(_scopedKey(_prefKeyFastActiveCadence)) ?? 10).clamp(
-          5,
-          60,
+        (prefs.getInt(_scopedKey(_prefKeyFastActiveCadence)) ??
+                _defaultFastLocationActiveCadenceSeconds)
+            .clamp(
+          _minFastLocationActiveCadenceSeconds,
+          _maxFastLocationActiveCadenceSeconds,
         );
     fastLocationChannelIdx = prefs.getInt(_scopedKey(_prefKeyFastChannelIdx));
 

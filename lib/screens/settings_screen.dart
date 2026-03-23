@@ -341,7 +341,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
           decoration: const InputDecoration(
             labelText: 'Meters',
-            helperText: 'Valid range: 1 to 1000 meters',
+            helperText: 'Valid range: 10 to 1000 meters',
           ),
         ),
         actions: [
@@ -353,7 +353,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             onPressed: () {
               final parsed = double.tryParse(controller.text.trim());
               if (parsed == null) return;
-              Navigator.pop(context, parsed.clamp(1.0, 1000.0));
+              Navigator.pop(context, parsed.clamp(10.0, 1000.0));
             },
             child: const Text('Save'),
           ),
@@ -382,7 +382,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           keyboardType: TextInputType.number,
           decoration: const InputDecoration(
             labelText: 'Seconds',
-            helperText: 'Valid range: 5 to 60 seconds',
+            helperText: 'Valid range: 10 to 31 seconds',
           ),
         ),
         actions: [
@@ -394,7 +394,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             onPressed: () {
               final parsed = int.tryParse(controller.text.trim());
               if (parsed == null) return;
-              Navigator.pop(context, parsed.clamp(5, 60));
+              Navigator.pop(context, parsed.clamp(10, 31));
             },
             child: const Text('Save'),
           ),

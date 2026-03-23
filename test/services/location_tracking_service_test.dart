@@ -19,6 +19,13 @@ void main() {
     service.fastLocationChannelIdx = null;
   });
 
+  test('loads conservative fast location defaults', () async {
+    await service.loadSettings();
+
+    expect(service.fastLocationMovementThresholdMeters, 10.0);
+    expect(service.fastLocationActiveCadenceSeconds, 10);
+  });
+
   test('persists and restores fast location channel idx', () async {
     await service.updateFastLocationChannelIdx(3);
 
@@ -36,5 +43,13 @@ void main() {
     await service.loadSettings();
 
     expect(service.fastLocationChannelIdx, isNull);
+  });
+
+  test('clamps fast location settings to conservative limits', () async {
+    await service.updateFastLocationMovementThreshold(3);
+    await service.updateFastLocationActiveCadenceSeconds(45);
+
+    expect(service.fastLocationMovementThresholdMeters, 10.0);
+    expect(service.fastLocationActiveCadenceSeconds, 31);
   });
 }

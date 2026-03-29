@@ -1839,16 +1839,24 @@ class _NeighboursSheetState extends State<_NeighboursSheet> {
         final parts = trimmed.split(':');
         if (parts.length >= 3) {
           final keyHex = parts[0];
-          final timestampOrMs = int.tryParse(parts[1]);
+          final timestampOrSeconds = int.tryParse(parts[1]);
           final snrRaw = int.tryParse(parts[2]);
-          final isMs = timestampOrMs != null && timestampOrMs < 1e9;
+          final isDurationSeconds =
+              timestampOrSeconds != null && timestampOrSeconds < 1000000000;
           parsed.add(
             _Neighbour(
               publicKeyHex: keyHex,
-              lastSeenAt: !isMs && timestampOrMs != null
-                  ? DateTime.fromMillisecondsSinceEpoch(timestampOrMs * 1000)
+              lastSeenAt: !isDurationSeconds && timestampOrSeconds != null
+                  ? timestampOrSeconds >= 1000000000000
+                        ? DateTime.fromMillisecondsSinceEpoch(
+                            timestampOrSeconds,
+                          )
+                        : DateTime.fromMillisecondsSinceEpoch(
+                            timestampOrSeconds * 1000,
+                          )
                   : null,
-              lastSeenMs: isMs ? timestampOrMs : null,
+              lastSeenSeconds:
+                  isDurationSeconds ? timestampOrSeconds : null,
               snrDb: snrRaw != null ? snrRaw / 4.0 : null,
             ),
           );
@@ -1896,12 +1904,12 @@ class _NeighboursSheetState extends State<_NeighboursSheet> {
           .difference(neighbour.lastSeenAt!)
           .toLocalizedTimeAgoWithSeconds(context);
     }
-    if (neighbour.lastSeenMs != null) {
-      if (neighbour.lastSeenMs! < 1000) {
+    if (neighbour.lastSeenSeconds != null) {
+      if (neighbour.lastSeenSeconds! < 1) {
         return AppLocalizations.of(context)!.justNow;
       }
       return Duration(
-        milliseconds: neighbour.lastSeenMs!,
+        seconds: neighbour.lastSeenSeconds!,
       ).toLocalizedTimeAgoWithSeconds(context);
     }
     return AppLocalizations.of(context)!.justNow;
@@ -2295,13 +2303,13 @@ class _NeighboursSheetState extends State<_NeighboursSheet> {
 class _Neighbour {
   final String publicKeyHex;
   final DateTime? lastSeenAt;
-  final int? lastSeenMs;
+  final int? lastSeenSeconds;
   final double? snrDb;
 
   const _Neighbour({
     required this.publicKeyHex,
     this.lastSeenAt,
-    this.lastSeenMs,
+    this.lastSeenSeconds,
     this.snrDb,
   });
 }

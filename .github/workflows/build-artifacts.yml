@@ -301,7 +301,7 @@ jobs:
         run: flutter pub get
 
       - name: Build web release
-        run: flutter build web --release --base-href /meshcore-sar/
+        run: flutter build web --wasm --release --base-href /meshcore-sar/
 
       - name: Upload pages artifact
         uses: actions/upload-pages-artifact@v3

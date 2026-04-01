@@ -135,6 +135,9 @@ clean: ## Clean build artifacts
 	flutter clean
 	rm -rf $(BUILD_DIR)
 
+build-web: ## Build web with WebAssembly
+	flutter build web --wasm --release
+
 # Build for all platforms
 build-all: bump ## Build for Android and iOS
 	flutter build apk --release

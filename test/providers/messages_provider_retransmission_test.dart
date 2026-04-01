@@ -423,6 +423,133 @@ void main() {
       expect(provider.messages.single.id, equals('handle-1'));
     });
 
+    test('channel duplicates only dedupe against the latest channel message', () {
+      final provider = MessagesProvider();
+      final sender = Uint8List.fromList([9, 8, 7, 6, 5, 4]);
+
+      provider.addMessage(
+        Message(
+          id: 'channel-first',
+          messageType: MessageType.channel,
+          channelIdx: 2,
+          pathLen: 1,
+          textType: MessageTextType.plain,
+          senderTimestamp: 1700000820,
+          text: 'same payload',
+          senderName: 'Radio Alpha',
+          receivedAt: DateTime.now(),
+          senderPublicKeyPrefix: sender,
+        ),
+      );
+      provider.addMessage(
+        Message(
+          id: 'channel-middle',
+          messageType: MessageType.channel,
+          channelIdx: 2,
+          pathLen: 1,
+          textType: MessageTextType.plain,
+          senderTimestamp: 1700000825,
+          text: 'different payload',
+          senderName: 'Radio Bravo',
+          receivedAt: DateTime.now(),
+          senderPublicKeyPrefix: Uint8List.fromList([1, 2, 3, 4, 5, 6]),
+        ),
+      );
+      provider.addMessage(
+        Message(
+          id: 'channel-repeat',
+          messageType: MessageType.channel,
+          channelIdx: 2,
+          pathLen: 2,
+          textType: MessageTextType.plain,
+          senderTimestamp: 1700000830,
+          text: 'same payload',
+          senderName: 'Radio Alpha',
+          receivedAt: DateTime.now(),
+          senderPublicKeyPrefix: sender,
+        ),
+      );
+
+      expect(provider.messages, hasLength(3));
+      expect(provider.messages.last.id, equals('channel-repeat'));
+    });
+
+    test('adjacent channel duplicates still dedupe within 5 seconds', () {
+      final provider = MessagesProvider();
+      final sender = Uint8List.fromList([4, 5, 6, 7, 8, 9]);
+      final baseTime = DateTime.fromMillisecondsSinceEpoch(1700000840000);
+
+      provider.addMessage(
+        Message(
+          id: 'adjacent-1',
+          messageType: MessageType.channel,
+          channelIdx: 3,
+          pathLen: 1,
+          textType: MessageTextType.plain,
+          senderTimestamp: 1700000840,
+          text: 'same payload',
+          senderName: 'Radio Charlie',
+          receivedAt: baseTime,
+          senderPublicKeyPrefix: sender,
+        ),
+      );
+      provider.addMessage(
+        Message(
+          id: 'adjacent-2',
+          messageType: MessageType.channel,
+          channelIdx: 3,
+          pathLen: 2,
+          textType: MessageTextType.plain,
+          senderTimestamp: 1700000845,
+          text: 'same payload',
+          senderName: 'Radio Charlie',
+          receivedAt: baseTime.add(const Duration(seconds: 4)),
+          senderPublicKeyPrefix: sender,
+        ),
+      );
+
+      expect(provider.messages, hasLength(1));
+      expect(provider.messages.single.id, equals('adjacent-1'));
+    });
+
+    test('channel duplicates outside 5 second window are kept', () {
+      final provider = MessagesProvider();
+      final sender = Uint8List.fromList([6, 7, 8, 9, 0, 1]);
+      final baseTime = DateTime.fromMillisecondsSinceEpoch(1700000850000);
+
+      provider.addMessage(
+        Message(
+          id: 'window-1',
+          messageType: MessageType.channel,
+          channelIdx: 4,
+          pathLen: 1,
+          textType: MessageTextType.plain,
+          senderTimestamp: 1700000850,
+          text: 'same payload',
+          senderName: 'Radio Delta',
+          receivedAt: baseTime,
+          senderPublicKeyPrefix: sender,
+        ),
+      );
+      provider.addMessage(
+        Message(
+          id: 'window-2',
+          messageType: MessageType.channel,
+          channelIdx: 4,
+          pathLen: 2,
+          textType: MessageTextType.plain,
+          senderTimestamp: 1700000855,
+          text: 'same payload',
+          senderName: 'Radio Delta',
+          receivedAt: baseTime.add(const Duration(seconds: 6)),
+          senderPublicKeyPrefix: sender,
+        ),
+      );
+
+      expect(provider.messages, hasLength(2));
+      expect(provider.messages.last.id, equals('window-2'));
+    });
+
     test('display list collapses stored duplicates and sums copy counts', () {
       final provider = MessagesProvider();
       final sender = Uint8List.fromList([5, 4, 3, 2, 1, 0]);

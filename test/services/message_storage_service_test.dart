@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:meshcore_client/meshcore_client.dart';
 import 'package:meshcore_sar_app/models/message_reception_details.dart';
@@ -8,9 +9,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+  final originalDebugPrint = debugPrint;
 
   setUp(() {
     SharedPreferences.setMockInitialValues({});
+  });
+
+  tearDown(() {
+    debugPrint = originalDebugPrint;
   });
 
   test(
@@ -154,5 +160,35 @@ void main() {
     expect(defaultMessages.single.text, defaultMessage.text);
     expect(customMessages.single.id, customMessage.id);
     expect(customMessages.single.text, customMessage.text);
+  });
+
+  test('skips unchanged message snapshots', () async {
+    final storage = MessageStorageService();
+    final logs = <String>[];
+    debugPrint = (String? message, {int? wrapWidth}) {
+      if (message != null) {
+        logs.add(message);
+      }
+    };
+    final message = Message(
+      id: 'msg-stable',
+      messageType: MessageType.channel,
+      senderPublicKeyPrefix: Uint8List.fromList([3, 3, 3, 3, 3, 3]),
+      channelIdx: 3,
+      pathLen: 1,
+      textType: MessageTextType.plain,
+      senderTimestamp: 1700003000,
+      text: 'Stable snapshot',
+      receivedAt: DateTime.fromMillisecondsSinceEpoch(1700003000500),
+      isRead: true,
+    );
+
+    await storage.saveMessages([message]);
+    await storage.saveMessages([message]);
+
+    expect(
+      logs.where((log) => log.contains('Saved 1 messages to storage')),
+      hasLength(1),
+    );
   });
 }

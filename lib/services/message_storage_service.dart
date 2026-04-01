@@ -58,10 +58,7 @@ class MessageStorageService {
           : jsonList;
 
       final jsonString = jsonEncode(limitedList);
-      await prefs.setString(
-        _key(_messagesKey, namespace: namespace),
-        jsonString,
-      );
+      final messagesKey = _key(_messagesKey, namespace: namespace);
       final retainedMessageIds = limitedList
           .map((entry) => entry['id'] as String)
           .toSet();
@@ -89,22 +86,41 @@ class MessageStorageService {
           routeMetadataJson[entry.key] = entry.value.toJson();
         }
       }
-      await prefs.setString(
-        _key(_messageContactLocationsKey, namespace: namespace),
-        jsonEncode(locationJson),
+      final contactLocationsKey = _key(
+        _messageContactLocationsKey,
+        namespace: namespace,
       );
-      await prefs.setString(
-        _key(_messageReceptionDetailsKey, namespace: namespace),
-        jsonEncode(receptionJson),
+      final receptionDetailsKey = _key(
+        _messageReceptionDetailsKey,
+        namespace: namespace,
       );
-      await prefs.setString(
-        _key(_messageTransferDetailsKey, namespace: namespace),
-        jsonEncode(transferJson),
+      final transferDetailsKey = _key(
+        _messageTransferDetailsKey,
+        namespace: namespace,
       );
-      await prefs.setString(
-        _key(_messageRouteMetadataKey, namespace: namespace),
-        jsonEncode(routeMetadataJson),
+      final routeMetadataKey = _key(
+        _messageRouteMetadataKey,
+        namespace: namespace,
       );
+      final locationJsonString = jsonEncode(locationJson);
+      final receptionJsonString = jsonEncode(receptionJson);
+      final transferJsonString = jsonEncode(transferJson);
+      final routeMetadataJsonString = jsonEncode(routeMetadataJson);
+      final hasChanges =
+          prefs.getString(messagesKey) != jsonString ||
+          prefs.getString(contactLocationsKey) != locationJsonString ||
+          prefs.getString(receptionDetailsKey) != receptionJsonString ||
+          prefs.getString(transferDetailsKey) != transferJsonString ||
+          prefs.getString(routeMetadataKey) != routeMetadataJsonString;
+      if (!hasChanges) {
+        return;
+      }
+
+      await prefs.setString(messagesKey, jsonString);
+      await prefs.setString(contactLocationsKey, locationJsonString);
+      await prefs.setString(receptionDetailsKey, receptionJsonString);
+      await prefs.setString(transferDetailsKey, transferJsonString);
+      await prefs.setString(routeMetadataKey, routeMetadataJsonString);
 
       debugPrint(
         '✅ [MessageStorage] Saved ${limitedList.length} messages to storage',

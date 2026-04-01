@@ -23,6 +23,7 @@ typedef DisplayMessageEntry = ({Message message, int occurrenceCount});
 /// Messages Provider - manages message history and SAR markers
 class MessagesProvider with ChangeNotifier {
   static const Duration _channelEchoWarningDelay = Duration(seconds: 12);
+  static const Duration _receivedDuplicateWindow = Duration(seconds: 5);
 
   final List<Message> _messages = [];
   final Map<String, SarMarker> _sarMarkers = {};
@@ -731,10 +732,25 @@ class MessagesProvider with ChangeNotifier {
       return -1;
     }
 
+    final exactDuplicateIndex = _findExactDuplicateMessageIndex(message);
+    if (exactDuplicateIndex != -1) {
+      return exactDuplicateIndex;
+    }
+
+    final lastConversationDuplicateIndex =
+        _findLastConversationDuplicateMessageIndex(message);
+    if (lastConversationDuplicateIndex != -1) {
+      return lastConversationDuplicateIndex;
+    }
+
+    return -1;
+  }
+
+  int _findExactDuplicateMessageIndex(Message message) {
     for (int index = 0; index < _messages.length; index++) {
       final existing = _messages[index];
       if (existing.isSentMessage ||
-          !_matchesDuplicateScope(existing, message) ||
+          !_matchesExactDuplicateScope(existing, message) ||
           existing.text != message.text) {
         continue;
       }
@@ -751,23 +767,38 @@ class MessagesProvider with ChangeNotifier {
     return -1;
   }
 
-  bool _matchesDuplicateScope(Message existing, Message message) {
+  int _findLastConversationDuplicateMessageIndex(Message message) {
+    for (int index = _messages.length - 1; index >= 0; index--) {
+      final existing = _messages[index];
+      if (!_isSameConversation(existing, message)) {
+        continue;
+      }
+      if (existing.isSentMessage ||
+          existing.isSystemMessage ||
+          existing.text != message.text) {
+        return -1;
+      }
+      final receivedDelta = existing.receivedAt.difference(message.receivedAt).abs();
+      if (receivedDelta > _receivedDuplicateWindow) {
+        return -1;
+      }
+      return _matchesDuplicateSenderIdentity(existing, message) ? index : -1;
+    }
+
+    return -1;
+  }
+
+  bool _matchesExactDuplicateScope(Message existing, Message message) {
     if (existing.messageType != message.messageType) {
       return false;
     }
 
     if (message.isContactMessage) {
-      // Match by sender key + sender timestamp (matches official app's DB
-      // uniqueness: contactPublicKey + senderTimestamp + text + txtType).
-      if (existing.senderKeyShort == message.senderKeyShort &&
-          existing.senderTimestamp == message.senderTimestamp) {
-        return true;
+      if (!_isSameConversation(existing, message)) {
+        return false;
       }
-
-      // Fallback dedup when retransmits surface as separate inbound rows
-      // without a stable timestamp/message id, but still carry the same
-      // visible sender identity and payload.
-      return _matchesDuplicateSenderIdentity(existing, message);
+      return existing.senderTimestamp == message.senderTimestamp &&
+          _matchesDuplicateSenderIdentity(existing, message);
     }
 
     if (message.isChannelMessage) {
@@ -775,24 +806,37 @@ class MessagesProvider with ChangeNotifier {
         return false;
       }
 
-      // Primary dedup: same senderTimestamp = same message from mesh repeats.
-      // Matches official app's DB uniqueness: (channelSecret, senderTimestamp, text).
       if (existing.senderTimestamp == message.senderTimestamp) {
         return true;
       }
-
-      // Secondary: catch near-duplicate repeats within a 30s window
-      // (clock drift between nodes).
-      final withinChannelRepeatWindow =
-          (existing.senderTimestamp - message.senderTimestamp).abs() <= 30;
-      if (!withinChannelRepeatWindow) {
-        return false;
-      }
-
-      return _matchesDuplicateSenderIdentity(existing, message);
+      return false;
     }
 
     // System messages and other types: never deduplicate by scope alone.
+    return false;
+  }
+
+  bool _isSameConversation(Message existing, Message message) {
+    if (existing.messageType != message.messageType) {
+      return false;
+    }
+
+    if (message.isChannelMessage) {
+      return existing.channelIdx == message.channelIdx;
+    }
+
+    if (!message.isContactMessage) {
+      return false;
+    }
+
+    if (existing.recipientPublicKey != null && message.recipientPublicKey != null) {
+      return _listEquals(existing.recipientPublicKey!, message.recipientPublicKey!);
+    }
+
+    if (existing.recipientPublicKey == null && message.recipientPublicKey == null) {
+      return true;
+    }
+
     return false;
   }
 
@@ -825,12 +869,30 @@ class MessagesProvider with ChangeNotifier {
         continue;
       }
 
-      if (_matchesDuplicateScope(existing, message)) {
+      if (_matchesSentReplayScope(existing, message)) {
         return index;
       }
     }
 
     return -1;
+  }
+
+  bool _matchesSentReplayScope(Message existing, Message message) {
+    if (!_isSameConversation(existing, message)) {
+      return false;
+    }
+
+    if (existing.senderTimestamp == message.senderTimestamp) {
+      return true;
+    }
+
+    final withinChannelRepeatWindow =
+        (existing.senderTimestamp - message.senderTimestamp).abs() <= 30;
+    if (!withinChannelRepeatWindow) {
+      return false;
+    }
+
+    return _matchesDuplicateSenderIdentity(existing, message);
   }
 
   /// Add multiple messages
@@ -1254,7 +1316,9 @@ class MessagesProvider with ChangeNotifier {
     }
 
     return existing.text == message.text &&
-        _matchesDuplicateScope(existing, message);
+        (_matchesExactDuplicateScope(existing, message) ||
+            (_isSameConversation(existing, message) &&
+                _matchesDuplicateSenderIdentity(existing, message)));
   }
 
   int _messageOccurrenceCount(Message message) =>

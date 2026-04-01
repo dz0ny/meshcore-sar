@@ -893,7 +893,7 @@ void main() {
     });
 
     test(
-      'clears runtime contacts before sync without erasing persisted contacts or saved groups',
+      'keeps runtime contacts visible during sync without erasing persisted contacts or saved groups',
       () async {
         final key = createPublicKey(140);
         final pendingKey = createPublicKey(180);
@@ -906,8 +906,11 @@ void main() {
 
         await provider.prepareForDeviceContactSync();
 
-        expect(provider.chatContacts, isEmpty);
-        expect(provider.pendingAdverts, isEmpty);
+        expect(
+          provider.chatContacts.map((contact) => contact.advName),
+          contains('Synced Later'),
+        );
+        expect(provider.pendingAdverts, hasLength(1));
         expect(provider.savedGroupsForSection('teamMembers'), hasLength(1));
 
         final restored = ContactsProvider();

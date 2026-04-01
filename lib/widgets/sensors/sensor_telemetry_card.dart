@@ -29,6 +29,31 @@ class SensorMetricOption {
   });
 }
 
+const Set<String> _imperialMeasurementCountries = <String>{
+  'US',
+  'LR',
+  'MM',
+};
+
+bool _usesImperialSpeedUnits() {
+  final countryCode =
+      WidgetsBinding.instance.platformDispatcher.locale.countryCode;
+  if (countryCode == null || countryCode.isEmpty) {
+    return false;
+  }
+  return _imperialMeasurementCountries.contains(countryCode.toUpperCase());
+}
+
+String _formatPreviewSpeed(num metersPerSecond) {
+  if (_usesImperialSpeedUnits()) {
+    final milesPerHour = metersPerSecond * 2.2369362920544;
+    return '${_formatPreviewNumber(milesPerHour, maxFractionDigits: 2)} mph';
+  }
+
+  final kilometersPerHour = metersPerSecond * 3.6;
+  return '${_formatPreviewNumber(kilometersPerHour, maxFractionDigits: 2)} km/h';
+}
+
 List<SensorMetricOption> sensorMetricOptionsFor(
   Contact? contact, {
   Map<String, String> labelOverrides = const <String, String>{},
@@ -795,17 +820,17 @@ String? _sensorMetricPreviewValue(String rawKey, dynamic value) {
     case 'speed':
       final metersPerSecond = _previewAsDouble(value);
       if (metersPerSecond == null) return null;
-      return '${_formatPreviewNumber(metersPerSecond, maxFractionDigits: 2)} m/s';
+      return _formatPreviewSpeed(metersPerSecond);
 
     case 'signed_speed':
       final metersPerSecond = _previewAsDouble(value);
       if (metersPerSecond == null) return null;
-      return '${_formatPreviewNumber(metersPerSecond, maxFractionDigits: 2)} m/s';
+      return _formatPreviewSpeed(metersPerSecond);
 
     case 'gust':
       final metersPerSecond = _previewAsDouble(value);
       if (metersPerSecond == null) return null;
-      return '${_formatPreviewNumber(metersPerSecond, maxFractionDigits: 2)} m/s';
+      return _formatPreviewSpeed(metersPerSecond);
 
     case 'dew':
       final degreesCelsius = _previewAsDouble(value);
@@ -1065,6 +1090,16 @@ class SensorTelemetryCard extends StatelessWidget {
         'All fields are hidden. Use Visible fields to choose what to show.',
     this.labelOverrides = const <String, String>{},
   });
+
+  String _formatSpeed(num metersPerSecond) {
+    if (_usesImperialSpeedUnits()) {
+      final milesPerHour = metersPerSecond * 2.2369362920544;
+      return '${_formatNumber(milesPerHour, maxFractionDigits: 2)} mph';
+    }
+
+    final kilometersPerHour = metersPerSecond * 3.6;
+    return '${_formatNumber(kilometersPerHour, maxFractionDigits: 2)} km/h';
+  }
 
   bool get _showsMenu =>
       onRefresh != null ||
@@ -1759,7 +1794,7 @@ class SensorTelemetryCard extends StatelessWidget {
           fieldKey: _extraFieldKey(rawKey),
           icon: Icons.air,
           label: label,
-          value: '${_formatNumber(metersPerSecond, maxFractionDigits: 2)} m/s',
+          value: _formatSpeed(metersPerSecond),
           accent: const Color(0xFF2B78A0),
           channel: metricKey.channel,
         );
@@ -1771,7 +1806,7 @@ class SensorTelemetryCard extends StatelessWidget {
           fieldKey: _extraFieldKey(rawKey),
           icon: Icons.air,
           label: label,
-          value: '${_formatNumber(metersPerSecond, maxFractionDigits: 2)} m/s',
+          value: _formatSpeed(metersPerSecond),
           accent: const Color(0xFF2B78A0),
           channel: metricKey.channel,
         );
@@ -1783,7 +1818,7 @@ class SensorTelemetryCard extends StatelessWidget {
           fieldKey: _extraFieldKey(rawKey),
           icon: Icons.air,
           label: label,
-          value: '${_formatNumber(metersPerSecond, maxFractionDigits: 2)} m/s',
+          value: _formatSpeed(metersPerSecond),
           accent: const Color(0xFF1E88A8),
           channel: metricKey.channel,
         );
@@ -2252,7 +2287,7 @@ class _InlineAlertBadge extends StatelessWidget {
   }
 }
 
-class SensorMetricTile extends StatelessWidget {
+class SensorMetricTile extends StatefulWidget {
   final SensorMetricCardData data;
   final double width;
   final String keyPrefix;
@@ -2268,8 +2303,43 @@ class SensorMetricTile extends StatelessWidget {
     this.onLongPress,
   });
 
+  @override
+  State<SensorMetricTile> createState() => _SensorMetricTileState();
+}
+
+class _SensorMetricTileState extends State<SensorMetricTile> {
+  final flutter_map.MapController _previewMapController =
+      flutter_map.MapController();
+
+  @override
+  void didUpdateWidget(covariant SensorMetricTile oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final previousLocation = oldWidget.data.mapLocation;
+    final nextLocation = widget.data.mapLocation;
+    if (!_sameMapLocation(previousLocation, nextLocation) &&
+        nextLocation != null &&
+        widget.allowMapPreview) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) {
+          return;
+        }
+        _previewMapController.move(
+          nextLocation,
+          _previewMapController.camera.zoom,
+        );
+      });
+    }
+  }
+
+  bool _sameMapLocation(LatLng? a, LatLng? b) {
+    if (a == null || b == null) {
+      return a == b;
+    }
+    return a.latitude == b.latitude && a.longitude == b.longitude;
+  }
+
   Future<void> _showExpandedMap(BuildContext context) async {
-    final location = data.mapLocation;
+    final location = widget.data.mapLocation;
     if (location == null) return;
 
     await Navigator.of(context).push(
@@ -2280,9 +2350,9 @@ class SensorMetricTile extends StatelessWidget {
               title: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(data.label),
+                  Text(widget.data.label),
                   Text(
-                    data.value,
+                    widget.data.value,
                     style: Theme.of(pageContext).textTheme.bodySmall,
                   ),
                 ],
@@ -2291,11 +2361,11 @@ class SensorMetricTile extends StatelessWidget {
             body: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (data.secondaryValue != null)
+                if (widget.data.secondaryValue != null)
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
                     child: Text(
-                      data.secondaryValue!,
+                      widget.data.secondaryValue!,
                       style: Theme.of(pageContext).textTheme.bodyMedium,
                     ),
                   ),
@@ -2320,7 +2390,7 @@ class SensorMetricTile extends StatelessWidget {
                             height: 40,
                             child: Icon(
                               Icons.location_on,
-                              color: data.accent,
+                              color: widget.data.accent,
                               size: 34,
                             ),
                           ),
@@ -2340,14 +2410,15 @@ class SensorMetricTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final data = widget.data;
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        key: ValueKey('${keyPrefix}_${data.fieldKey}'),
+        key: ValueKey('${widget.keyPrefix}_${data.fieldKey}'),
         borderRadius: BorderRadius.circular(22),
-        onLongPress: onLongPress,
+        onLongPress: widget.onLongPress,
         child: Container(
-          width: width,
+          width: widget.width,
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
             color: data.accent.withValues(alpha: 0.08),
@@ -2368,7 +2439,10 @@ class SensorMetricTile extends StatelessWidget {
                         ),
                         const SizedBox(width: 10),
                         Expanded(
-                          child: _MetricText(data: data, keyPrefix: keyPrefix),
+                          child: _MetricText(
+                            data: data,
+                            keyPrefix: widget.keyPrefix,
+                          ),
                         ),
                       ],
                     ),
@@ -2387,7 +2461,7 @@ class SensorMetricTile extends StatelessWidget {
                       ),
                   ],
                 )
-              : data.mapLocation == null || !allowMapPreview
+              : data.mapLocation == null || !widget.allowMapPreview
               ? Stack(
                   children: [
                     Row(
@@ -2396,7 +2470,10 @@ class SensorMetricTile extends StatelessWidget {
                         _MetricIcon(accent: data.accent, icon: data.icon),
                         const SizedBox(width: 10),
                         Expanded(
-                          child: _MetricText(data: data, keyPrefix: keyPrefix),
+                          child: _MetricText(
+                            data: data,
+                            keyPrefix: widget.keyPrefix,
+                          ),
                         ),
                       ],
                     ),
@@ -2424,7 +2501,10 @@ class SensorMetricTile extends StatelessWidget {
                         _MetricIcon(accent: data.accent, icon: data.icon),
                         const SizedBox(width: 10),
                         Expanded(
-                          child: _MetricText(data: data, keyPrefix: keyPrefix),
+                          child: _MetricText(
+                            data: data,
+                            keyPrefix: widget.keyPrefix,
+                          ),
                         ),
                       ],
                     ),
@@ -2439,12 +2519,13 @@ class SensorMetricTile extends StatelessWidget {
                           child: SizedBox(
                             height: 104,
                             width: double.infinity,
-                            child: Stack(
-                              children: [
-                                flutter_map.FlutterMap(
-                                  options: flutter_map.MapOptions(
-                                    initialCenter: data.mapLocation!,
-                                    initialZoom: 14,
+                              child: Stack(
+                                children: [
+                                  flutter_map.FlutterMap(
+                                    mapController: _previewMapController,
+                                    options: flutter_map.MapOptions(
+                                      initialCenter: data.mapLocation!,
+                                      initialZoom: 14,
                                     interactionOptions:
                                         const flutter_map.InteractionOptions(
                                           flags:

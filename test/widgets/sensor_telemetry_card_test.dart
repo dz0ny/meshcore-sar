@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_map/flutter_map.dart' as flutter_map;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:meshcore_sar_app/l10n/app_localizations.dart';
 import 'package:meshcore_sar_app/models/contact.dart';
 import 'package:meshcore_sar_app/providers/sensors_provider.dart';
@@ -140,6 +142,8 @@ void main() {
   });
 
   testWidgets('renders MeshCore custom weather metrics', (tester) async {
+    tester.platformDispatcher.localeTestValue = const Locale('sl', 'SI');
+    addTearDown(tester.platformDispatcher.clearLocaleTestValue);
     final publicKey = Uint8List(32);
     publicKey[0] = 0x46;
     final contact = Contact(
@@ -185,9 +189,128 @@ void main() {
     expect(find.text('Wind gust'), findsOneWidget);
     expect(find.text('Dew point'), findsOneWidget);
     expect(find.text('Rain'), findsOneWidget);
-    expect(find.text('3.7 m/s'), findsOneWidget);
+    expect(find.textContaining('km/h'), findsOneWidget);
+    expect(find.textContaining('m/s'), findsNothing);
     expect(find.text('2°C'), findsOneWidget);
     expect(find.text('12.3 mm'), findsOneWidget);
+  });
+
+  testWidgets('renders speed in mph for imperial system locale', (
+    tester,
+  ) async {
+    tester.platformDispatcher.localeTestValue = const Locale('en', 'US');
+    addTearDown(tester.platformDispatcher.clearLocaleTestValue);
+
+    final publicKey = Uint8List(32);
+    publicKey[0] = 0x4A;
+    final contact = Contact(
+      publicKey: publicKey,
+      type: ContactType.sensor,
+      flags: 0,
+      outPathLen: 0,
+      outPath: Uint8List(64),
+      advName: 'WX Station',
+      lastAdvert: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+      advLat: 0,
+      advLon: 0,
+      lastMod: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+      telemetry: ContactTelemetry(
+        timestamp: DateTime.now().subtract(const Duration(minutes: 1)),
+        extraSensorData: const {'speed_2': 3.7},
+      ),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: SensorTelemetryCard(
+            contact: contact,
+            state: SensorRefreshState.idle,
+            visibleFields: const {'extra:speed_2'},
+            fieldSpans: sensorFullWidthFieldSpans(const {'extra:speed_2'}),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.textContaining('mph'), findsOneWidget);
+    expect(find.textContaining('m/s'), findsNothing);
+  });
+
+  testWidgets('gps preview map recenters when telemetry location changes', (
+    tester,
+  ) async {
+    final publicKey = Uint8List(32);
+    publicKey[0] = 0x4B;
+
+    Contact buildGpsContact(double latitude, double longitude) => Contact(
+      publicKey: publicKey,
+      type: ContactType.sensor,
+      flags: 0,
+      outPathLen: 0,
+      outPath: Uint8List(64),
+      advName: 'GPS Station',
+      lastAdvert: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+      advLat: 0,
+      advLon: 0,
+      lastMod: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+      telemetry: ContactTelemetry(
+        gpsLocation: LatLng(latitude, longitude),
+        timestamp: DateTime.now().subtract(const Duration(minutes: 1)),
+      ),
+    );
+
+    var contact = buildGpsContact(46.0569, 14.5058);
+
+    await tester.pumpWidget(
+      StatefulBuilder(
+        builder: (context, setState) {
+          return MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Scaffold(
+              body: Column(
+                children: [
+                  ElevatedButton(
+                    onPressed: () {
+                      setState(() {
+                        contact = buildGpsContact(46.1000, 14.6000);
+                      });
+                    },
+                    child: const Text('Update'),
+                  ),
+                  SensorTelemetryCard(
+                    contact: contact,
+                    state: SensorRefreshState.idle,
+                    visibleFields: const {'gps'},
+                    fieldSpans: sensorFullWidthFieldSpans(const {'gps'}),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+
+    final initialMap = tester.widget<flutter_map.FlutterMap>(
+      find.byType(flutter_map.FlutterMap).first,
+    );
+    final initialCenter = initialMap.mapController!.camera.center;
+    expect(initialCenter.latitude, closeTo(46.0569, 0.0001));
+    expect(initialCenter.longitude, closeTo(14.5058, 0.0001));
+
+    await tester.tap(find.text('Update'));
+    await tester.pump();
+
+    final updatedMap = tester.widget<flutter_map.FlutterMap>(
+      find.byType(flutter_map.FlutterMap).first,
+    );
+    final updatedCenter = updatedMap.mapController!.camera.center;
+    expect(updatedCenter.latitude, closeTo(46.1000, 0.0001));
+    expect(updatedCenter.longitude, closeTo(14.6000, 0.0001));
   });
 
   testWidgets('renders generic percentage separately from UV for weather payload', (tester) async {

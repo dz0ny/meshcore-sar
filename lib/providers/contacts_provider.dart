@@ -275,10 +275,10 @@ class ContactsProvider with ChangeNotifier {
 
   /// Clear runtime contact state before a live device contact sync begins.
   ///
-  /// This intentionally does not touch persisted storage. It keeps any saved
-  /// contact groups for the active profile, but removes stale in-memory device
-  /// contacts and discovery state so a newly connected device starts from an
-  /// empty list while sync is in progress.
+  /// This intentionally does not touch persisted storage. It snapshots the
+  /// current in-memory contacts so sync updates can still merge against the
+  /// latest local state, but keeps the visible list intact so reconnects do
+  /// not blank the UI while the device is resyncing.
   Future<void> prepareForDeviceContactSync({Uint8List? devicePublicKey}) async {
     _setSelfDevicePublicKey(devicePublicKey);
     if (!_isInitialized) {
@@ -292,7 +292,7 @@ class ContactsProvider with ChangeNotifier {
     }
 
     debugPrint(
-      '🧹 [ContactsProvider] Clearing runtime contacts before device sync',
+      '🧹 [ContactsProvider] Preparing retained contact state for device sync',
     );
     _retainedContactsForSync
       ..clear()
@@ -301,12 +301,6 @@ class ContactsProvider with ChangeNotifier {
           (contact) => MapEntry(contact.publicKeyHex, contact),
         ),
       );
-    _contacts.clear();
-    _pendingAdverts.clear();
-    _estimatedLocations.clear();
-    _rssiObservations.clear();
-    _ensurePublicChannelExists();
-    notifyListeners();
   }
 
   /// Remove self-contact from loaded contacts (called after BLE connection established)

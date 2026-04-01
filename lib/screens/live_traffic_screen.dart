@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 
 import '../models/ble_packet_log.dart';
 import '../models/contact.dart';
+import '../providers/channels_provider.dart';
 import '../providers/contacts_provider.dart';
 import '../providers/connection_provider.dart';
 import '../services/live_traffic_summary.dart';
@@ -156,6 +157,11 @@ class _LiveTrafficScreenState extends State<LiveTrafficScreen> {
               icon: const Icon(Icons.list_alt_rounded),
             ),
           IconButton(
+            onPressed: () => _showPacketTypeHelpSheet(context),
+            tooltip: 'Packet type help',
+            icon: const Icon(Icons.help_outline),
+          ),
+          IconButton(
             onPressed: () {
               setState(() {
                 _clearedAt = widget.now();
@@ -277,6 +283,68 @@ class _LiveTrafficScreenState extends State<LiveTrafficScreen> {
     setState(() {
       _selectedWindow = selected;
     });
+  }
+
+  Future<void> _showPacketTypeHelpSheet(BuildContext context) {
+    final packetTypes = LiveTrafficEntry.knownPayloadTypes;
+    return showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (context) {
+        final scheme = Theme.of(context).colorScheme;
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: ListView(
+              shrinkWrap: true,
+              children: [
+                Text(
+                  'Packet Types',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Descriptions below follow the current MeshCore payload definitions.',
+                  style: TextStyle(color: scheme.onSurfaceVariant),
+                ),
+                const SizedBox(height: 16),
+                for (final packetType in packetTypes) ...[
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: scheme.surfaceContainerHigh,
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          packetType.title,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          packetType.description,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: scheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                ],
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 }
 
@@ -676,7 +744,11 @@ class _LiveTrafficCard extends StatelessWidget {
     final accent = isRx ? Colors.green : Colors.blue;
     final rxInfo = log.logRxDataInfo;
     final originDistance = _originDistanceLabel(context, entry);
-    final packetDetails = _LiveTrafficPacketDetails.fromEntry(entry);
+    final channelsProvider = _maybeProvider<ChannelsProvider>(context);
+    final packetDetails = _LiveTrafficPacketDetails.fromEntry(
+      entry,
+      channelsProvider: channelsProvider,
+    );
     final signalMetric = SignalMetric.fromRxInfo(rxInfo);
 
     return Material(
@@ -730,7 +802,7 @@ class _LiveTrafficCard extends StatelessWidget {
                         if (entry.payloadMeaning != null)
                           Text(
                             entry.payloadMeaning!,
-                            maxLines: 1,
+                            maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               fontSize: 11,
@@ -989,27 +1061,22 @@ class _LiveTrafficPacketDetails {
     required this.endpointLine,
   });
 
-  factory _LiveTrafficPacketDetails.fromEntry(LiveTrafficEntry entry) {
+  factory _LiveTrafficPacketDetails.fromEntry(
+    LiveTrafficEntry entry, {
+    ChannelsProvider? channelsProvider,
+  }) {
     final route = entry.route;
     final payloadType = route?.payloadType;
     final parsedPayload = _ParsedTrafficPayload.tryParse(
       entry.log.rawData,
       route,
+      channelsProvider: channelsProvider,
     );
     final title = switch (payloadType) {
-      0x00 => 'FLOOD REQUEST',
-      0x01 => 'FLOOD RESPONSE',
-      0x02 => 'FLOOD TEXT',
-      0x03 => 'FLOOD ACK',
-      0x04 => 'FLOOD ADVERTISEMENT',
-      0x05 => 'FLOOD GROUP_TEXT',
-      0x06 => 'FLOOD GROUP_DATA',
-      0x07 => 'FLOOD ANON_REQUEST',
-      0x08 => 'FLOOD RETURNED_PATH',
-      0x09 => 'FLOOD TRACE_PATH',
-      0x0A => 'FLOOD MULTIPART',
-      0x0B => 'FLOOD CONTROL',
-      _ => entry.payloadLabel.toUpperCase(),
+      0x05 => parsedPayload?.channelDisplayName ?? LiveTrafficEntry.payloadTypeTitle(0x05),
+      0x06 => parsedPayload?.channelDisplayName ?? LiveTrafficEntry.payloadTypeTitle(0x06),
+      null => entry.payloadLabel.toUpperCase(),
+      _ => LiveTrafficEntry.payloadTypeTitle(payloadType),
     };
 
     final hopHashes = route?.hopHashes ?? const <String>[];
@@ -1041,13 +1108,15 @@ class _LiveTrafficPacketDetails {
 
 class _ParsedTrafficPayload {
   final String? endpointLine;
+  final String? channelDisplayName;
 
-  const _ParsedTrafficPayload({this.endpointLine});
+  const _ParsedTrafficPayload({this.endpointLine, this.channelDisplayName});
 
   static _ParsedTrafficPayload? tryParse(
     List<int> rawData,
-    DecodedLogRxRoute? route,
-  ) {
+    DecodedLogRxRoute? route, {
+    ChannelsProvider? channelsProvider,
+  }) {
     if (rawData.length < 5 ||
         rawData.first != LiveTrafficSummary.logRxDataResponseCode) {
       return null;
@@ -1084,9 +1153,18 @@ class _ParsedTrafficPayload {
       case 0x05:
       case 0x06:
         if (payload.isEmpty) return const _ParsedTrafficPayload();
+        final channelHash = payload.first;
+        final channelHashHex = channelHash
+            .toRadixString(16)
+            .padLeft(2, '0')
+            .toUpperCase();
+        final channelDisplayName = channelsProvider
+            ?.getUniqueChannelDisplayNameByHashByte(channelHash);
         return _ParsedTrafficPayload(
-          endpointLine:
-              'Channel Hash: ${payload.first.toRadixString(16).padLeft(2, '0').toUpperCase()}',
+          channelDisplayName: channelDisplayName,
+          endpointLine: channelDisplayName == null
+              ? 'Channel Hash: $channelHashHex'
+              : 'Channel: $channelDisplayName ($channelHashHex)',
         );
       case 0x00:
       case 0x01:

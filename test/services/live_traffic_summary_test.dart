@@ -196,5 +196,18 @@ void main() {
         1,
       );
     });
+
+    test('exposes detailed descriptions for known packet types', () {
+      final returnedPath = LiveTrafficEntry.payloadTypeDetails(0x08);
+      final control = LiveTrafficEntry.payloadTypeDetails(0x0B);
+
+      expect(returnedPath.title, 'FLOOD RETURNED_PATH');
+      expect(
+        returnedPath.description,
+        contains('stores that returned path as the peer\'s direct out-path'),
+      );
+      expect(control.label, 'Control packet');
+      expect(control.description, contains('discovery request and response'));
+    });
   });
 }

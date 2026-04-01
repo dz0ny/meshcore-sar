@@ -2,9 +2,12 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:meshcore_sar_app/models/channel.dart';
 import 'package:meshcore_sar_app/models/ble_packet_log.dart';
 import 'package:meshcore_sar_app/l10n/app_localizations.dart';
+import 'package:meshcore_sar_app/providers/channels_provider.dart';
 import 'package:meshcore_sar_app/screens/live_traffic_screen.dart';
+import 'package:provider/provider.dart';
 
 BlePacketLog _log({
   required DateTime timestamp,
@@ -51,12 +54,16 @@ List<int> _multiHopRaw({
   ];
 }
 
-Widget _testApp(Widget child) {
-  return MaterialApp(
+Widget _testApp(Widget child, {ChannelsProvider? channelsProvider}) {
+  final app = MaterialApp(
     localizationsDelegates: AppLocalizations.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
     home: child,
   );
+  if (channelsProvider == null) {
+    return app;
+  }
+  return ChangeNotifierProvider.value(value: channelsProvider, child: app);
 }
 
 void main() {
@@ -188,6 +195,82 @@ void main() {
 
     expect(find.text('No packets for this filter'), findsNothing);
     expect(find.textContaining('Size: 3 bytes'), findsOneWidget);
+  });
+
+  testWidgets('shows known channel name for group traffic', (tester) async {
+    final logs = <BlePacketLog>[];
+    final refresh = ValueNotifier<int>(0);
+    final channel = Channel.create(index: 3, name: '#ops');
+    final channelsProvider = ChannelsProvider()
+      ..initializePublicChannel()
+      ..addOrUpdateChannelObject(channel);
+    final now = DateTime(2026, 3, 12, 12, 0, 0);
+
+    logs.add(
+      _log(
+        timestamp: now.subtract(const Duration(seconds: 4)),
+        direction: PacketDirection.rx,
+        rawData: [
+          ..._multiHopRaw(hops: [0xC0, 0x10], payloadType: 0x05),
+          channel.hashByte,
+        ],
+        responseCode: 0x88,
+      ),
+    );
+
+    await tester.pumpWidget(
+      _testApp(
+        LiveTrafficScreen(
+          logReader: () => logs,
+          refreshListenable: refresh,
+          now: () => now,
+        ),
+        channelsProvider: channelsProvider,
+      ),
+    );
+
+    expect(find.text('#ops'), findsOneWidget);
+    expect(find.text('Channel: #ops (${channel.hashHex})'), findsOneWidget);
+    expect(find.text('FLOOD GROUP_TEXT'), findsNothing);
+  });
+
+  testWidgets('shows packet type help sheet from the app bar', (tester) async {
+    final logs = <BlePacketLog>[];
+    final refresh = ValueNotifier<int>(0);
+    final now = DateTime(2026, 3, 12, 12, 0, 0);
+
+    await tester.pumpWidget(
+      _testApp(
+        LiveTrafficScreen(
+          logReader: () => logs,
+          refreshListenable: refresh,
+          now: () => now,
+        ),
+      ),
+    );
+
+    await tester.tap(find.byTooltip('Packet type help'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Packet Types'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('FLOOD RETURNED_PATH'),
+      300,
+      scrollable: find.byType(Scrollable).last,
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('FLOOD RETURNED_PATH'), findsOneWidget);
+    expect(
+      find.textContaining('stores that returned path as the peer\'s direct out-path'),
+      findsOneWidget,
+    );
+    await tester.scrollUntilVisible(
+      find.text('FLOOD CONTROL'),
+      300,
+      scrollable: find.byType(Scrollable).last,
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('FLOOD CONTROL'), findsOneWidget);
   });
 
   testWidgets('summary metrics expand across wide layouts', (tester) async {

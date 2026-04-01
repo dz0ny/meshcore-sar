@@ -122,6 +122,15 @@ class Channel {
   /// Base64-encoded PSK for sharing with firmware CLI and related tooling.
   String get pskBase64 => base64.encode(secret);
 
+  /// MeshCore group packets carry the first byte of SHA256(channel secret).
+  int get hashByte {
+    final digest = sha256.convert(secret);
+    return digest.bytes.first;
+  }
+
+  String get hashHex =>
+      hashByte.toRadixString(16).padLeft(2, '0').toUpperCase();
+
   /// Display name for the channel
   /// Returns "Public" for channel 0, otherwise returns the custom name or "Channel N"
   String get displayName {

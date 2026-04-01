@@ -29,6 +29,16 @@ class ChannelsProvider with ChangeNotifier {
     return index == 0 ? 'Public' : 'Channel $index';
   }
 
+  List<Channel> getChannelsByHashByte(int hashByte) {
+    return _channels.values.where((channel) => channel.hashByte == hashByte).toList()
+      ..sort((a, b) => a.index.compareTo(b.index));
+  }
+
+  String? getUniqueChannelDisplayNameByHashByte(int hashByte) {
+    final matches = getChannelsByHashByte(hashByte);
+    return matches.length == 1 ? matches.single.displayName : null;
+  }
+
   /// Add or update a channel
   void addOrUpdateChannel({
     required int index,

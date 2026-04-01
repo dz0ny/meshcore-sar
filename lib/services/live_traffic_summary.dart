@@ -3,11 +3,135 @@ import '../utils/log_rx_route_decoder.dart';
 
 enum LiveTrafficBusyness { quiet, active, busy }
 
+class LiveTrafficPacketTypeDetails {
+  final int payloadType;
+  final String title;
+  final String label;
+  final String summary;
+  final String description;
+
+  const LiveTrafficPacketTypeDetails({
+    required this.payloadType,
+    required this.title,
+    required this.label,
+    required this.summary,
+    required this.description,
+  });
+}
+
 class LiveTrafficEntry {
   final BlePacketLog log;
   final DecodedLogRxRoute? route;
 
   const LiveTrafficEntry({required this.log, required this.route});
+
+  static const List<LiveTrafficPacketTypeDetails> _knownPayloadTypes = [
+    LiveTrafficPacketTypeDetails(
+      payloadType: 0x00,
+      title: 'FLOOD REQUEST',
+      label: 'Request',
+      summary: 'Encrypted request to a known peer',
+      description:
+          'Encrypted request to a known peer. The wire payload carries destination and source hashes plus a MAC, and the decrypted body starts with a timestamp followed by application-defined request data such as stats or keepalive requests.',
+    ),
+    LiveTrafficPacketTypeDetails(
+      payloadType: 0x01,
+      title: 'FLOOD RESPONSE',
+      label: 'Response',
+      summary: 'Encrypted reply to a request',
+      description:
+          'Encrypted reply to a Request or Anonymous request. After decryption, the body is application-defined response data with no single generic response envelope.',
+    ),
+    LiveTrafficPacketTypeDetails(
+      payloadType: 0x02,
+      title: 'FLOOD TEXT',
+      label: 'Text message',
+      summary: 'Encrypted direct text with timestamp and retry flags',
+      description:
+          'Encrypted direct text message to a known peer. The decrypted body contains a timestamp, a flags and attempt byte, and the message text.',
+    ),
+    LiveTrafficPacketTypeDetails(
+      payloadType: 0x03,
+      title: 'FLOOD ACK',
+      label: 'Ack',
+      summary: '4-byte acknowledgement for an earlier message',
+      description:
+          'Short acknowledgement proving that a prior message was received. It carries a 4-byte checksum derived from the original message data.',
+    ),
+    LiveTrafficPacketTypeDetails(
+      payloadType: 0x04,
+      title: 'FLOOD ADVERTISEMENT',
+      label: 'Advertisement',
+      summary: 'Signed node identity broadcast',
+      description:
+          'Signed node advertisement announcing a device identity plus app data such as a name or location. Receivers verify the signature before accepting it.',
+    ),
+    LiveTrafficPacketTypeDetails(
+      payloadType: 0x05,
+      title: 'FLOOD GROUP_TEXT',
+      label: 'Group text',
+      summary: 'Encrypted channel text matched by channel hash',
+      description:
+          'Encrypted channel text message. It is matched by the first byte of SHA256(channel secret), then decrypted with the channel key. The plaintext is usually in the form "<sender name>: <message body>".',
+    ),
+    LiveTrafficPacketTypeDetails(
+      payloadType: 0x06,
+      title: 'FLOOD GROUP_DATA',
+      label: 'Group datagram',
+      summary: 'Encrypted channel data with type and length',
+      description:
+          'Encrypted channel datagram. After channel-hash matching and decryption, the body starts with a 16-bit data type and a 1-byte data length before the application payload.',
+    ),
+    LiveTrafficPacketTypeDetails(
+      payloadType: 0x07,
+      title: 'FLOOD ANON_REQUEST',
+      label: 'Anonymous request',
+      summary: 'Request using an ephemeral sender key',
+      description:
+          'Encrypted request to a destination hash without using a stored sender identity. The packet includes the sender\'s ephemeral public key so the receiver can derive the shared secret.',
+    ),
+    LiveTrafficPacketTypeDetails(
+      payloadType: 0x08,
+      title: 'FLOOD RETURNED_PATH',
+      label: 'Returned path',
+      summary:
+          'Return route back to the sender, with optional bundled ACK or response',
+      description:
+          'Path reply sent back to the original author to describe the route a received packet took. MeshCore stores that returned path as the peer\'s direct out-path and can bundle an ACK or response in the same payload.',
+    ),
+    LiveTrafficPacketTypeDetails(
+      payloadType: 0x09,
+      title: 'FLOOD TRACE_PATH',
+      label: 'Trace path',
+      summary: 'Direct trace that records SNR at each hop',
+      description:
+          'Direct diagnostic packet that walks a supplied path and appends one SNR sample per hop. When it reaches the end of the path, the initiator can inspect hop-by-hop link quality.',
+    ),
+    LiveTrafficPacketTypeDetails(
+      payloadType: 0x0A,
+      title: 'FLOOD MULTIPART',
+      label: 'Multipart packet',
+      summary: 'Wrapper for one packet in a multipart sequence',
+      description:
+          'Packet wrapper used when a logical message is split into a sequence. Current MeshCore code uses it for multipart ACKs, where the first nibble says how many parts remain.',
+    ),
+    LiveTrafficPacketTypeDetails(
+      payloadType: 0x0B,
+      title: 'FLOOD CONTROL',
+      label: 'Control packet',
+      summary: 'Discovery or other control data',
+      description:
+          'Control or discovery payload, typically unencrypted. Current documented subtypes are discovery request and response packets used to find nearby nodes and report SNR.',
+    ),
+    LiveTrafficPacketTypeDetails(
+      payloadType: 0x0F,
+      title: 'RAW CUSTOM',
+      label: 'Custom packet',
+      summary: 'Application-defined custom packet',
+      description:
+          'Application-defined raw packet bytes for custom encryption or custom payload formats. MeshCore leaves the inner format up to the higher-level application.',
+    ),
+  ];
 
   bool get isMultiHop => (route?.hopCount ?? 0) > 1;
 
@@ -37,66 +161,39 @@ class LiveTrafficEntry {
         .join(' -> ');
   }
 
-  static String payloadTypeLabel(int payloadType) {
-    switch (payloadType) {
-      case 0x00:
-        return 'Request';
-      case 0x01:
-        return 'Response';
-      case 0x02:
-        return 'Text message';
-      case 0x03:
-        return 'Ack';
-      case 0x04:
-        return 'Advertisement';
-      case 0x05:
-        return 'Group text';
-      case 0x06:
-        return 'Group datagram';
-      case 0x07:
-        return 'Anonymous request';
-      case 0x08:
-        return 'Returned path';
-      case 0x09:
-        return 'Trace path';
-      case 0x0A:
-        return 'Multipart packet';
-      case 0x0B:
-        return 'Control packet';
-      default:
-        return '0x${payloadType.toRadixString(16).padLeft(2, '0')}';
+  static List<LiveTrafficPacketTypeDetails> get knownPayloadTypes =>
+      _knownPayloadTypes;
+
+  static LiveTrafficPacketTypeDetails payloadTypeDetails(int payloadType) {
+    for (final details in _knownPayloadTypes) {
+      if (details.payloadType == payloadType) {
+        return details;
+      }
     }
+    return LiveTrafficPacketTypeDetails(
+      payloadType: payloadType,
+      title: '0x${payloadType.toRadixString(16).padLeft(2, '0').toUpperCase()}',
+      label: '0x${payloadType.toRadixString(16).padLeft(2, '0')}',
+      summary: 'Unknown or application-specific protocol payload',
+      description:
+          'Unknown or application-specific packet type. Check the current MeshCore firmware or app-specific protocol docs for the exact payload format.',
+    );
+  }
+
+  static String payloadTypeLabel(int payloadType) {
+    return payloadTypeDetails(payloadType).label;
+  }
+
+  static String payloadTypeTitle(int payloadType) {
+    return payloadTypeDetails(payloadType).title;
   }
 
   static String payloadTypeMeaning(int payloadType) {
-    switch (payloadType) {
-      case 0x00:
-        return 'Request (destination/source hashes + MAC)';
-      case 0x01:
-        return 'Response to Request or Anonymous request';
-      case 0x02:
-        return 'Plain text message';
-      case 0x03:
-        return 'Simple acknowledgement';
-      case 0x04:
-        return 'Node advertisement';
-      case 0x05:
-        return 'Unverified group text message';
-      case 0x06:
-        return 'Unverified group datagram';
-      case 0x07:
-        return 'Generic anonymous request';
-      case 0x08:
-        return 'Returned path payload';
-      case 0x09:
-        return 'Trace path collecting hop SNR';
-      case 0x0A:
-        return 'One packet from a multipart set';
-      case 0x0B:
-        return 'Control or discovery packet';
-      default:
-        return 'protocol payload';
-    }
+    return payloadTypeDetails(payloadType).summary;
+  }
+
+  static String payloadTypeDescription(int payloadType) {
+    return payloadTypeDetails(payloadType).description;
   }
 }
 

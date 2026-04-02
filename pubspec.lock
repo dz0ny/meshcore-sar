@@ -827,9 +827,9 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: "0bb339f"
+      ref: "0bb339f684f709cf5b9d40c07827cc62beb18a4d"
       resolved-ref: "0bb339f684f709cf5b9d40c07827cc62beb18a4d"
-      url: "../meshcore_client"
+      url: "https://github.com/dz0ny/meshcore_client.git"
     source: git
     version: "0.1.0"
   meta:

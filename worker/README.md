@@ -1,4 +1,4 @@
-# MeshCore SAR RX Stats Worker
+# MeshCore SAR Stats Worker
 
 This worker follows the same split as `/Users/dz0ny/site-vendorvigilance`:
 

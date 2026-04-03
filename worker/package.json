@@ -1,5 +1,5 @@
 {
-  "name": "meshcore-sar-rx-stats-worker",
+  "name": "meshcore-sar-stats",
   "private": true,
   "version": "0.0.0",
   "type": "module",

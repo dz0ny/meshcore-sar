@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "meshcore-sar-rx-stats-worker",
+      "name": "meshcore-sar-stats",
       "dependencies": {
         "@astrojs/check": "^0.9.6",
         "@astrojs/cloudflare": "^12.6.12",

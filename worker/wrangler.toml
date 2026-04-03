@@ -1,4 +1,4 @@
-name = "meshcore-sar-rx-stats"
+name = "meshcore-sar-stats"
 main = "worker/index.ts"
 compatibility_date = "2026-04-03"
 compatibility_flags = ["nodejs_compat"]
@@ -17,3 +17,4 @@ run_worker_first = ["/api/*"]
 [[d1_databases]]
 binding = "DB"
 database_name = "meshcore_sar_rx_stats"
+database_id = "94a3978f-13d9-4dc8-9a3c-2beb102699e5"

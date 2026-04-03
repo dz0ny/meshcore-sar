@@ -224,32 +224,14 @@ export function DashboardShell() {
 
             <Card>
               <CardHeader>
-                <CardTitle>Traffic Trend</CardTitle>
+                <CardTitle>Traffic Over Time</CardTitle>
                 <CardDescription>Packets per {summary?.filter.bucket ?? "time"} bucket</CardDescription>
               </CardHeader>
               <CardContent>
                 {isLoading && !summary ? (
                   <EmptyState label="Loading..." />
                 ) : summary?.chartPoints.length ? (
-                  <div className="flex min-h-[280px] items-end gap-[3px]">
-                    {summary.chartPoints.map((point) => {
-                      const pct = Math.max((point.totalPackets / maxTrend) * 100, 3);
-                      return (
-                        <div key={point.label} className="group flex flex-1 flex-col items-center gap-1" title={`${point.label}\n${point.totalPackets} packets`}>
-                          <span className="text-[0.6rem] font-medium opacity-0 transition-opacity group-hover:opacity-100">
-                            {point.totalPackets}
-                          </span>
-                          <div
-                            className="w-full rounded-t-md bg-gradient-to-t from-primary/80 to-primary transition-all group-hover:from-primary group-hover:to-primary"
-                            style={{ height: `${pct}%` }}
-                          />
-                          <span className="max-w-full truncate text-[0.55rem] text-muted-foreground">
-                            {point.label.slice(5)}
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
+                  <TrafficChart points={summary.chartPoints} maxValue={maxTrend} />
                 ) : (
                   <EmptyState label="No data for this window." />
                 )}
@@ -367,6 +349,193 @@ export function DashboardShell() {
       </Tabs>
     </div>
   );
+}
+
+const CHART_H = 240;
+const CHART_PAD = { top: 20, right: 16, bottom: 32, left: 48 };
+
+function TrafficChart({ points, maxValue }: { points: ChartPoint[]; maxValue: number }) {
+  const [hover, setHover] = useState<number | null>(null);
+  const count = points.length;
+  if (count === 0) return null;
+
+  const innerW = 100; // we use viewBox percentages
+  const innerH = CHART_H - CHART_PAD.top - CHART_PAD.bottom;
+
+  // find peak
+  const peakIdx = points.reduce((best, p, i) => (p.totalPackets > points[best].totalPackets ? i : best), 0);
+
+  // Y axis grid: 4 nice lines
+  const gridLines = niceGridLines(maxValue, 4);
+
+  // point positions (normalized 0-1)
+  const xs = points.map((_, i) => i / Math.max(count - 1, 1));
+  const ys = points.map((p) => 1 - p.totalPackets / maxValue);
+
+  // SVG path for the line
+  const linePath = xs.map((x, i) => `${i === 0 ? "M" : "L"}${x * innerW},${ys[i] * innerH}`).join(" ");
+  // area path (closed to bottom)
+  const areaPath = `${linePath} L${xs[xs.length - 1] * innerW},${innerH} L0,${innerH} Z`;
+
+  // X-axis labels: show ~6 evenly spaced
+  const labelStep = Math.max(1, Math.floor(count / 6));
+  const xLabels = points
+    .map((p, i) => ({ i, label: p.label.slice(5) }))
+    .filter((_, i) => i % labelStep === 0 || i === count - 1);
+
+  return (
+    <div className="relative select-none">
+      <svg
+        viewBox={`${-CHART_PAD.left} ${-CHART_PAD.top} ${innerW + CHART_PAD.left + CHART_PAD.right} ${CHART_H}`}
+        className="h-auto w-full"
+        preserveAspectRatio="none"
+        onMouseLeave={() => setHover(null)}
+      >
+        <defs>
+          <linearGradient id="areaFill" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="hsl(178, 83%, 31%)" stopOpacity={0.35} />
+            <stop offset="100%" stopColor="hsl(178, 83%, 31%)" stopOpacity={0.03} />
+          </linearGradient>
+          <linearGradient id="lineStroke" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor="hsl(178, 83%, 38%)" />
+            <stop offset="100%" stopColor="hsl(178, 60%, 28%)" />
+          </linearGradient>
+        </defs>
+
+        {/* Y grid lines */}
+        {gridLines.map((val) => {
+          const y = (1 - val / maxValue) * innerH;
+          return (
+            <g key={val}>
+              <line x1={0} y1={y} x2={innerW} y2={y} stroke="hsl(206, 22%, 87%)" strokeWidth={0.3} />
+              <text x={-6} y={y} textAnchor="end" dominantBaseline="middle" fill="hsl(208, 19%, 55%)" fontSize={3.2} fontFamily="var(--font-sans)">
+                {formatCompact(val)}
+              </text>
+            </g>
+          );
+        })}
+
+        {/* baseline */}
+        <line x1={0} y1={innerH} x2={innerW} y2={innerH} stroke="hsl(206, 22%, 87%)" strokeWidth={0.4} />
+
+        {/* area fill */}
+        <path d={areaPath} fill="url(#areaFill)" />
+
+        {/* line */}
+        <path d={linePath} fill="none" stroke="url(#lineStroke)" strokeWidth={0.7} strokeLinecap="round" strokeLinejoin="round" />
+
+        {/* peak dot */}
+        <circle
+          cx={xs[peakIdx] * innerW}
+          cy={ys[peakIdx] * innerH}
+          r={1.5}
+          fill="hsl(178, 83%, 31%)"
+          stroke="white"
+          strokeWidth={0.6}
+        />
+
+        {/* peak label */}
+        <text
+          x={xs[peakIdx] * innerW}
+          y={ys[peakIdx] * innerH - 4}
+          textAnchor="middle"
+          fill="hsl(178, 83%, 28%)"
+          fontSize={3}
+          fontWeight={600}
+          fontFamily="var(--font-sans)"
+        >
+          {points[peakIdx].totalPackets.toLocaleString()}
+        </text>
+
+        {/* X-axis labels */}
+        {xLabels.map(({ i, label }) => (
+          <text
+            key={i}
+            x={xs[i] * innerW}
+            y={innerH + 10}
+            textAnchor="middle"
+            fill="hsl(208, 19%, 55%)"
+            fontSize={2.8}
+            fontFamily="var(--font-sans)"
+          >
+            {label}
+          </text>
+        ))}
+
+        {/* invisible hover zones */}
+        {points.map((point, i) => {
+          const sliceW = innerW / count;
+          return (
+            <rect
+              key={point.label}
+              x={xs[i] * innerW - sliceW / 2}
+              y={0}
+              width={sliceW}
+              height={innerH}
+              fill="transparent"
+              onMouseEnter={() => setHover(i)}
+            />
+          );
+        })}
+
+        {/* hover indicator */}
+        {hover !== null && (
+          <>
+            <line
+              x1={xs[hover] * innerW}
+              y1={0}
+              x2={xs[hover] * innerW}
+              y2={innerH}
+              stroke="hsl(178, 83%, 31%)"
+              strokeWidth={0.3}
+              strokeDasharray="1.5 1"
+            />
+            <circle
+              cx={xs[hover] * innerW}
+              cy={ys[hover] * innerH}
+              r={1.2}
+              fill="white"
+              stroke="hsl(178, 83%, 31%)"
+              strokeWidth={0.6}
+            />
+          </>
+        )}
+      </svg>
+
+      {/* hover tooltip */}
+      {hover !== null && (
+        <div
+          className="pointer-events-none absolute -top-2 z-10 -translate-x-1/2 rounded-lg border border-border/50 bg-card px-3 py-1.5 text-xs shadow-lg"
+          style={{
+            left: `${(CHART_PAD.left + xs[hover] * innerW) / (innerW + CHART_PAD.left + CHART_PAD.right) * 100}%`,
+          }}
+        >
+          <div className="font-semibold tabular-nums">{points[hover].totalPackets.toLocaleString()} packets</div>
+          <div className="text-muted-foreground">{points[hover].label}</div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function niceGridLines(max: number, count: number): number[] {
+  if (max <= 0) return [0];
+  const rough = max / count;
+  const magnitude = 10 ** Math.floor(Math.log10(rough));
+  const residual = rough / magnitude;
+  const nice = residual <= 1.5 ? 1 : residual <= 3 ? 2 : residual <= 7 ? 5 : 10;
+  const step = nice * magnitude;
+  const lines: number[] = [];
+  for (let v = step; v <= max; v += step) {
+    lines.push(Math.round(v));
+  }
+  return lines;
+}
+
+function formatCompact(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(n >= 10_000 ? 0 : 1)}K`;
+  return String(n);
 }
 
 function MetricCard({ label, value, note }: { label: string; value: number | string; note: string }) {

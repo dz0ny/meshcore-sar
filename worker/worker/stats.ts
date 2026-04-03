@@ -177,12 +177,6 @@ export interface AppVersionEntry {
   packets: number;
 }
 
-export interface ColoEntry {
-  colo: string;
-  reporters: number;
-  packets: number;
-}
-
 export interface TrafficComposition {
   human: number;
   overhead: number;
@@ -212,7 +206,6 @@ export interface DashboardSummary {
   chartPoints: ChartPoint[];
   locationPoints: LocationPoint[];
   appVersions: AppVersionEntry[];
-  coloDistribution: ColoEntry[];
   trafficComposition: TrafficComposition;
   multiHopRatio: MultiHopRatio;
   compositionOverTime: CompositionPoint[];
@@ -328,7 +321,6 @@ export function summarizeRows(
 
   // per-version and per-colo accumulators
   const versionMap = new Map<string, { reporters: Set<string>; packets: number }>();
-  const coloMap = new Map<string, { reporters: Set<string>; packets: number }>();
   const compositionBuckets = new Map<string, { human: number; overhead: number }>();
 
   for (const row of rows) {
@@ -379,16 +371,6 @@ export function summarizeRows(
       verEntry.packets += packetTotal;
     } else {
       versionMap.set(ver, { reporters: new Set([row.device_key6]), packets: packetTotal });
-    }
-
-    // CF colo
-    const colo = row.cf_colo ?? "unknown";
-    const coloEntry = coloMap.get(colo);
-    if (coloEntry) {
-      coloEntry.reporters.add(row.device_key6);
-      coloEntry.packets += packetTotal;
-    } else {
-      coloMap.set(colo, { reporters: new Set([row.device_key6]), packets: packetTotal });
     }
 
     // composition over time (human = text + group_text, overhead = rest)
@@ -445,9 +427,6 @@ export function summarizeRows(
     locationPoints,
     appVersions: [...versionMap.entries()]
       .map(([version, entry]) => ({ version, reporters: entry.reporters.size, packets: entry.packets }))
-      .sort((left, right) => right.packets - left.packets),
-    coloDistribution: [...coloMap.entries()]
-      .map(([colo, entry]) => ({ colo, reporters: entry.reporters.size, packets: entry.packets }))
       .sort((left, right) => right.packets - left.packets),
     trafficComposition: { human: humanTotal, overhead: overheadTotal, acks: acksTotal },
     multiHopRatio: { direct: directTotal, multiHop: multiHopTotal },

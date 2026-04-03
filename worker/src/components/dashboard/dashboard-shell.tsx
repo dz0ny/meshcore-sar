@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -49,12 +48,6 @@ type AppVersionEntry = {
   packets: number;
 };
 
-type ColoEntry = {
-  colo: string;
-  reporters: number;
-  packets: number;
-};
-
 type TrafficComposition = {
   human: number;
   overhead: number;
@@ -90,7 +83,6 @@ type DashboardResponse = {
   chartPoints: ChartPoint[];
   locationPoints: LocationPoint[];
   appVersions: AppVersionEntry[];
-  coloDistribution: ColoEntry[];
   trafficComposition: TrafficComposition;
   multiHopRatio: MultiHopRatio;
   compositionOverTime: CompositionPoint[];
@@ -186,6 +178,8 @@ export function DashboardShell() {
   const comp = summary?.trafficComposition;
   const compTotal = comp ? comp.human + comp.overhead + comp.acks : 0;
   const humanPct = compTotal > 0 ? ((comp!.human / compTotal) * 100).toFixed(1) : "0";
+  const nodeCount = summary?.uniqueDevices ?? 0;
+  const avgPerNode = nodeCount > 0 ? Math.round(totalPackets / nodeCount) : 0;
 
   return (
     <div className="mx-auto max-w-[1320px] px-5 py-8">
@@ -198,7 +192,8 @@ export function DashboardShell() {
               <h1 className="text-2xl font-semibold tracking-tight">MeshCore SAR</h1>
             </div>
             <p className="max-w-xl text-sm text-muted-foreground">
-              Anonymous mesh network traffic overview. Location is derived from Cloudflare ingress metadata.
+              Aggregated observations from opt-in mesh nodes. Counts reflect what reporting nodes observed, not unique network packets.
+              Ratios and percentages are statistically valid; absolute numbers scale with reporter count.
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -228,14 +223,14 @@ export function DashboardShell() {
           {/* Key metrics */}
           <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
             <MetricCard
-              label="Active Nodes"
-              value={summary?.uniqueDevices ?? 0}
-              note="Unique reporting nodes"
+              label="Reporting Nodes"
+              value={nodeCount}
+              note="Opt-in nodes in this window"
             />
             <MetricCard
-              label="Total Packets"
-              value={totalPackets}
-              note="Decoded + failed"
+              label="Avg / Node"
+              value={avgPerNode}
+              note={`${totalPackets.toLocaleString()} total obs.`}
             />
             <MetricCard
               label="Decode Rate"
@@ -245,22 +240,22 @@ export function DashboardShell() {
             <MetricCard
               label="Multi-Hop"
               value={`${multiHopPct}%`}
-              note={`${summary?.multiHopRatio.multiHop ?? 0} relayed`}
+              note="Relayed through mesh"
             />
             <MetricCard
               label="Messages"
               value={`${humanPct}%`}
-              note={`${comp?.human ?? 0} text + group`}
+              note="Text + group text"
             />
             <MetricCard
               label="Protocol Types"
               value={activePacketTypes.length}
-              note="of 16 types active"
+              note="of 16 types observed"
             />
           </section>
 
           {/* Map + Traffic trend */}
-          <section className="grid gap-4 xl:grid-cols-[1.4fr_1fr]">
+          <section className="space-y-4">
             <Card>
               <CardHeader>
                 <CardTitle>Reporter Locations</CardTitle>
@@ -275,8 +270,11 @@ export function DashboardShell() {
 
             <Card>
               <CardHeader>
-                <CardTitle>Traffic Over Time</CardTitle>
-                <CardDescription>Packets per {summary?.filter.bucket ?? "time"} bucket</CardDescription>
+                <CardTitle>Observations Over Time</CardTitle>
+                <CardDescription>
+                  Per-node average observations per {summary?.filter.bucket ?? "time"} bucket.
+                  Normalizing by reporter count removes the bias of more nodes = higher numbers.
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 {isLoading && !summary ? (
@@ -291,7 +289,7 @@ export function DashboardShell() {
           </section>
 
           {/* Protocol breakdown */}
-          <section className="grid gap-4 xl:grid-cols-[1.4fr_1fr]">
+          <section className="space-y-4">
             <Card>
               <CardHeader>
                 <CardTitle>Protocol Packet Types</CardTitle>
@@ -329,7 +327,7 @@ export function DashboardShell() {
                                   style={{ width: `${pct}%` }}
                                 />
                               </div>
-                              <span className="text-xs font-semibold tabular-nums">{entry.total.toLocaleString()}</span>
+                              <span className="text-xs font-semibold tabular-nums">{entry.total.toLocaleString()} obs.</span>
                             </div>
                           </div>
                         </div>
@@ -342,7 +340,6 @@ export function DashboardShell() {
               </CardContent>
             </Card>
 
-            <div className="space-y-4">
               <Card>
                 <CardHeader>
                   <CardTitle>Path Routing Modes</CardTitle>
@@ -374,31 +371,10 @@ export function DashboardShell() {
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle>Reporting Regions</CardTitle>
-                  <CardDescription>Geographic distribution of mesh nodes</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {summary?.locationPoints.length ? (
-                    <div className="flex flex-wrap gap-2">
-                      {dedupeLocations(summary.locationPoints).map((loc) => (
-                        <Badge key={`${loc.city}-${loc.country}`} variant="outline" className="gap-1.5 px-3 py-1.5">
-                          <span className="font-medium">{loc.city}</span>
-                          <span className="text-muted-foreground">{loc.country}</span>
-                        </Badge>
-                      ))}
-                    </div>
-                  ) : (
-                    <EmptyState label="No location data yet." />
-                  )}
-                </CardContent>
-              </Card>
-            </div>
           </section>
 
           {/* Messages vs Overhead over time */}
-          <section className="grid gap-4 xl:grid-cols-[1.4fr_1fr]">
+          <section className="space-y-4">
             <Card>
               <CardHeader>
                 <CardTitle>Messages vs Protocol Overhead</CardTitle>
@@ -418,7 +394,7 @@ export function DashboardShell() {
             <Card>
               <CardHeader>
                 <CardTitle>Traffic Breakdown</CardTitle>
-                <CardDescription>What the mesh is carrying</CardDescription>
+                <CardDescription>Observed traffic composition across all reporting nodes</CardDescription>
               </CardHeader>
               <CardContent className="space-y-5">
                 {comp && compTotal > 0 ? (
@@ -454,12 +430,12 @@ export function DashboardShell() {
             </Card>
           </section>
 
-          {/* App versions + CF edge */}
-          <section className="grid gap-4 xl:grid-cols-2">
+          {/* App versions */}
+          <section>
             <Card>
               <CardHeader>
                 <CardTitle>App Versions</CardTitle>
-                <CardDescription>Distribution of reporting app versions</CardDescription>
+                <CardDescription>Distribution of reporting app versions by node count and observations</CardDescription>
               </CardHeader>
               <CardContent>
                 {summary?.appVersions.length ? (
@@ -471,7 +447,7 @@ export function DashboardShell() {
                           <div className="flex items-baseline justify-between gap-3 text-sm">
                             <span className="font-mono font-medium">{entry.version}</span>
                             <span className="text-xs text-muted-foreground">
-                              {entry.reporters} {entry.reporters === 1 ? "node" : "nodes"} / {entry.packets.toLocaleString()} pkts
+                              {entry.reporters} {entry.reporters === 1 ? "node" : "nodes"} / {entry.packets.toLocaleString()} obs.
                             </span>
                           </div>
                           <div className="h-2 overflow-hidden rounded-full bg-secondary">
@@ -486,32 +462,6 @@ export function DashboardShell() {
                   </div>
                 ) : (
                   <EmptyState label="No version data yet." />
-                )}
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Cloudflare Edge PoPs</CardTitle>
-                <CardDescription>Which Cloudflare datacenters are serving mesh traffic</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {summary?.coloDistribution.length ? (
-                  <div className="flex flex-wrap gap-2">
-                    {summary.coloDistribution.map((entry) => (
-                      <div key={entry.colo} className="rounded-xl border border-border/50 bg-secondary/30 px-4 py-3 text-center">
-                        <div className="text-base font-bold font-mono">{entry.colo}</div>
-                        <div className="mt-1 text-xs text-muted-foreground">
-                          {entry.reporters} {entry.reporters === 1 ? "node" : "nodes"}
-                        </div>
-                        <div className="text-xs tabular-nums text-muted-foreground">
-                          {entry.packets.toLocaleString()} pkts
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <EmptyState label="No edge data yet." />
                 )}
               </CardContent>
             </Card>
@@ -641,27 +591,29 @@ function buildStackedAreaPath(xs: number[], topYs: number[], bottomYs: number[],
 const CHART_H = 240;
 const CHART_PAD = { top: 20, right: 16, bottom: 32, left: 48 };
 
-function TrafficChart({ points, maxValue }: { points: ChartPoint[]; maxValue: number }) {
+function TrafficChart({ points, maxValue: _rawMax }: { points: ChartPoint[]; maxValue: number }) {
   const [hover, setHover] = useState<number | null>(null);
   const count = points.length;
   if (count === 0) return null;
 
-  const innerW = 100; // we use viewBox percentages
+  // Normalize: per-node average per bucket
+  const normalized = points.map((p) => ({
+    ...p,
+    perNode: p.reports > 0 ? Math.round(p.totalPackets / p.reports) : 0,
+  }));
+  const maxValue = Math.max(...normalized.map((p) => p.perNode), 1);
+
+  const innerW = 100;
   const innerH = CHART_H - CHART_PAD.top - CHART_PAD.bottom;
 
-  // find peak
-  const peakIdx = points.reduce((best, p, i) => (p.totalPackets > points[best].totalPackets ? i : best), 0);
+  const peakIdx = normalized.reduce((best, p, i) => (p.perNode > normalized[best].perNode ? i : best), 0);
 
-  // Y axis grid: 4 nice lines
   const gridLines = niceGridLines(maxValue, 4);
 
-  // point positions (normalized 0-1)
-  const xs = points.map((_, i) => i / Math.max(count - 1, 1));
-  const ys = points.map((p) => 1 - p.totalPackets / maxValue);
+  const xs = normalized.map((_, i) => i / Math.max(count - 1, 1));
+  const ys = normalized.map((p) => 1 - p.perNode / maxValue);
 
-  // SVG path for the line
   const linePath = xs.map((x, i) => `${i === 0 ? "M" : "L"}${x * innerW},${ys[i] * innerH}`).join(" ");
-  // area path (closed to bottom)
   const areaPath = `${linePath} L${xs[xs.length - 1] * innerW},${innerH} L0,${innerH} Z`;
 
   // X-axis labels: show ~6 evenly spaced
@@ -731,7 +683,7 @@ function TrafficChart({ points, maxValue }: { points: ChartPoint[]; maxValue: nu
           fontWeight={600}
           fontFamily="var(--font-sans)"
         >
-          {points[peakIdx].totalPackets.toLocaleString()}
+          {normalized[peakIdx].perNode.toLocaleString()}
         </text>
 
         {/* X-axis labels */}
@@ -797,8 +749,9 @@ function TrafficChart({ points, maxValue }: { points: ChartPoint[]; maxValue: nu
             left: `${(CHART_PAD.left + xs[hover] * innerW) / (innerW + CHART_PAD.left + CHART_PAD.right) * 100}%`,
           }}
         >
-          <div className="font-semibold tabular-nums">{points[hover].totalPackets.toLocaleString()} packets</div>
-          <div className="text-muted-foreground">{points[hover].label}</div>
+          <div className="font-semibold tabular-nums">{normalized[hover].perNode.toLocaleString()} avg/node</div>
+          <div className="text-muted-foreground">{normalized[hover].totalPackets.toLocaleString()} total from {normalized[hover].reports} {normalized[hover].reports === 1 ? "node" : "nodes"}</div>
+          <div className="text-muted-foreground">{normalized[hover].label}</div>
         </div>
       )}
     </div>
@@ -940,16 +893,6 @@ function LeafletMap({ locations }: { locations: LocationPoint[] }) {
       </div>
     </>
   );
-}
-
-function dedupeLocations(locations: LocationPoint[]) {
-  const seen = new Set<string>();
-  return locations.filter((loc) => {
-    const key = `${loc.city}-${loc.country}`;
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
 }
 
 function formatRelative(value: string) {

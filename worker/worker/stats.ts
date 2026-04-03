@@ -85,12 +85,9 @@ const WINDOW_OPTIONS = {
     durationMs: 7 * 24 * 60 * 60 * 1000,
     bucket: "day",
   },
-  "30d": {
-    label: "Last 30 days",
-    durationMs: 30 * 24 * 60 * 60 * 1000,
-    bucket: "day",
-  },
 } as const;
+
+const RETENTION_MS = 7 * 24 * 60 * 60 * 1000;
 
 export const jsonHeaders = {
   "content-type": "application/json; charset=utf-8",
@@ -269,8 +266,7 @@ export function buildWindowFilter(
 ): WindowFilter {
   const windowKey =
     requestedWindow === "24h" ||
-    requestedWindow === "7d" ||
-    requestedWindow === "30d"
+    requestedWindow === "7d"
       ? requestedWindow
       : "24h";
   const option = WINDOW_OPTIONS[windowKey];
@@ -280,6 +276,19 @@ export function buildWindowFilter(
     sinceIso: new Date(now.getTime() - option.durationMs).toISOString(),
     bucket: option.bucket,
   };
+}
+
+export async function purgeOldReports(
+  env: Env,
+  now: Date = new Date(),
+): Promise<number> {
+  const cutoff = new Date(now.getTime() - RETENTION_MS).toISOString();
+  const result = await env.DB.prepare(
+    "DELETE FROM reports WHERE window_end < ?",
+  )
+    .bind(cutoff)
+    .run();
+  return Number((result.meta as { changes?: number }).changes ?? 0);
 }
 
 export async function loadDashboardSummary(

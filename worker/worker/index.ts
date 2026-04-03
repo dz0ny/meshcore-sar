@@ -4,6 +4,7 @@ import {
   extractCfGeo,
   jsonHeaders,
   loadDashboardSummary,
+  purgeOldReports,
   validateIngestPayload,
   type Env,
   type IngestPayload,
@@ -82,6 +83,9 @@ async function handleIngest(request: Request, env: Env): Promise<Response> {
   const result = await env.DB.prepare(REPORT_INSERT_SQL).bind(...values).run();
   const changes = Number((result.meta as { changes?: number }).changes ?? 0);
 
+  // Purge reports older than 7 days (best-effort, don't block response)
+  void purgeOldReports(env).catch(() => {});
+
   return Response.json(
     {
       ok: true,
@@ -107,7 +111,7 @@ async function handleDashboard(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
   const windowParam = url.searchParams.get("window");
   const summary = await loadDashboardSummary(env, windowParam);
-  const cacheTtl = windowParam === "7d" || windowParam === "30d" ? 86400 : 60;
+  const cacheTtl = windowParam === "7d" ? 86400 : 60;
   return Response.json(
     {
       generatedAt: new Date().toISOString(),

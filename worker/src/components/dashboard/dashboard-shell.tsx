@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-type WindowKey = "24h" | "7d" | "30d";
+type WindowKey = "24h" | "7d";
 
 type PacketTypeEntry = {
   key: string;
@@ -91,7 +91,6 @@ type DashboardResponse = {
 const WINDOW_OPTIONS: Array<{ key: WindowKey; label: string }> = [
   { key: "24h", label: "24h" },
   { key: "7d", label: "7 days" },
-  { key: "30d", label: "30 days" },
 ];
 
 const PACKET_TYPE_INFO: Record<string, { title: string; summary: string }> = {

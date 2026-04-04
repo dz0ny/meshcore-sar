@@ -69,12 +69,17 @@ class PathHistoryService {
     }
 
     try {
-      final decoded = jsonDecode(raw);
-      if (decoded is Map<String, dynamic>) {
-        for (final entry in decoded.entries) {
-          final value = entry.value;
-          if (value is Map<String, dynamic>) {
-            _cache[entry.key] = ContactPathHistory.fromJson(entry.key, value);
+      if (raw != null && raw.isNotEmpty) {
+        final decoded = jsonDecode(raw);
+        if (decoded is Map<String, dynamic>) {
+          for (final entry in decoded.entries) {
+            final value = entry.value;
+            if (value is Map<String, dynamic>) {
+              _cache[entry.key] = ContactPathHistory.fromJson(
+                entry.key,
+                value,
+              );
+            }
           }
         }
       }

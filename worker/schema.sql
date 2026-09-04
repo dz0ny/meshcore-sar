@@ -1,0 +1,42 @@
+CREATE TABLE IF NOT EXISTS reports (
+  report_id TEXT PRIMARY KEY,
+  device_key6 TEXT NOT NULL,
+  window_start TEXT NOT NULL,
+  window_end TEXT NOT NULL,
+  received_at TEXT NOT NULL,
+  app_version TEXT,
+  cf_country TEXT,
+  cf_region TEXT,
+  cf_city TEXT,
+  cf_latitude REAL,
+  cf_longitude REAL,
+  cf_colo TEXT,
+  pt_00 INTEGER NOT NULL DEFAULT 0,
+  pt_01 INTEGER NOT NULL DEFAULT 0,
+  pt_02 INTEGER NOT NULL DEFAULT 0,
+  pt_03 INTEGER NOT NULL DEFAULT 0,
+  pt_04 INTEGER NOT NULL DEFAULT 0,
+  pt_05 INTEGER NOT NULL DEFAULT 0,
+  pt_06 INTEGER NOT NULL DEFAULT 0,
+  pt_07 INTEGER NOT NULL DEFAULT 0,
+  pt_08 INTEGER NOT NULL DEFAULT 0,
+  pt_09 INTEGER NOT NULL DEFAULT 0,
+  pt_0a INTEGER NOT NULL DEFAULT 0,
+  pt_0b INTEGER NOT NULL DEFAULT 0,
+  pt_0c INTEGER NOT NULL DEFAULT 0,
+  pt_0d INTEGER NOT NULL DEFAULT 0,
+  pt_0e INTEGER NOT NULL DEFAULT 0,
+  pt_0f INTEGER NOT NULL DEFAULT 0,
+  decode_fail INTEGER NOT NULL DEFAULT 0,
+  path_mode_1b INTEGER NOT NULL DEFAULT 0,
+  path_mode_2b INTEGER NOT NULL DEFAULT 0,
+  path_mode_3b INTEGER NOT NULL DEFAULT 0,
+  path_mode_none INTEGER NOT NULL DEFAULT 0,
+  path_mode_unknown INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE INDEX IF NOT EXISTS idx_reports_device_window_end
+ON reports (device_key6, window_end);
+
+CREATE INDEX IF NOT EXISTS idx_reports_window_end
+ON reports (window_end);

@@ -1,0 +1,1 @@
+Field coordination for search and rescue teams using MeshCore, BLE, offline maps, messaging, voice, and SAR markers.

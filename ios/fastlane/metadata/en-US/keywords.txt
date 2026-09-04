@@ -1,0 +1,1 @@
+meshcore,sar,search,rescue,mesh,lora,offline,maps,radio,gps

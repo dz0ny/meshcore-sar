@@ -1,0 +1,194 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
+import '../l10n/app_localizations.dart';
+
+enum MapLayerType {
+  openStreetMap,
+  openTopoMap,
+  esriWorldImagery,
+  googleHybrid,
+  googleRoadmap,
+  googleTerrain,
+  // Kept for stored preference compatibility after MBTiles removal.
+  vectorMbtiles,
+  wmsBase,
+  // Appended last: stored layer preference is the enum index.
+  mapyOutdoor,
+}
+
+class MapLayer {
+  final MapLayerType type;
+  final String name;
+  final String urlTemplate;
+  final String attribution;
+  final double maxZoom;
+
+  /// Extra HTTP headers required by the tile server (e.g. Referer).
+  final Map<String, String>? headers;
+
+  // WMS specific properties
+  final bool isWms;
+  final String? wmsBaseUrl;
+  final List<String>? wmsLayers;
+  final String? wmsFormat;
+  final bool? wmsTransparent;
+  final List<String>? wmsStyles;
+  final Crs? crs;
+
+  const MapLayer({
+    required this.type,
+    required this.name,
+    required this.urlTemplate,
+    required this.attribution,
+    required this.maxZoom,
+    this.headers,
+    this.isWms = false,
+    this.wmsBaseUrl,
+    this.wmsLayers,
+    this.wmsFormat,
+    this.wmsTransparent,
+    this.wmsStyles,
+    this.crs,
+  });
+
+  /// Get localized name for the layer
+  String getLocalizedName(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;
+    switch (type) {
+      case MapLayerType.openStreetMap:
+        return localizations.openStreetMap;
+      case MapLayerType.openTopoMap:
+        return localizations.openTopoMap;
+      case MapLayerType.esriWorldImagery:
+        return localizations.esriSatellite;
+      case MapLayerType.googleHybrid:
+        return localizations.googleHybrid;
+      case MapLayerType.googleRoadmap:
+        return localizations.googleRoadmap;
+      case MapLayerType.googleTerrain:
+        return localizations.googleTerrain;
+      case MapLayerType.vectorMbtiles:
+        // Legacy value kept only for preference migration compatibility.
+        return name;
+      case MapLayerType.mapyOutdoor:
+        // Brand name, not translated.
+        return name;
+      case MapLayerType.wmsBase:
+        // For WMS layers, use the name (will be localized separately)
+        return name;
+    }
+  }
+
+  static const openStreetMap = MapLayer(
+    type: MapLayerType.openStreetMap,
+    name: 'OpenStreetMap',
+    urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+    attribution: '© OpenStreetMap contributors',
+    maxZoom: 19, // OSM standard maximum
+  );
+
+  static const openTopoMap = MapLayer(
+    type: MapLayerType.openTopoMap,
+    name: 'OpenTopoMap',
+    urlTemplate: 'https://a.tile.opentopomap.org/{z}/{x}/{y}.png',
+    attribution: '© OpenTopoMap (CC-BY-SA)',
+    maxZoom: 17.49, // OpenTopoMap maximum (just below level 18)
+  );
+
+  /// Mapy.cz outdoor map: OSM data with LIDAR-based shaded relief.
+  /// The tile server rejects requests without a mapy.com Referer.
+  static const mapyOutdoor = MapLayer(
+    type: MapLayerType.mapyOutdoor,
+    name: 'Mapy.cz Outdoor (OSM + LIDAR)',
+    urlTemplate: 'https://mapserver.mapy.cz/turist-en/retina/{z}-{x}-{y}',
+    attribution: '© Seznam.cz, a.s., © OpenStreetMap contributors',
+    maxZoom: 19,
+    headers: {'Referer': 'https://mapy.com/'},
+  );
+
+  static const esriWorldImagery = MapLayer(
+    type: MapLayerType.esriWorldImagery,
+    name: 'ESRI Satellite',
+    urlTemplate:
+        'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+    attribution: '© Esri',
+    maxZoom: 19, // ESRI World Imagery maximum
+  );
+
+  static const googleHybrid = MapLayer(
+    type: MapLayerType.googleHybrid,
+    name: 'Google Hybrid',
+    urlTemplate: 'http://mt0.google.com/vt/lyrs=y&hl=en&x={x}&y={y}&z={z}',
+    attribution: '© Google',
+    maxZoom: 20, // Google Maps maximum
+  );
+
+  static const googleRoadmap = MapLayer(
+    type: MapLayerType.googleRoadmap,
+    name: 'Google Roadmap',
+    urlTemplate: 'http://mt0.google.com/vt/lyrs=m&hl=en&x={x}&y={y}&z={z}',
+    attribution: '© Google',
+    maxZoom: 20, // Google Maps maximum
+  );
+
+  static const googleTerrain = MapLayer(
+    type: MapLayerType.googleTerrain,
+    name: 'Google Terrain',
+    urlTemplate: 'http://mt0.google.com/vt/lyrs=p&hl=en&x={x}&y={y}&z={z}',
+    attribution: '© Google',
+    maxZoom: 20, // Google Maps maximum
+  );
+
+  /// Slovenian Aerial Imagery 2024 (Ortofoto) - WMS Base Layer
+  /// Uses EPSG:3794 coordinate system (GeoWebCache tile matrix zoom 0-15)
+  /// Note: CRS is initialized at runtime in getSlovenianAerial2024()
+  static MapLayer getSlovenianAerial2024(Crs slovenianCrs) {
+    return MapLayer(
+      type: MapLayerType.wmsBase,
+      name: 'Ortofoto 2024 (Slovenija)',
+      urlTemplate: '', // Not used for WMS
+      attribution: '© GURS (Geodetska uprava Republike Slovenije)',
+      maxZoom: 15, // GeoWebCache tile matrix maximum
+      isWms: true,
+      wmsBaseUrl: 'https://prostor.zgs.gov.si/geowebcache/service/wms?',
+      wmsLayers: const ['pregledovalnik:DOF_2024'],
+      wmsFormat: 'image/jpeg',
+      wmsTransparent: false,
+      crs: slovenianCrs,
+    );
+  }
+
+  /// Slovenian Topographic Map 1:25000 (DTK25) - WMS Base Layer
+  /// Uses EPSG:3794 coordinate system (GeoWebCache tile matrix zoom 0-15)
+  /// Note: CRS is initialized at runtime in getDTK25()
+  static MapLayer getDTK25(Crs slovenianCrs) {
+    return MapLayer(
+      type: MapLayerType.wmsBase,
+      name: 'DTK25 (Slovenija)',
+      urlTemplate: '', // Not used for WMS
+      attribution: '© GURS (Geodetska uprava Republike Slovenije)',
+      maxZoom: 15, // GeoWebCache tile matrix maximum
+      isWms: true,
+      wmsBaseUrl: 'https://prostor.zgs.gov.si/geowebcache/service/wms?',
+      wmsLayers: const ['pregledovalnik:DTK25'],
+      wmsFormat: 'image/jpeg',
+      wmsTransparent: false,
+      crs: slovenianCrs,
+    );
+  }
+
+  static const List<MapLayer> allLayers = [
+    openStreetMap,
+    openTopoMap,
+    mapyOutdoor,
+    esriWorldImagery,
+    googleHybrid,
+    googleRoadmap,
+    googleTerrain,
+    // Note: Slovenian aerial layer is added dynamically via getSlovenianAerial2024()
+  ];
+
+  static MapLayer fromType(MapLayerType type) {
+    return allLayers.firstWhere((layer) => layer.type == type);
+  }
+}

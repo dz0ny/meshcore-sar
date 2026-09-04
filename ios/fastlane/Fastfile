@@ -1,0 +1,81 @@
+# This file contains the fastlane.tools configuration
+# You can find the documentation at https://docs.fastlane.tools
+#
+# For a list of all available actions, check out
+#
+#     https://docs.fastlane.tools/actions
+#
+# For a list of all available plugins, check out
+#
+#     https://docs.fastlane.tools/plugins/available-plugins
+#
+
+# Uncomment the line if you want fastlane to automatically update itself
+# update_fastlane
+
+default_platform(:ios)
+
+platform :ios do
+  def project_root
+    File.expand_path("../..", __dir__)
+  end
+
+  def beta_app_info
+    {
+      "en-US" => {
+        description: "Field-ready SAR coordination over MeshCore with chat, voice, images, offline maps, and live team context.",
+        feedback_email: "hey@dz0ny.dev",
+        marketing_url: "https://github.com/dz0ny/meshcore-sar",
+        privacy_policy_url: "https://github.com/dz0ny/meshcore-sar"
+      }
+    }
+  end
+
+  def beta_build_info
+    {
+      "en-US" => {
+        whats_new: "Test MeshCore SAR field coordination flows: messaging, maps, contacts, voice, images, and SAR markers."
+      }
+    }
+  end
+
+  desc "Push a new release build to the App Store"
+  lane :release do
+    increment_build_number(xcodeproj: "Runner.xcodeproj")
+    build_app(workspace: "Runner.xcworkspace", scheme: "Runner")
+    upload_to_testflight(
+      skip_waiting_for_build_processing: true,
+      localized_app_info: beta_app_info,
+      localized_build_info: beta_build_info,
+      changelog: "Test MeshCore SAR field coordination flows: messaging, maps, contacts, voice, images, and SAR markers."
+    )
+  end
+
+  desc "Push a new beta build to TestFlight"
+  lane :beta do
+    increment_build_number(xcodeproj: "Runner.xcodeproj")
+    build_app(workspace: "Runner.xcworkspace", scheme: "Runner")
+    upload_to_testflight(
+      skip_waiting_for_build_processing: true,
+      localized_app_info: beta_app_info,
+      localized_build_info: beta_build_info,
+      changelog: "Test MeshCore SAR field coordination flows: messaging, maps, contacts, voice, images, and SAR markers."
+    )
+  end
+
+  desc "Capture iOS screenshots for App Store Connect"
+  lane :screenshots do
+    sh("cd #{project_root} && scripts/take_screenshots.sh --ios")
+  end
+
+  desc "Upload App Store screenshots"
+  lane :store_assets do
+    upload_to_app_store(
+      skip_binary_upload: true,
+      skip_metadata: true,
+      skip_screenshots: false,
+      submit_for_review: false,
+      force: true
+    )
+  end
+end

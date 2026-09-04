@@ -1,0 +1,434 @@
+name: Build And Upload Release Assets
+
+on:
+  push:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+env:
+  FLUTTER_VERSION: "3.41.4"
+  APP_NAME: meshcore-sar
+  ANDROID_NDK_VERSION: "27.0.12077973"
+
+jobs:
+  build-android:
+    name: Build Android APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Setup Gradle cache
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+          pub-cache: true
+          cache-key: flutter-${{ runner.os }}-stable-${{ env.FLUTTER_VERSION }}-${{ runner.arch }}
+          pub-cache-key: flutter-pub-${{ runner.os }}-stable-${{ env.FLUTTER_VERSION }}-${{ runner.arch }}-${{ hashFiles('pubspec.lock') }}
+
+      - name: Setup Ruby
+        if: github.event_name == 'release'
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+          bundler-cache: true
+          working-directory: android
+
+      - name: Cache Android NDK
+        uses: actions/cache@v4
+        with:
+          path: |
+            /usr/local/lib/android/sdk/ndk/${{ env.ANDROID_NDK_VERSION }}
+            /usr/local/lib/android/sdk/licenses
+          key: ${{ runner.os }}-android-ndk-${{ env.ANDROID_NDK_VERSION }}
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Validate Android release secrets
+        if: github.event_name == 'release'
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          GOOGLE_PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+        run: |
+          test -n "$ANDROID_KEYSTORE_BASE64"
+          test -n "$ANDROID_KEYSTORE_PASSWORD"
+          test -n "$ANDROID_KEY_ALIAS"
+          test -n "$ANDROID_KEY_PASSWORD"
+          test -n "$GOOGLE_PLAY_SERVICE_ACCOUNT_JSON"
+
+      - name: Create Android signing files
+        if: github.event_name == 'release'
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > android/release-keystore.jks
+          cat <<EOF > android/key.properties
+          storePassword=$ANDROID_KEYSTORE_PASSWORD
+          keyPassword=$ANDROID_KEY_PASSWORD
+          keyAlias=$ANDROID_KEY_ALIAS
+          storeFile=../release-keystore.jks
+          EOF
+
+      - name: Build APK
+        run: flutter build apk --release
+
+      - name: Build Play release AAB
+        if: github.event_name == 'release'
+        run: flutter build appbundle --release
+
+      - name: Prepare Android artifacts
+        run: |
+          RAW_TAG="${{ github.event.release.tag_name || github.ref_name }}"
+          TAG="${RAW_TAG//\//-}"
+          cp build/app/outputs/flutter-apk/app-release.apk "${APP_NAME}-${TAG}-android.apk"
+          if [ -f build/app/outputs/bundle/release/app-release.aab ]; then
+            cp build/app/outputs/bundle/release/app-release.aab "${APP_NAME}-${TAG}-play.aab"
+          fi
+
+      - name: Upload Android artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-android
+          path: |
+            ${{ env.APP_NAME }}-*-android.apk
+            ${{ env.APP_NAME }}-*-play.aab
+          if-no-files-found: error
+
+      - name: Upload Play release to internal testing
+        if: github.event_name == 'release'
+        env:
+          GOOGLE_PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+          SKIP_ANDROID_BUILD: "1"
+        run: cd android && bundle exec fastlane android internal
+
+      - name: Upload Play release to production
+        if: github.event_name == 'release' && !github.event.release.prerelease
+        env:
+          GOOGLE_PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+          SKIP_ANDROID_BUILD: "1"
+        run: cd android && bundle exec fastlane android production
+
+  build-linux:
+    name: Build Linux App
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Linux build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            clang \
+            cmake \
+            ninja-build \
+            pkg-config \
+            libgtk-3-dev \
+            liblzma-dev \
+            libgstreamer1.0-dev \
+            libgstreamer-plugins-base1.0-dev
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+          pub-cache: true
+          cache-key: flutter-${{ runner.os }}-stable-${{ env.FLUTTER_VERSION }}-${{ runner.arch }}
+          pub-cache-key: flutter-pub-${{ runner.os }}-stable-${{ env.FLUTTER_VERSION }}-${{ runner.arch }}-${{ hashFiles('pubspec.lock') }}
+
+      - name: Enable Linux desktop
+        run: flutter config --enable-linux-desktop
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build Linux release
+        run: flutter build linux --release
+
+      - name: Package Linux artifact
+        run: |
+          RAW_TAG="${{ github.event.release.tag_name || github.ref_name }}"
+          TAG="${RAW_TAG//\//-}"
+          tar -C build/linux/x64/release -czf "${APP_NAME}-${TAG}-linux.tar.gz" bundle
+
+      - name: Upload Linux artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-linux
+          path: "${{ env.APP_NAME }}-*-linux.tar.gz"
+          if-no-files-found: error
+
+  build-windows:
+    name: Build Windows App
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+          pub-cache: true
+          cache-key: flutter-${{ runner.os }}-stable-${{ env.FLUTTER_VERSION }}-${{ runner.arch }}
+          pub-cache-key: flutter-pub-${{ runner.os }}-stable-${{ env.FLUTTER_VERSION }}-${{ runner.arch }}-${{ hashFiles('pubspec.lock') }}
+
+      - name: Enable Windows desktop
+        shell: pwsh
+        run: flutter config --enable-windows-desktop
+
+      - name: Install dependencies
+        shell: pwsh
+        run: flutter pub get
+
+      - name: Build Windows release
+        shell: pwsh
+        run: flutter build windows --release
+
+      - name: Package Windows artifact
+        shell: pwsh
+        run: |
+          $RawTag = "${{ github.event.release.tag_name || github.ref_name }}"
+          $Tag = $RawTag -replace '/', '-'
+          $Output = "${{ env.APP_NAME }}-$Tag-windows.zip"
+          Compress-Archive -Path "build/windows/x64/runner/Release/*" -DestinationPath $Output
+
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-windows
+          path: "${{ env.APP_NAME }}-*-windows.zip"
+          if-no-files-found: error
+
+  build-macos:
+    name: Build macOS DMG
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+          pub-cache: true
+          cache-key: flutter-${{ runner.os }}-stable-${{ env.FLUTTER_VERSION }}-${{ runner.arch }}
+          pub-cache-key: flutter-pub-${{ runner.os }}-stable-${{ env.FLUTTER_VERSION }}-${{ runner.arch }}-${{ hashFiles('pubspec.lock') }}
+
+      - name: Enable macOS desktop
+        run: flutter config --enable-macos-desktop
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Install macOS native build tools
+        run: brew install automake libtool
+
+      - name: Build macOS release
+        run: flutter build macos --release
+
+      - name: Create DMG
+        run: |
+          RAW_TAG="${{ github.event.release.tag_name || github.ref_name }}"
+          TAG="${RAW_TAG//\//-}"
+          APP_PATH=$(find build/macos/Build/Products/Release -maxdepth 1 -name "*.app" -print -quit)
+          if [ -z "$APP_PATH" ]; then
+            echo "No .app bundle found in build output"
+            exit 1
+          fi
+          hdiutil create -volname "MeshCore SAR" -srcfolder "$APP_PATH" -ov -format UDZO "${APP_NAME}-${TAG}-macos.dmg"
+
+      - name: Upload macOS artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-macos
+          path: "${{ env.APP_NAME }}-*-macos.dmg"
+          if-no-files-found: error
+
+  build-ios:
+    name: Build iOS Archive (Manual Signing)
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+          pub-cache: true
+          cache-key: flutter-${{ runner.os }}-stable-${{ env.FLUTTER_VERSION }}-${{ runner.arch }}
+          pub-cache-key: flutter-pub-${{ runner.os }}-stable-${{ env.FLUTTER_VERSION }}-${{ runner.arch }}-${{ hashFiles('pubspec.lock') }}
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build iOS app (no codesign)
+        run: flutter build ios --release --no-codesign
+
+      - name: Package iOS unsigned artifacts
+        run: |
+          RAW_TAG="${{ github.event.release.tag_name || github.ref_name }}"
+          TAG="${RAW_TAG//\//-}"
+          APP_PATH="build/ios/iphoneos/Runner.app"
+          IPA_NAME="${APP_NAME}-${TAG}-ios-unsigned.ipa"
+          RUNNER_ZIP_NAME="${APP_NAME}-${TAG}-ios-runner-app.zip"
+          if [ ! -d "$APP_PATH" ]; then
+            echo "Runner.app not found at $APP_PATH"
+            exit 1
+          fi
+
+          mkdir -p ios_payload/Payload
+          cp -R "$APP_PATH" ios_payload/Payload/
+          (
+            cd ios_payload
+            zip -qry "../${IPA_NAME}" Payload
+          )
+          rm -rf ios_payload
+
+          zip -qry "${RUNNER_ZIP_NAME}" "$APP_PATH"
+
+          echo "IOS_IPA=${IPA_NAME}" >> "$GITHUB_ENV"
+          echo "IOS_RUNNER_ZIP=${RUNNER_ZIP_NAME}" >> "$GITHUB_ENV"
+          ls -lah "${IPA_NAME}" "${RUNNER_ZIP_NAME}"
+
+      - name: Upload iOS artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-ios
+          path: |
+            ${{ env.IOS_IPA }}
+            ${{ env.IOS_RUNNER_ZIP }}
+          if-no-files-found: error
+
+  build-web:
+    name: Build Web App
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+          pub-cache: true
+          cache-key: flutter-${{ runner.os }}-stable-${{ env.FLUTTER_VERSION }}-${{ runner.arch }}
+          pub-cache-key: flutter-pub-${{ runner.os }}-stable-${{ env.FLUTTER_VERSION }}-${{ runner.arch }}-${{ hashFiles('pubspec.lock') }}
+
+      - name: Enable web
+        run: flutter config --enable-web
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build web release
+        run: flutter build web --wasm --release --base-href /meshcore-sar/
+
+      - name: Upload pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: build/web
+
+  deploy-pages:
+    name: Deploy to GitHub Pages
+    runs-on: ubuntu-latest
+    needs: build-web
+    if: github.ref == 'refs/heads/main'
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+  upload-release-assets:
+    name: Upload Assets To Release
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    needs:
+      - build-android
+      - build-linux
+      - build-windows
+      - build-macos
+      - build-ios
+
+    steps:
+      - name: Download all build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: release-*
+          path: dist
+          merge-multiple: true
+
+      - name: Upload assets to published release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event.release.tag_name || github.ref_name }}
+          body: |
+            Release assets are published for all supported build targets:
+            - Android (`.apk`)
+            - Google Play (`.aab`)
+            - Linux (`.tar.gz`)
+            - macOS (`.dmg`)
+            - Windows (`.zip`)
+            - iOS unsigned (`-ios-unsigned.ipa`, `-ios-runner-app.zip`)
+
+            Windows status: currently unusable. The BLE stack on Windows is broken, so BLE features do not work.
+
+            iOS manual signing and install:
+            1. Download `*-ios-unsigned.ipa` (or `*-ios-runner-app.zip`) from this release.
+            2. Re-sign it with your Apple Development/Distribution certificate and provisioning profile.
+            3. If you used `*-ios-runner-app.zip`, create a signed `.ipa` from `Runner.app` during signing.
+            4. Install the signed `.ipa` on your iPhone using Apple Configurator 2 or Xcode (Devices and Simulators).
+          files: |
+            dist/*.apk
+            dist/*.aab
+            dist/*.tar.gz
+            dist/*.zip
+            dist/*.dmg
+            dist/*-ios-unsigned.ipa
+            dist/*-ios-runner-app.zip
+          fail_on_unmatched_files: true

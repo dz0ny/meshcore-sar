@@ -1,0 +1,14 @@
+MeshCore SAR gives search and rescue teams a field-ready coordination workspace for low-connectivity operations.
+
+Use mesh chat, live location context, SAR markers, offline-first maps, tactical drawings, voice clips, and compressed image transfer in one app. The app is built around MeshCore and BLE so teams can coordinate over LoRa links when normal infrastructure is weak or unavailable.
+
+Key capabilities:
+- Direct and group mesh messaging
+- Live team contacts with signal, battery, and location context
+- Offline maps with SAR markers and tactical overlays
+- Voice clips optimized for low-bandwidth links
+- Image transfer with compact encoding
+- GPX trail import/export
+- Incident, staging, and discovery workflows for field teams
+
+MeshCore SAR is intended for search and rescue field teams, incident command, and operators who need practical coordination tools outside normal coverage.

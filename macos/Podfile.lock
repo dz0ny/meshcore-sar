@@ -1,0 +1,47 @@
+PODS:
+  - codec2_flutter (0.1.0):
+    - FlutterMacOS
+  - flutter_avif_macos (0.0.1):
+    - FlutterMacOS
+  - flutter_libserialport (0.0.1):
+    - FlutterMacOS
+    - libserialport
+  - FlutterMacOS (1.0.0)
+  - libserialport (0.1.1)
+  - nsd_macos (0.0.1):
+    - FlutterMacOS
+
+DEPENDENCIES:
+  - codec2_flutter (from `Flutter/ephemeral/.symlinks/plugins/codec2_flutter/macos`)
+  - flutter_avif_macos (from `Flutter/ephemeral/.symlinks/plugins/flutter_avif_macos/macos`)
+  - flutter_libserialport (from `Flutter/ephemeral/.symlinks/plugins/flutter_libserialport/macos`)
+  - FlutterMacOS (from `Flutter/ephemeral`)
+  - nsd_macos (from `Flutter/ephemeral/.symlinks/plugins/nsd_macos/macos`)
+
+SPEC REPOS:
+  trunk:
+    - libserialport
+
+EXTERNAL SOURCES:
+  codec2_flutter:
+    :path: Flutter/ephemeral/.symlinks/plugins/codec2_flutter/macos
+  flutter_avif_macos:
+    :path: Flutter/ephemeral/.symlinks/plugins/flutter_avif_macos/macos
+  flutter_libserialport:
+    :path: Flutter/ephemeral/.symlinks/plugins/flutter_libserialport/macos
+  FlutterMacOS:
+    :path: Flutter/ephemeral
+  nsd_macos:
+    :path: Flutter/ephemeral/.symlinks/plugins/nsd_macos/macos
+
+SPEC CHECKSUMS:
+  codec2_flutter: 50d930e6a1a187f05891b89300c6ef589651bfbd
+  flutter_avif_macos: 9ed61d67adfbd6964eccb59971020fb55c31fc11
+  flutter_libserialport: 2c523cb8d8203fc6d1b0da88190da31ac970eb93
+  FlutterMacOS: d0db08ddef1a9af05a5ec4b724367152bb0500b1
+  libserialport: 1cb25e66ef3c92a8e59c2ea3820302c3fa2268cd
+  nsd_macos: a472240e770b92f6c6df1022403aa29c90d012e3
+
+PODFILE CHECKSUM: 467066e8d30d1105257e0877b8cdd20642e7b3db
+
+COCOAPODS: 1.16.2

@@ -1,0 +1,2617 @@
+{
+  "@@locale": "uk",
+  "appTitle": "MeshCore SAR",
+  "@appTitle": {
+    "description": "The application title"
+  },
+  "messages": "Повідомлення",
+  "@messages": {
+    "description": "Messages tab label"
+  },
+  "contacts": "Контакти",
+  "@contacts": {
+    "description": "Contacts tab label"
+  },
+  "map": "Мапа",
+  "@map": {
+    "description": "Map tab label"
+  },
+  "settings": "Налаштування",
+  "@settings": {
+    "description": "Settings screen title"
+  },
+  "connect": "Підключити",
+  "@connect": {
+    "description": "Connect button label"
+  },
+  "disconnect": "Відключити",
+  "@disconnect": {
+    "description": "Disconnect button label"
+  },
+  "noDevicesFound": "Пристроїв не знайдено",
+  "@noDevicesFound": {
+    "description": "Text shown when no BLE devices are found"
+  },
+  "scanAgain": "Сканувати знову",
+  "@scanAgain": {
+    "description": "Button to restart BLE scanning"
+  },
+  "deviceNotConnected": "Пристрій не підключено",
+  "@deviceNotConnected": {
+    "description": "Error message when device is not connected"
+  },
+  "locationPermissionDenied": "Доступ до геолокації відхилено",
+  "@locationPermissionDenied": {
+    "description": "Error when location permission is denied"
+  },
+  "locationPermissionPermanentlyDenied": "Дозвіл на геолокацію назавжди відхилено. Увімкніть його в Налаштуваннях.",
+  "@locationPermissionPermanentlyDenied": {
+    "description": "Error when location permission is permanently denied"
+  },
+  "locationPermissionRequired": "Для GPS-відстеження та координації команди потрібен дозвіл на геолокацію. Ви можете ввімкнути його пізніше в Налаштуваннях.",
+  "@locationPermissionRequired": {
+    "description": "Message when location permission is needed"
+  },
+  "locationServicesDisabled": "Служби геолокації вимкнені. Увімкніть їх у Налаштуваннях.",
+  "@locationServicesDisabled": {
+    "description": "Error when location services are disabled"
+  },
+  "failedToGetGpsLocation": "Не вдалося отримати GPS-координати",
+  "@failedToGetGpsLocation": {
+    "description": "Error when GPS location cannot be obtained"
+  },
+  "failedToAdvertise": "Не вдалося транслювати: {error}",
+  "@failedToAdvertise": {
+    "description": "Error message for failed advertisement",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "cancelReconnection": "Скасувати повторне підключення",
+  "@cancelReconnection": {
+    "description": "Tooltip for cancel reconnection button"
+  },
+  "general": "Загальні",
+  "@general": {
+    "description": "General settings section header"
+  },
+  "theme": "Тема",
+  "@theme": {
+    "description": "Theme setting label"
+  },
+  "chooseTheme": "Вибрати тему",
+  "@chooseTheme": {
+    "description": "Theme selection dialog title"
+  },
+  "light": "Світла",
+  "@light": {
+    "description": "Light theme option"
+  },
+  "dark": "Темна",
+  "@dark": {
+    "description": "Dark theme option"
+  },
+  "blueLightTheme": "Світло-синя тема",
+  "@blueLightTheme": {
+    "description": "Description for blue light theme"
+  },
+  "blueDarkTheme": "Темно-синя тема",
+  "@blueDarkTheme": {
+    "description": "Description for blue dark theme"
+  },
+  "sarRed": "SAR Червоний",
+  "@sarRed": {
+    "description": "SAR Red theme option"
+  },
+  "alertEmergencyMode": "Режим тривоги/надзвичайної ситуації",
+  "@alertEmergencyMode": {
+    "description": "Description for SAR Red theme"
+  },
+  "sarGreen": "SAR Зелений",
+  "@sarGreen": {
+    "description": "SAR Green theme option"
+  },
+  "safeAllClearMode": "Безпечний режим/усе чисто",
+  "@safeAllClearMode": {
+    "description": "Description for SAR Green theme"
+  },
+  "autoSystem": "Авто (система)",
+  "@autoSystem": {
+    "description": "Auto/System theme option"
+  },
+  "followSystemTheme": "Слідувати системній темі",
+  "@followSystemTheme": {
+    "description": "Description for system theme"
+  },
+  "showRxTxIndicators": "Показувати індикатори RX/TX",
+  "@showRxTxIndicators": {
+    "description": "Setting to show RX/TX indicators"
+  },
+  "disableMap": "Вимкнути мапу",
+  "@disableMap": {
+    "description": "Setting to disable the map tab"
+  },
+  "language": "Мова",
+  "@language": {
+    "description": "Language setting label"
+  },
+  "chooseLanguage": "Вибрати мову",
+  "@chooseLanguage": {
+    "description": "Language selection dialog title"
+  },
+  "save": "Зберегти",
+  "@save": {
+    "description": "Save button label"
+  },
+  "cancel": "Скасувати",
+  "@cancel": {
+    "description": "Cancel button label"
+  },
+  "close": "Закрити",
+  "@close": {
+    "description": "Close button label"
+  },
+  "about": "Про програму",
+  "@about": {
+    "description": "About section header"
+  },
+  "appVersion": "Версія застосунку",
+  "@appVersion": {
+    "description": "App version label"
+  },
+  "aboutMeshCoreSar": "Про MeshCore SAR",
+  "@aboutMeshCoreSar": {
+    "description": "About dialog title"
+  },
+  "aboutDescription": "Застосунок для пошуку та рятування, створений для команд екстреного реагування. Можливості:\n\n• BLE mesh-мережа для зв’язку між пристроями\n• Офлайн-мапи з кількома шарами\n• Відстеження членів команди в реальному часі\n• Тактичні маркери SAR (знайдена людина, пожежа, зона збору)\n• Керування контактами та повідомленнями\n• GPS-відстеження з компасом\n• Кешування тайлів мапи для офлайн-використання",
+  "@aboutDescription": {
+    "description": "About dialog description"
+  },
+  "technologiesUsed": "Використані технології:",
+  "@technologiesUsed": {
+    "description": "Technologies used section title"
+  },
+  "technologiesList": "• Flutter для кросплатформної розробки\n• BLE (Bluetooth Low Energy) для mesh-мережі\n• OpenStreetMap для мап\n• Provider для керування станом\n• SharedPreferences для локального зберігання",
+  "@technologiesList": {
+    "description": "List of technologies used"
+  },
+  "moreInfo": "Більше інформації",
+  "@moreInfo": {
+    "description": "More info button label"
+  },
+  "packageName": "Назва пакета",
+  "@packageName": {
+    "description": "Package name label"
+  },
+  "sampleData": "Тестові дані",
+  "@sampleData": {
+    "description": "Sample data section header"
+  },
+  "sampleDataDescription": "Завантажити або очистити тестові контакти, повідомлення каналів і маркери SAR для перевірки",
+  "@sampleDataDescription": {
+    "description": "Sample data section description"
+  },
+  "loadSampleData": "Завантажити тестові дані",
+  "@loadSampleData": {
+    "description": "Load sample data button"
+  },
+  "clearAllData": "Очистити всі дані",
+  "@clearAllData": {
+    "description": "Clear all data button"
+  },
+  "clearAllDataConfirmTitle": "Очистити всі дані",
+  "@clearAllDataConfirmTitle": {
+    "description": "Clear data confirmation dialog title"
+  },
+  "clearAllDataConfirmMessage": "Це очистить усі контакти та маркери SAR. Ви впевнені?",
+  "@clearAllDataConfirmMessage": {
+    "description": "Clear data confirmation message"
+  },
+  "clear": "Очистити",
+  "@clear": {
+    "description": "Clear button label"
+  },
+  "loadedSampleData": "Завантажено {teamCount} членів команди, {channelCount} каналів, {sarCount} маркерів SAR, {messageCount} повідомлень",
+  "@loadedSampleData": {
+    "description": "Success message after loading sample data",
+    "placeholders": {
+      "teamCount": {
+        "type": "int"
+      },
+      "channelCount": {
+        "type": "int"
+      },
+      "sarCount": {
+        "type": "int"
+      },
+      "messageCount": {
+        "type": "int"
+      }
+    }
+  },
+  "failedToLoadSampleData": "Не вдалося завантажити тестові дані: {error}",
+  "@failedToLoadSampleData": {
+    "description": "Error message when sample data fails to load",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "allDataCleared": "Усі дані очищено",
+  "@allDataCleared": {
+    "description": "Success message after clearing all data"
+  },
+  "failedToStartBackgroundTracking": "Не вдалося запустити фонове відстеження. Перевірте дозволи та BLE-з’єднання.",
+  "@failedToStartBackgroundTracking": {
+    "description": "Error message when background tracking fails to start"
+  },
+  "locationBroadcast": "Трансляція місцезнаходження: {latitude}, {longitude}",
+  "@locationBroadcast": {
+    "description": "Success message for location broadcast",
+    "placeholders": {
+      "latitude": {
+        "type": "String"
+      },
+      "longitude": {
+        "type": "String"
+      }
+    }
+  },
+  "defaultPinInfo": "Стандартний PIN для пристроїв без екрана - 123456. Проблеми зі сполученням? Видаліть Bluetooth-пристрій у системних налаштуваннях.",
+  "@defaultPinInfo": {
+    "description": "Information about default PIN for pairing"
+  },
+  "noMessagesYet": "Повідомлень ще немає",
+  "@noMessagesYet": {
+    "description": "Empty state message when there are no messages"
+  },
+  "pullDownToSync": "Потягніть вниз, щоб синхронізувати повідомлення",
+  "@pullDownToSync": {
+    "description": "Instruction to pull down to refresh messages"
+  },
+  "deleteContact": "Видалити контакт",
+  "@deleteContact": {
+    "description": "Delete contact action label"
+  },
+  "delete": "Видалити",
+  "@delete": {
+    "description": "Delete button label"
+  },
+  "viewOnMap": "Показати на мапі",
+  "@viewOnMap": {
+    "description": "Action to view contact location on map"
+  },
+  "refresh": "Оновити",
+  "@refresh": {
+    "description": "Refresh button label"
+  },
+  "resetPath": "Скинути маршрут (побудувати заново)",
+  "@resetPath": {
+    "description": "Action to reset contact path for re-routing"
+  },
+  "copiedToClipboard": "{label} скопійовано в буфер обміну",
+  "@copiedToClipboard": {
+    "description": "Success message when a value is copied to clipboard",
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "pleaseEnterPassword": "Будь ласка, введіть пароль",
+  "@pleaseEnterPassword": {
+    "description": "Validation message for empty password field"
+  },
+  "failedToSyncContacts": "Не вдалося синхронізувати контакти: {error}",
+  "@failedToSyncContacts": {
+    "description": "Error message when contact sync fails",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "loggedInSuccessfully": "Вхід виконано успішно! Очікування повідомлень кімнати...",
+  "@loggedInSuccessfully": {
+    "description": "Success message after successful room login"
+  },
+  "loginFailed": "Помилка входу - неправильний пароль",
+  "@loginFailed": {
+    "description": "Error message when room login fails"
+  },
+  "loggingIn": "Вхід до {roomName}...",
+  "@loggingIn": {
+    "description": "Status message during room login process",
+    "placeholders": {
+      "roomName": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToSendLogin": "Не вдалося надіслати вхід: {error}",
+  "@failedToSendLogin": {
+    "description": "Error message when login command fails to send",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "lowLocationAccuracy": "Низька точність геолокації",
+  "@lowLocationAccuracy": {
+    "description": "Warning title for low GPS accuracy"
+  },
+  "continue_": "Продовжити",
+  "@continue_": {
+    "description": "Continue button label"
+  },
+  "sendSarMarker": "Надіслати маркер SAR",
+  "@sendSarMarker": {
+    "description": "Action to send SAR marker"
+  },
+  "deleteDrawing": "Видалити рисунок",
+  "@deleteDrawing": {
+    "description": "Action to delete a map drawing"
+  },
+  "drawingTools": "Інструменти малювання",
+  "@drawingTools": {
+    "description": "Drawing tools section or menu title"
+  },
+  "drawLine": "Намалювати лінію",
+  "@drawLine": {
+    "description": "Map drawing mode: line"
+  },
+  "drawLineDesc": "Намалювати довільну лінію на мапі",
+  "@drawLineDesc": {
+    "description": "Description for line drawing mode"
+  },
+  "drawRectangle": "Намалювати прямокутник",
+  "@drawRectangle": {
+    "description": "Map drawing mode: rectangle"
+  },
+  "drawRectangleDesc": "Намалювати прямокутну область на мапі",
+  "@drawRectangleDesc": {
+    "description": "Description for rectangle drawing mode"
+  },
+  "measureDistance": "Виміряти відстань",
+  "@measureDistance": {
+    "description": "Map drawing mode: measure distance"
+  },
+  "measureDistanceDesc": "Затисніть дві точки, щоб виміряти",
+  "@measureDistanceDesc": {
+    "description": "Description for distance measurement mode"
+  },
+  "clearMeasurement": "Очистити вимірювання",
+  "@clearMeasurement": {
+    "description": "Tooltip to clear measurement"
+  },
+  "distanceLabel": "Відстань: {distance}",
+  "@distanceLabel": {
+    "description": "Label showing measured distance",
+    "placeholders": {
+      "distance": {
+        "type": "String"
+      }
+    }
+  },
+  "longPressForSecondPoint": "Затисніть для другої точки",
+  "@longPressForSecondPoint": {
+    "description": "Instruction when first measurement point is set"
+  },
+  "longPressToStartMeasurement": "Затисніть, щоб встановити першу точку",
+  "@longPressToStartMeasurement": {
+    "description": "Instruction to start measurement"
+  },
+  "longPressToStartNewMeasurement": "Затисніть, щоб почати нове вимірювання",
+  "@longPressToStartNewMeasurement": {
+    "description": "Instruction to restart measurement after completion"
+  },
+  "shareDrawings": "Поділитися рисунками",
+  "@shareDrawings": {
+    "description": "Action to share drawings to network"
+  },
+  "clearAllDrawings": "Очистити всі рисунки",
+  "@clearAllDrawings": {
+    "description": "Action to clear all local drawings"
+  },
+  "completeLine": "Завершити лінію",
+  "@completeLine": {
+    "description": "Tooltip to complete drawing a line"
+  },
+  "broadcastDrawingsToTeam": "Транслювати {count} рисунок{plural} команді",
+  "@broadcastDrawingsToTeam": {
+    "description": "Subtitle showing how many drawings will be broadcast",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "plural": {
+        "type": "String"
+      }
+    }
+  },
+  "removeAllDrawings": "Видалити всі {count} рисунок{plural}",
+  "@removeAllDrawings": {
+    "description": "Subtitle for remove all drawings action",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "plural": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteAllDrawingsConfirm": "Видалити всі {count} рисунок{plural} з мапи?",
+  "@deleteAllDrawingsConfirm": {
+    "description": "Confirmation dialog message for deleting all drawings",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "plural": {
+        "type": "String"
+      }
+    }
+  },
+  "drawing": "Рисунок",
+  "@drawing": {
+    "description": "Generic drawing label"
+  },
+  "shareDrawingsCount": "Поділитися {count} рисунок{plural}",
+  "@shareDrawingsCount": {
+    "description": "Title for share drawings dialog",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "plural": {
+        "type": "String"
+      }
+    }
+  },
+  "showReceivedDrawings": "Показати отримані рисунки",
+  "@showReceivedDrawings": {
+    "description": "Toggle to show/hide received drawings from other team members"
+  },
+  "showingAllDrawings": "Показуються всі рисунки",
+  "@showingAllDrawings": {
+    "description": "Subtitle when received drawings are visible"
+  },
+  "showingOnlyYourDrawings": "Показуються лише ваші рисунки",
+  "@showingOnlyYourDrawings": {
+    "description": "Subtitle when received drawings are hidden"
+  },
+  "showSarMarkers": "Показати маркери SAR",
+  "@showSarMarkers": {
+    "description": "Toggle to show/hide SAR markers on map"
+  },
+  "showingSarMarkers": "Показуються маркери SAR",
+  "@showingSarMarkers": {
+    "description": "Subtitle when SAR markers are visible"
+  },
+  "hidingSarMarkers": "Приховування маркерів SAR",
+  "@hidingSarMarkers": {
+    "description": "Subtitle when SAR markers are hidden"
+  },
+  "clearAll": "Очистити все",
+  "@clearAll": {
+    "description": "Clear all button label"
+  },
+  "publicChannel": "Публічний канал",
+  "@publicChannel": {
+    "description": "Public channel option for sharing"
+  },
+  "broadcastToAll": "Транслювати всім сусіднім вузлам (тимчасово)",
+  "@broadcastToAll": {
+    "description": "Description for public channel broadcast"
+  },
+  "storedPermanently": "Постійно збережено в кімнаті",
+  "@storedPermanently": {
+    "description": "Description for room storage permanence"
+  },
+  "notConnectedToDevice": "Не підключено до пристрою",
+  "@notConnectedToDevice": {
+    "description": "Error message when device is not connected for direct messaging"
+  },
+  "typeYourMessage": "Введіть повідомлення...",
+  "@typeYourMessage": {
+    "description": "Placeholder text for message input field"
+  },
+  "quickLocationMarker": "Швидкий маркер місця",
+  "@quickLocationMarker": {
+    "description": "Subtitle for SAR marker sheet header"
+  },
+  "markerType": "Тип маркера",
+  "@markerType": {
+    "description": "Label for marker type selection section"
+  },
+  "sendTo": "Надіслати до",
+  "@sendTo": {
+    "description": "Label for destination selection section"
+  },
+  "noDestinationsAvailable": "Немає доступних отримувачів.",
+  "@noDestinationsAvailable": {
+    "description": "Warning when no rooms or channels exist"
+  },
+  "selectDestination": "Виберіть отримувача...",
+  "@selectDestination": {
+    "description": "Placeholder for destination dropdown"
+  },
+  "ephemeralBroadcastInfo": "Тимчасове: транслюється лише по радіо. Не зберігається - вузли мають бути онлайн.",
+  "@ephemeralBroadcastInfo": {
+    "description": "Information about ephemeral channel broadcasts"
+  },
+  "persistentRoomInfo": "Постійне: незмінно зберігається в кімнаті. Автоматично синхронізується і зберігається офлайн.",
+  "@persistentRoomInfo": {
+    "description": "Information about persistent room storage"
+  },
+  "location": "Місцезнаходження",
+  "@location": {
+    "description": "Label for location section"
+  },
+  "fromMap": "З мапи",
+  "@fromMap": {
+    "description": "Badge showing location is from map tap"
+  },
+  "gettingLocation": "Отримання місцезнаходження...",
+  "@gettingLocation": {
+    "description": "Loading message while fetching GPS location"
+  },
+  "locationError": "Помилка геолокації",
+  "@locationError": {
+    "description": "Title for location error messages"
+  },
+  "retry": "Повторити",
+  "@retry": {
+    "description": "Retry button label"
+  },
+  "refreshLocation": "Оновити місцезнаходження",
+  "@refreshLocation": {
+    "description": "Tooltip for refresh location button"
+  },
+  "accuracyMeters": "Точність: ±{accuracy}м",
+  "@accuracyMeters": {
+    "description": "Display of GPS accuracy in meters",
+    "placeholders": {
+      "accuracy": {
+        "type": "int"
+      }
+    }
+  },
+  "notesOptional": "Нотатки (необов’язково)",
+  "@notesOptional": {
+    "description": "Label for optional notes field"
+  },
+  "addAdditionalInformation": "Додайте додаткову інформацію...",
+  "@addAdditionalInformation": {
+    "description": "Placeholder for notes field"
+  },
+  "lowAccuracyWarning": "Точність місцезнаходження становить ±{accuracy}м. Це може бути недостатньо точно для операцій SAR.\n\nПродовжити все одно?",
+  "@lowAccuracyWarning": {
+    "description": "Warning dialog content for low GPS accuracy",
+    "placeholders": {
+      "accuracy": {
+        "type": "int"
+      }
+    }
+  },
+  "loginToRoom": "Увійти до кімнати",
+  "@loginToRoom": {
+    "description": "Title for room login dialog"
+  },
+  "enterPasswordInfo": "Введіть пароль для доступу до цієї кімнати. Пароль буде збережено для подальшого використання.",
+  "@enterPasswordInfo": {
+    "description": "Information about room password"
+  },
+  "password": "Пароль",
+  "@password": {
+    "description": "Password field label"
+  },
+  "enterRoomPassword": "Введіть пароль кімнати",
+  "@enterRoomPassword": {
+    "description": "Password field hint"
+  },
+  "loggingInDots": "Вхід...",
+  "@loggingInDots": {
+    "description": "Button text while logging in"
+  },
+  "login": "Увійти",
+  "@login": {
+    "description": "Login button label"
+  },
+  "failedToAddRoom": "Не вдалося додати кімнату до пристрою: {error}\n\nМожливо, кімната ще не почала трансляцію.\nСпробуйте зачекати, поки вона почне транслюватися.",
+  "@failedToAddRoom": {
+    "description": "Error message when adding room fails",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "direct": "Напряму",
+  "@direct": {
+    "description": "Direct routing indicator"
+  },
+  "flood": "Широкомовно",
+  "@flood": {
+    "description": "Flood routing indicator"
+  },
+  "loggedIn": "Увійшли",
+  "@loggedIn": {
+    "description": "Logged in status badge"
+  },
+  "noGpsData": "Немає GPS-даних",
+  "@noGpsData": {
+    "description": "Message when GPS data is not available"
+  },
+  "distance": "Відстань",
+  "@distance": {
+    "description": "Distance label"
+  },
+  "directPingTimeout": "Час очікування прямого ping вичерпано - повторна спроба для {name} через flooding...",
+  "@directPingTimeout": {
+    "description": "Warning when direct ping times out",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "pingFailed": "Ping до {name} не вдався - відповіді не отримано",
+  "@pingFailed": {
+    "description": "Error message when ping fails",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteContactConfirmation": "Ви впевнені, що хочете видалити \"{name}\"?\n\nЦе видалить контакт і з застосунку, і з пов’язаного радіопристрою.",
+  "@deleteContactConfirmation": {
+    "description": "Confirmation message for deleting contact",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToRemoveContact": "Не вдалося видалити контакт: {error}",
+  "@failedToRemoveContact": {
+    "description": "Error message when contact removal fails",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "type": "Тип",
+  "@type": {
+    "description": "Contact type label"
+  },
+  "publicKey": "Публічний ключ",
+  "@publicKey": {
+    "description": "Public key label"
+  },
+  "lastSeen": "Востаннє бачили",
+  "@lastSeen": {
+    "description": "Last seen label"
+  },
+  "yes": "Так",
+  "@yes": {
+    "description": "Yes answer"
+  },
+  "no": "Ні",
+  "@no": {
+    "description": "No answer"
+  },
+  "permissions": "Дозволи",
+  "@permissions": {
+    "description": "Permissions label"
+  },
+  "telemetry": "Телеметрія",
+  "@telemetry": {
+    "description": "Telemetry section header"
+  },
+  "voltage": "Напруга",
+  "@voltage": {
+    "description": "Voltage label"
+  },
+  "battery": "Батарея",
+  "@battery": {
+    "description": "Battery label"
+  },
+  "temperature": "Температура",
+  "@temperature": {
+    "description": "Temperature label"
+  },
+  "humidity": "Вологість",
+  "@humidity": {
+    "description": "Humidity label"
+  },
+  "pressure": "Тиск",
+  "@pressure": {
+    "description": "Pressure label"
+  },
+  "gpsTelemetry": "GPS (телеметрія)",
+  "@gpsTelemetry": {
+    "description": "GPS from telemetry label"
+  },
+  "reLoginToRoom": "Повторно увійти до кімнати",
+  "@reLoginToRoom": {
+    "description": "Button to re-login to room"
+  },
+  "heading": "Напрямок",
+  "@heading": {
+    "description": "Compass heading label"
+  },
+  "elevation": "Висота",
+  "@elevation": {
+    "description": "Elevation/altitude label"
+  },
+  "accuracy": "Точність",
+  "@accuracy": {
+    "description": "GPS accuracy label"
+  },
+  "bearing": "Пеленг",
+  "@bearing": {
+    "description": "Bearing label in compass"
+  },
+  "direction": "Напрямок",
+  "@direction": {
+    "description": "Direction label in compass"
+  },
+  "filterMarkers": "Фільтрувати маркери",
+  "@filterMarkers": {
+    "description": "Title for filter markers dialog"
+  },
+  "filterMarkersTooltip": "Фільтрувати маркери",
+  "@filterMarkersTooltip": {
+    "description": "Tooltip for filter button"
+  },
+  "contactsFilter": "Контакти",
+  "@contactsFilter": {
+    "description": "Filter option for contacts"
+  },
+  "repeatersFilter": "Ретранслятори",
+  "@repeatersFilter": {
+    "description": "Filter option for repeaters"
+  },
+  "sarMarkers": "Маркери SAR",
+  "@sarMarkers": {
+    "description": "SAR markers section header"
+  },
+  "foundPerson": "Знайдена людина",
+  "@foundPerson": {
+    "description": "Found person SAR marker type"
+  },
+  "fire": "Пожежа",
+  "@fire": {
+    "description": "Fire SAR marker type"
+  },
+  "stagingArea": "Зона збору",
+  "@stagingArea": {
+    "description": "Staging area SAR marker type"
+  },
+  "showAll": "Показати все",
+  "@showAll": {
+    "description": "Button to show all filters"
+  },
+  "locationUnavailable": "Місцезнаходження недоступне",
+  "@locationUnavailable": {
+    "description": "Message when GPS location is unavailable"
+  },
+  "ahead": "попереду",
+  "@ahead": {
+    "description": "Relative bearing direction - ahead"
+  },
+  "degreesRight": "{degrees}° праворуч",
+  "@degreesRight": {
+    "description": "Relative bearing direction - right",
+    "placeholders": {
+      "degrees": {
+        "type": "int"
+      }
+    }
+  },
+  "degreesLeft": "{degrees}° ліворуч",
+  "@degreesLeft": {
+    "description": "Relative bearing direction - left",
+    "placeholders": {
+      "degrees": {
+        "type": "int"
+      }
+    }
+  },
+  "latLonFormat": "Шир.: {latitude} Довг.: {longitude}",
+  "@latLonFormat": {
+    "description": "Latitude and longitude display format",
+    "placeholders": {
+      "latitude": {
+        "type": "String"
+      },
+      "longitude": {
+        "type": "String"
+      }
+    }
+  },
+  "noContactsYet": "Контактів ще немає",
+  "@noContactsYet": {
+    "description": "Empty state message when there are no contacts"
+  },
+  "connectToDeviceToLoadContacts": "Підключіться до пристрою, щоб завантажити контакти",
+  "@connectToDeviceToLoadContacts": {
+    "description": "Instruction to connect device to load contacts"
+  },
+  "teamMembers": "Члени команди",
+  "@teamMembers": {
+    "description": "Section header for team members (chat contacts)"
+  },
+  "repeaters": "Ретранслятори",
+  "@repeaters": {
+    "description": "Section header for repeater nodes"
+  },
+  "rooms": "Кімнати",
+  "@rooms": {
+    "description": "Section header for rooms"
+  },
+  "channels": "Канали",
+  "@channels": {
+    "description": "Section header for broadcast channels"
+  },
+  "selectMapLayer": "Вибрати шар мапи",
+  "@selectMapLayer": {
+    "description": "Title for map layer selection dialog"
+  },
+  "openStreetMap": "OpenStreetMap",
+  "@openStreetMap": {
+    "description": "OpenStreetMap layer name"
+  },
+  "openTopoMap": "OpenTopoMap",
+  "@openTopoMap": {
+    "description": "OpenTopoMap layer name"
+  },
+  "esriSatellite": "ESRI Супутник",
+  "@esriSatellite": {
+    "description": "ESRI Satellite imagery layer name"
+  },
+  "googleHybrid": "Google Гібрид",
+  "@googleHybrid": {
+    "description": "Google Hybrid layer name (satellite + labels)"
+  },
+  "googleRoadmap": "Google Дорожня карта",
+  "@googleRoadmap": {
+    "description": "Google Roadmap layer name (street map)"
+  },
+  "googleTerrain": "Google Рельєф",
+  "@googleTerrain": {
+    "description": "Google Terrain layer name (topographic)"
+  },
+  "dragToPosition": "Перетягніть у позицію",
+  "@dragToPosition": {
+    "description": "Label when dragging a pin on map"
+  },
+  "createSarMarker": "Створити маркер SAR",
+  "@createSarMarker": {
+    "description": "Label for creating SAR marker from pin"
+  },
+  "compass": "Компас",
+  "@compass": {
+    "description": "Compass title in detailed compass dialog"
+  },
+  "navigationAndContacts": "Навігація та контакти",
+  "@navigationAndContacts": {
+    "description": "Subtitle for compass dialog"
+  },
+  "sarAlert": "ТРИВОГА SAR",
+  "@sarAlert": {
+    "description": "Label for SAR alert badge on messages"
+  },
+  "textCopiedToClipboard": "Текст скопійовано в буфер обміну",
+  "@textCopiedToClipboard": {
+    "description": "Success message when text is copied"
+  },
+  "cannotReplySenderMissing": "Неможливо відповісти: відсутня інформація про відправника",
+  "@cannotReplySenderMissing": {
+    "description": "Error when sender info is missing for reply"
+  },
+  "cannotReplyContactNotFound": "Неможливо відповісти: контакт не знайдено",
+  "@cannotReplyContactNotFound": {
+    "description": "Error when contact not found for reply"
+  },
+  "copyText": "Копіювати текст",
+  "@copyText": {
+    "description": "Option to copy message text to clipboard"
+  },
+  "saveAsTemplate": "Зберегти як шаблон",
+  "@saveAsTemplate": {
+    "description": "Option to save SAR message as a reusable template"
+  },
+  "templateSaved": "Шаблон успішно збережено",
+  "@templateSaved": {
+    "description": "Success message when SAR template is saved"
+  },
+  "templateAlreadyExists": "Шаблон із цим emoji уже існує",
+  "@templateAlreadyExists": {
+    "description": "Error message when trying to save duplicate template"
+  },
+  "deleteMessage": "Видалити повідомлення",
+  "@deleteMessage": {
+    "description": "Dialog title for deleting a message"
+  },
+  "deleteMessageConfirmation": "Ви впевнені, що хочете видалити це повідомлення?",
+  "@deleteMessageConfirmation": {
+    "description": "Confirmation text for message deletion"
+  },
+  "shareLocation": "Поділитися місцезнаходженням",
+  "@shareLocation": {
+    "description": "Option to share SAR marker location"
+  },
+  "shareLocationText": "{markerInfo}\n\nКоординати: {lat}, {lon}\n\nGoogle Maps: {url}",
+  "@shareLocationText": {
+    "description": "Formatted text for sharing SAR marker location",
+    "placeholders": {
+      "markerInfo": {
+        "type": "String"
+      },
+      "lat": {
+        "type": "String"
+      },
+      "lon": {
+        "type": "String"
+      },
+      "url": {
+        "type": "String"
+      }
+    }
+  },
+  "sarLocationShare": "Місцезнаходження SAR",
+  "@sarLocationShare": {
+    "description": "Subject line when sharing SAR marker location"
+  },
+  "justNow": "Щойно",
+  "@justNow": {
+    "description": "Time indicator for very recent activity"
+  },
+  "minutesAgo": "{minutes} хв тому",
+  "@minutesAgo": {
+    "description": "Time indicator for minutes ago",
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "hoursAgo": "{hours} год тому",
+  "@hoursAgo": {
+    "description": "Time indicator for hours ago",
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "daysAgo": "{days} дн тому",
+  "@daysAgo": {
+    "description": "Time indicator for days ago",
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "secondsAgo": "{seconds} с тому",
+  "@secondsAgo": {
+    "description": "Time indicator for seconds ago",
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "sending": "Надсилання...",
+  "@sending": {
+    "description": "Delivery status: sending"
+  },
+  "sent": "Надіслано",
+  "@sent": {
+    "description": "Delivery status: sent"
+  },
+  "delivered": "Доставлено",
+  "@delivered": {
+    "description": "Delivery status: delivered"
+  },
+  "deliveredWithTime": "Доставлено ({time}ms)",
+  "@deliveredWithTime": {
+    "description": "Delivery status with round-trip time",
+    "placeholders": {
+      "time": {
+        "type": "int"
+      }
+    }
+  },
+  "failed": "Помилка",
+  "@failed": {
+    "description": "Delivery status: failed"
+  },
+  "broadcast": "Трансляція",
+  "@broadcast": {
+    "description": "Delivery status for channel messages (no echoes yet)"
+  },
+  "deliveredToContacts": "Доставлено {delivered}/{total} контактам",
+  "@deliveredToContacts": {
+    "description": "Grouped message delivery count",
+    "placeholders": {
+      "delivered": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "allDelivered": "Усе доставлено",
+  "@allDelivered": {
+    "description": "Status when all recipients received the message"
+  },
+  "recipientDetails": "Деталі отримувача",
+  "@recipientDetails": {
+    "description": "Header for expandable recipient list"
+  },
+  "pending": "Очікує",
+  "@pending": {
+    "description": "Delivery status: pending/waiting"
+  },
+  "sarMarkerFoundPerson": "Знайдена людина",
+  "@sarMarkerFoundPerson": {
+    "description": "SAR marker type: found person"
+  },
+  "sarMarkerFire": "Місце пожежі",
+  "@sarMarkerFire": {
+    "description": "SAR marker type: fire"
+  },
+  "sarMarkerStagingArea": "Зона збору",
+  "@sarMarkerStagingArea": {
+    "description": "SAR marker type: staging area"
+  },
+  "sarMarkerObject": "Знайдений об’єкт",
+  "@sarMarkerObject": {
+    "description": "SAR marker type: object"
+  },
+  "from": "Від",
+  "@from": {
+    "description": "Sender label in notifications"
+  },
+  "coordinates": "Координати",
+  "@coordinates": {
+    "description": "Coordinates label"
+  },
+  "tapToViewOnMap": "Торкніться, щоб переглянути на мапі",
+  "@tapToViewOnMap": {
+    "description": "Notification action text"
+  },
+  "radioSettings": "Налаштування радіо",
+  "@radioSettings": {
+    "description": "Section title for radio settings"
+  },
+  "frequencyMHz": "Частота (MHz)",
+  "@frequencyMHz": {
+    "description": "Label for radio frequency field"
+  },
+  "bandwidth": "Ширина смуги",
+  "@bandwidth": {
+    "description": "Label for bandwidth dropdown"
+  },
+  "spreadingFactor": "Коефіцієнт розширення",
+  "@spreadingFactor": {
+    "description": "Label for spreading factor dropdown"
+  },
+  "codingRate": "Швидкість кодування",
+  "@codingRate": {
+    "description": "Label for coding rate dropdown"
+  },
+  "txPowerDbm": "Потужність TX (dBm)",
+  "@txPowerDbm": {
+    "description": "Label for TX power field"
+  },
+  "maxPowerDbm": "Макс: {power} dBm",
+  "@maxPowerDbm": {
+    "description": "Helper text showing maximum TX power",
+    "placeholders": {
+      "power": {
+        "type": "int"
+      }
+    }
+  },
+  "you": "Ви",
+  "@you": {
+    "description": "Label for the current user in message bubbles"
+  },
+  "exportFailed": "Помилка експорту: {error}",
+  "@exportFailed": {
+    "description": "Error message when export fails",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "importFailed": "Помилка імпорту: {error}",
+  "@importFailed": {
+    "description": "Error message when import fails",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "unknown": "Невідомо",
+  "@unknown": {
+    "description": "Unknown value label"
+  },
+  "onlineLayers": "Онлайн-шари",
+  "@onlineLayers": {
+    "description": "Section header for online map layers"
+  },
+  "locationTrail": "Слід місцезнаходження",
+  "@locationTrail": {
+    "description": "Location trail title"
+  },
+  "showTrailOnMap": "Показати слід на мапі",
+  "@showTrailOnMap": {
+    "description": "Toggle to show/hide trail on map"
+  },
+  "trailVisible": "Слід видно на мапі",
+  "@trailVisible": {
+    "description": "Trail visibility status - visible"
+  },
+  "trailHiddenRecording": "Слід прихований (запис триває)",
+  "@trailHiddenRecording": {
+    "description": "Trail visibility status - hidden but recording"
+  },
+  "duration": "Тривалість",
+  "@duration": {
+    "description": "Duration label"
+  },
+  "points": "Точки",
+  "@points": {
+    "description": "Trail points count label"
+  },
+  "clearTrail": "Очистити слід",
+  "@clearTrail": {
+    "description": "Button to clear location trail"
+  },
+  "clearTrailQuestion": "Очистити слід?",
+  "@clearTrailQuestion": {
+    "description": "Confirmation dialog title"
+  },
+  "clearTrailConfirmation": "Ви впевнені, що хочете очистити поточний слід місцезнаходження? Цю дію не можна скасувати.",
+  "@clearTrailConfirmation": {
+    "description": "Confirmation dialog message"
+  },
+  "noTrailRecorded": "Слід ще не записано",
+  "@noTrailRecorded": {
+    "description": "Message when no trail exists"
+  },
+  "startTrackingToRecord": "Почніть відстеження місцезнаходження, щоб записати слід",
+  "@startTrackingToRecord": {
+    "description": "Instructions to start trail recording"
+  },
+  "trailControls": "Керування слідом",
+  "@trailControls": {
+    "description": "Trail controls tooltip"
+  },
+  "model": "Модель",
+  "@model": {
+    "description": "Device model label"
+  },
+  "version": "Версія",
+  "@version": {
+    "description": "Version label"
+  },
+  "maxContacts": "Макс. контактів",
+  "@maxContacts": {
+    "description": "Maximum contacts capacity label"
+  },
+  "maxChannels": "Макс. каналів",
+  "@maxChannels": {
+    "description": "Maximum channels capacity label"
+  },
+  "publicInfo": "Публічна інформація",
+  "@publicInfo": {
+    "description": "Public information section header"
+  },
+  "useCurrentLocation": "Використати поточне місцезнаходження",
+  "@useCurrentLocation": {
+    "description": "Tooltip for use current location button"
+  },
+  "noneUnknown": "Немає/Невідомо",
+  "@noneUnknown": {
+    "description": "Device type: none or unknown"
+  },
+  "chatNode": "Вузол чату",
+  "@chatNode": {
+    "description": "Device type: chat node"
+  },
+  "repeater": "Ретранслятор",
+  "@repeater": {
+    "description": "Device type: repeater"
+  },
+  "roomChannel": "Кімната/Канал",
+  "@roomChannel": {
+    "description": "Device type: room or channel"
+  },
+  "typeNumber": "Тип {number}",
+  "@typeNumber": {
+    "description": "Generic device type with number",
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "failedToSave": "Не вдалося зберегти: {error}",
+  "@failedToSave": {
+    "description": "Generic error message for save failures",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToGetLocation": "Не вдалося отримати місцезнаходження: {error}",
+  "@failedToGetLocation": {
+    "description": "Error message when getting location fails",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "sarTemplates": "Шаблони SAR",
+  "@sarTemplates": {
+    "description": "SAR templates menu title"
+  },
+  "addTemplate": "Додати шаблон",
+  "@addTemplate": {
+    "description": "Button to add new SAR template"
+  },
+  "editTemplate": "Редагувати шаблон",
+  "@editTemplate": {
+    "description": "Dialog title for editing template"
+  },
+  "deleteTemplate": "Видалити шаблон",
+  "@deleteTemplate": {
+    "description": "Action to delete template"
+  },
+  "templateName": "Назва шаблону",
+  "@templateName": {
+    "description": "Label for template name field"
+  },
+  "templateNameHint": "напр. Знайдена людина",
+  "@templateNameHint": {
+    "description": "Hint text for template name"
+  },
+  "templateEmoji": "Emoji",
+  "@templateEmoji": {
+    "description": "Label for template emoji field"
+  },
+  "emojiRequired": "Emoji обов’язковий",
+  "@emojiRequired": {
+    "description": "Validation error when emoji field is empty"
+  },
+  "nameRequired": "Назва обов’язкова",
+  "@nameRequired": {
+    "description": "Validation error when name field is empty"
+  },
+  "templateDescription": "Опис (необов’язково)",
+  "@templateDescription": {
+    "description": "Label for template description field"
+  },
+  "templateDescriptionHint": "Додайте додатковий контекст...",
+  "@templateDescriptionHint": {
+    "description": "Hint text for template description"
+  },
+  "templateColor": "Колір",
+  "@templateColor": {
+    "description": "Label for template color picker"
+  },
+  "previewFormat": "Попередній перегляд (формат повідомлення SAR)",
+  "@previewFormat": {
+    "description": "Label for format preview"
+  },
+  "importFromClipboard": "Імпорт",
+  "@importFromClipboard": {
+    "description": "Button to import templates from clipboard"
+  },
+  "exportToClipboard": "Експорт",
+  "@exportToClipboard": {
+    "description": "Button to export templates to clipboard"
+  },
+  "deleteTemplateConfirmation": "Видалити шаблон \"{name}\"?",
+  "@deleteTemplateConfirmation": {
+    "description": "Confirmation message for template deletion",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "templateAdded": "Шаблон додано",
+  "@templateAdded": {
+    "description": "Success message when template is added"
+  },
+  "templateUpdated": "Шаблон оновлено",
+  "@templateUpdated": {
+    "description": "Success message when template is updated"
+  },
+  "templateDeleted": "Шаблон видалено",
+  "@templateDeleted": {
+    "description": "Success message when template is deleted"
+  },
+  "templatesImported": "{count, plural, =0{Шаблони не імпортовано} =1{Імпортовано 1 шаблон} other{Імпортовано {count} шаблонів}}",
+  "@templatesImported": {
+    "description": "Success message after importing templates",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "templatesExported": "{count, plural, =1{Експортовано 1 шаблон у буфер обміну} other{Експортовано {count} шаблонів у буфер обміну}}",
+  "@templatesExported": {
+    "description": "Success message after exporting templates",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resetToDefaults": "Скинути до стандартних",
+  "@resetToDefaults": {
+    "description": "Action to reset templates to defaults"
+  },
+  "resetToDefaultsConfirmation": "Це видалить усі користувацькі шаблони та відновить 4 стандартні шаблони. Продовжити?",
+  "@resetToDefaultsConfirmation": {
+    "description": "Confirmation message for reset to defaults"
+  },
+  "reset": "Скинути",
+  "@reset": {
+    "description": "Reset button label"
+  },
+  "resetComplete": "Шаблони скинуто до стандартних",
+  "@resetComplete": {
+    "description": "Success message after reset"
+  },
+  "noTemplates": "Немає доступних шаблонів",
+  "@noTemplates": {
+    "description": "Message when no templates exist"
+  },
+  "tapAddToCreate": "Торкніться +, щоб створити перший шаблон",
+  "@tapAddToCreate": {
+    "description": "Helper text when no templates exist"
+  },
+  "ok": "OK",
+  "@ok": {
+    "description": "OK button label"
+  },
+  "locationPermission": "Дозвіл на геолокацію",
+  "@locationPermission": {
+    "description": "Location permission label"
+  },
+  "checking": "Перевірка...",
+  "@checking": {
+    "description": "Loading state indicator"
+  },
+  "locationPermissionGrantedAlways": "Надано (Завжди)",
+  "@locationPermissionGrantedAlways": {
+    "description": "Location permission status: granted always"
+  },
+  "locationPermissionGrantedWhileInUse": "Надано (Під час використання)",
+  "@locationPermissionGrantedWhileInUse": {
+    "description": "Location permission status: granted while in use"
+  },
+  "locationPermissionDeniedTapToRequest": "Відхилено - торкніться, щоб запросити",
+  "@locationPermissionDeniedTapToRequest": {
+    "description": "Location permission status: denied, user can request"
+  },
+  "locationPermissionPermanentlyDeniedOpenSettings": "Назавжди відхилено - відкрити налаштування",
+  "@locationPermissionPermanentlyDeniedOpenSettings": {
+    "description": "Location permission status: permanently denied"
+  },
+  "locationPermissionDialogContent": "Дозвіл на геолокацію назавжди відхилено. Увімкніть його в налаштуваннях пристрою, щоб використовувати GPS та поширення місцезнаходження.",
+  "@locationPermissionDialogContent": {
+    "description": "Content for location permission dialog when permanently denied"
+  },
+  "openSettings": "Відкрити налаштування",
+  "@openSettings": {
+    "description": "Button to open device settings"
+  },
+  "locationPermissionGranted": "Дозвіл на геолокацію надано!",
+  "@locationPermissionGranted": {
+    "description": "Success message when location permission is granted"
+  },
+  "locationPermissionRequiredForGps": "Для GPS-відстеження та поширення місцезнаходження потрібен дозвіл на геолокацію.",
+  "@locationPermissionRequiredForGps": {
+    "description": "Info message about location permission requirement"
+  },
+  "locationPermissionAlreadyGranted": "Дозвіл на геолокацію вже надано.",
+  "@locationPermissionAlreadyGranted": {
+    "description": "Info message when permission is already granted"
+  },
+  "sarNavyBlue": "SAR Темно-синій",
+  "@sarNavyBlue": {
+    "description": "SAR Navy Blue theme name"
+  },
+  "sarNavyBlueDescription": "Професійний/операційний режим",
+  "@sarNavyBlueDescription": {
+    "description": "Description for SAR Navy Blue theme"
+  },
+  "selectRecipient": "Вибрати отримувача",
+  "@selectRecipient": {
+    "description": "Title for recipient selector sheet"
+  },
+  "broadcastToAllNearby": "Транслювати всім поблизу",
+  "@broadcastToAllNearby": {
+    "description": "Subtitle for public channel option"
+  },
+  "searchRecipients": "Пошук отримувачів...",
+  "@searchRecipients": {
+    "description": "Placeholder text for recipient search field"
+  },
+  "noContactsFound": "Контактів не знайдено",
+  "@noContactsFound": {
+    "description": "Message when no contacts match search"
+  },
+  "noRoomsFound": "Кімнат не знайдено",
+  "@noRoomsFound": {
+    "description": "Message when no rooms match search"
+  },
+  "noRecipientsAvailable": "Немає доступних отримувачів",
+  "@noRecipientsAvailable": {
+    "description": "Message when no recipients exist (contacts, rooms, or channels)"
+  },
+  "noChannelsFound": "Каналів не знайдено",
+  "@noChannelsFound": {
+    "description": "Message when no channels match the search"
+  },
+  "newMessage": "Нове повідомлення",
+  "@newMessage": {
+    "description": "Notification title for new message"
+  },
+  "channel": "Канал",
+  "@channel": {
+    "description": "Channel label in notifications"
+  },
+  "samplePoliceLead": "Керівник поліції",
+  "@samplePoliceLead": {
+    "description": "Sample team member name"
+  },
+  "sampleDroneOperator": "Оператор дрона",
+  "@sampleDroneOperator": {
+    "description": "Sample team member name"
+  },
+  "sampleFirefighterAlpha": "Пожежник",
+  "@sampleFirefighterAlpha": {
+    "description": "Sample team member name"
+  },
+  "sampleMedicCharlie": "Медик",
+  "@sampleMedicCharlie": {
+    "description": "Sample team member name"
+  },
+  "sampleCommandDelta": "Командування",
+  "@sampleCommandDelta": {
+    "description": "Sample team member name"
+  },
+  "sampleFireEngine": "Пожежна машина",
+  "@sampleFireEngine": {
+    "description": "Sample team member name"
+  },
+  "sampleAirSupport": "Повітряна підтримка",
+  "@sampleAirSupport": {
+    "description": "Sample team member name"
+  },
+  "sampleBaseCoordinator": "Координатор бази",
+  "@sampleBaseCoordinator": {
+    "description": "Sample team member name"
+  },
+  "channelEmergency": "Надзвичайна ситуація",
+  "@channelEmergency": {
+    "description": "Emergency channel name"
+  },
+  "channelCoordination": "Координація",
+  "@channelCoordination": {
+    "description": "Coordination channel name"
+  },
+  "channelUpdates": "Оновлення",
+  "@channelUpdates": {
+    "description": "Updates channel name"
+  },
+  "sampleTeamMember": "Тестовий член команди",
+  "@sampleTeamMember": {
+    "description": "Sample sender name"
+  },
+  "sampleScout": "Тестовий розвідник",
+  "@sampleScout": {
+    "description": "Sample sender name"
+  },
+  "sampleBase": "Тестова база",
+  "@sampleBase": {
+    "description": "Sample sender name"
+  },
+  "sampleSearcher": "Тестовий пошуковець",
+  "@sampleSearcher": {
+    "description": "Sample sender name"
+  },
+  "sampleObjectBackpack": " Знайдено рюкзак - синього кольору",
+  "@sampleObjectBackpack": {
+    "description": "Sample object note"
+  },
+  "sampleObjectVehicle": " Покинутий транспорт - перевірити власника",
+  "@sampleObjectVehicle": {
+    "description": "Sample object note"
+  },
+  "sampleObjectCamping": " Знайдено туристичне спорядження",
+  "@sampleObjectCamping": {
+    "description": "Sample object note"
+  },
+  "sampleObjectTrailMarker": " Знайдено маркер стежки поза маршрутом",
+  "@sampleObjectTrailMarker": {
+    "description": "Sample object note"
+  },
+  "sampleMsgAllTeamsCheckIn": "Усі команди - дайте відмітку",
+  "@sampleMsgAllTeamsCheckIn": {
+    "description": "Sample channel message"
+  },
+  "sampleMsgWeatherUpdate": "Оновлення погоди: ясно, температура 18°C",
+  "@sampleMsgWeatherUpdate": {
+    "description": "Sample channel message"
+  },
+  "sampleMsgBaseCamp": "Базовий табір розгорнуто в зоні збору",
+  "@sampleMsgBaseCamp": {
+    "description": "Sample channel message"
+  },
+  "sampleMsgTeamAlpha": "Команда рухається до сектора 2",
+  "@sampleMsgTeamAlpha": {
+    "description": "Sample channel message"
+  },
+  "sampleMsgRadioCheck": "Перевірка радіо - усім станціям відповісти",
+  "@sampleMsgRadioCheck": {
+    "description": "Sample channel message"
+  },
+  "sampleMsgWaterSupply": "Запас води доступний на контрольній точці 3",
+  "@sampleMsgWaterSupply": {
+    "description": "Sample channel message"
+  },
+  "sampleMsgTeamBravo": "Команда доповідає: сектор 1 чистий",
+  "@sampleMsgTeamBravo": {
+    "description": "Sample channel message"
+  },
+  "sampleMsgEtaRallyPoint": "Орієнтовний час до точки збору: 15 хвилин",
+  "@sampleMsgEtaRallyPoint": {
+    "description": "Sample channel message"
+  },
+  "sampleMsgSupplyDrop": "Скидання постачання підтверджено на 14:00",
+  "@sampleMsgSupplyDrop": {
+    "description": "Sample channel message"
+  },
+  "sampleMsgDroneSurvey": "Обстеження дроном завершено - результатів немає",
+  "@sampleMsgDroneSurvey": {
+    "description": "Sample channel message"
+  },
+  "sampleMsgTeamCharlie": "Команда просить підкріплення",
+  "@sampleMsgTeamCharlie": {
+    "description": "Sample channel message"
+  },
+  "sampleMsgRadioDiscipline": "Усім підрозділам: дотримуйтеся радіодисципліни",
+  "@sampleMsgRadioDiscipline": {
+    "description": "Sample channel message"
+  },
+  "sampleMsgUrgentMedical": "ТЕРМІНОВО: потрібна медична допомога в секторі 4",
+  "@sampleMsgUrgentMedical": {
+    "description": "Sample emergency message"
+  },
+  "sampleMsgAdultMale": " Дорослий чоловік, при свідомості",
+  "@sampleMsgAdultMale": {
+    "description": "Sample emergency message note"
+  },
+  "sampleMsgFireSpotted": "Помічено пожежу - координати надходять",
+  "@sampleMsgFireSpotted": {
+    "description": "Sample emergency message"
+  },
+  "sampleMsgSpreadingRapidly": " Швидко поширюється!",
+  "@sampleMsgSpreadingRapidly": {
+    "description": "Sample emergency message note"
+  },
+  "sampleMsgPriorityHelicopter": "ПРІОРИТЕТ: потрібна підтримка гелікоптера",
+  "@sampleMsgPriorityHelicopter": {
+    "description": "Sample emergency message"
+  },
+  "sampleMsgMedicalTeamEnRoute": "Медична команда прямує до вашого місця",
+  "@sampleMsgMedicalTeamEnRoute": {
+    "description": "Sample emergency message"
+  },
+  "sampleMsgEvacHelicopter": "ETA евакуаційного гелікоптера 10 хвилин",
+  "@sampleMsgEvacHelicopter": {
+    "description": "Sample emergency message"
+  },
+  "sampleMsgEmergencyResolved": "Надзвичайну ситуацію вирішено - все чисто",
+  "@sampleMsgEmergencyResolved": {
+    "description": "Sample emergency message"
+  },
+  "sampleMsgEmergencyStagingArea": " Аварійна зона збору",
+  "@sampleMsgEmergencyStagingArea": {
+    "description": "Sample emergency message note"
+  },
+  "sampleMsgEmergencyServices": "Екстрені служби повідомлені та вже реагують",
+  "@sampleMsgEmergencyServices": {
+    "description": "Sample emergency message"
+  },
+  "sampleAlphaTeamLead": "Керівник команди",
+  "@sampleAlphaTeamLead": {
+    "description": "Sample team name"
+  },
+  "sampleBravoScout": "Розвідник",
+  "@sampleBravoScout": {
+    "description": "Sample team name"
+  },
+  "sampleCharlieMedic": "Медик",
+  "@sampleCharlieMedic": {
+    "description": "Sample team name"
+  },
+  "sampleDeltaNavigator": "Навігатор",
+  "@sampleDeltaNavigator": {
+    "description": "Sample team name"
+  },
+  "sampleEchoSupport": "Підтримка",
+  "@sampleEchoSupport": {
+    "description": "Sample team name"
+  },
+  "sampleBaseCommand": "Командування бази",
+  "@sampleBaseCommand": {
+    "description": "Sample team name"
+  },
+  "sampleFieldCoordinator": "Польовий координатор",
+  "@sampleFieldCoordinator": {
+    "description": "Sample team name"
+  },
+  "sampleMedicalTeam": "Медична команда",
+  "@sampleMedicalTeam": {
+    "description": "Sample team name"
+  },
+  "mapDrawing": "Рисунок на мапі",
+  "@mapDrawing": {
+    "description": "Label for map drawing messages"
+  },
+  "navigateToDrawing": "Перейти до рисунка",
+  "@navigateToDrawing": {
+    "description": "Option to navigate to drawing on map"
+  },
+  "copyCoordinates": "Копіювати координати",
+  "@copyCoordinates": {
+    "description": "Option to copy coordinates to clipboard"
+  },
+  "hideFromMap": "Приховати з мапи",
+  "@hideFromMap": {
+    "description": "Option to hide drawing from map"
+  },
+  "lineDrawing": "Лінійний рисунок",
+  "@lineDrawing": {
+    "description": "Label for line type drawings"
+  },
+  "rectangleDrawing": "Рисунок прямокутника",
+  "@rectangleDrawing": {
+    "description": "Label for rectangle type drawings"
+  },
+  "manualCoordinates": "Ручні координати",
+  "@manualCoordinates": {
+    "description": "Label for manual coordinate input toggle"
+  },
+  "enterCoordinatesManually": "Введіть координати вручну",
+  "@enterCoordinatesManually": {
+    "description": "Description for manual coordinate input option"
+  },
+  "latitudeLabel": "Широта",
+  "@latitudeLabel": {
+    "description": "Label for latitude input field"
+  },
+  "longitudeLabel": "Довгота",
+  "@longitudeLabel": {
+    "description": "Label for longitude input field"
+  },
+  "exampleCoordinates": "Приклад: 46.0569, 14.5058",
+  "@exampleCoordinates": {
+    "description": "Example coordinate format hint"
+  },
+  "shareDrawing": "Поділитися рисунком",
+  "@shareDrawing": {
+    "description": "Title for share single drawing dialog"
+  },
+  "shareWithAllNearbyDevices": "Поділитися з усіма пристроями поблизу",
+  "@shareWithAllNearbyDevices": {
+    "description": "Subtitle for public channel sharing option"
+  },
+  "shareToRoom": "Поділитися в кімнату",
+  "@shareToRoom": {
+    "description": "Header for room sharing section"
+  },
+  "sendToPersistentStorage": "Надіслати в постійне сховище кімнати",
+  "@sendToPersistentStorage": {
+    "description": "Subtitle for room sharing option"
+  },
+  "deleteDrawingConfirm": "Ви впевнені, що хочете видалити цей рисунок?",
+  "@deleteDrawingConfirm": {
+    "description": "Confirmation message for deleting a single drawing"
+  },
+  "drawingDeleted": "Рисунок видалено",
+  "@drawingDeleted": {
+    "description": "Success message after deleting a drawing"
+  },
+  "yourDrawingsCount": "Ваші рисунки ({count})",
+  "@yourDrawingsCount": {
+    "description": "Header showing count of user's drawings",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "shared": "Спільний",
+  "@shared": {
+    "description": "Status label for shared drawings"
+  },
+  "line": "Лінія",
+  "@line": {
+    "description": "Line drawing type label"
+  },
+  "rectangle": "Прямокутник",
+  "@rectangle": {
+    "description": "Rectangle drawing type label"
+  },
+  "updateAvailable": "Доступне оновлення",
+  "@updateAvailable": {
+    "description": "Title for update dialog when new version is available"
+  },
+  "currentVersion": "Поточна",
+  "@currentVersion": {
+    "description": "Label for current app version"
+  },
+  "latestVersion": "Остання",
+  "@latestVersion": {
+    "description": "Label for latest available app version"
+  },
+  "downloadUpdate": "Завантажити",
+  "@downloadUpdate": {
+    "description": "Button to download app update"
+  },
+  "updateLater": "Пізніше",
+  "@updateLater": {
+    "description": "Button to dismiss update dialog"
+  },
+  "cadastralParcels": "Кадастрові ділянки",
+  "@cadastralParcels": {
+    "description": "Label for cadastral parcels WMS overlay layer"
+  },
+  "forestRoads": "Лісові дороги",
+  "@forestRoads": {
+    "description": "Label for forest roads WMS overlay layer"
+  },
+  "wmsOverlays": "Накладки WMS",
+  "@wmsOverlays": {
+    "description": "Section header for WMS overlay layers in layer selector"
+  },
+  "hikingTrails": "Пішохідні стежки",
+  "@hikingTrails": {
+    "description": "Label for hiking/mountain trails WMS overlay layer"
+  },
+  "mainRoads": "Основні дороги",
+  "@mainRoads": {
+    "description": "Label for main roads WMS overlay layer"
+  },
+  "houseNumbers": "Номери будинків",
+  "@houseNumbers": {
+    "description": "Label for house numbers WMS overlay layer"
+  },
+  "fireHazardZones": "Зони пожежної небезпеки",
+  "@fireHazardZones": {
+    "description": "Label for fire hazard risk zones WMS overlay layer"
+  },
+  "historicalFires": "Історичні пожежі",
+  "@historicalFires": {
+    "description": "Label for historical forest fires WMS overlay layer"
+  },
+  "firebreaks": "Протипожежні смуги",
+  "@firebreaks": {
+    "description": "Label for firebreaks WMS overlay layer"
+  },
+  "krasFireZones": "Пожежні зони Красу",
+  "@krasFireZones": {
+    "description": "Label for Kras fire zones WMS overlay layer"
+  },
+  "placeNames": "Назви місць",
+  "@placeNames": {
+    "description": "Label for geographic place names WMS overlay layer"
+  },
+  "municipalityBorders": "Межі громад",
+  "@municipalityBorders": {
+    "description": "Label for municipality borders WMS overlay layer"
+  },
+  "topographicMap": "Топографічна мапа 1:25000",
+  "@topographicMap": {
+    "description": "Label for DTK25 topographic base map layer"
+  },
+  "recentMessages": "Останні повідомлення",
+  "@recentMessages": {
+    "description": "Header for recent messages overlay on map in fullscreen mode"
+  },
+  "addChannel": "Додати канал",
+  "@addChannel": {
+    "description": "Button to add a new channel"
+  },
+  "channelName": "Назва каналу",
+  "@channelName": {
+    "description": "Label for channel name field"
+  },
+  "channelNameHint": "напр. Рятувальна команда Альфа",
+  "@channelNameHint": {
+    "description": "Hint for channel name field"
+  },
+  "channelSecret": "Секрет каналу",
+  "@channelSecret": {
+    "description": "Label for channel secret field"
+  },
+  "channelSecretHint": "Спільний пароль для цього каналу",
+  "@channelSecretHint": {
+    "description": "Hint for channel secret field"
+  },
+  "channelSecretHelp": "Цей секрет має бути спільним для всіх членів команди, яким потрібен доступ до цього каналу",
+  "@channelSecretHelp": {
+    "description": "Help text explaining channel secret"
+  },
+  "channelTypesInfo": "Hash-канали (#team): секрет автоматично генерується з назви. Однакова назва = той самий канал на всіх пристроях.\n\nПриватні канали: використовуйте явний секрет. Приєднатися можуть лише ті, хто його знає.",
+  "@channelTypesInfo": {
+    "description": "Information banner explaining hash and private channel types"
+  },
+  "hashChannelInfo": "Hash-канал: секрет буде автоматично згенерований з назви каналу. Кожен, хто використовує ту саму назву, приєднається до того самого каналу.",
+  "@hashChannelInfo": {
+    "description": "Help text for hash channels (# prefix)"
+  },
+  "channelNameRequired": "Назва каналу обов’язкова",
+  "@channelNameRequired": {
+    "description": "Validation error for empty channel name"
+  },
+  "channelNameTooLong": "Назва каналу має бути не довшою за 31 символ",
+  "@channelNameTooLong": {
+    "description": "Validation error for channel name too long"
+  },
+  "channelSecretRequired": "Секрет каналу обов’язковий",
+  "@channelSecretRequired": {
+    "description": "Validation error for empty channel secret"
+  },
+  "channelSecretTooLong": "Секрет каналу має бути не довшим за 32 символи",
+  "@channelSecretTooLong": {
+    "description": "Validation error for channel secret too long"
+  },
+  "invalidAsciiCharacters": "Дозволені лише символи ASCII",
+  "@invalidAsciiCharacters": {
+    "description": "Validation error for non-ASCII characters"
+  },
+  "channelCreatedSuccessfully": "Канал успішно створено",
+  "@channelCreatedSuccessfully": {
+    "description": "Success message after creating channel"
+  },
+  "channelCreationFailed": "Не вдалося створити канал: {error}",
+  "@channelCreationFailed": {
+    "description": "Error message when channel creation fails",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteChannel": "Видалити канал",
+  "@deleteChannel": {
+    "description": "Delete channel button/menu item"
+  },
+  "deleteChannelConfirmation": "Ви впевнені, що хочете видалити канал \"{channelName}\"? Цю дію не можна скасувати.",
+  "@deleteChannelConfirmation": {
+    "description": "Confirmation dialog when deleting a channel",
+    "placeholders": {
+      "channelName": {
+        "type": "String"
+      }
+    }
+  },
+  "channelDeletedSuccessfully": "Канал успішно видалено",
+  "@channelDeletedSuccessfully": {
+    "description": "Success message after deleting channel"
+  },
+  "channelDeletionFailed": "Не вдалося видалити канал: {error}",
+  "@channelDeletionFailed": {
+    "description": "Error message when channel deletion fails",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "createChannel": "Створити канал",
+  "@createChannel": {
+    "description": "Button text for creating a channel"
+  },
+  "wizardBack": "Назад",
+  "@wizardBack": {
+    "description": "Wizard back button text"
+  },
+  "wizardSkip": "Пропустити",
+  "@wizardSkip": {
+    "description": "Wizard skip button text"
+  },
+  "wizardNext": "Далі",
+  "@wizardNext": {
+    "description": "Wizard next button text"
+  },
+  "wizardGetStarted": "Почати",
+  "@wizardGetStarted": {
+    "description": "Wizard final button text to complete onboarding"
+  },
+  "wizardWelcomeTitle": "Ласкаво просимо до MeshCore SAR",
+  "@wizardWelcomeTitle": {
+    "description": "Welcome wizard first page title"
+  },
+  "viewWelcomeTutorial": "Переглянути вступний посібник",
+  "@viewWelcomeTutorial": {
+    "description": "Settings option to re-show welcome wizard"
+  },
+  "allTeamContacts": "Усі контакти команди",
+  "@allTeamContacts": {
+    "description": "Destination option to send SAR marker to all team contacts"
+  },
+  "directMessagesInfo": "Прямі повідомлення з ACK. Надіслано {count} членам команди.",
+  "@directMessagesInfo": {
+    "description": "Information about sending to all contacts",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "sarMarkerSentToContacts": "Маркер SAR надіслано {count} контактам",
+  "@sarMarkerSentToContacts": {
+    "description": "Success message after sending SAR marker to all contacts",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "noContactsAvailable": "Немає доступних контактів команди",
+  "@noContactsAvailable": {
+    "description": "Message when there are no chat contacts to send to"
+  },
+  "reply": "Відповісти",
+  "@reply": {},
+  "technicalDetails": "Технічні деталі",
+  "@technicalDetails": {},
+  "messageTechnicalDetails": "Технічні деталі повідомлення",
+  "@messageTechnicalDetails": {},
+  "linkQuality": "Якість зв’язку",
+  "@linkQuality": {},
+  "delivery": "Доставка",
+  "@delivery": {},
+  "status": "Статус",
+  "@status": {},
+  "expectedAckTag": "Очікуваний тег ACK",
+  "@expectedAckTag": {},
+  "roundTrip": "Час в обидва боки",
+  "@roundTrip": {},
+  "retryAttempt": "Спроба повтору",
+  "@retryAttempt": {},
+  "floodFallback": "Резервний flooding",
+  "@floodFallback": {},
+  "identity": "Ідентичність",
+  "@identity": {},
+  "messageId": "ID повідомлення",
+  "@messageId": {},
+  "sender": "Відправник",
+  "@sender": {},
+  "senderKey": "Ключ відправника",
+  "@senderKey": {},
+  "recipient": "Отримувач",
+  "@recipient": {},
+  "recipientKey": "Ключ отримувача",
+  "@recipientKey": {},
+  "voice": "Голос",
+  "@voice": {},
+  "voiceId": "ID голосу",
+  "@voiceId": {},
+  "envelope": "Конверт",
+  "@envelope": {},
+  "sessionProgress": "Прогрес сеансу",
+  "@sessionProgress": {},
+  "complete": "Завершено",
+  "@complete": {},
+  "rawDump": "Сирий дамп",
+  "@rawDump": {},
+  "cannotRetryMissingRecipient": "Неможливо повторити: відсутня інформація про отримувача",
+  "@cannotRetryMissingRecipient": {},
+  "voiceUnavailable": "Голос зараз недоступний",
+  "@voiceUnavailable": {},
+  "requestingVoice": "Запит голосу",
+  "@requestingVoice": {},
+  "device": "пристрій",
+  "change": "Змінити",
+  "wizardOverviewDescription": "Ця програма поєднує повідомлення MeshCore, польові оновлення SAR, карти та інструменти пристрою в одному місці.",
+  "wizardOverviewFeature1": "Надсилайте особисті повідомлення, повідомлення кімнат і повідомлення каналів з основної вкладки «Повідомлення».",
+  "wizardOverviewFeature2": "Діліться SAR-маркерами, малюнками на карті, голосовими кліпами та зображеннями через mesh-мережу.",
+  "wizardOverviewFeature3": "Підключайтеся через BLE або TCP, а потім керуйте супутнім радіопристроєм прямо з програми.",
+  "wizardMessagingTitle": "Повідомлення та польові звіти",
+  "wizardMessagingDescription": "Повідомлення тут це більше, ніж просто текст. Програма вже підтримує кілька типів операційних даних і сценаріїв передачі.",
+  "wizardMessagingFeature1": "Надсилайте особисті повідомлення, повідомлення кімнат і трафік каналів з одного редактора.",
+  "wizardMessagingFeature2": "Створюйте оновлення SAR і багаторазові шаблони SAR для типових польових звітів.",
+  "wizardMessagingFeature3": "Передавайте голосові сесії та зображення з індикатором прогресу й оцінками ефірного часу в інтерфейсі.",
+  "wizardConnectDeviceTitle": "Підключити пристрій",
+  "wizardConnectDeviceDescription": "Підключіть своє радіо MeshCore, виберіть назву та застосуйте радіопрофіль перед продовженням.",
+  "wizardSetupBadge": "Налаштування",
+  "wizardOverviewBadge": "Огляд",
+  "wizardConnectedToDevice": "Підключено до {deviceName}",
+  "wizardNoDeviceConnected": "Ще немає підключеного пристрою",
+  "wizardSkipForNow": "Пропустити поки що",
+  "wizardDeviceNameLabel": "Назва пристрою",
+  "wizardDeviceNameHelp": "Ця назва оголошується іншим користувачам MeshCore.",
+  "wizardConfigRegionLabel": "Регіон конфігурації",
+  "wizardConfigRegionHelp": "Використовується повний офіційний список профілів MeshCore. Типово вибрано EU/UK (Narrow).",
+  "wizardPresetNote1": "Переконайтеся, що вибраний профіль відповідає місцевим радіоправилам.",
+  "wizardPresetNote2": "Список відповідає офіційному потоку профілів інструмента MeshCore config.",
+  "wizardPresetNote3": "Для онбордингу типовим залишається EU/UK (Narrow).",
+  "wizardSaving": "Збереження...",
+  "wizardSaveAndContinue": "Зберегти й продовжити",
+  "wizardEnterDeviceName": "Введіть назву пристрою перед продовженням.",
+  "wizardDeviceSetupSaved": "Збережено {deviceName} з профілем {presetName}.",
+  "wizardNetworkTitle": "Контакти, кімнати та ретранслятори",
+  "wizardNetworkDescription": "Вкладка «Контакти» організовує мережу, яку ви виявляєте, і маршрути, які вивчаєте з часом.",
+  "wizardNetworkFeature1": "Переглядайте членів команди, ретранслятори, кімнати, канали та оголошення в очікуванні в одному списку.",
+  "wizardNetworkFeature2": "Використовуйте smart ping, вхід до кімнат, вивчені шляхи й інструменти скидання маршрутів, коли зв'язок стає нестабільним.",
+  "wizardNetworkFeature3": "Створюйте канали та керуйте мережевими призначеннями, не виходячи з програми.",
+  "wizardMapOpsTitle": "Мапа, сліди та спільна геометрія",
+  "wizardMapOpsDescription": "Мапа програми напряму пов'язана з повідомленнями, відстеженням і SAR-накладками, а не є окремим переглядачем.",
+  "wizardMapOpsFeature1": "Відстежуйте власну позицію, місця розташування команди та сліди руху на мапі.",
+  "wizardMapOpsFeature2": "Відкривайте малюнки з повідомлень, переглядайте їх в інтерфейсі та видаляйте з мапи за потреби.",
+  "wizardMapOpsFeature3": "Використовуйте мапи ретрансляторів і спільні накладки, щоб розуміти покриття мережі в полі.",
+  "wizardToolsTitle": "Інструменти поза повідомленнями",
+  "wizardToolsDescription": "Тут є більше, ніж чотири основні вкладки. Програма також включає налаштування, діагностику та необов'язкові сценарії датчиків.",
+  "wizardToolsFeature1": "Відкрийте налаштування пристрою, щоб змінити параметри радіо, телеметрію, потужність TX і дані супутнього пристрою.",
+  "wizardToolsFeature2": "Увімкніть вкладку «Датчики», коли потрібні панелі моніторингу та швидкі дії оновлення.",
+  "wizardToolsFeature3": "Використовуйте журнали пакетів, сканування спектра та діагностику розробника для усунення проблем mesh-мережі.",
+  "contactInSensors": "У датчиках",
+  "contactAddToSensors": "Додати до датчиків",
+  "contactSetPath": "Задати шлях",
+  "contactAddedToSensors": "{contactName} додано до Датчиків",
+  "contactFailedToClearRoute": "Не вдалося очистити маршрут: {error}",
+  "contactRouteCleared": "Маршрут очищено",
+  "contactRouteSet": "Маршрут задано: {route}",
+  "contactFailedToSetRoute": "Не вдалося задати маршрут: {error}",
+  "rssi": "RSSI",
+  "snr": "SNR",
+  "ackTimeout": "Тайм-аут ACK",
+  "opcode": "Опкод",
+  "payload": "Корисне навантаження",
+  "hops": "Хопи",
+  "hashSize": "Розмір хешу",
+  "pathBytes": "Байти шляху",
+  "selectedPath": "Обраний шлях",
+  "estimatedTx": "Очікувана передача",
+  "senderToReceipt": "Від відправника до отримання",
+  "receivedCopies": "Отримані копії",
+  "retryCause": "Причина повтору",
+  "retryMode": "Режим повтору",
+  "retryResult": "Результат повтору",
+  "lastRetry": "Остання спроба",
+  "rxPackets": "RX-пакети",
+  "mesh": "Mesh",
+  "rate": "Швидкість",
+  "window": "Вікно",
+  "posttxDelay": "Затримка після передачі",
+  "bandpass": "Смуговий",
+  "bandpassFilterVoice": "Смуговий фільтр голосу",
+  "active": "Активно",
+  "addContact": "Додати контакт",
+  "all": "Усі",
+  "clearAllLabel": "Очистити все",
+  "clearFilters": "Очистити фільтри",
+  "clearRoute": "Очистити маршрут",
+  "clearMessages": "Очистити повідомлення",
+  "clearScale": "Очистити масштаб",
+  "clearDiscoveries": "Очистити виявлення",
+  "clearOnlineTraceDatabase": "Очистити базу трасувань",
+  "clearAllChannels": "Очистити всі канали",
+  "clearAllContacts": "Очистити всі контакти",
+  "clearChannels": "Очистити канали",
+  "clearContacts": "Очистити контакти",
+  "clearPathOnMaxRetry": "Очистити шлях при макс. спробі",
+  "create": "Створити",
+  "custom": "Користувацький",
+  "defaultValue": "За замовчуванням",
+  "duplicate": "Дублювати",
+  "editName": "Редагувати ім'я",
+  "open": "Відкрити",
+  "paste": "Вставити",
+  "preview": "Попередній перегляд",
+  "remove": "Видалити",
+  "rename": "Перейменувати",
+  "resolveAll": "Вирішити все",
+  "send": "Надіслати",
+  "sendAnyway": "Надіслати все одно",
+  "share": "Поділитися",
+  "trace": "Трасування",
+  "discovery": "Виявлення",
+  "discoverRepeaters": "Виявити повторювачі",
+  "discoverSensors": "Виявити датчики",
+  "repeaterDiscoverySent": "Виявлення повторювачів надіслано",
+  "sensorDiscoverySent": "Виявлення датчиків надіслано",
+  "clearedPendingDiscoveries": "Очікувані виявлення очищено.",
+  "autoDiscovery": "Автоматичне виявлення",
+  "enableAutomaticAdding": "Увімкнути автоматичне додавання",
+  "autoaddRepeaters": "Автододавання повторювачів",
+  "autoaddRoomServers": "Автододавання серверів кімнат",
+  "autoaddSensors": "Автододавання датчиків",
+  "autoaddUsers": "Автододавання користувачів",
+  "overwriteOldestWhenFull": "Перезаписати найстаріші при заповненні",
+  "storage": "Сховище",
+  "dangerZone": "Небезпечна зона",
+  "profiles": "Профілі",
+  "favourites": "Обране",
+  "sensors": "Датчики",
+  "others": "Інші",
+  "gpsModule": "Модуль GPS",
+  "liveTraffic": "Живий трафік",
+  "repeatersMap": "Карта повторювачів",
+  "blePacketLogs": "Журнали BLE-пакетів",
+  "onlineTraceDatabase": "База трасувань",
+  "routePathByteSize": "Розмір шляху в байтах",
+  "messageNotifications": "Сповіщення про повідомлення",
+  "sarAlerts": "SAR-сповіщення",
+  "discoveryNotifications": "Сповіщення про виявлення",
+  "updateNotifications": "Сповіщення про оновлення",
+  "muteWhileAppIsOpen": "Без звуку при відкритому додатку",
+  "disableContacts": "Вимкнути контакти",
+  "enableSensorsTab": "Увімкнути вкладку Датчики",
+  "enableProfiles": "Увімкнути профілі",
+  "nearestRepeaterFallback": "Найближчий повторювач як резерв",
+  "deleteAllStoredMessageHistory": "Видалити всю історію повідомлень",
+  "messageFontSize": "Розмір шрифту повідомлень",
+  "rotateMapWithHeading": "Обертати карту за напрямком",
+  "showMapDebugInfo": "Показати налагоджувальну інфо карти",
+  "openMapInFullscreen": "Відкрити карту на повний екран",
+  "showSarMarkersLabel": "Показати SAR-маркери",
+  "hideRepeatersOnMap": "Сховати повторювачі на карті",
+  "setMapScale": "Встановити масштаб карти",
+  "customMapScaleSaved": "Користувацький масштаб карти збережено",
+  "voiceBitrate": "Бітрейт голосу",
+  "voiceCompressor": "Компресор голосу",
+  "voiceLimiter": "Лімітер голосу",
+  "micAutoGain": "Автопідсилення мікрофона",
+  "echoCancellation": "Придушення ехо",
+  "noiseSuppression": "Придушення шуму",
+  "trimSilenceInVoiceMessages": "Обрізати тишу в голосових повідомленнях",
+  "compressor": "Компресор",
+  "limiter": "Лімітер",
+  "autoGain": "Автопідсилення",
+  "echoCancel": "Ехо",
+  "noiseSuppress": "Шум",
+  "silenceTrim": "Тиша",
+  "maxImageSize": "Максимальний розмір зображення",
+  "imageCompression": "Стиснення зображення",
+  "grayscale": "Відтінки сірого",
+  "ultraMode": "Ультра режим",
+  "fastPrivateGpsUpdates": "Швидкі приватні GPS-оновлення",
+  "movementThreshold": "Поріг руху",
+  "fastGpsMovementThreshold": "Поріг руху швидкого GPS",
+  "fastGpsActiveuseInterval": "Інтервал активного використання швидкого GPS",
+  "activeuseUpdateInterval": "Інтервал оновлення при активному використанні",
+  "repeatNearbyTraffic": "Повторювати близький трафік",
+  "relayThroughRepeatersAcrossTheMesh": "Ретранслювати через повторювачі по мережі",
+  "nearbyOnlyWithoutRepeaterFlooding": "Лише поблизу, без flood повторювачів",
+  "multihop": "Багатохоповий",
+  "createProfile": "Створити профіль",
+  "renameProfile": "Перейменувати профіль",
+  "newProfile": "Новий профіль",
+  "manageProfiles": "Керувати профілями",
+  "enableProfilesToStartManagingThem": "Увімкніть профілі, щоб почати керувати ними.",
+  "openMessage": "Відкрити повідомлення",
+  "jumpToTheRelatedSarMessage": "Перейти до пов'язаного SAR-повідомлення",
+  "removeSarMarker": "Видалити SAR-маркер",
+  "pleaseSelectADestinationToSendSarMarker": "Виберіть призначення для надсилання SAR-маркера",
+  "sarMarkerBroadcastToPublicChannel": "SAR-маркер надіслано на публічний канал",
+  "sarMarkerSentToRoom": "SAR-маркер надіслано в кімнату",
+  "loadFromGallery": "Завантажити з галереї",
+  "replaceImage": "Замінити зображення",
+  "selectFromGallery": "Вибрати з галереї",
+  "team": "Команда",
+  "found": "Знайдено",
+  "staging": "Місце збору",
+  "object": "Об'єкт",
+  "quiet": "Тихо",
+  "busy": "Зайнято",
+  "searchMessages": "Пошук повідомлень",
+  "sendImageFromGallery": "Надіслати зображення з галереї",
+  "takePhoto": "Зробити фото",
+  "allMessages": "Усі повідомлення",
+  "sendToPublicChannel": "Надіслати в публічний канал?",
+  "selectMarkerTypeAndDestination": "Виберіть тип маркера та призначення",
+  "noDestinationsAvailableLabel": "Немає доступних призначень",
+  "image": "Зображення",
+  "format": "Формат",
+  "dimensions": "Розміри",
+  "segments": "Сегменти",
+  "transfers": "Передачі",
+  "downloadedBy": "Завантажено",
+  "saveDiscoverySettings": "Зберегти налаштування виявлення",
+  "savePublicInfo": "Зберегти публічну інформацію",
+  "saveRadioSettings": "Зберегти налаштування радіо",
+  "savePath": "Зберегти шлях",
+  "wipeDeviceData": "Стерти дані пристрою",
+  "wipeDevice": "Стерти пристрій",
+  "destructiveDeviceActions": "Деструктивні дії пристрою.",
+  "chooseAPresetOrFinetuneCustomRadioSettings": "Оберіть пресет або налаштуйте радіо вручну.",
+  "used": "Використано",
+  "total": "Загалом",
+  "renameValue": "Перейменувати значення",
+  "customizeFields": "Налаштувати поля",
+  "livePreview": "Попередній перегляд наживо",
+  "refreshSchedule": "Розклад оновлення",
+  "noResponse": "Немає відповіді",
+  "refreshing": "Оновлення",
+  "unavailable": "Недоступно",
+  "pickARelayOrNodeToWatchInSensors": "Оберіть реле або вузол для спостереження.",
+  "publicKeyLabel": "Публічний ключ",
+  "alreadyInContacts": "Вже в контактах",
+  "connectToADeviceBeforeAddingContacts": "Підключіться до пристрою перед додаванням контактів",
+  "fromContacts": "З контактів",
+  "onlineOnly": "Лише онлайн",
+  "inBoth": "В обох",
+  "source": "Джерело",
+  "allMessagesCleared": "Усі повідомлення очищено",
+  "onlineTraceDatabaseCleared": "Базу трасувань очищено",
+  "packetLogsCleared": "Журнали пакетів очищено",
+  "hexDataCopiedToClipboard": "Hex-дані скопійовано в буфер",
+  "developerModeEnabled": "Режим розробника увімкнено",
+  "developerModeDisabled": "Режим розробника вимкнено",
+  "clipboardIsEmpty": "Буфер обміну порожній",
+  "contactImported": "Контакт імпортовано",
+  "contactLinkCopiedToClipboard": "Посилання на контакт скопійовано в буфер",
+  "failedToExportContact": "Не вдалося експортувати контакт",
+  "noLogsToExport": "Немає журналів для експорту",
+  "exportAsCsv": "Експортувати як CSV",
+  "exportAsText": "Експортувати як текст",
+  "receivedRfc3339": "Отримано (RFC3339)",
+  "buildTime": "Час збірки",
+  "downloadUrlNotAvailable": "URL завантаження недоступний",
+  "cannotOpenDownloadUrl": "Не вдається відкрити URL завантаження",
+  "updateCheckIsOnlyAvailableOnAndroid": "Перевірка оновлень доступна лише на Android",
+  "youAreRunningTheLatestVersion": "Ви використовуєте останню версію",
+  "updateAvailableButDownloadUrlNotFound": "Оновлення доступне, але URL завантаження не знайдено",
+  "startTictactoe": "Почати Tic-Tac-Toe",
+  "tictactoeUnavailable": "Tic-Tac-Toe недоступно",
+  "tictactoeOpponentUnknown": "Tic-Tac-Toe: суперник невідомий",
+  "tictactoeWaitingForStart": "Tic-Tac-Toe: очікування початку",
+  "acceptsShareLinks": "Приймає посилання для обміну",
+  "supportsRawHex": "Підтримує raw hex",
+  "clipboardfriendly": "Зручно для буфера",
+  "captured": "Захоплено",
+  "size": "Розмір",
+  "noCustomChannelsToClear": "Немає користувацьких каналів для очищення.",
+  "noDeviceContactsToClear": "Немає контактів пристрою для очищення.",
+  "autoSend": "Автовідправлення",
+  "autoSendDescription": "Надіслати поточним маршрутом.",
+  "sendDirect": "Пряме надсилання",
+  "sendDirectDescription": "Надіслати безпосередньо цьому контакту.",
+  "sendFlood": "Надсилання лавиною",
+  "sendFloodDescription": "Надіслати через усі ретранслятори.",
+  "postConnectDiscoveryTitle": "Виявити ретранслятори зараз?",
+  "postConnectDiscoveryDescription": "Запустіть виявлення ретрансляторів одразу після підключення, щоб побачити найближчі вузли MeshCore та швидше додати їх до своєї мережі.",
+  "aToZ": "А-Я",
+  "add": "Додати",
+  "addAdditionalDetails": "Додати додаткові деталі",
+  "addPeer": "Додати вузол",
+  "addPeerManually": "Додати вузол вручну",
+  "addedToContacts": "{name} додано до контактів",
+  "addedToSensors": "{name} додано до сенсорів",
+  "allowAll": "Дозволити все",
+  "anonymousRxStats": "Анонімна статистика RX",
+  "appearance": "Зовнішній вигляд",
+  "ascii": "ASCII",
+  "baseTelemetry": "Базова телеметрія",
+  "blePin": "BLE PIN",
+  "buzzerAlerts": "Сповіщення зумером",
+  "cancelImageReceive": "Скасувати отримання зображення",
+  "choose": "Обрати",
+  "chooseWhichTabsAndContactSectionsToShow": "Оберіть, які вкладки та розділи контактів показувати",
+  "clearCache": "Очистити кеш",
+  "clearHistory": "Очистити історію",
+  "clearLiveView": "Очистити живий перегляд",
+  "clearLogs": "Очистити журнали",
+  "clearOfflineCache": "Очистити офлайн-кеш?",
+  "clearOverlay": "Очистити накладання",
+  "clearRouteOnlyAfterAllRetriesFail": "Очистити маршрут лише після невдачі всіх спроб",
+  "codecBitrateAndAudioProcessing": "Кодек, бітрейт та обробка звуку",
+  "connectByIpAddress": "Підключити за IP-адресою",
+  "controlWhichAlertsYouReceive": "Керуйте сповіщеннями, які ви отримуєте",
+  "copyFullHex": "Копіювати повний Hex",
+  "copyRawResponse": "Копіювати необроблену відповідь",
+  "couldNotLoadMetHistory": "Не вдалося завантажити історію MET",
+  "customizeSensor": "Налаштувати {name}",
+  "data": "Дані",
+  "deleteGroup": "Видалити групу",
+  "deleteStyleConfirm": "Видалити {name}?",
+  "deleteThisDrawing": "Видалити цей {type}?",
+  "deny": "Відхилити",
+  "deviceInfo": "Інформація про пристрій",
+  "deviceSettings": "Налаштування пристрою",
+  "deviceTimeSynced": "Час пристрою синхронізовано з цим телефоном.",
+  "disableFastGpsPublishing": "Вимкнути швидку публікацію GPS",
+  "displayMarkersAndTraceDatabase": "Відображення, маркери та база даних трасувань",
+  "download": "Завантажити",
+  "environmentalTelemetry": "Телеметрія довкілля",
+  "errorCheckingForUpdates": "Помилка перевірки оновлень: {error}",
+  "errorGeneric": "Помилка: {error}",
+  "errorOpeningDownload": "Помилка відкриття завантаження: {error}",
+  "exportLogs": "Експортувати журнали",
+  "extraAggressiveAvifCompression": "Надагресивне стиснення AVIF",
+  "failedToAddContact": "Не вдалося додати контакт: {error}",
+  "failedToAddName": "Не вдалося додати {name}: {error}",
+  "failedToClearChannels": "Не вдалося очистити канали: {error}",
+  "failedToClearContacts": "Не вдалося очистити контакти: {error}",
+  "failedToConnectViaSerial": "Не вдалося підключитися через послідовний порт",
+  "failedToLoadPreviewImage": "Не вдалося завантажити попередній перегляд: {error}",
+  "failedToLoadTrace": "Не вдалося завантажити трасування: {error}",
+  "failedToSendSarMarker": "Не вдалося надіслати SAR маркер: {error}",
+  "failedToSetBuzzerMode": "Не вдалося встановити режим зумера: {error}",
+  "failedToSetGpsMode": "Не вдалося встановити режим GPS: {error}",
+  "failedToSyncDeviceTime": "Не вдалося синхронізувати час пристрою: {error}",
+  "failedToWipeDeviceData": "Не вдалося стерти дані пристрою: {error}",
+  "fastGpsTargetChannel": "Цільовий канал швидкого GPS",
+  "fastUpdatesThresholdsAndPermissions": "Швидкі оновлення, пороги та дозволи",
+  "fetchingCatalog": "Завантаження каталогу...",
+  "fifteenMinutes": "15 хвилин",
+  "fifteenSeconds": "15 секунд",
+  "filterByDirection": "Фільтрувати за напрямком",
+  "finish": "Завершити",
+  "fiveMinutes": "5 хвилин",
+  "fiveSeconds": "5 секунд",
+  "fix": "Фіксація",
+  "gps": "GPS",
+  "gpsAdvertPolicy": "Політика оголошень GPS",
+  "gpsAndLocation": "GPS та місцезнаходження",
+  "gpsDiagnostics": "Діагностика GPS",
+  "gpsSection": "GPS",
+  "help": "Допомога",
+  "hex": "Hex",
+  "hidden": "Приховано",
+  "howTheRadioAutoAddsDiscoveredNodes": "Як радіо автоматично додає виявлені вузли.",
+  "images": "Зображення",
+  "importProfile": "Імпортувати профіль",
+  "lastFix": "Остання фіксація",
+  "latest": "Найновіші",
+  "latitude": "Широта",
+  "loadASavedRegion": "Завантажити збережений регіон",
+  "loading": "Завантаження",
+  "locationSharingHardwareAndUpdateInterval": "Обмін місцезнаходженням, обладнання та інтервал оновлення.",
+  "locationTelemetry": "Телеметрія місцезнаходження",
+  "lockDestination": "Зафіксувати призначення",
+  "longitude": "Довгота",
+  "mapStyle": "Стиль мапи",
+  "max": "Макс",
+  "maxZoom": "Макс. масштаб",
+  "messaging": "Обмін повідомленнями",
+  "metHistory": "Історія MET",
+  "min": "Мін",
+  "minZoom": "Мін. масштаб",
+  "moveDown": "Перемістити вниз",
+  "moveUp": "Перемістити вгору",
+  "multiAckMode": "Режим мульти-ACK",
+  "multiDeviceWorkspaceManagement": "Керування робочим простором кількох пристроїв",
+  "myLocation": "Моє місцезнаходження",
+  "nameAndTelemetryShared": "Ім'я та телеметрія надсилаються іншим пристроям.",
+  "newVersionAvailable": "Нова версія: {version}",
+  "newer": "Новіші",
+  "noNeighboursFound": "Сусідів не знайдено",
+  "noServersFound": "Серверів не знайдено",
+  "notSet": "Не встановлено",
+  "notifications": "Сповіщення",
+  "offZeroSeconds": "Вимк (0 с)",
+  "offlineMaps": "Офлайн-мапи",
+  "older": "Старіші",
+  "oneByteMode0": "1 байт (режим 0)",
+  "oneHour": "1 година",
+  "oneMinute": "1 хвилина",
+  "openPacketLogs": "Відкрити журнали пакетів",
+  "packetTypeHelp": "Довідка типів пакетів",
+  "pasteShareLinkOrHexAdvert": "Вставте посилання або hex-оголошення",
+  "pathHash": "Хеш шляху",
+  "pathSize": "Розмір шляху",
+  "ping": "Ping",
+  "polygon": "Полігон",
+  "rawResponseCopied": "Необроблену відповідь скопійовано",
+  "resendThroughNearestRepeaterOnFailure": "Повторно надіслати через найближчий ретранслятор у разі невдачі",
+  "resolveContact": "Розв'язати контакт",
+  "routingRetriesAndDestinationLock": "Маршрутизація, повторні спроби та фіксація призначення",
+  "samples": "Зразки",
+  "satellites": "Супутники",
+  "saving": "Збереження...",
+  "search": "Пошук",
+  "searchByNameOrToken": "Шукати за іменем або токеном",
+  "searchDiscoveredNodes": "Шукати виявлені вузли",
+  "searchInCurrentFilter": "Шукати в поточному фільтрі",
+  "searchLogs": "Шукати в журналах...",
+  "searchSensors": "Шукати сенсори",
+  "searchThisSection": "Шукати в цьому розділі",
+  "selectedRelays": "Обрані ретранслятори",
+  "sensor": "Сенсор",
+  "serialError": "Помилка послідовного порту: {error}",
+  "setPathForContact": "Встановити шлях для {name}",
+  "shareLiveGps": "Поділитися GPS у реальному часі",
+  "shareMyTiles": "Поділитися моїми тайлами",
+  "sharingLocationFromPhone": "Обмін місцезнаходженням на цьому каналі з телефону.",
+  "sharingLocationFromRadio": "Обмін місцезнаходженням на цьому каналі з радіо.",
+  "signalDbm": "Сигнал {rssi} дБм",
+  "sizeCompressionAndPreview": "Розмір, стиснення та попередній перегляд",
+  "skip": "Пропустити",
+  "smallerFileSize": "Менший розмір файлу",
+  "sort": "Сортувати",
+  "stoppedSharingLocation": "Обмін місцезнаходженням на цьому каналі зупинено.",
+  "suppressNotificationsWhileInForeground": "Придушити сповіщення, коли застосунок на передньому плані",
+  "tabsAndNavigation": "Вкладки та навігація",
+  "templatesAndTutorials": "Шаблони та посібники",
+  "tenMinutes": "10 хвилин",
+  "tenSeconds": "10 секунд",
+  "testSendUpdate": "Тестове надсилання оновлення",
+  "themeLanguageAndDisplayPreferences": "Тема, мова та налаштування відображення",
+  "thirtyMinutes": "30 хвилин",
+  "thirtySeconds": "30 секунд",
+  "threeBytesMode2": "3 байти (режим 2)",
+  "trafficStatsMessageHistoryAndDeveloperTools": "Статистика трафіку, історія повідомлень та інструменти розробника",
+  "twoBytesMode1": "2 байти (режим 1)",
+  "twoMinutes": "2 хвилини",
+  "undo": "Скасувати",
+  "updated": "Оновлено",
+  "useContactFlags": "Використовувати прапорці контактів",
+  "useSavedCoordinates": "Використати збережені координати",
+  "view": "Перегляд",
+  "viewNeighbours": "Переглянути сусідів",
+  "viewPublicStats": "Переглянути публічну статистику",
+  "setRegionScope": "Встановити область регіону",
+  "regionScope": "Область регіону",
+  "regionScopeNone": "Немає (глобально)",
+  "clearRegionScope": "Очистити область",
+  "regionScopeWarning": "Лише ретранслятори, що дозволяють цей регіон, будуть пересилати.",
+  "discoverRegions": "Виявити з ретрансляторів",
+  "discoveringRegions": "Виявлення регіонів...",
+  "enterRegionName": "Назва регіону (напр. auckland)",
+  "noRegionsFound": "Регіони не знайдені на цьому ретрансляторі.",
+  "regionScopeSet": "Область регіону встановлена на {name}",
+  "regionScopeCleared": "Область регіону очищена",
+  "simpleMode": "Простий режим",
+  "simpleModeDescription": "Лише чат і карта з обраними контактами",
+  "simpleModeRequiresLockedDestination": "Спочатку увімкніть «Зафіксувати призначення» з каналом, щоб використовувати простий режим",
+  "noFavouriteContacts": "Немає обраних контактів",
+  "selectDestinationFirst": "Спершу виберіть канал, контакт або кімнату",
+  "recipientNoLongerAvailable": "Одержувач більше недоступний",
+  "failedToSendMessage": "Не вдалося надіслати: {error}",
+  "tictactoeDirectOnly": "Хрестики-нулики працюють лише в особистих повідомленнях. Спершу виберіть контакт.",
+  "deviceKeyUnavailable": "Ключ пристрою недоступний",
+  "imageCompressionFailed": "Не вдалося стиснути зображення",
+  "imageFragmentationFailed": "Не вдалося розділити зображення на фрагменти",
+  "failedToAnnounceImage": "Не вдалося анонсувати зображення",
+  "noRecipientSelected": "Одержувача не вибрано",
+  "imageSendFailed": "Не вдалося надіслати зображення",
+  "microphonePermissionRequiredForVoice": "Для голосових повідомлень потрібен дозвіл на мікрофон",
+  "recordingDiscarded": "Запис відхилено",
+  "publicChannelMediaWarning": "Ви збираєтеся надіслати {mediaType} в публічний канал. Це не рекомендується: отримати це може будь-хто в mesh-мережі. Виберіть приватний або тегований канал, якщо тільки це не те, що ви хочете.",
+  "selectPrivateChannelToShareLocation": "Виберіть приватний канал, щоб поділитися місцезнаходженням.",
+  "stopSharingMyLocation": "Припинити ділитися місцезнаходженням",
+  "shareMyLocation": "Поділитися місцезнаходженням",
+  "stopRecording": "Зупинити запис",
+  "recordVoice": "Записати голосове повідомлення",
+  "moreActions": "Інші дії",
+  "noMessagesInFilter": "У цьому фільтрі немає повідомлень",
+  "noMatchesInFilter": "У цьому фільтрі немає збігів",
+  "syncFailed": "Помилка синхронізації: {error}",
+  "invalidLink": "Недійсне посилання",
+  "cannotOpenLink": "Не вдається відкрити посилання",
+  "failedToOpenLink": "Не вдалося відкрити посилання",
+  "failedToResendMessage": "Не вдалося повторно надіслати повідомлення",
+  "retryFailed": "Повторна спроба не вдалася: {error}",
+  "deleteDrawingAndMessage": "Видалити рисунок і повідомлення",
+  "lastEchoRelay": "Останнє відлуння: ретранслятор",
+  "lastEchoPath": "Останнє відлуння: шлях",
+  "lastEchoBytesReport": "Останнє відлуння: звіт про байти",
+  "noGpsCoordinatesAvailable": "Координати GPS недоступні",
+  "notASarMarker": "Це не маркер SAR",
+  "failedToSaveTemplate": "Не вдалося зберегти шаблон: {error}",
+  "drawingNotFound": "Рисунок не знайдено",
+  "unknownDrawingType": "Невідомий тип рисунка",
+  "customMapMarker": "Власний маркер карти",
+  "customMapPointLabel": "Точка: {point}",
+  "mapIdLabel": "ID карти: {id}",
+  "cannotFetchVoice": "Не вдається отримати голосове повідомлення",
+  "senderContactUnknown": "Контакт відправника невідомий. Спершу синхронізуйте контакти.",
+  "senderRouteUnknown": "Маршрут відправника невідомий. Спершу синхронізуйте контакти/шлях.",
+  "messageTooFar": "Повідомлення задалеко ({hops} хопів, макс. {maxHops}).",
+  "senderRouteNoPathResponse": "Маршрут відправника не відповів на перевірку шляху. Синхронізуйте контакти/шлях і спробуйте ще раз.",
+  "senderRouteNoRawResponse": "Маршрут відправника не відповів на raw-транспортному шляху.",
+  "voiceFetchOverHops": "Отримання голосу через {hops} хопів може зайняти час.",
+  "voiceReceiveCanceled": "Приймання голосового повідомлення скасовано",
+  "fetchingMissingVoiceFragments": "Отримання відсутніх фрагментів голосу",
+  "receivingVoice": "Приймання голосу",
+  "cannotFetchImage": "Не вдається отримати зображення",
+  "imageFetchOverHops": "Отримання зображення через {hops} хопів може зайняти час.",
+  "imageAlreadyBeingReceived": "Зображення вже приймається",
+  "loadImage": "Завантажити зображення",
+  "imageFetchFailedToSendRequest": "Не вдалося надіслати запит на зображення",
+  "imageUnavailable": "Зображення зараз недоступне",
+  "imageFetchTimedOut": "Час очікування зображення минув",
+  "imageReceiveCanceled": "Приймання зображення скасовано",
+  "closeImagePreview": "Закрити перегляд зображення",
+  "recordingReleaseToSend": "Запис... відпустіть, щоб надіслати",
+  "sendingVoice": "Надсилання голосу...",
+  "sendLongPressToRecordVoice": "Надіслати (утримуйте для запису голосу)",
+  "discardRecording": "Відхилити запис",
+  "hopCount": "{count, plural, one{{count} хоп} few{{count} хопи} many{{count} хопів} other{{count} хопа}}",
+  "channelsSectionDescription": "Широкомовні канали для mesh-трафіку поблизу",
+  "roomsSectionDescription": "Спільні простори для постійної координації команди",
+  "contactsSectionDescription": "Люди та пристрої в прямій досяжності",
+  "noRecentChatters": "Немає нещодавніх співрозмовників",
+  "public": "Публічний",
+  "failedToSendTicTacToeMove": "Не вдалося надіслати хід у хрестики-нулики",
+  "youWon": "Ви перемогли",
+  "opponentWon": "Переміг суперник",
+  "gameDraw": "Нічия",
+  "yourTurn": "Ваш хід",
+  "opponentTurn": "Хід суперника",
+  "pleaseEnterValidCoordinates": "Введіть коректні координати",
+  "locationNotAvailable": "Місцезнаходження недоступне",
+  "customCaveMapPoint": "Власна точка карти печери",
+  "mapPoint": "Точка карти",
+  "fetchingMissingImageFragments": "Отримання відсутніх фрагментів…",
+  "loadingImage": "Завантаження…",
+  "receivingImage": "Приймання…",
+  "tapToLoad": "Торкніться, щоб завантажити",
+  "connectDevice": "Підключити пристрій",
+  "chooseTransportSubtitle": "Виберіть транспорт: Bluetooth, WiFi або послідовний порт",
+  "ble": "BLE",
+  "network": "Мережа",
+  "serial": "Послідовний порт",
+  "scan": "Сканувати",
+  "pressScanToSearchForDevices": "Натисніть «Сканувати», щоб знайти пристрої поблизу",
+  "failedToConnectToDevice": "Не вдалося підключитися до {name}",
+  "unknownDevice": "Невідомий пристрій",
+  "showingCachedResultsTapRefresh": "Показано кешовані результати. Натисніть «Оновити», щоб пересканувати.",
+  "scanningLocalNetworkOnPort": "Сканування локальної мережі на наявність WiFi-пристроїв MeshCore на порту {port}",
+  "cancelScanAndAddServer": "Скасувати сканування та додати сервер",
+  "addServer": "Додати сервер",
+  "scanningProgressIps": "Сканування... {scanned}/{total} IP-адрес",
+  "cancelAndEnterManually": "Скасувати та ввести вручну",
+  "noRecentOrDiscoveredServers": "Поки немає нещодавніх або виявлених серверів",
+  "recentlyUsed": "Нещодавно використані",
+  "connecting": "Підключення...",
+  "discoveredOnThisNetwork": "Виявлені в цій мережі",
+  "serverNoLongerAvailable": "Сервер {host}:{port} більше недоступний. Виконайте сканування ще раз, щоб знайти активні сервери.",
+  "failedToConnectToHost": "Не вдалося підключитися до {host}:{port}",
+  "enterValidIpAddress": "Введіть коректну IP-адресу",
+  "enterValidTcpPort": "Введіть коректний TCP-порт",
+  "ipAddress": "IP-адреса",
+  "tcpPort": "TCP-порт",
+  "customServerPort": "Власний порт сервера",
+  "chat": "Чат",
+  "restoringPreviousLink": "Відновлення попереднього підключення",
+  "noDeviceConnected": "Немає підключеного пристрою",
+  "sendAdvert": "Надіслати мій контакт",
+  "advertMode": "Надіслати мій контакт",
+  "advertModeSubtitle": "Виберіть, як далеко мають поширитися ваші контактні дані.",
+  "floodAdvertSent": "Контакт надіслано по всій mesh-мережі",
+  "directAdvertSent": "Контакт надіслано пристроям поблизу"
+}

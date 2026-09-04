@@ -1,0 +1,52 @@
+PODS:
+  - codec2_flutter (0.1.0):
+    - Flutter
+  - Flutter (1.0.0)
+  - flutter_avif_ios (0.0.1):
+    - Flutter
+  - flutter_background_service_ios (0.0.3):
+    - Flutter
+  - flutter_compass (0.0.1):
+    - Flutter
+  - nsd_ios (0.0.1):
+    - Flutter
+  - permission_handler_apple (9.3.0):
+    - Flutter
+
+DEPENDENCIES:
+  - codec2_flutter (from `.symlinks/plugins/codec2_flutter/ios`)
+  - Flutter (from `Flutter`)
+  - flutter_avif_ios (from `.symlinks/plugins/flutter_avif_ios/ios`)
+  - flutter_background_service_ios (from `.symlinks/plugins/flutter_background_service_ios/ios`)
+  - flutter_compass (from `.symlinks/plugins/flutter_compass/ios`)
+  - nsd_ios (from `.symlinks/plugins/nsd_ios/ios`)
+  - permission_handler_apple (from `.symlinks/plugins/permission_handler_apple/ios`)
+
+EXTERNAL SOURCES:
+  codec2_flutter:
+    :path: ".symlinks/plugins/codec2_flutter/ios"
+  Flutter:
+    :path: Flutter
+  flutter_avif_ios:
+    :path: ".symlinks/plugins/flutter_avif_ios/ios"
+  flutter_background_service_ios:
+    :path: ".symlinks/plugins/flutter_background_service_ios/ios"
+  flutter_compass:
+    :path: ".symlinks/plugins/flutter_compass/ios"
+  nsd_ios:
+    :path: ".symlinks/plugins/nsd_ios/ios"
+  permission_handler_apple:
+    :path: ".symlinks/plugins/permission_handler_apple/ios"
+
+SPEC CHECKSUMS:
+  codec2_flutter: 15e24fa897d9d903a2afb1cc5a17ae3ac88b6d6f
+  Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
+  flutter_avif_ios: 2553d2aafda56339cf924e943da89ad3f40af2dd
+  flutter_background_service_ios: 00d31bdff7b4bfe06d32375df358abe0329cf87e
+  flutter_compass: b236ab69b61545cce89fd58527f401a7587d5cc1
+  nsd_ios: 596ad79109ddd3e52d665f650f36428049e3653e
+  permission_handler_apple: 4ed2196e43d0651e8ff7ca3483a069d469701f2d
+
+PODFILE CHECKSUM: 2d56c9747241a29800bf539d978b210bda037878
+
+COCOAPODS: 1.16.2

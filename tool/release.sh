@@ -250,7 +250,9 @@ build_ios() {
   export ASC_KEY_ID ASC_ISSUER_ID ASC_KEY_P8 APPLE_TEAM_ID
   export RELEASE_VERSION="$VERSION" RELEASE_BUILD="$BUILD_NUMBER"
   (cd "$APP_DIR/ios" && bundle exec fastlane ios release)
-  say "done: $VERSION ($BUILD_NUMBER) is on TestFlight"
+  # Not $BUILD_NUMBER: that is only the floor this script passed in, and
+  # the lane prints the number it actually used a few lines above.
+  say "done: $VERSION is on TestFlight"
 }
 
 # --------------------------------------------------------------------- main --

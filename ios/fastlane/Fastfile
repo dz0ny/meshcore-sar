@@ -13,11 +13,74 @@
 # Uncomment the line if you want fastlane to automatically update itself
 # update_fastlane
 
+require "shellwords"
+require "tmpdir"
+
 default_platform(:ios)
 
 platform :ios do
   def project_root
     File.expand_path("../..", __dir__)
+  end
+
+  # tool/release.sh exports an App Store Connect key; with it these lanes run
+  # with nobody at the keyboard, and without it they fall back to the
+  # interactive Apple ID login they have always used.
+  def asc_key
+    return nil unless ENV["ASC_KEY_ID"] && ENV["ASC_KEY_P8"]
+
+    app_store_connect_api_key(
+      key_id: ENV.fetch("ASC_KEY_ID"),
+      issuer_id: ENV.fetch("ASC_ISSUER_ID"),
+      key_content: ENV.fetch("ASC_KEY_P8"),
+      is_key_content_base64: true,
+      in_house: false,
+    )
+  end
+
+  # pubspec's +build is a floor, not the last word: TestFlight knows what it
+  # has already accepted, and a duplicate number is refused outright. So a
+  # release no longer depends on remembering `make bump` first — bump when the
+  # version should change, and the build number takes care of itself.
+  def next_build_number(key)
+    return ENV.fetch("RELEASE_BUILD", "1").to_i if key.nil?
+
+    latest = latest_testflight_build_number(
+      api_key: key,
+      app_identifier: "com.meshcore.sar.meshcoreSarApp",
+      version: ENV["RELEASE_VERSION"],
+      initial_build_number: 0,
+    )
+    [ENV.fetch("RELEASE_BUILD", "0").to_i, latest + 1].max
+  end
+
+  # gym has no api_key option — it shells out to xcodebuild, so the key goes in
+  # as authentication flags pointing at a file. Only the archive needs them:
+  # gym adds the same flags to the export itself, and xcodebuild rejects a
+  # repeated -authenticationKeyPath.
+  def with_archive_args(build_number = nil)
+    return yield(nil) unless ENV["ASC_KEY_ID"] && ENV["ASC_KEY_P8"]
+
+    path = File.join(Dir.tmpdir, "AuthKey_#{ENV.fetch('ASC_KEY_ID')}.p8")
+    File.binwrite(path, ENV.fetch("ASC_KEY_P8").unpack1("m"))
+    File.chmod(0o600, path)
+    args = [
+      "-allowProvisioningUpdates",
+      "-authenticationKeyPath", Shellwords.escape(path),
+      "-authenticationKeyID", Shellwords.escape(ENV.fetch("ASC_KEY_ID")),
+      "-authenticationKeyIssuerID", Shellwords.escape(ENV.fetch("ASC_ISSUER_ID")),
+    ]
+    # A build setting on the command line outranks any xcconfig, so the number
+    # the caller decided survives the archive regenerating Generated.xcconfig.
+    if ENV["RELEASE_VERSION"]
+      args << "FLUTTER_BUILD_NAME=#{ENV.fetch('RELEASE_VERSION')}"
+      args << "FLUTTER_BUILD_NUMBER=#{build_number}" if build_number
+    end
+    begin
+      yield(args.join(" "))
+    ensure
+      File.delete(path) if File.exist?(path)
+    end
   end
 
   def beta_app_info
@@ -41,9 +104,12 @@ platform :ios do
 
   desc "Push a new release build to the App Store"
   lane :release do
-    increment_build_number(xcodeproj: "Runner.xcodeproj")
-    build_app(workspace: "Runner.xcworkspace", scheme: "Runner")
+    key = asc_key
+    build = next_build_number(key)
+    UI.message("building #{ENV['RELEASE_VERSION'] || 'pubspec version'} (#{build})")
+    with_archive_args(build) { |args| build_app(workspace: "Runner.xcworkspace", scheme: "Runner", xcargs: args) }
     upload_to_testflight(
+      api_key: key,
       skip_waiting_for_build_processing: true,
       localized_app_info: beta_app_info,
       localized_build_info: beta_build_info,
@@ -53,9 +119,12 @@ platform :ios do
 
   desc "Push a new beta build to TestFlight"
   lane :beta do
-    increment_build_number(xcodeproj: "Runner.xcodeproj")
-    build_app(workspace: "Runner.xcworkspace", scheme: "Runner")
+    key = asc_key
+    build = next_build_number(key)
+    UI.message("building #{ENV['RELEASE_VERSION'] || 'pubspec version'} (#{build})")
+    with_archive_args(build) { |args| build_app(workspace: "Runner.xcworkspace", scheme: "Runner", xcargs: args) }
     upload_to_testflight(
+      api_key: key,
       skip_waiting_for_build_processing: true,
       localized_app_info: beta_app_info,
       localized_build_info: beta_build_info,
@@ -71,6 +140,7 @@ platform :ios do
   desc "Upload App Store screenshots"
   lane :store_assets do
     upload_to_app_store(
+      api_key: asc_key,
       skip_binary_upload: true,
       skip_metadata: true,
       skip_screenshots: false,

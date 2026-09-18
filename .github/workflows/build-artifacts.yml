@@ -261,7 +261,23 @@ jobs:
       - name: Build macOS release
         run: flutter build macos --release
 
+      # A release gets the signed, notarized DMG; an ordinary push keeps the
+      # quick unsigned one, because notarization means waiting on Apple.
+      - name: Build, sign and notarize DMG
+        if: github.event_name == 'release'
+        env:
+          MACOS_CERT_P12: ${{ secrets.MACOS_CERT_P12 }}
+          MACOS_CERT_PASSWORD: ${{ secrets.MACOS_CERT_PASSWORD }}
+          MACOS_SIGN_ID: ${{ secrets.MACOS_SIGN_ID }}
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+        run: |
+          ./tool/release.sh macos
+          cp dist/*-macos.dmg .
+
       - name: Create DMG
+        if: github.event_name != 'release'
         run: |
           RAW_TAG="${{ github.event.release.tag_name || github.ref_name }}"
           TAG="${RAW_TAG//\//-}"
@@ -328,6 +344,27 @@ jobs:
           echo "IOS_IPA=${IPA_NAME}" >> "$GITHUB_ENV"
           echo "IOS_RUNNER_ZIP=${RUNNER_ZIP_NAME}" >> "$GITHUB_ENV"
           ls -lah "${IPA_NAME}" "${RUNNER_ZIP_NAME}"
+
+      # The unsigned artifacts above are for anyone who wants the binary. On a
+      # release the same commit is signed and sent to TestFlight, through the
+      # ios/fastlane lanes `make release-ios` uses.
+      - name: Set up Ruby
+        if: github.event_name == 'release'
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+          working-directory: ios
+          bundler-cache: true
+
+      - name: Sign and upload to TestFlight
+        if: github.event_name == 'release'
+        env:
+          IOS_CERT_P12: ${{ secrets.IOS_CERT_P12 }}
+          IOS_CERT_PASSWORD: ${{ secrets.IOS_CERT_PASSWORD }}
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+        run: ./tool/release.sh ios
 
       - name: Upload iOS artifact
         uses: actions/upload-artifact@v4

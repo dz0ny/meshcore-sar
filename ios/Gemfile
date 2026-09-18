@@ -1,3 +1,6 @@
+# fastlane drives the iOS release: archive, export, TestFlight upload.
+# Pinned through Gemfile.lock so CI ships what a laptop tested. 2.240+ is
+# required: older fastlane needs the abbrev gem, which Ruby 4 no longer bundles.
 source "https://rubygems.org"
 
-gem "fastlane"
+gem "fastlane", ">= 2.240"

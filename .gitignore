@@ -97,3 +97,10 @@ worker/dist/
 # Dart code coverage
 coverage/
 lcov.info
+
+# Release tooling (tool/release.sh, tool/secrets.sh)
+dist/
+tool/.release.env
+ios/vendor/bundle/
+ios/.bundle/
+ios/fastlane/report.xml
